@@ -5,7 +5,7 @@ using UnityEngine;
 public enum UnitRole { Tank, DPS, Support }
 public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
 
-public abstract class Creature : MonoBehaviour, IUnit
+public abstract class Creature : MonoBehaviour, IUnit, IDamageable
 {
     [SerializeField] private bool _useObstacleDetection = true;
     [SerializeField] private LayerMask _obstacleMask;
@@ -16,6 +16,9 @@ public abstract class Creature : MonoBehaviour, IUnit
     public float VisionRange => _data.visionRange;
     public float VisionAngle => _data.visionAngle;
     public Vector3 Position => transform.position;
+    public int CurrentHealth { get; private set; }
+    public int MaxHealth => _data != null ? _data.maxHealth : 0;
+    public bool IsAlive => CurrentHealth > 0;
 
     protected UnitData _data;
 
@@ -23,6 +26,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     {
         _data = data;
         Id = data.unitId;
+        CurrentHealth = data.maxHealth;
     }
 
     public bool IsHostileTo(IUnit candidate)
@@ -31,6 +35,9 @@ public abstract class Creature : MonoBehaviour, IUnit
             return false;
 
         if (ReferenceEquals(candidate, this))
+            return false;
+
+        if (!candidate.IsAlive)
             return false;
 
         return Faction != candidate.Faction;
@@ -45,6 +52,12 @@ public abstract class Creature : MonoBehaviour, IUnit
             return false;
 
         if (_data == null)
+            return false;
+
+        if (!IsAlive)
+            return false;
+
+        if (!candidate.IsAlive)
             return false;
 
         bool inRange = IsWithinVisionRange(candidate);
@@ -112,6 +125,22 @@ public abstract class Creature : MonoBehaviour, IUnit
         }
 
         return false;
+    }
+
+    public void TakeDamage(int amount)
+    {
+        if (!IsAlive || amount <= 0)
+            return;
+
+        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+
+        if (CurrentHealth == 0)
+            Die();
+    }
+
+    protected virtual void Die()
+    {
+        gameObject.SetActive(false);
     }
 
 }

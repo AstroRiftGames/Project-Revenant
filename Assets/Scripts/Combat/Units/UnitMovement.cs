@@ -79,6 +79,17 @@ public class UnitMovement : MonoBehaviour
         return true;
     }
 
+    public bool IsWithinRange(Unit targetUnit, int rangeInCells)
+    {
+        if (_grid == null || _unit == null || targetUnit == null)
+            return false;
+
+        Vector3Int startCell = _grid.WorldToCell(_unit.Position);
+        Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
+        int distance = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
+        return distance <= Mathf.Max(0, rangeInCells);
+    }
+
     public void ClearDestination()
     {
         _currentPath.Clear();

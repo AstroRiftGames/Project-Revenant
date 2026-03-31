@@ -9,6 +9,7 @@ public class UnitData : ScriptableObject
     public UnitFaction faction;
     public Sprite sprite;
     public int tileSize;
+    public int maxHealth = 10;
     public float visionRange;
     public float visionAngle;
 }

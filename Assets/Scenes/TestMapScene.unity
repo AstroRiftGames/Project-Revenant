@@ -504,6 +504,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _engageRangeInCells: 1
   _retargetInterval: 0.25
+  _attackInterval: 0.75
+  _attackDamage: 1
   _runOnStart: 1
 --- !u!1 &619394800
 GameObject:
@@ -2534,6 +2536,8 @@ GameObject:
   - component: {fileID: 2137524624}
   - component: {fileID: 2137524623}
   - component: {fileID: 2137524627}
+  - component: {fileID: 2137524629}
+  - component: {fileID: 2137524628}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -2676,6 +2680,39 @@ MonoBehaviour:
   _unitData: {fileID: 11400000, guid: b86923acd10247d45bc11d58e87d1732, type: 2}
   _initializeOnAwake: 1
   _drawDetectionGizmos: 1
+--- !u!114 &2137524628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137524622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd6ea948014d2841ae7242af956a715, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _engageRangeInCells: 1
+  _retargetInterval: 0.25
+  _attackInterval: 0.75
+  _attackDamage: 1
+  _runOnStart: 1
+--- !u!114 &2137524629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137524622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64cb355d6b5b5f6499a7247c68b69470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 1908079972}
+  _moveSpeed: 1
+  _repathInterval: 0.2
+  _drawPathGizmos: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -6,12 +6,15 @@ public class UnitBrain : MonoBehaviour
 {
     [SerializeField] private int _engageRangeInCells = 1;
     [SerializeField] private float _retargetInterval = 0.25f;
+    [SerializeField] private float _attackInterval = 0.75f;
+    [SerializeField] private int _attackDamage = 1;
     [SerializeField] private bool _runOnStart = true;
 
     private Unit _unit;
     private UnitMovement _unitMovement;
     private Unit _currentTarget;
     private float _retargetTimer;
+    private float _attackTimer;
 
     private void Awake()
     {
@@ -24,6 +27,7 @@ public class UnitBrain : MonoBehaviour
         if (!_runOnStart || _unit == null || _unitMovement == null)
             return;
 
+        _attackTimer -= Time.deltaTime;
         _retargetTimer -= Time.deltaTime;
         if (_retargetTimer > 0f)
             return;
@@ -35,7 +39,7 @@ public class UnitBrain : MonoBehaviour
 
     private void UpdateTarget()
     {
-        if (_currentTarget != null && _unit.IsHostileTo(_currentTarget))
+        if (_currentTarget != null && _currentTarget.IsAlive && _unit.IsHostileTo(_currentTarget))
             return;
 
         _currentTarget = _unit.GetNearestVisibleHostileUnitInScene();
@@ -49,7 +53,26 @@ public class UnitBrain : MonoBehaviour
             return;
         }
 
+        if (_unitMovement.IsWithinRange(_currentTarget, _engageRangeInCells))
+        {
+            _unitMovement.ClearPath();
+            TryAttack();
+            return;
+        }
+
         _unitMovement.SetTarget(_currentTarget, _engageRangeInCells);
+    }
+
+    private void TryAttack()
+    {
+        if (_currentTarget == null || !_currentTarget.IsAlive)
+            return;
+
+        if (_attackTimer > 0f)
+            return;
+
+        _attackTimer = _attackInterval;
+        _currentTarget.TakeDamage(_attackDamage);
     }
 
     private void OnDrawGizmosSelected()

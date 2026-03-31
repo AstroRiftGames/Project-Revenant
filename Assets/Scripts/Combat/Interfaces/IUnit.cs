@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public interface IUnit
+public interface IUnit : IDamageable
 {
     string Id { get; }
     UnitRole Role { get; }
