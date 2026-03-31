@@ -18,6 +18,10 @@ MonoBehaviour:
   faction: 0
   sprite: {fileID: 0}
   tileSize: 0
-  maxHealth: 10
-  visionRange: 3
-  visionAngle: 90
+  stats:
+    maxHealth: 10
+    attackDamage: 1
+    attackInterval: 0.75
+    attackRangeInCells: 1
+    moveSpeed: 1
+    visionRange: 3.5

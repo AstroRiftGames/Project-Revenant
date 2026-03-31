@@ -9,6 +9,7 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
 {
     [SerializeField] private bool _useObstacleDetection = true;
     [SerializeField] private LayerMask _obstacleMask;
+    [SerializeField] private bool _debugDamage;
 
     public string Id { get; private set; }
     public UnitRole Role => _data.role;
@@ -138,7 +139,11 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
         if (!IsAlive || amount <= 0)
             return;
 
+        int previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+
+        if (_debugDamage)
+            Debug.Log($"[Damage] {Id} took {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
 
         if (CurrentHealth == 0)
             Die();
@@ -146,6 +151,9 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
 
     protected virtual void Die()
     {
+        if (_debugDamage)
+            Debug.Log($"[Death] {Id} died.", this);
+
         gameObject.SetActive(false);
     }
 

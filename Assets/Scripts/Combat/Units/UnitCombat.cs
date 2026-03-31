@@ -4,6 +4,8 @@ using UnityEngine;
 [RequireComponent(typeof(UnitMovement))]
 public class UnitCombat : MonoBehaviour
 {
+    [SerializeField] private bool _debugCombat;
+
     private Unit _unit;
     private UnitMovement _unitMovement;
     private float _attackTimer;
@@ -49,6 +51,10 @@ public class UnitCombat : MonoBehaviour
 
         _attackTimer = _unit.AttackInterval;
         target.TakeDamage(_unit.AttackDamage);
+
+        if (_debugCombat)
+            Debug.Log($"[Attack] {_unit.Id} hit {target.Id} for {_unit.AttackDamage}.", this);
+
         return true;
     }
 }

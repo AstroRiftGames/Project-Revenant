@@ -155,6 +155,7 @@ MonoBehaviour:
   _obstacleMask:
     serializedVersion: 2
     m_Bits: 64
+  _debugDamage: 1
   _unitData: {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
   _initializeOnAwake: 1
   _drawDetectionGizmos: 1
@@ -171,7 +172,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
-  _moveSpeed: 1
   _repathInterval: 0.2
   _drawPathGizmos: 1
 --- !u!114 &7167257448602601415
@@ -188,6 +188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _retargetInterval: 0.25
   _runOnStart: 1
+  _debugBrain: 1
 --- !u!114 &184566522043032827
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -215,6 +216,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _attackRangeInCells: 1
-  _attackInterval: 0.75
-  _attackDamage: 1
+  _debugCombat: 1
