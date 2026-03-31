@@ -6,6 +6,7 @@ public class UnitMovement : MonoBehaviour
 {
     [SerializeField] private BattleGrid _grid;
     [SerializeField] private float _moveSpeed = 2.5f;
+    [SerializeField] private float _repathInterval = 0.2f;
     [SerializeField] private bool _drawPathGizmos = true;
 
     private Unit _unit;
@@ -13,6 +14,9 @@ public class UnitMovement : MonoBehaviour
     private int _pathIndex;
     private bool _hasDestination;
     private Vector3Int _destinationCell;
+    private Unit _targetUnit;
+    private int _targetRangeInCells;
+    private float _repathTimer;
 
     private void Awake()
     {
@@ -21,7 +25,13 @@ public class UnitMovement : MonoBehaviour
 
     private void Update()
     {
-        if (_grid == null || _unit == null || !_hasDestination)
+        if (_grid == null || _unit == null)
+            return;
+
+        if (_targetUnit != null)
+            UpdateTargetPath();
+
+        if (!_hasDestination)
             return;
 
         FollowPath();
@@ -53,7 +63,19 @@ public class UnitMovement : MonoBehaviour
         _currentPath.AddRange(path);
         _pathIndex = 1;
         _destinationCell = destinationCell;
+        _targetUnit = null;
         _hasDestination = true;
+        return true;
+    }
+
+    public bool SetTarget(Unit targetUnit, int rangeInCells)
+    {
+        if (_grid == null || _unit == null || targetUnit == null)
+            return false;
+
+        _targetUnit = targetUnit;
+        _targetRangeInCells = Mathf.Max(0, rangeInCells);
+        _repathTimer = 0f;
         return true;
     }
 
@@ -62,13 +84,68 @@ public class UnitMovement : MonoBehaviour
         _currentPath.Clear();
         _pathIndex = 0;
         _hasDestination = false;
+        _targetUnit = null;
+    }
+
+    public void ClearPath()
+    {
+        _currentPath.Clear();
+        _pathIndex = 0;
+        _hasDestination = false;
+    }
+
+    private void UpdateTargetPath()
+    {
+        if (_targetUnit == null)
+            return;
+
+        _repathTimer -= Time.deltaTime;
+        if (_repathTimer > 0f)
+            return;
+
+        _repathTimer = _repathInterval;
+
+        Vector3Int startCell = _grid.WorldToCell(_unit.Position);
+        Vector3Int targetCell = _grid.WorldToCell(_targetUnit.Position);
+        int distanceToTarget = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
+
+        if (distanceToTarget <= _targetRangeInCells)
+        {
+            ClearPath();
+            return;
+        }
+
+        if (!_grid.TryFindWalkableCellInRange(targetCell, startCell, _targetRangeInCells, _unit, out Vector3Int destinationCell))
+        {
+            ClearPath();
+            return;
+        }
+
+        if (startCell == destinationCell)
+        {
+            ClearPath();
+            return;
+        }
+
+        List<Vector3Int> path = GridPathfinder.FindPath(_grid, startCell, destinationCell, _unit);
+        if (path.Count <= 1)
+        {
+            ClearPath();
+            return;
+        }
+
+        _currentPath.Clear();
+        _currentPath.AddRange(path);
+        _pathIndex = 1;
+        _destinationCell = destinationCell;
+        _hasDestination = true;
     }
 
     private void FollowPath()
     {
         if (_currentPath.Count == 0 || _pathIndex >= _currentPath.Count)
         {
-            ClearDestination();
+            ClearPath();
             return;
         }
 
@@ -82,7 +159,7 @@ public class UnitMovement : MonoBehaviour
         _pathIndex++;
 
         if (_pathIndex >= _currentPath.Count)
-            ClearDestination();
+            ClearPath();
     }
 
     private void OnDrawGizmos()

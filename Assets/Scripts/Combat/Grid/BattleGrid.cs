@@ -144,6 +144,40 @@ public class BattleGrid : MonoBehaviour
         return WorldToCell(movingUnit.Position);
     }
 
+    public bool TryFindWalkableCellInRange(Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit movingUnit, out Vector3Int resultCell)
+    {
+        resultCell = originCell;
+
+        if (rangeInCells < 0)
+            return false;
+
+        bool found = false;
+        float bestDistance = float.MaxValue;
+
+        for (int x = -rangeInCells; x <= rangeInCells; x++)
+        {
+            for (int y = -rangeInCells; y <= rangeInCells; y++)
+            {
+                if (Mathf.Abs(x) + Mathf.Abs(y) > rangeInCells)
+                    continue;
+
+                Vector3Int candidateCell = targetCell + new Vector3Int(x, y, 0);
+                if (!IsCellWalkable(candidateCell, movingUnit))
+                    continue;
+
+                float distance = Vector3Int.Distance(originCell, candidateCell);
+                if (distance >= bestDistance)
+                    continue;
+
+                bestDistance = distance;
+                resultCell = candidateCell;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
     private void OnDrawGizmosSelected()
     {
         if (!_drawGridGizmos)

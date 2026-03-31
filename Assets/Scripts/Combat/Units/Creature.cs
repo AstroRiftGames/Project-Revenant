@@ -25,6 +25,17 @@ public abstract class Creature : MonoBehaviour, IUnit
         Id = data.unitId;
     }
 
+    public bool IsHostileTo(IUnit candidate)
+    {
+        if (candidate == null)
+            return false;
+
+        if (ReferenceEquals(candidate, this))
+            return false;
+
+        return Faction != candidate.Faction;
+    }
+
     public bool CanDetect(IUnit candidate)
     {
         if (candidate == null)
@@ -47,6 +58,33 @@ public abstract class Creature : MonoBehaviour, IUnit
             return new List<IUnit>();
 
         return candidates.Where(CanDetect).ToList();
+    }
+
+    public List<IUnit> GetVisibleHostileUnits(IEnumerable<IUnit> candidates)
+    {
+        if (candidates == null)
+            return new List<IUnit>();
+
+        return candidates.Where(candidate => IsHostileTo(candidate) && CanDetect(candidate)).ToList();
+    }
+
+    public IUnit GetNearestVisibleHostileUnit(IEnumerable<IUnit> candidates)
+    {
+        List<IUnit> visibleHostiles = GetVisibleHostileUnits(candidates);
+        IUnit nearest = null;
+        float bestDistance = float.MaxValue;
+
+        for (int i = 0; i < visibleHostiles.Count; i++)
+        {
+            float distance = Vector3.Distance(Position, visibleHostiles[i].Position);
+            if (distance >= bestDistance)
+                continue;
+
+            bestDistance = distance;
+            nearest = visibleHostiles[i];
+        }
+
+        return nearest;
     }
 
     protected virtual bool IsWithinVisionRange(IUnit candidate)

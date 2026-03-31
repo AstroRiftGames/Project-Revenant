@@ -26,6 +26,24 @@ public class Unit : Creature
         return GetVisibleUnits(_detectionCandidates);
     }
 
+    public List<IUnit> GetVisibleHostileUnitsInScene()
+    {
+        if (_data == null)
+            return new List<IUnit>();
+
+        RefreshDetectionCandidates();
+        return GetVisibleHostileUnits(_detectionCandidates);
+    }
+
+    public Unit GetNearestVisibleHostileUnitInScene()
+    {
+        if (_data == null)
+            return null;
+
+        RefreshDetectionCandidates();
+        return GetNearestVisibleHostileUnit(_detectionCandidates) as Unit;
+    }
+
     private void RefreshDetectionCandidates()
     {
         _detectionCandidates.Clear();

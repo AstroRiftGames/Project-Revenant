@@ -18,5 +18,5 @@ MonoBehaviour:
   faction: 1
   sprite: {fileID: 0}
   tileSize: 0
-  visionRange: 1.5
+  visionRange: 2.5
   visionAngle: 90

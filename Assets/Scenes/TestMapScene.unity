@@ -315,6 +315,7 @@ GameObject:
   - component: {fileID: 550724730}
   - component: {fileID: 550724734}
   - component: {fileID: 550724735}
+  - component: {fileID: 550724737}
   - component: {fileID: 550724736}
   m_Layer: 0
   m_Name: Allie
@@ -472,6 +473,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 1908079972}
   _moveSpeed: 1
+  _repathInterval: 0.2
   _drawPathGizmos: 1
 --- !u!114 &550724736
 MonoBehaviour:
@@ -480,13 +482,29 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 550724729}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5d2b427633d24a4a910d3e09f12dd91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 1908079972}
   _drawHoveredCellGizmo: 1
+  _drawClickedCellGizmo: 1
+--- !u!114 &550724737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 550724729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd6ea948014d2841ae7242af956a715, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _engageRangeInCells: 1
+  _retargetInterval: 0.25
+  _runOnStart: 1
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
