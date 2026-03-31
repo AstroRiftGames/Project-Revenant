@@ -2,32 +2,30 @@ using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(UnitMovement))]
+[RequireComponent(typeof(UnitCombat))]
 public class UnitBrain : MonoBehaviour
 {
-    [SerializeField] private int _engageRangeInCells = 1;
     [SerializeField] private float _retargetInterval = 0.25f;
-    [SerializeField] private float _attackInterval = 0.75f;
-    [SerializeField] private int _attackDamage = 1;
     [SerializeField] private bool _runOnStart = true;
 
     private Unit _unit;
     private UnitMovement _unitMovement;
+    private UnitCombat _unitCombat;
     private Unit _currentTarget;
     private float _retargetTimer;
-    private float _attackTimer;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
         _unitMovement = GetComponent<UnitMovement>();
+        _unitCombat = GetComponent<UnitCombat>();
     }
 
     private void Update()
     {
-        if (!_runOnStart || _unit == null || _unitMovement == null)
+        if (!_runOnStart || _unit == null || _unitMovement == null || _unitCombat == null)
             return;
 
-        _attackTimer -= Time.deltaTime;
         _retargetTimer -= Time.deltaTime;
         if (_retargetTimer > 0f)
             return;
@@ -53,26 +51,14 @@ public class UnitBrain : MonoBehaviour
             return;
         }
 
-        if (_unitMovement.IsWithinRange(_currentTarget, _engageRangeInCells))
+        if (_unitCombat.IsTargetInRange(_currentTarget))
         {
             _unitMovement.ClearPath();
-            TryAttack();
+            _unitCombat.TryAttack(_currentTarget);
             return;
         }
 
-        _unitMovement.SetTarget(_currentTarget, _engageRangeInCells);
-    }
-
-    private void TryAttack()
-    {
-        if (_currentTarget == null || !_currentTarget.IsAlive)
-            return;
-
-        if (_attackTimer > 0f)
-            return;
-
-        _attackTimer = _attackInterval;
-        _currentTarget.TakeDamage(_attackDamage);
+        _unitMovement.SetTarget(_currentTarget, _unitCombat.AttackRangeInCells);
     }
 
     private void OnDrawGizmosSelected()
