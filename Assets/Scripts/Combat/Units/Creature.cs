@@ -19,6 +19,8 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
     public int AttackDamage => _data.stats.attackDamage;
     public float AttackInterval => _data.stats.attackInterval;
     public int AttackRangeInCells => _data.stats.attackRangeInCells;
+    public float Accuracy => _data.stats.accuracy;
+    public float Evasion => _data.stats.evasion;
     public Vector3 Position => transform.position;
     public int CurrentHealth { get; private set; }
     public int MaxHealth => _data != null ? _data.stats.maxHealth : 0;

@@ -7,6 +7,8 @@ public class UnitStatsData
     public int attackDamage = 1;
     public float attackInterval = 0.75f;
     public int attackRangeInCells = 1;
+    [Range(0f, 1f)] public float accuracy = 0.85f;
+    [Range(0f, 1f)] public float evasion = 0.1f;
     public float moveSpeed = 2.5f;
     public float visionRange = 5f;
 }
