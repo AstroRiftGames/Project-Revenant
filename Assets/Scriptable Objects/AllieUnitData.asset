@@ -19,9 +19,11 @@ MonoBehaviour:
   sprite: {fileID: 0}
   tileSize: 0
   stats:
-    maxHealth: 10
-    attackDamage: 1
+    maxHealth: 15
+    attackDamage: 2
     attackInterval: 0.75
     attackRangeInCells: 1
+    accuracy: 0.85
+    evasion: 0.1
     moveSpeed: 1
     visionRange: 3.5

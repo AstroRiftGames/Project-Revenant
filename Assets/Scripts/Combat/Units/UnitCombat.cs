@@ -64,7 +64,7 @@ public class UnitCombat : MonoBehaviour
             return false;
         }
 
-        target.TakeDamage(_unit.AttackDamage);
+        target.TakeDamage(_unit.AttackDamage, _unit);
 
         if (_debugCombat)
             Debug.Log($"[Attack] {_unit.Id} hit {target.Id} for {_unit.AttackDamage}. Roll: {roll:0.00}, HitChance: {hitChance:0.00}", this);

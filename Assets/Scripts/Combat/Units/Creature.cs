@@ -143,9 +143,19 @@ public abstract class Creature : MonoBehaviour, IUnit
         return false;
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, IUnit source = null)
     {
-        _lifeController?.TakeDamage(amount);
+        _lifeController?.TakeDamage(amount, source);
+    }
+
+    public Unit GetLastAttacker()
+    {
+        return _lifeController != null ? _lifeController.LastAttacker : null;
+    }
+
+    public List<Unit> GetAliveAggressors()
+    {
+        return _lifeController != null ? _lifeController.GetAliveAggressors() : new List<Unit>();
     }
 
 }

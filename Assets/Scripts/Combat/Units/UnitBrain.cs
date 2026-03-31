@@ -3,6 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(UnitMovement))]
 [RequireComponent(typeof(UnitCombat))]
+[RequireComponent(typeof(TargetingStrategy))]
 public class UnitBrain : MonoBehaviour
 {
     [SerializeField] private float _retargetInterval = 0.25f;
@@ -12,6 +13,7 @@ public class UnitBrain : MonoBehaviour
     private Unit _unit;
     private UnitMovement _unitMovement;
     private UnitCombat _unitCombat;
+    private TargetingStrategy _targetingStrategy;
     private Unit _currentTarget;
     private float _retargetTimer;
     private BrainState _brainState;
@@ -28,11 +30,12 @@ public class UnitBrain : MonoBehaviour
         _unit = GetComponent<Unit>();
         _unitMovement = GetComponent<UnitMovement>();
         _unitCombat = GetComponent<UnitCombat>();
+        _targetingStrategy = GetComponent<TargetingStrategy>();
     }
 
     private void Update()
     {
-        if (!_runOnStart || _unit == null || _unitMovement == null || _unitCombat == null)
+        if (!_runOnStart || _unit == null || _unitMovement == null || _unitCombat == null || _targetingStrategy == null)
             return;
 
         _retargetTimer -= Time.deltaTime;
@@ -46,11 +49,8 @@ public class UnitBrain : MonoBehaviour
 
     private void UpdateTarget()
     {
-        if (_currentTarget != null && _currentTarget.IsAlive && _unit.IsHostileTo(_currentTarget))
-            return;
-
         Unit previousTarget = _currentTarget;
-        _currentTarget = _unit.GetNearestVisibleHostileUnitInScene();
+        _currentTarget = _targetingStrategy.SelectTarget(_unit, _currentTarget);
 
         if (!_debugBrain || previousTarget == _currentTarget)
             return;

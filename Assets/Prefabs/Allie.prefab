@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 184566522043032827}
   - component: {fileID: 4996026872253235626}
   - component: {fileID: 1177492162369679053}
+  - component: {fileID: 5655221388907690004}
   m_Layer: 0
   m_Name: Allie
   m_TagString: Untagged
@@ -232,3 +233,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _debugDamage: 1
+--- !u!114 &5655221388907690004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8823206920075786061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eb1ee5926e15c64aa40983bc3fc76aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

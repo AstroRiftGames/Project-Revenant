@@ -29,22 +29,63 @@ public class Unit : Creature
         return GetVisibleUnits(_detectionCandidates);
     }
 
-    public List<IUnit> GetVisibleHostileUnitsInScene()
+    public List<IUnit> GetVisiblecriaturaeUnitsInScene()
     {
         if (_data == null)
             return new List<IUnit>();
 
         RefreshDetectionCandidates();
-        return GetVisibleHostileUnits(_detectionCandidates);
+        return GetVisiblecriaturaeUnits(_detectionCandidates);
     }
 
-    public Unit GetNearestVisibleHostileUnitInScene()
+    public List<Unit> GetcriaturaeUnitsInScene()
+    {
+        if (_data == null)
+            return new List<Unit>();
+
+        RefreshDetectionCandidates();
+
+        var criaturas = new List<Unit>();
+        for (int i = 0; i < _detectionCandidates.Count; i++)
+        {
+            if (_detectionCandidates[i] is not Unit candidate)
+                continue;
+
+            if (!candidate.IsAlive || !IscriaturaeTo(candidate))
+                continue;
+
+            criaturas.Add(candidate);
+        }
+
+        return criaturas;
+    }
+
+    public Unit GetNearestVisiblecriaturaeUnitInScene()
     {
         if (_data == null)
             return null;
 
         RefreshDetectionCandidates();
-        return GetNearestVisibleHostileUnit(_detectionCandidates) as Unit;
+        return GetNearestVisiblecriaturaeUnit(_detectionCandidates) as Unit;
+    }
+
+    public Unit GetNearestcriaturaeUnitInScene()
+    {
+        List<Unit> criaturas = GetcriaturaeUnitsInScene();
+        Unit nearest = null;
+        float bestDistance = float.MaxValue;
+
+        for (int i = 0; i < criaturas.Count; i++)
+        {
+            float distance = Vector3.Distance(Position, criaturas[i].Position);
+            if (distance >= bestDistance)
+                continue;
+
+            bestDistance = distance;
+            nearest = criaturas[i];
+        }
+
+        return nearest;
     }
 
     private void RefreshDetectionCandidates()
@@ -57,6 +98,24 @@ public class Unit : Creature
             if (units[i] != null && !ReferenceEquals(units[i], this))
                 _detectionCandidates.Add(units[i]);
         }
+    }
+
+    [ContextMenu("Snap To Grid")]
+    public void SnapToGrid()
+    {
+        BattleGrid grid = BattleGrid.Instance != null
+            ? BattleGrid.Instance
+            : FindAnyObjectByType<BattleGrid>();
+
+        if (grid == null)
+            return;
+
+        Vector3Int desiredCell = grid.WorldToCell(transform.position);
+        Vector3Int targetCell = grid.IsCellWalkable(desiredCell, this)
+            ? desiredCell
+            : grid.FindClosestWalkableCell(desiredCell, this);
+
+        transform.position = grid.CellToWorld(targetCell);
     }
 
     private void OnDrawGizmos()

@@ -13,6 +13,8 @@ public class UnitMovement : MonoBehaviour
     private int _pathIndex;
     private bool _hasDestination;
     private Vector3Int _destinationCell;
+    private Vector3Int _currentCell;
+    private bool _hasCurrentCell;
     private Unit _targetUnit;
     private int _targetRangeInCells;
     private float _repathTimer;
@@ -20,6 +22,14 @@ public class UnitMovement : MonoBehaviour
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        if (_grid != null)
+            SnapToCurrentCell();
+    }
+
+    private void Start()
+    {
+        if (_grid != null)
+            SnapToCurrentCell();
     }
 
     private void Update()
@@ -41,7 +51,7 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null || _unit == null)
             return false;
 
-        Vector3Int startCell = _grid.WorldToCell(_unit.Position);
+        Vector3Int startCell = GetCurrentCell();
         if (!_grid.IsCellWalkable(destinationCell, _unit))
             return false;
 
@@ -83,7 +93,7 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null || _unit == null || targetUnit == null)
             return false;
 
-        Vector3Int startCell = _grid.WorldToCell(_unit.Position);
+        Vector3Int startCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
         int distance = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
         return distance <= Mathf.Max(0, rangeInCells);
@@ -115,12 +125,13 @@ public class UnitMovement : MonoBehaviour
 
         _repathTimer = _repathInterval;
 
-        Vector3Int startCell = _grid.WorldToCell(_unit.Position);
+        Vector3Int startCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(_targetUnit.Position);
         int distanceToTarget = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
 
         if (distanceToTarget <= _targetRangeInCells)
         {
+            SnapToCurrentCell();
             ClearPath();
             return;
         }
@@ -166,10 +177,37 @@ public class UnitMovement : MonoBehaviour
             return;
 
         transform.position = targetWorld;
+        _currentCell = _currentPath[_pathIndex];
+        _hasCurrentCell = true;
         _pathIndex++;
 
         if (_pathIndex >= _currentPath.Count)
+        {
+            SnapToCurrentCell();
             ClearPath();
+        }
+    }
+
+    private void SnapToCurrentCell()
+    {
+        if (_grid == null)
+            return;
+
+        _currentCell = _grid.WorldToCell(transform.position);
+        _hasCurrentCell = true;
+        transform.position = _grid.CellToWorld(_currentCell);
+    }
+
+    private Vector3Int GetCurrentCell()
+    {
+        if (_grid == null)
+            return Vector3Int.zero;
+
+        if (!_hasCurrentCell)
+            _currentCell = _grid.WorldToCell(transform.position);
+        _hasCurrentCell = true;
+
+        return _currentCell;
     }
 
     private void OnDrawGizmos()
