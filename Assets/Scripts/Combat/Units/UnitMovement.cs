@@ -5,7 +5,6 @@ using UnityEngine;
 public class UnitMovement : MonoBehaviour
 {
     [SerializeField] private BattleGrid _grid;
-    [SerializeField] private float _moveSpeed = 2.5f;
     [SerializeField] private float _repathInterval = 0.2f;
     [SerializeField] private bool _drawPathGizmos = true;
 
@@ -161,7 +160,7 @@ public class UnitMovement : MonoBehaviour
         }
 
         Vector3 targetWorld = _grid.CellToWorld(_currentPath[_pathIndex]);
-        transform.position = Vector3.MoveTowards(transform.position, targetWorld, _moveSpeed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, targetWorld, _unit.MoveSpeed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, targetWorld) > 0.01f)
             return;

@@ -66,7 +66,7 @@ public class Unit : Creature
         bool hasBlockedCandidateInRange = false;
         for (int i = 0; i < _detectionCandidates.Count; i++)
         {
-            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.visionRange;
+            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.stats.visionRange;
             bool blocked = _data != null && inRange && IsDetectionBlocked(_detectionCandidates[i]);
 
             if (blocked)
@@ -82,13 +82,13 @@ public class Unit : Creature
         Color rangeWire = hasBlockedCandidateInRange ? new Color(1f, 0.4f, 0f) : Color.yellow;
 
         Gizmos.color = rangeFill;
-        Gizmos.DrawSphere(transform.position, _unitData.visionRange);
+        Gizmos.DrawSphere(transform.position, _unitData.stats.visionRange);
         Gizmos.color = rangeWire;
-        Gizmos.DrawWireSphere(transform.position, _unitData.visionRange);
+        Gizmos.DrawWireSphere(transform.position, _unitData.stats.visionRange);
 
         for (int i = 0; i < _detectionCandidates.Count; i++)
         {
-            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.visionRange;
+            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.stats.visionRange;
             bool blocked = _data != null && inRange && IsDetectionBlocked(_detectionCandidates[i]);
             bool detected = _data != null
                 ? CanDetect(_detectionCandidates[i])

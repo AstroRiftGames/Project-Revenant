@@ -13,20 +13,26 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
     public string Id { get; private set; }
     public UnitRole Role => _data.role;
     public UnitFaction Faction => _data.faction;
-    public float VisionRange => _data.visionRange;
-    public float VisionAngle => _data.visionAngle;
+    public float VisionRange => _data.stats.visionRange;
+    public float MoveSpeed => _data.stats.moveSpeed;
+    public int AttackDamage => _data.stats.attackDamage;
+    public float AttackInterval => _data.stats.attackInterval;
+    public int AttackRangeInCells => _data.stats.attackRangeInCells;
     public Vector3 Position => transform.position;
     public int CurrentHealth { get; private set; }
-    public int MaxHealth => _data != null ? _data.maxHealth : 0;
+    public int MaxHealth => _data != null ? _data.stats.maxHealth : 0;
     public bool IsAlive => CurrentHealth > 0;
 
     protected UnitData _data;
 
     protected virtual void Initialize(UnitData data)
     {
+        if (data.stats == null)
+            data.stats = new UnitStatsData();
+
         _data = data;
         Id = data.unitId;
-        CurrentHealth = data.maxHealth;
+        CurrentHealth = data.stats.maxHealth;
     }
 
     public bool IsHostileTo(IUnit candidate)
