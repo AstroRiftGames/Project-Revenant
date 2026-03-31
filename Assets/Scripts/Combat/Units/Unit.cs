@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(LifeController))]
 public class Unit : Creature
 {
     [SerializeField] private UnitData _unitData;
@@ -9,8 +10,10 @@ public class Unit : Creature
 
     private readonly List<IUnit> _detectionCandidates = new();
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         if (!_initializeOnAwake || _unitData == null || _data != null)
             return;
 

@@ -5,11 +5,10 @@ using UnityEngine;
 public enum UnitRole { Tank, DPS, Support }
 public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
 
-public abstract class Creature : MonoBehaviour, IUnit, IDamageable
+public abstract class Creature : MonoBehaviour, IUnit
 {
     [SerializeField] private bool _useObstacleDetection = true;
     [SerializeField] private LayerMask _obstacleMask;
-    [SerializeField] private bool _debugDamage;
 
     public string Id { get; private set; }
     public UnitRole Role => _data.role;
@@ -22,11 +21,18 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
     public float Accuracy => _data.stats.accuracy;
     public float Evasion => _data.stats.evasion;
     public Vector3 Position => transform.position;
-    public int CurrentHealth { get; private set; }
-    public int MaxHealth => _data != null ? _data.stats.maxHealth : 0;
-    public bool IsAlive => CurrentHealth > 0;
+    public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
+    public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : BaseMaxHealth;
+    public bool IsAlive => _lifeController != null && _lifeController.IsAlive;
+    public int BaseMaxHealth => _data != null ? _data.stats.maxHealth : 0;
 
     protected UnitData _data;
+    protected LifeController _lifeController;
+
+    protected virtual void Awake()
+    {
+        _lifeController = GetComponent<LifeController>();
+    }
 
     protected virtual void Initialize(UnitData data)
     {
@@ -35,7 +41,8 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
 
         _data = data;
         Id = data.unitId;
-        CurrentHealth = data.stats.maxHealth;
+        _lifeController ??= GetComponent<LifeController>();
+        _lifeController?.Initialize(data.stats.maxHealth);
     }
 
     public bool IsHostileTo(IUnit candidate)
@@ -138,25 +145,7 @@ public abstract class Creature : MonoBehaviour, IUnit, IDamageable
 
     public void TakeDamage(int amount)
     {
-        if (!IsAlive || amount <= 0)
-            return;
-
-        int previousHealth = CurrentHealth;
-        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
-
-        if (_debugDamage)
-            Debug.Log($"[Damage] {Id} took {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
-
-        if (CurrentHealth == 0)
-            Die();
-    }
-
-    protected virtual void Die()
-    {
-        if (_debugDamage)
-            Debug.Log($"[Death] {Id} died.", this);
-
-        gameObject.SetActive(false);
+        _lifeController?.TakeDamage(amount);
     }
 
 }

@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7167257448602601415}
   - component: {fileID: 184566522043032827}
   - component: {fileID: 4996026872253235626}
+  - component: {fileID: 1177492162369679053}
   m_Layer: 0
   m_Name: Allie
   m_TagString: Untagged
@@ -155,7 +156,6 @@ MonoBehaviour:
   _obstacleMask:
     serializedVersion: 2
     m_Bits: 64
-  _debugDamage: 1
   _unitData: {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
   _initializeOnAwake: 1
   _drawDetectionGizmos: 1
@@ -217,3 +217,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _debugCombat: 1
+  _minHitChance: 0.1
+  _maxHitChance: 0.95
+--- !u!114 &1177492162369679053
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8823206920075786061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0656f010a052a8247841f5ac2f9b61f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _debugDamage: 1
