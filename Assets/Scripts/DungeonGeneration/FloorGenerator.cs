@@ -14,6 +14,7 @@ public class FloorGenerator
         CreateMainPath(floor);
         CreateBranches(floor);
         AssignSpecialRooms(floor);
+        AssignTemporaryPositions(floor);
 
         return floor;
     }
@@ -95,5 +96,61 @@ public class FloorGenerator
         if (roll < 0.95f) return RoomType.Shop;
 
         return RoomType.Combat;
+    }
+    private void AssignTemporaryPositions(FloorData floor)
+    {
+        Dictionary<int, Vector2Int> occupiedPositions = new Dictionary<int, Vector2Int>();
+        Queue<RoomData> queue = new Queue<RoomData>();
+
+        Vector2Int[] directions = new Vector2Int[]
+        {
+        new Vector2Int(1, 0), 
+        new Vector2Int(-1, 0),
+        new Vector2Int(0, 1),  
+        new Vector2Int(0, -1)   
+        };
+
+        floor.StartRoom.GridPosition = Vector2Int.zero;
+
+        occupiedPositions.Add(floor.StartRoom.RoomID, Vector2Int.zero);
+        queue.Enqueue(floor.StartRoom);
+
+        while (queue.Count > 0)
+        {
+            RoomData current = queue.Dequeue();
+            Vector2Int currentPos = current.GridPosition;
+
+            foreach (int connectedID in current.ConnectedRooms)
+            {
+                RoomData next = floor.Rooms[connectedID];
+
+                if (occupiedPositions.ContainsKey(next.RoomID))
+                    continue;
+
+                foreach (var dir in directions)
+                {
+                    Vector2Int candidatePos = currentPos + dir;
+
+                    bool occupied = false;
+
+                    foreach (var pos in occupiedPositions.Values)
+                    {
+                        if (pos == candidatePos)
+                        {
+                            occupied = true;
+                            break;
+                        }
+                    }
+
+                    if (!occupied)
+                    {
+                        next.GridPosition = candidatePos;
+                        occupiedPositions.Add(next.RoomID, candidatePos);
+                        queue.Enqueue(next);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

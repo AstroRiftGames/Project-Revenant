@@ -1,56 +1,97 @@
+using NUnit.Framework;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
+using UnityEngine.Tilemaps;
 
 public class DungeonManager : MonoBehaviour
 {
     private DungeonData dungeonData;
     [SerializeField] private RoomPrefabDatabase roomDatabase;
     private FloorData currentFloor;
+    [SerializeField] private Transform dungeonRoot;
 
     private FloorGenerator floorGenerator = new FloorGenerator();
+
+    private float tileWidth = 1f;
+    private float tileHeight = .5f;
 
     private void Start()
     {
         int seed = Random.Range(0, int.MaxValue);
 
         currentFloor = floorGenerator.Generate(1, seed);
+        dungeonData = new DungeonData(seed);
         dungeonData.Floors.Add(currentFloor);
+
+        StartCoroutine(BuildFloor(currentFloor));
     }
-    private Color GetColor(RoomType type)
+        
+    private IEnumerator BuildFloor(FloorData floor)
     {
-        switch (type)
+        GameObject floorGO = new GameObject($"Floor_{floor.FloorIndex}");
+        floorGO.transform.SetParent(dungeonRoot);
+
+        foreach (var room in floor.Rooms)
         {
-            case RoomType.Start: return Color.green;
-            case RoomType.Boss: return Color.red;
-            case RoomType.MiniBoss: return new Color(1f, 0.5f, 0f);
-            case RoomType.Loot: return Color.yellow;
-            case RoomType.Shop: return Color.cyan;
-            case RoomType.Combat: return Color.magenta;
-            case RoomType.Altar: return Color.blue;
-            default: return Color.gray;
+            SpawnRoom(room, floorGO.transform);
+            yield return new WaitForSeconds(1f);
         }
+
+        StartCoroutine(SortFloor(currentFloor));
     }
 
-    private void OnDrawGizmos()
+    private void SpawnRoom(RoomData roomData, Transform parent)
     {
-        if (currentFloor == null) return;
+        var entry = roomDatabase.GetRandom(roomData.RoomType);
 
-        foreach (var room in currentFloor.Rooms)
+        roomData.Size = entry.Size;
+
+        Vector2Int scaledGrid = new Vector2Int(
+            roomData.GridPosition.x * roomData.Size.x,
+            roomData.GridPosition.y * roomData.Size.y
+        );
+
+        Vector3 worldPos = GridToIsometric(scaledGrid);
+
+        GameObject instance = Instantiate(entry.Prefab, worldPos, Quaternion.identity, parent);
+
+        RoomController controller = instance.GetComponent<RoomController>();
+
+        roomData.RoomInstance = instance;
+        controller.Initialize(roomData);
+    }
+
+    Vector3 GridToIsometric(Vector2Int gridPos)
+    {
+        float x = (gridPos.x - gridPos.y) * (tileWidth / 2f);
+        float y = (gridPos.x + gridPos.y) * (tileHeight / 2f);
+        return new Vector3(x, y, 0f);
+    }
+
+    private IEnumerator SortFloor(FloorData floor)
+    {
+        List<RoomData> rooms = floor.Rooms;
+        rooms.Sort((a, b) => b.GridPosition.y.CompareTo(a.GridPosition.y));
+        rooms.Sort((a, b) => b.GridPosition.x.CompareTo(a.GridPosition.x));
+
+        foreach (RoomData room in rooms)
         {
-            Vector3 pos = new Vector3(room.RoomID * 3, 0, 0);
-
-            Gizmos.color = GetColor(room.RoomType);
-            Gizmos.DrawSphere(pos, 0.5f);
-
-            foreach (var connection in room.ConnectedRooms)
+            RoomController controller = room.RoomInstance.GetComponent<RoomController>();
+            TilemapRenderer renderer = null;
+            if (controller != null)
             {
-                var target = currentFloor.Rooms.Find(r => r.RoomID == connection);
-                if (target == null) continue;
-
-                Vector3 targetPos = new Vector3(target.RoomID * 3, 0, 0);
-
-                Gizmos.color = Color.white;
-                Gizmos.DrawLine(pos, targetPos);
+                renderer = controller.GetComponentInChildren<TilemapRenderer>();
             }
+
+            if (renderer != null)
+            {
+                int sortingOrder = room.RoomID * -1;
+                renderer.sortingOrder = sortingOrder;
+            }
+            yield return new WaitForSeconds(1f);
         }
     }
 }
