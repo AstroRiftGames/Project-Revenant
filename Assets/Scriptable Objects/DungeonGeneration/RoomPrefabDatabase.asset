@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0853427a0111144097b43e2ba2151fd, type: 3}
+  m_Name: RoomPrefabDatabase
+  m_EditorClassIdentifier: 
+  roomPrefabs:
+  - roomType: 0
+    prefab: {fileID: 4347932947661017972, guid: bc965b098b28c994aad97ee8ad023a67, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 0
+    prefab: {fileID: 4347932947661017972, guid: 051b64bb5178287448837261e9587bec, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 0
+    prefab: {fileID: 4347932947661017972, guid: 7beac613e72e74d42aa81b900556eb10, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 0
+    prefab: {fileID: 4347932947661017972, guid: 77760f3e250cbb749a04c7c79f0a234e, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 1
+    prefab: {fileID: 4347932947661017972, guid: bec740fb037c89f4ba33f5e3c0c8940f, type: 3}
+    size: {x: 9, y: 15}
+    weight: 3
+  - roomType: 1
+    prefab: {fileID: 4347932947661017972, guid: 1031a7f8baa5f204d86381a436bdbc38, type: 3}
+    size: {x: 9, y: 15}
+    weight: 3
+  - roomType: 1
+    prefab: {fileID: 4347932947661017972, guid: 1031a7f8baa5f204d86381a436bdbc38, type: 3}
+    size: {x: 9, y: 15}
+    weight: 3
+  - roomType: 1
+    prefab: {fileID: 4347932947661017972, guid: 44c256478de73964d8d7c206108891e2, type: 3}
+    size: {x: 9, y: 15}
+    weight: 3
+  - roomType: 2
+    prefab: {fileID: 4347932947661017972, guid: b3541fa2c1284c2408a40e8c55047431, type: 3}
+    size: {x: 9, y: 15}
+    weight: 2
+  - roomType: 2
+    prefab: {fileID: 4347932947661017972, guid: 8e6b3527226cbb14aa56393406228bd7, type: 3}
+    size: {x: 9, y: 15}
+    weight: 2
+  - roomType: 2
+    prefab: {fileID: 4347932947661017972, guid: 3950504f304ba314d85e37e38ee76c6a, type: 3}
+    size: {x: 9, y: 15}
+    weight: 2
+  - roomType: 2
+    prefab: {fileID: 4347932947661017972, guid: 7a4a974949473174e883decfe460fef8, type: 3}
+    size: {x: 9, y: 15}
+    weight: 2
+  - roomType: 3
+    prefab: {fileID: 4347932947661017972, guid: 7251d23e8db69ec4d899531bf0d75995, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 4
+    prefab: {fileID: 4347932947661017972, guid: 87de35f8342c11148ab22f4ac33c5f81, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 5
+    prefab: {fileID: 4347932947661017972, guid: b4fdd24acc5a6fb46b971909e3ab044a, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
+  - roomType: 5
+    prefab: {fileID: 4347932947661017972, guid: b4fdd24acc5a6fb46b971909e3ab044a, type: 3}
+    size: {x: 9, y: 15}
+    weight: 1
