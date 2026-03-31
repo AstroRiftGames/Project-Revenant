@@ -17,7 +17,7 @@ public class Unit : Creature
         Initialize(_unitData);
     }
 
-    public List<IUnit> HasVisibleUnits()
+    public List<IUnit> GetVisibleUnitsInScene()
     {
         if (_data == null)
             return new List<IUnit>();
