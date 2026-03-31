@@ -1,45 +1,32 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
+[RequireComponent(typeof(UnitMovement))]
 public class GridInputMover : MonoBehaviour
 {
     [SerializeField] private BattleGrid _grid;
-    [SerializeField] private float _moveSpeed = 4f;
-    [SerializeField] private bool _drawTargetCellGizmo = true;
+    [SerializeField] private bool _drawHoveredCellGizmo = true;
+    [SerializeField] private bool _drawClickedCellGizmo = true;
 
     private Unit _unit;
-    private bool _isMoving;
-    private Vector3 _targetWorldPosition;
-    private Vector3Int _targetCell;
+    private UnitMovement _unitMovement;
     private Camera _mainCamera;
+    private Vector3Int _hoveredCell;
+    private bool _hasHoveredCell;
+    private Vector3Int _clickedCell;
+    private bool _hasClickedCell;
+    private bool _clickedCellWasWalkable;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        _unitMovement = GetComponent<UnitMovement>();
         _mainCamera = Camera.main;
-        _targetWorldPosition = transform.position;
-        _targetCell = _grid != null ? _grid.WorldToCell(transform.position) : Vector3Int.zero;
     }
 
     private void Update()
     {
         if (_grid == null)
-            return;
-
-        if (_isMoving)
-        {
-            transform.position = Vector3.MoveTowards(transform.position, _targetWorldPosition, _moveSpeed * Time.deltaTime);
-
-            if (Vector3.Distance(transform.position, _targetWorldPosition) <= 0.001f)
-            {
-                transform.position = _targetWorldPosition;
-                _isMoving = false;
-            }
-
-            return;
-        }
-
-        if (!Input.GetMouseButtonDown(0))
             return;
 
         if (_mainCamera == null)
@@ -50,28 +37,42 @@ public class GridInputMover : MonoBehaviour
 
         Vector3 mouseWorldPosition = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mouseWorldPosition.z = 0f;
+        _hoveredCell = _grid.WorldToCell(mouseWorldPosition);
+        _hasHoveredCell = true;
 
-        Vector3Int clickedCell = _grid.WorldToCell(mouseWorldPosition);
-        if (!_grid.IsCellWalkable(clickedCell, _unit))
+        if (!Input.GetMouseButtonDown(0))
             return;
 
-        _targetCell = clickedCell;
-        _targetWorldPosition = _grid.CellToWorld(clickedCell);
-        _isMoving = true;
+        _clickedCell = _hoveredCell;
+        _hasClickedCell = true;
+        _clickedCellWasWalkable = _grid.IsCellWalkable(_hoveredCell, _unit);
+
+        if (_clickedCellWasWalkable)
+            _unitMovement.SetDestinationCell(_hoveredCell);
     }
 
     private void OnDrawGizmos()
     {
-        if (!_drawTargetCellGizmo || _grid == null)
+        if (_grid == null)
             return;
 
-        Vector3Int cell = Application.isPlaying ? _targetCell : _grid.WorldToCell(transform.position);
+        if (_drawHoveredCellGizmo && _hasHoveredCell)
+            DrawCellGizmo(_hoveredCell, _unit != null && _grid.IsCellWalkable(_hoveredCell, _unit), 0.05f);
+
+        if (_drawClickedCellGizmo && _hasClickedCell)
+            DrawCellGizmo(_clickedCell, _clickedCellWasWalkable, 0.08f);
+    }
+
+    private void DrawCellGizmo(Vector3Int cell, bool isWalkable, float depth)
+    {
         Vector3 center = _grid.CellToWorld(cell);
         Vector2 size = _grid.CellWorldSize;
 
-        Gizmos.color = new Color(0.2f, 1f, 1f, 0.35f);
-        Gizmos.DrawCube(center, new Vector3(size.x, size.y, 0.05f));
-        Gizmos.color = new Color(0.2f, 1f, 1f, 1f);
-        Gizmos.DrawWireCube(center, new Vector3(size.x, size.y, 0.05f));
+        Gizmos.color = isWalkable
+            ? new Color(0.2f, 1f, 0.2f, 0.35f)
+            : new Color(1f, 0.2f, 0.2f, 0.35f);
+        Gizmos.DrawCube(center, new Vector3(size.x, size.y, depth));
+        Gizmos.color = isWalkable ? Color.green : Color.red;
+        Gizmos.DrawWireCube(center, new Vector3(size.x, size.y, depth));
     }
 }

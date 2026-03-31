@@ -146,7 +146,7 @@ Grid:
   m_Enabled: 1
   m_CellSize: {x: 1, y: 0.5, z: 1}
   m_CellGap: {x: 0, y: 0, z: 0}
-  m_CellLayout: 2
+  m_CellLayout: 3
   m_CellSwizzle: 0
 --- !u!4 &378264008
 Transform:
@@ -315,6 +315,7 @@ GameObject:
   - component: {fileID: 550724730}
   - component: {fileID: 550724734}
   - component: {fileID: 550724735}
+  - component: {fileID: 550724736}
   m_Layer: 0
   m_Name: Allie
   m_TagString: Untagged
@@ -432,7 +433,7 @@ Transform:
   m_GameObject: {fileID: 550724729}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.97, y: -2.25, z: 0}
+  m_LocalPosition: {x: -0.814, y: -2.376, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -470,12 +471,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 1908079972}
-  _targetOverride: {fileID: 2137524627}
   _moveSpeed: 1
-  _repathInterval: 0.25
-  _stopDistanceInCells: 0.1
-  _moveOnStart: 1
   _drawPathGizmos: 1
+--- !u!114 &550724736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 550724729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5d2b427633d24a4a910d3e09f12dd91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 1908079972}
+  _drawHoveredCellGizmo: 1
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1165,19 +1176,19 @@ CompositeCollider2D:
   - m_Collider: {fileID: 1766367742}
     m_ColliderPaths:
     - - X: 50000000
-        Y: -5000000
+        Y: -6250000
       - X: 0
-        Y: 20000000
+        Y: 18750000
       - X: -55000000
-        Y: -7500000
+        Y: -8750000
       - X: -5000000
-        Y: -32500000
+        Y: -33750000
   m_CompositePaths:
     m_Paths:
-    - - {x: -0.5000118, y: -3.2499943}
-      - {x: 4.9999385, y: -0.4999691}
-      - {x: -0.0000118, y: 1.9999943}
-      - {x: -5.4999385, y: -0.75003093}
+    - - {x: -0.5000118, y: -3.3749945}
+      - {x: 4.9999385, y: -0.6249691}
+      - {x: -0.0000118, y: 1.8749943}
+      - {x: -5.4999385, y: -0.87503093}
   m_VertexDistance: 0.0005
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
@@ -2475,7 +2486,6 @@ MonoBehaviour:
   _blockedCellsMask:
     serializedVersion: 2
     m_Bits: 64
-  _allowDiagonalMovement: 1
   _drawGridGizmos: 1
   _gizmoExtents: {x: 12, y: 12}
   _maxClosestCellSearch: 512
@@ -2623,7 +2633,7 @@ Transform:
   m_GameObject: {fileID: 2137524622}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.9, y: 1.16, z: 0}
+  m_LocalPosition: {x: 0.59, y: 0.36, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
