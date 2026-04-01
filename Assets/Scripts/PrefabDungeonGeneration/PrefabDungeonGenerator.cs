@@ -26,6 +26,7 @@ namespace PrefabDungeonGeneration
 
         private PDFloorData _currentFloor;
         private List<GameObject> _spawnedInstances = new List<GameObject>();
+        [SerializeField] private FloorManager _floorManager;
 
         [ContextMenu("Generate Prefab Dungeon")]
         public void GenerateDungeon()
@@ -130,6 +131,8 @@ namespace PrefabDungeonGeneration
                     }
                 }
             }
+
+            _floorManager.currentRoom = instantiatedRooms.Values.ToArray()[0];
 
             // Restore hierarchy order based on Y position (isometric/2dtilemap typical rendering trick)
             var ySortedInstances = new List<GameObject>(_spawnedInstances);

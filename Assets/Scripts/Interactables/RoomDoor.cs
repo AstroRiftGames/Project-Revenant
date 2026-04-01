@@ -9,9 +9,11 @@ public class RoomDoor : MonoBehaviour, IInteractable
 
     public static event Action<RoomDoor> OnDoorInteracted;
 
+    [ContextMenu("Interact")]
     public void Interact()
     {
         Debug.Log("Interacted with the door!");
         OnDoorInteracted?.Invoke(this);
     }
+
 }
