@@ -9,6 +9,9 @@ public class Unit : Creature
     [SerializeField] private bool _drawDetectionGizmos = true;
 
     private readonly List<IUnit> _detectionCandidates = new();
+    private readonly List<IUnit> _visibleUnitsBuffer = new();
+    private readonly List<IUnit> _visibleHostilesBuffer = new();
+    private readonly List<Unit> _hostileUnitsBuffer = new();
 
     protected override void Awake()
     {
@@ -23,29 +26,39 @@ public class Unit : Creature
     public List<IUnit> GetVisibleUnitsInScene()
     {
         if (_data == null)
-            return new List<IUnit>();
+        {
+            _visibleUnitsBuffer.Clear();
+            return _visibleUnitsBuffer;
+        }
 
         RefreshDetectionCandidates();
-        return GetVisibleUnits(_detectionCandidates);
+        GetVisibleUnits(_detectionCandidates, _visibleUnitsBuffer);
+        return _visibleUnitsBuffer;
     }
 
     public List<IUnit> GetVisibleHostileUnitsInScene()
     {
         if (_data == null)
-            return new List<IUnit>();
+        {
+            _visibleHostilesBuffer.Clear();
+            return _visibleHostilesBuffer;
+        }
 
         RefreshDetectionCandidates();
-        return GetVisibleHostileUnits(_detectionCandidates);
+        GetVisibleHostileUnits(_detectionCandidates, _visibleHostilesBuffer);
+        return _visibleHostilesBuffer;
     }
 
     public List<Unit> GetHostileUnitsInScene()
     {
         if (_data == null)
-            return new List<Unit>();
+        {
+            _hostileUnitsBuffer.Clear();
+            return _hostileUnitsBuffer;
+        }
 
         RefreshDetectionCandidates();
-
-        var hostiles = new List<Unit>();
+        _hostileUnitsBuffer.Clear();
         for (int i = 0; i < _detectionCandidates.Count; i++)
         {
             if (_detectionCandidates[i] is not Unit candidate)
@@ -54,10 +67,10 @@ public class Unit : Creature
             if (!candidate.IsAlive || !IsHostileTo(candidate))
                 continue;
 
-            hostiles.Add(candidate);
+            _hostileUnitsBuffer.Add(candidate);
         }
 
-        return hostiles;
+        return _hostileUnitsBuffer;
     }
 
     public Unit GetNearestVisibleHostileUnitInScene()
@@ -66,7 +79,7 @@ public class Unit : Creature
             return null;
 
         RefreshDetectionCandidates();
-        return GetNearestVisibleHostileUnit(_detectionCandidates) as Unit;
+        return GetNearestVisibleHostileUnit(_detectionCandidates, _visibleHostilesBuffer) as Unit;
     }
 
     public Unit GetNearestHostileUnitInScene()

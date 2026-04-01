@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public enum UnitRole { Tank, DPS, Support }
@@ -81,36 +80,54 @@ public abstract class Creature : MonoBehaviour, IUnit
         return inRange && !blocked;
     }
 
-    public List<IUnit> GetVisibleUnits(IEnumerable<IUnit> candidates)
+    public void GetVisibleUnits(List<IUnit> candidates, List<IUnit> results)
     {
-        if (candidates == null)
-            return new List<IUnit>();
+        if (results == null)
+            return;
 
-        return candidates.Where(CanDetect).ToList();
+        results.Clear();
+        if (candidates == null)
+            return;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            IUnit candidate = candidates[i];
+            if (CanDetect(candidate))
+                results.Add(candidate);
+        }
     }
 
-    public List<IUnit> GetVisibleHostileUnits(IEnumerable<IUnit> candidates)
+    public void GetVisibleHostileUnits(List<IUnit> candidates, List<IUnit> results)
     {
-        if (candidates == null)
-            return new List<IUnit>();
+        if (results == null)
+            return;
 
-        return candidates.Where(candidate => IsHostileTo(candidate) && CanDetect(candidate)).ToList();
+        results.Clear();
+        if (candidates == null)
+            return;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            IUnit candidate = candidates[i];
+            if (candidate != null && IsHostileTo(candidate) && CanDetect(candidate))
+                results.Add(candidate);
+        }
     }
 
-    public IUnit GetNearestVisibleHostileUnit(IEnumerable<IUnit> candidates)
+    public IUnit GetNearestVisibleHostileUnit(List<IUnit> candidates, List<IUnit> visibleHostilesBuffer)
     {
-        List<IUnit> visibleHostiles = GetVisibleHostileUnits(candidates);
+        GetVisibleHostileUnits(candidates, visibleHostilesBuffer);
         IUnit nearest = null;
         float bestDistance = float.MaxValue;
 
-        for (int i = 0; i < visibleHostiles.Count; i++)
+        for (int i = 0; i < visibleHostilesBuffer.Count; i++)
         {
-            float distance = Vector3.Distance(Position, visibleHostiles[i].Position);
+            float distance = Vector3.Distance(Position, visibleHostilesBuffer[i].Position);
             if (distance >= bestDistance)
                 continue;
 
             bestDistance = distance;
-            nearest = visibleHostiles[i];
+            nearest = visibleHostilesBuffer[i];
         }
 
         return nearest;
