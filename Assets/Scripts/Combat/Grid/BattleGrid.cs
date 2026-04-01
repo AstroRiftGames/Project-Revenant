@@ -48,7 +48,11 @@ public class BattleGrid : MonoBehaviour
     public Vector3 CellToWorld(Vector3Int cell)
     {
         if (_walkableTilemap != null)
-            return _walkableTilemap.GetCellCenterWorld(cell);
+        {
+            Vector3 center = _walkableTilemap.GetCellCenterWorld(cell);
+            center.z = 0f;
+            return center;
+        }
 
         return new Vector3(cell.x * _cellSize, cell.y * _cellSize, 0f);
     }

@@ -6,6 +6,6 @@ public interface IUnit : IDamageable
     UnitRole Role { get; }
     UnitFaction Faction { get; }
     Vector3 Position { get; }
-    bool IscriaturaeTo(IUnit candidate);
+    bool IsHostileTo(IUnit candidate);
     bool CanDetect(IUnit candidate);
 }

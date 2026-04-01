@@ -29,60 +29,60 @@ public class Unit : Creature
         return GetVisibleUnits(_detectionCandidates);
     }
 
-    public List<IUnit> GetVisiblecriaturaeUnitsInScene()
+    public List<IUnit> GetVisibleHostileUnitsInScene()
     {
         if (_data == null)
             return new List<IUnit>();
 
         RefreshDetectionCandidates();
-        return GetVisiblecriaturaeUnits(_detectionCandidates);
+        return GetVisibleHostileUnits(_detectionCandidates);
     }
 
-    public List<Unit> GetcriaturaeUnitsInScene()
+    public List<Unit> GetHostileUnitsInScene()
     {
         if (_data == null)
             return new List<Unit>();
 
         RefreshDetectionCandidates();
 
-        var criaturas = new List<Unit>();
+        var hostiles = new List<Unit>();
         for (int i = 0; i < _detectionCandidates.Count; i++)
         {
             if (_detectionCandidates[i] is not Unit candidate)
                 continue;
 
-            if (!candidate.IsAlive || !IscriaturaeTo(candidate))
+            if (!candidate.IsAlive || !IsHostileTo(candidate))
                 continue;
 
-            criaturas.Add(candidate);
+            hostiles.Add(candidate);
         }
 
-        return criaturas;
+        return hostiles;
     }
 
-    public Unit GetNearestVisiblecriaturaeUnitInScene()
+    public Unit GetNearestVisibleHostileUnitInScene()
     {
         if (_data == null)
             return null;
 
         RefreshDetectionCandidates();
-        return GetNearestVisiblecriaturaeUnit(_detectionCandidates) as Unit;
+        return GetNearestVisibleHostileUnit(_detectionCandidates) as Unit;
     }
 
-    public Unit GetNearestcriaturaeUnitInScene()
+    public Unit GetNearestHostileUnitInScene()
     {
-        List<Unit> criaturas = GetcriaturaeUnitsInScene();
+        List<Unit> hostiles = GetHostileUnitsInScene();
         Unit nearest = null;
         float bestDistance = float.MaxValue;
 
-        for (int i = 0; i < criaturas.Count; i++)
+        for (int i = 0; i < hostiles.Count; i++)
         {
-            float distance = Vector3.Distance(Position, criaturas[i].Position);
+            float distance = Vector3.Distance(Position, hostiles[i].Position);
             if (distance >= bestDistance)
                 continue;
 
             bestDistance = distance;
-            nearest = criaturas[i];
+            nearest = hostiles[i];
         }
 
         return nearest;
