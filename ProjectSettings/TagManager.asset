@@ -53,5 +53,8 @@ TagManager:
   - name: Characters
     uniqueID: 1008339267
     locked: 0
+  - name: Doors
+    uniqueID: 3110442501
+    locked: 0
   m_RenderingLayers:
   - Default

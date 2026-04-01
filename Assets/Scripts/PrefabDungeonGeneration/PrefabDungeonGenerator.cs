@@ -88,7 +88,10 @@ namespace PrefabDungeonGeneration
                 roomSpawnData.Add((roomNode, spawnPos));
             }
 
-            roomSpawnData.Sort((a, b) => b.spawnPos.y.CompareTo(a.spawnPos.y));
+            // Sort by ID to ensure parent rooms are instantiated before child rooms
+            roomSpawnData.Sort((a, b) => a.room.ID.CompareTo(b.room.ID));
+
+            Dictionary<int, GameObject> instantiatedRooms = new Dictionary<int, GameObject>();
 
             foreach (var data in roomSpawnData)
             {
@@ -99,7 +102,55 @@ namespace PrefabDungeonGeneration
                 instance.name = $"{roomNode.RoomType}_Room_{roomNode.ID}";
                 
                 _spawnedInstances.Add(instance);
+                instantiatedRooms[roomNode.ID] = instance;
+
+                // When instantiating a room, grab reference to previous room and assign RoomB
+                if (roomNode.ParentNode != null && instantiatedRooms.TryGetValue(roomNode.ParentNode.ID, out GameObject parentRoom))
+                {
+                    if (roomNode.ParentDoorIndex >= 0 && roomNode.ParentDoorIndex < roomNode.ParentNode.PrefabProfile.Doors.Count)
+                    {
+                        var doorConfig = roomNode.ParentNode.PrefabProfile.Doors[roomNode.ParentDoorIndex];
+                        if (doorConfig.AnchorTransform != null)
+                        {
+                            string path = GetHierarchyPath(roomNode.ParentNode.PrefabProfile.transform, doorConfig.AnchorTransform);
+                            Transform anchorInstance = string.IsNullOrEmpty(path) ? parentRoom.transform : parentRoom.transform.Find(path);
+
+                            if (anchorInstance != null)
+                            {
+                                RoomDoor parentDoorComponent = anchorInstance.GetComponent<RoomDoor>();
+                                if (parentDoorComponent == null) parentDoorComponent = anchorInstance.GetComponentInChildren<RoomDoor>();
+
+                                if (parentDoorComponent != null)
+                                {
+                                    parentDoorComponent.roomA = parentRoom;
+                                    parentDoorComponent.roomB = instance;
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
+            // Restore hierarchy order based on Y position (isometric/2dtilemap typical rendering trick)
+            var ySortedInstances = new List<GameObject>(_spawnedInstances);
+            ySortedInstances.Sort((a, b) => b.transform.position.y.CompareTo(a.transform.position.y));
+            foreach (var inst in ySortedInstances)
+            {
+                inst.transform.SetAsLastSibling();
+            }
+        }
+
+        private string GetHierarchyPath(Transform root, Transform target)
+        {
+            if (target == root) return "";
+            string path = target.name;
+            Transform curr = target.parent;
+            while (curr != root && curr != null)
+            {
+                path = curr.name + "/" + path;
+                curr = curr.parent;
+            }
+            return path;
         }
 
         private void ClearDungeon()

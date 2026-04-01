@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8287637150139783960
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6651081469251109486}
+  - component: {fileID: 1574469988401372388}
+  m_Layer: 0
+  m_Name: PrefabDungeonGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6651081469251109486
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8287637150139783960}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.0399497, y: -1.3046961, z: 0.49373668}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1574469988401372388
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8287637150139783960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b853376bb3f8151428e5aed0d71c8c7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Seed: -579608436
+  FloorNumber: 1
+  MinRooms: 10
+  MaxRooms: 13
+  UseRandomSeed: 1
+  TileWorldSize: 1
+  RoomPrototypes:
+  - Type: 0
+    Templates:
+    - {fileID: -1078256696771541569, guid: bc965b098b28c994aad97ee8ad023a67, type: 3}
+  - Type: 1
+    Templates:
+    - {fileID: -1078256696771541569, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}
+  - Type: 2
+    Templates:
+    - {fileID: -1078256696771541569, guid: 8d9e961703349474598746fea6b22c55, type: 3}
+  - Type: 3
+    Templates:
+    - {fileID: -1078256696771541569, guid: 12739da575b160b4d958c68ccd4b5977, type: 3}
+  - Type: 4
+    Templates:
+    - {fileID: -1078256696771541569, guid: 97d78f489f64b2d4e8d652fa0bf502e2, type: 3}
+  - Type: 5
+    Templates:
+    - {fileID: -1078256696771541569, guid: e11913508e6338044b99aa6222b96923, type: 3}
+  - Type: 6
+    Templates:
+    - {fileID: -1078256696771541569, guid: 89afb1a2c42fb8d4f939b39850e66900, type: 3}
+  BalanceRules: []

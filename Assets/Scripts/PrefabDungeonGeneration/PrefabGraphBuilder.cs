@@ -127,6 +127,8 @@ namespace PrefabDungeonGeneration
                 if (!overlap)
                 {
                     PDRoomNode newNode = CreateNode(floor.Rooms.Count, type, chosenTemplate, targetWorldPos, sourceNode.Depth + 1, tileSize);
+                    newNode.ParentNode = sourceNode;
+                    newNode.ParentDoorIndex = sourceDoor.OriginalIndex;
                     floor.Rooms.Add(newNode);
                     
                     sourceDoor.IsUsed = true;
@@ -162,7 +164,8 @@ namespace PrefabDungeonGeneration
                 {
                     Position = worldPos + localDoor.Position,
                     Direction = localDoor.Direction,
-                    IsUsed = localDoor.IsUsed
+                    IsUsed = localDoor.IsUsed,
+                    OriginalIndex = localDoor.OriginalIndex
                 });
             }
 

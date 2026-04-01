@@ -1,0 +1,17 @@
+using System;
+using UnityEngine;
+
+public class RoomDoor : MonoBehaviour, IInteractable
+{
+    [Header("Connected Rooms")]
+    public GameObject roomA;
+    public GameObject roomB;
+
+    public static event Action<RoomDoor> OnDoorInteracted;
+
+    public void Interact()
+    {
+        Debug.Log("Interacted with the door!");
+        OnDoorInteracted?.Invoke(this);
+    }
+}

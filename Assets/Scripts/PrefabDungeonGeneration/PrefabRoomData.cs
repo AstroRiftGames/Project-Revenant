@@ -29,6 +29,7 @@ namespace PrefabDungeonGeneration
         public PDDoorDirection Direction;
         
         public bool IsUsed;
+        public int OriginalIndex;
     }
 
     public class PDRoomNode
@@ -41,6 +42,9 @@ namespace PrefabDungeonGeneration
         public RoomPrefabProfile PrefabProfile;
         public List<PDDoorAnchor> GlobalDoors = new List<PDDoorAnchor>();
         public int Depth;
+        
+        public PDRoomNode ParentNode;
+        public int ParentDoorIndex = -1;
     }
 
     public class PDFloorData

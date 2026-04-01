@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7930500531744462894}
+  - component: {fileID: 8511806804218083313}
   m_Layer: 0
   m_Name: Top_Right
   m_TagString: Untagged
@@ -31,6 +32,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8172554018064421073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8511806804218083313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 663372228334592985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262271d6fd998e846b3d4ef134dfc916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomA: {fileID: 0}
+  roomB: {fileID: 0}
 --- !u!1 &1261821990994168952
 GameObject:
   m_ObjectHideFlags: 0
@@ -40,6 +55,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4701966091055693866}
+  - component: {fileID: 8954108763676573669}
   m_Layer: 0
   m_Name: Bottom_Right
   m_TagString: Untagged
@@ -62,6 +78,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8172554018064421073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8954108763676573669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261821990994168952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262271d6fd998e846b3d4ef134dfc916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomA: {fileID: 0}
+  roomB: {fileID: 0}
 --- !u!1 &1335042572350580095
 GameObject:
   m_ObjectHideFlags: 0
@@ -885,7 +915,7 @@ TilemapRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -953616565
+  m_SortingLayerID: 1675799453
   m_SortingLayer: 1
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
@@ -1235,7 +1265,7 @@ GameObject:
   - component: {fileID: 7492168251971325700}
   - component: {fileID: 4853889774924007266}
   m_Layer: 0
-  m_Name: Top-WallTilemap
+  m_Name: WallTilemap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1509,8 +1539,8 @@ TilemapRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 2124394983
-  m_SortingLayer: 2
+  m_SortingLayerID: -410323883
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
@@ -1593,6 +1623,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7626864716034980286}
+  - component: {fileID: 7491389233481798045}
   m_Layer: 0
   m_Name: Top_Left
   m_TagString: Untagged
@@ -1615,6 +1646,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8172554018064421073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7491389233481798045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4296777080561113146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262271d6fd998e846b3d4ef134dfc916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomA: {fileID: 0}
+  roomB: {fileID: 0}
 --- !u!1 &4347932947661017972
 GameObject:
   m_ObjectHideFlags: 0
@@ -1792,6 +1837,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5876231404404473421}
+  - component: {fileID: 4461057540377096193}
   m_Layer: 0
   m_Name: Bottom_Left
   m_TagString: Untagged
@@ -1814,6 +1860,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8172554018064421073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4461057540377096193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7086621146851972991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 262271d6fd998e846b3d4ef134dfc916, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomA: {fileID: 0}
+  roomB: {fileID: 0}
 --- !u!1 &8652037412062293294
 GameObject:
   m_ObjectHideFlags: 0

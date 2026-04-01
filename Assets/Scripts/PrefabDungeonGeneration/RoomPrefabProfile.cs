@@ -23,8 +23,9 @@ namespace PrefabDungeonGeneration
             GridLayout gridLayout = GetComponentInParent<GridLayout>();
             if (gridLayout == null) gridLayout = GetComponentInChildren<GridLayout>();
 
-            foreach (var d in Doors)
+            for (int i = 0; i < Doors.Count; i++)
             {
+                var d = Doors[i];
                 if (d.AnchorTransform == null) continue;
                 
                 Vector3 relativePos = d.AnchorTransform.position - transform.position;
@@ -47,7 +48,8 @@ namespace PrefabDungeonGeneration
                 {
                     Position = pos,
                     Direction = d.Direction,
-                    IsUsed = false
+                    IsUsed = false,
+                    OriginalIndex = i
                 });
             }
             return anchors;
