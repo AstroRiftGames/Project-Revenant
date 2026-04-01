@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class GridPathfinder
 {
-    public static List<Vector3Int> FindPath(BattleGrid grid, Vector3Int start, Vector3Int goal, Unit movingUnit)
+    public static List<Vector3Int> FindPath(BattleGrid grid, Vector3Int start, Vector3Int goal, Unit movingUnit = null)
     {
         if (start == goal)
             return new List<Vector3Int> { start };
