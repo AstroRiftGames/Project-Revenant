@@ -20,7 +20,7 @@ public class RoleBasedTargeting : TargetingStrategy
         return SelectByRolePriority(hostilesInScene, self);
     }
 
-    private Unit SelectByRolePriority(List<IUnit> candidates, Unit self)
+    private Unit SelectByRolePriority<T>(List<T> candidates, Unit self) where T : IUnit
     {
         if (candidates == null || candidates.Count == 0)
             return null;
@@ -36,54 +36,14 @@ public class RoleBasedTargeting : TargetingStrategy
         return SelectNearestByRole(candidates, self, UnitRole.Support);
     }
 
-    private Unit SelectByRolePriority(List<Unit> candidates, Unit self)
-    {
-        if (candidates == null || candidates.Count == 0)
-            return null;
-
-        Unit target = SelectNearestByRole(candidates, self, UnitRole.Tank);
-        if (target != null)
-            return target;
-
-        target = SelectNearestByRole(candidates, self, UnitRole.DPS);
-        if (target != null)
-            return target;
-
-        return SelectNearestByRole(candidates, self, UnitRole.Support);
-    }
-
-    private Unit SelectNearestByRole(List<IUnit> candidates, Unit self, UnitRole role)
+    private Unit SelectNearestByRole<T>(List<T> candidates, Unit self, UnitRole role) where T : IUnit
     {
         Unit bestTarget = null;
         float bestDistance = float.MaxValue;
 
         for (int i = 0; i < candidates.Count; i++)
         {
-            if (candidates[i] is not Unit candidate)
-                continue;
-
-            if (!candidate.IsAlive || !self.IsHostileTo(candidate) || candidate.Role != role)
-                continue;
-
-            float distance = Vector3.Distance(self.Position, candidate.Position);
-            if (distance >= bestDistance)
-                continue;
-
-            bestDistance = distance;
-            bestTarget = candidate;
-        }
-
-        return bestTarget;
-    }
-
-    private Unit SelectNearestByRole(List<Unit> candidates, Unit self, UnitRole role)
-    {
-        Unit bestTarget = null;
-        float bestDistance = float.MaxValue;
-
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            Unit candidate = candidates[i];
+            T candidate = candidates[i];
             if (candidate == null || !candidate.IsAlive || !self.IsHostileTo(candidate) || candidate.Role != role)
                 continue;
 
@@ -92,7 +52,7 @@ public class RoleBasedTargeting : TargetingStrategy
                 continue;
 
             bestDistance = distance;
-            bestTarget = candidate;
+            bestTarget = candidate as Unit;
         }
 
         return bestTarget;
