@@ -2677,7 +2677,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4296291439879332514}
   - component: {fileID: -1078256696771541569}
-  - component: {fileID: -5186815750348684531}
+  - component: {fileID: 6411234689243384758}
   m_Layer: 0
   m_Name: LootRoomPrefab
   m_TagString: Untagged
@@ -2727,7 +2727,7 @@ MonoBehaviour:
     Direction: 2
   - AnchorTransform: {fileID: 7626864716034980286}
     Direction: 3
---- !u!114 &-5186815750348684531
+--- !u!114 &6411234689243384758
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2736,10 +2736,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 4347932947661017972}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37a428154abc97b43af7a0a3403be9b5, type: 3}
+  m_Script: {fileID: 11500000, guid: 93982e12882461b4589d4be8cde32b3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _battleGrid: {fileID: 0}
+  TileSize: 1
+  SpawnOffset: {x: -1, y: -1}
+  EdgePadding: 2
+  UseSeed: 1
+  RandomSeed: 0
+  CombatRoomConfig:
+    SpawnCountRange: {x: 0, y: 0}
+    Categories: []
+  LootRoomConfig:
+    SpawnCountRange: {x: 2, y: 4}
+    Categories:
+    - CategoryName: Chests
+      Weight: 100
+      Prefabs:
+      - Prefab: {fileID: 4776528938805947016, guid: 57587f1e0aa0d99459bf01c110ae2688, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 4776528938805947016, guid: 3cac8bfca8869a9429051182ab393692, type: 3}
+        Weight: 25
+      - Prefab: {fileID: 4776528938805947016, guid: 75bda3dcd8d58f5459b897a2141d914f, type: 3}
+        Weight: 25
 --- !u!1 &5071545530209455873
 GameObject:
   m_ObjectHideFlags: 0
