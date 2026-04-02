@@ -40,7 +40,7 @@ namespace PrefabDungeonGeneration
     {
         [Header("Grid Rules")]
         [Tooltip("Size of each logical tile for spawning objects.")]
-        public float TileSize = 1f;
+        private float _tileSize = 1f;
 
         [Tooltip("Use this to align the spawning grid correctly if your room's pivot isn't perfectly centered.")]
         public Vector2 SpawnOffset = Vector2.zero;
@@ -78,7 +78,7 @@ namespace PrefabDungeonGeneration
             }
             else
             {
-                return new Vector3(gridPos.x * TileSize, gridPos.y * TileSize, 0);
+                return new Vector3(gridPos.x * _tileSize, gridPos.y * _tileSize, 0);
             }
         }
 

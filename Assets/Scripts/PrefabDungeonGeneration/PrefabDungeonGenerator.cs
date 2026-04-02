@@ -19,7 +19,7 @@ namespace PrefabDungeonGeneration
         public int MaxRooms = 13;
         public bool UseRandomSeed = true;
 
-        public float TileWorldSize = 64f;
+        private float _tileWorldSize = 1f;
 
         public List<PrefabRoomDictionaryEntry> RoomPrototypes;
         public List<RoomTypeRule> BalanceRules;
@@ -56,7 +56,7 @@ namespace PrefabDungeonGeneration
             }
 
             var builder = new PrefabGraphBuilder(Seed);
-            _currentFloor = builder.GenerateFloor(FloorNumber, MinRooms, MaxRooms, templates, TileWorldSize, BalanceRules);
+            _currentFloor = builder.GenerateFloor(FloorNumber, MinRooms, MaxRooms, templates, _tileWorldSize, BalanceRules);
 
             SpawnDungeon();
         }
@@ -87,7 +87,7 @@ namespace PrefabDungeonGeneration
                 }
                 else
                 {
-                    spawnPos = new Vector3(roomNode.WorldPosition.x, roomNode.WorldPosition.y, 0) * TileWorldSize;
+                    spawnPos = new Vector3(roomNode.WorldPosition.x, roomNode.WorldPosition.y, 0) * _tileWorldSize;
                     spawnPos = transform.TransformPoint(spawnPos);
                 }
                 
@@ -204,8 +204,8 @@ namespace PrefabDungeonGeneration
                 }
                 else
                 {
-                    centerWorld = new Vector3(room.WorldPosition.x + room.Size.x / 2f, room.WorldPosition.y + room.Size.y / 2f, 0) * TileWorldSize;
-                    sizeWorld = new Vector3(room.Size.x, room.Size.y, 1f) * TileWorldSize;
+                    centerWorld = new Vector3(room.WorldPosition.x + room.Size.x / 2f, room.WorldPosition.y + room.Size.y / 2f, 0) * _tileWorldSize;
+                    sizeWorld = new Vector3(room.Size.x, room.Size.y, 1f) * _tileWorldSize;
                 }
                 
                 centerWorld = transform.TransformPoint(centerWorld);
@@ -226,11 +226,11 @@ namespace PrefabDungeonGeneration
                     }
                     else
                     {
-                        doorPos = new Vector3(door.Position.x + 0.5f, door.Position.y + 0.5f, 0) * TileWorldSize;
+                        doorPos = new Vector3(door.Position.x + 0.5f, door.Position.y + 0.5f, 0) * _tileWorldSize;
                     }
                     
                     doorPos = transform.TransformPoint(doorPos);
-                    Gizmos.DrawSphere(doorPos, (activeGrid != null ? 1f : TileWorldSize) * 0.2f);
+                    Gizmos.DrawSphere(doorPos, (activeGrid != null ? 1f : _tileWorldSize) * 0.2f);
                 }
             }
         }

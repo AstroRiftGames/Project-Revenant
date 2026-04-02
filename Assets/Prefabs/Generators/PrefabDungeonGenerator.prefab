@@ -72,4 +72,21 @@ MonoBehaviour:
   - Type: 6
     Templates:
     - {fileID: -1078256696771541569, guid: 89afb1a2c42fb8d4f939b39850e66900, type: 3}
-  BalanceRules: []
+  BalanceRules:
+  - Type: 4
+    Weight: 0
+    MinCount: 0
+    MaxCount: 1
+  - Type: 3
+    Weight: 0
+    MinCount: 0
+    MaxCount: 1
+  - Type: 2
+    Weight: 0
+    MinCount: 0
+    MaxCount: 3
+  - Type: 1
+    Weight: 0
+    MinCount: 0
+    MaxCount: 3
+  _floorManager: {fileID: 0}
