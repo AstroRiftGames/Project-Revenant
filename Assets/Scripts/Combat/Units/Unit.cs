@@ -114,11 +114,18 @@ public class Unit : Creature
     {
         _detectionCandidates.Clear();
 
-        Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
-        for (int i = 0; i < units.Length; i++)
+        if (_roomContext == null)
+            return;
+
+        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
+        for (int i = 0; i < roomUnits.Count; i++)
         {
-            if (units[i] != null && !ReferenceEquals(units[i], this))
-                _detectionCandidates.Add(units[i]);
+            Unit candidate = roomUnits[i];
+
+            if (candidate == null || ReferenceEquals(candidate, this) || !candidate.gameObject.activeInHierarchy)
+                continue;
+
+            _detectionCandidates.Add(candidate);
         }
     }
 
