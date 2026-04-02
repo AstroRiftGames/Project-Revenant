@@ -8,6 +8,8 @@ public class Unit : Creature
     [SerializeField] private bool _initializeOnAwake = true;
     [SerializeField] private bool _drawDetectionGizmos = true;
 
+    private RoomContext _roomContext;
+
     private readonly List<IUnit> _detectionCandidates = new();
     private readonly List<IUnit> _visibleUnitsBuffer = new();
     private readonly List<IUnit> _visibleHostilesBuffer = new();
@@ -99,6 +101,13 @@ public class Unit : Creature
         }
 
         return nearest;
+    }
+
+    public RoomContext RoomContext => _roomContext;
+
+    public void AssignRoomContext(RoomContext context)
+    {
+        _roomContext = context;
     }
 
     private void RefreshDetectionCandidates()

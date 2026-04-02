@@ -2805,6 +2805,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4296291439879332514}
   - component: {fileID: -1078256696771541569}
+  - component: {fileID: 3548806610932490709}
   m_Layer: 0
   m_Name: MiniBossRoomPrefab
   m_TagString: Untagged
@@ -2854,6 +2855,19 @@ MonoBehaviour:
     Direction: 2
   - AnchorTransform: {fileID: 7626864716034980286}
     Direction: 3
+--- !u!114 &3548806610932490709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4347932947661017972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37a428154abc97b43af7a0a3403be9b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _battleGrid: {fileID: 0}
 --- !u!1 &4425420952683323405
 GameObject:
   m_ObjectHideFlags: 0

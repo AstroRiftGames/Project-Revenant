@@ -17,6 +17,18 @@ public class BattleGrid : MonoBehaviour
     public static BattleGrid Instance { get; private set; }
 
     public float CellSize => CellWorldSize.x;
+
+    /// <summary>
+    /// Reconfigura los tilemaps del grid.
+    /// Usado por RoomContext cuando el BattleGrid es un servicio global compartido:
+    /// al entrar a una sala, RoomContext lo reconfigura con los tilemaps locales de esa sala.
+    /// </summary>
+    public void Configure(Tilemap walkable, Tilemap blocked)
+    {
+        _walkableTilemap = walkable;
+        _blockedTilemap = blocked;
+    }
+
     public Vector2 CellWorldSize
     {
         get

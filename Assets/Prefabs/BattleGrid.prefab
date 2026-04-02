@@ -51,7 +51,7 @@ MonoBehaviour:
   _usePhysicsBlockedCells: 0
   _blockedCellsMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 0
   _drawGridGizmos: 1
   _gizmoExtents: {x: 12, y: 12}
   _maxClosestCellSearch: 512

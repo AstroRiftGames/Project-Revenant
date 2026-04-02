@@ -46,6 +46,20 @@ public class UnitMovement : MonoBehaviour
         FollowPath();
     }
 
+    public void SetGrid(BattleGrid grid)
+    {
+        if (grid == _grid)
+            return;
+
+        _grid = grid;
+
+        ClearDestination();
+
+        _hasCurrentCell = false;
+
+        SnapToCurrentCell();
+    }
+
     public bool SetDestinationCell(Vector3Int destinationCell)
     {
         if (_grid == null || _unit == null)
