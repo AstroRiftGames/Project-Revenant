@@ -10,8 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 7405934179895148141}
   - component: {fileID: 4319667460501799238}
+  - component: {fileID: 3554181492560652788}
+  - component: {fileID: 6829797285607290224}
+  - component: {fileID: 3162561922233596159}
   - component: {fileID: 7841205390335374499}
-  - component: {fileID: 2475009883092957532}
+  - component: {fileID: 5540166723793157794}
   m_Layer: 0
   m_Name: Necromancer
   m_TagString: Untagged
@@ -75,8 +78,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -1703598871
-  m_SortingLayer: 2
+  m_SortingLayerID: 1008339267
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 1125379381859389362, guid: b1069bb1ac8e1e0449b72ae0271fdc50, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -89,6 +92,55 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &3554181492560652788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _useObstacleDetection: 1
+  _obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _unitData: {fileID: 11400000, guid: 179cda59bf1edba47842adcd98a6ecfe, type: 2}
+  _initializeOnAwake: 1
+  _drawDetectionGizmos: 1
+--- !u!114 &6829797285607290224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64cb355d6b5b5f6499a7247c68b69470, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 0}
+  _repathInterval: 0.2
+  _drawPathGizmos: 1
+--- !u!114 &3162561922233596159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5d2b427633d24a4a910d3e09f12dd91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 0}
+  _drawHoveredCellGizmo: 1
+  _drawClickedCellGizmo: 1
 --- !u!61 &7841205390335374499
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -135,7 +187,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.40625, y: 0.53125}
   m_EdgeRadius: 0
---- !u!114 &2475009883092957532
+--- !u!114 &5540166723793157794
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,10 +196,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8347385983871711347}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9f967912b83180e4b8f2e9c01adb86fd, type: 3}
+  m_Script: {fileID: 11500000, guid: 0656f010a052a8247841f5ac2f9b61f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _grid: {fileID: 0}
-  _moveSpeed: 2
-  _drawHoveredCellGizmo: 1
-  _drawClickedCellGizmo: 1
+  _debugDamage: 0

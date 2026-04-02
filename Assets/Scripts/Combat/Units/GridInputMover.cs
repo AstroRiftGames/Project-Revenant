@@ -24,6 +24,11 @@ public class GridInputMover : MonoBehaviour
         _mainCamera = Camera.main;
     }
 
+    public void SetGrid(BattleGrid grid)
+    {
+        _grid = grid;
+    }
+
     private void Update()
     {
         if (_grid == null)

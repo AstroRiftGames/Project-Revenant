@@ -119,6 +119,52 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &37667920
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 37667922}
+  - component: {fileID: 37667921}
+  m_Layer: 0
+  m_Name: NecromancerSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &37667921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37667920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242bd21dae86681469342fc3690d432e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancerPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
+  _floorManager: {fileID: 1032554670}
+--- !u!4 &37667922
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37667920}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &378264006
 GameObject:
   m_ObjectHideFlags: 0
@@ -282,6 +328,10 @@ PrefabInstance:
       propertyPath: _grid
       value: 
       objectReference: {fileID: 1908079972}
+    - target: {fileID: 5019270668954427053, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
+      propertyPath: _obstacleMask.m_Bits
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7803597328171877914, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
       propertyPath: m_Name
       value: Allie Role Based Targeting
@@ -469,7 +519,7 @@ MonoBehaviour:
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 000000009dabe263e924759a55f48ae7059665b9
+  m_ApplyToSortingLayers: 000000004bf728c7e7b19f7e614312fe43091a3c059665b9
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -545,7 +595,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b5f35274d18bd44e9cabe004e946aa3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentRoom: {fileID: 0}
+  _currentRoom: {fileID: 0}
 --- !u!4 &1032554671
 Transform:
   m_ObjectHideFlags: 0
@@ -2634,23 +2684,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 110857073650024161, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 2797703798169635397, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
-      propertyPath: _blockedTilemap
-      value: 
-      objectReference: {fileID: 1577750487}
-    - target: {fileID: 2797703798169635397, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
-      propertyPath: _walkableTilemap
-      value: 
-      objectReference: {fileID: 1766367744}
     - target: {fileID: 7719158441552037017, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.195
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7719158441552037017, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.80999994
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7719158441552037017, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2768,3 +2810,4 @@ SceneRoots:
   - {fileID: 480650145}
   - {fileID: 1131841152}
   - {fileID: 1032554671}
+  - {fileID: 37667922}

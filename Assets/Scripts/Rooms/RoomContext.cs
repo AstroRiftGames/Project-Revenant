@@ -4,10 +4,8 @@ using UnityEngine.Tilemaps;
 
 public class RoomContext : MonoBehaviour
 {
-    [Header("Navegación — BattleGrid opcional (se resuelve automáticamente si está en la jerarquía)")]
     [SerializeField] private BattleGrid _battleGrid;
 
-    [Header("Tilemaps locales — asignar solo si el BattleGrid es global/compartido")]
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
 
@@ -87,6 +85,7 @@ public class RoomContext : MonoBehaviour
         foreach (Unit unit in _units)
         {
             unit.GetComponent<UnitMovement>()?.SetGrid(_battleGrid);
+            unit.GetComponent<GridInputMover>()?.SetGrid(_battleGrid);
             unit.AssignRoomContext(this);
         }
     }

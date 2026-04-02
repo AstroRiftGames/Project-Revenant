@@ -1,0 +1,85 @@
+using UnityEngine;
+
+[DefaultExecutionOrder(100)]
+public class NecromancerSpawner : MonoBehaviour
+{
+    [SerializeField] private GameObject _necromancerPrefab;
+    [SerializeField] private FloorManager _floorManager;
+
+    private void Start()
+    {
+        Spawn();
+    }
+
+    private void Spawn()
+    {
+        if (!ValidateSetup(out RoomContext roomContext, out BattleGrid grid))
+            return;
+
+        Vector3Int spawnCell = FindSpawnCell(grid, roomContext);
+        Vector3 spawnPosition = grid.CellToWorld(spawnCell);
+
+        GameObject instance = Instantiate(_necromancerPrefab, spawnPosition, Quaternion.identity);
+
+        if (!instance.TryGetComponent(out Unit unit))
+        {
+            Debug.LogWarning("[NecromancerSpawner] El prefab del Nigromante no tiene componente Unit.", this);
+            Destroy(instance);
+            return;
+        }
+
+        instance.GetComponent<UnitMovement>()?.SetGrid(grid);
+        instance.GetComponent<GridInputMover>()?.SetGrid(grid);
+
+        unit.AssignRoomContext(roomContext);
+        roomContext.RegisterUnit(unit);
+    }
+
+    private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)
+    {
+        Vector3Int centerCell = grid.WorldToCell(roomContext.transform.position);
+        return grid.FindClosestWalkableCell(centerCell, null);
+    }
+
+    private bool ValidateSetup(out RoomContext roomContext, out BattleGrid grid)
+    {
+        roomContext = null;
+        grid = null;
+
+        if (_necromancerPrefab == null)
+        {
+            Debug.LogWarning("[NecromancerSpawner] No hay prefab del Nigromante asignado.", this);
+            return false;
+        }
+
+        if (_floorManager == null)
+        {
+            Debug.LogWarning("[NecromancerSpawner] No hay FloorManager asignado.", this);
+            return false;
+        }
+
+        GameObject startRoom = _floorManager.CurrentRoom;
+        if (startRoom == null)
+        {
+            Debug.LogWarning("[NecromancerSpawner] FloorManager no tiene sala inicial. " +
+                             "Asegurate de que PrefabDungeonGenerator se ejecute antes (orden 0).", this);
+            return false;
+        }
+
+        if (!startRoom.TryGetComponent(out roomContext))
+        {
+            Debug.LogWarning($"[NecromancerSpawner] La sala inicial '{startRoom.name}' no tiene RoomContext.", this);
+            return false;
+        }
+
+        grid = roomContext.BattleGrid;
+        if (grid == null)
+        {
+            Debug.LogWarning("[NecromancerSpawner] RoomContext no tiene BattleGrid resuelto. " +
+                             "Asegurate de que la sala tenga tilemaps configurados.", this);
+            return false;
+        }
+
+        return true;
+    }
+}
