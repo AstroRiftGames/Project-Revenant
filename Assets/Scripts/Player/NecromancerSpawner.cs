@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(100)]
@@ -21,24 +22,42 @@ public class NecromancerSpawner : MonoBehaviour
 
         GameObject instance = Instantiate(_necromancerPrefab, spawnPosition, Quaternion.identity);
 
-        if (!instance.TryGetComponent(out Unit unit))
+        if (!instance.TryGetComponent(out Necromancer necromancer))
         {
-            Debug.LogWarning("[NecromancerSpawner] El prefab del Nigromante no tiene componente Unit.", this);
+            Debug.LogWarning("[NecromancerSpawner] El prefab del Nigromante no tiene componente Necromancer.", this);
             Destroy(instance);
             return;
         }
 
-        instance.GetComponent<UnitMovement>()?.SetGrid(grid);
-        instance.GetComponent<GridInputMover>()?.SetGrid(grid);
-
-        unit.AssignRoomContext(roomContext);
-        roomContext.RegisterUnit(unit);
+        necromancer.SetGrid(grid);
     }
 
     private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)
     {
         Vector3Int centerCell = grid.WorldToCell(roomContext.transform.position);
-        return grid.FindClosestWalkableCell(centerCell, null);
+
+        if (grid.IsCellWalkable(centerCell))
+            return centerCell;
+
+        // BFS para encontrar la celda walkable más cercana al centro de la sala
+        var visited = new HashSet<Vector3Int> { centerCell };
+        var queue = new Queue<Vector3Int>();
+        queue.Enqueue(centerCell);
+
+        while (queue.Count > 0)
+        {
+            Vector3Int cell = queue.Dequeue();
+            foreach (Vector3Int neighbor in grid.GetNeighbors(cell))
+            {
+                if (!grid.IsCellInsideWalkableBounds(neighbor) || !visited.Add(neighbor))
+                    continue;
+                if (grid.IsCellWalkable(neighbor))
+                    return neighbor;
+                queue.Enqueue(neighbor);
+            }
+        }
+
+        return centerCell;
     }
 
     private bool ValidateSetup(out RoomContext roomContext, out BattleGrid grid)

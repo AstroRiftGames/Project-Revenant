@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[RequireComponent(typeof(Unit))]
 public class LifeController : MonoBehaviour, IDamageable
 {
     [SerializeField] private bool _debugDamage;

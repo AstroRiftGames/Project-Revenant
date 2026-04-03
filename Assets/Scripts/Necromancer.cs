@@ -105,6 +105,18 @@ public class Necromancer : MonoBehaviour
         transform.position = _grid.CellToWorld(cell);
     }
 
+    public void SetGrid(BattleGrid grid)
+    {
+        _grid = grid;
+    }
+
+    public void Teleport(Vector3 worldPosition)
+    {
+        _waypoints.Clear();
+        _isMoving = false;
+        transform.position = worldPosition;
+    }
+
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {

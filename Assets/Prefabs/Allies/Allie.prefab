@@ -81,7 +81,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1703598871
-  m_SortingLayer: 2
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: -4871531732248455920, guid: b1069bb1ac8e1e0449b72ae0271fdc50, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -158,7 +158,7 @@ MonoBehaviour:
     m_Bits: 64
   _unitData: {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
   _initializeOnAwake: 1
-  _drawDetectionGizmos: 1
+  _drawDetectionGizmos: 0
 --- !u!114 &6099419616565794161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
   _repathInterval: 0.2
-  _drawPathGizmos: 1
+  _drawPathGizmos: 0
 --- !u!114 &7167257448602601415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _retargetInterval: 0.25
   _runOnStart: 1
-  _debugBrain: 1
+  _debugBrain: 0
 --- !u!114 &4996026872253235626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugCombat: 1
+  _debugCombat: 0
   _minHitChance: 0.1
   _maxHitChance: 0.95
 --- !u!114 &1177492162369679053
@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0656f010a052a8247841f5ac2f9b61f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugDamage: 1
+  _debugDamage: 0
 --- !u!114 &677521004704075058
 MonoBehaviour:
   m_ObjectHideFlags: 0

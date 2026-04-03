@@ -16,4 +16,11 @@ public class RoomDoor : MonoBehaviour, IInteractable
         OnDoorInteracted?.Invoke(this);
     }
 
+    public void HandleTriggerEnter(Collider2D other)
+    {
+        if (!other.CompareTag("Player"))
+            return;
+
+        Interact();
+    }
 }

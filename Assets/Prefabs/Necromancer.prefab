@@ -10,14 +10,13 @@ GameObject:
   m_Component:
   - component: {fileID: 7405934179895148141}
   - component: {fileID: 4319667460501799238}
-  - component: {fileID: 3554181492560652788}
-  - component: {fileID: 6829797285607290224}
-  - component: {fileID: 3162561922233596159}
   - component: {fileID: 7841205390335374499}
-  - component: {fileID: 5540166723793157794}
+  - component: {fileID: 6397360623999948256}
+  - component: {fileID: 3197931699983048068}
+  - component: {fileID: -2721680991065955918}
   m_Layer: 0
   m_Name: Necromancer
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -92,55 +91,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &3554181492560652788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _useObstacleDetection: 1
-  _obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
-  _unitData: {fileID: 11400000, guid: 179cda59bf1edba47842adcd98a6ecfe, type: 2}
-  _initializeOnAwake: 1
-  _drawDetectionGizmos: 1
---- !u!114 &6829797285607290224
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 64cb355d6b5b5f6499a7247c68b69470, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _grid: {fileID: 0}
-  _repathInterval: 0.2
-  _drawPathGizmos: 1
---- !u!114 &3162561922233596159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5d2b427633d24a4a910d3e09f12dd91, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _grid: {fileID: 0}
-  _drawHoveredCellGizmo: 1
-  _drawClickedCellGizmo: 1
 --- !u!61 &7841205390335374499
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -187,7 +137,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.40625, y: 0.53125}
   m_EdgeRadius: 0
---- !u!114 &5540166723793157794
+--- !u!114 &6397360623999948256
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -196,7 +146,50 @@ MonoBehaviour:
   m_GameObject: {fileID: 8347385983871711347}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0656f010a052a8247841f5ac2f9b61f2, type: 3}
+  m_Script: {fileID: 11500000, guid: 269286a667c2cd84c9f894f6eb258286, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugDamage: 0
+  _necromancer: {fileID: 3197931699983048068}
+--- !u!114 &3197931699983048068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f967912b83180e4b8f2e9c01adb86fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _grid: {fileID: 0}
+  _moveSpeed: 5
+  _drawHoveredCellGizmo: 1
+  _drawClickedCellGizmo: 1
+--- !u!50 &-2721680991065955918
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0

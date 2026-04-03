@@ -256,6 +256,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &826770790
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 826770792}
+  - component: {fileID: 826770793}
+  m_Layer: 0
+  m_Name: NecromancerSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &826770792
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 826770790}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &826770793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 826770790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242bd21dae86681469342fc3690d432e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancerPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
+  _floorManager: {fileID: 1032554670}
+  _transitioner: {fileID: 6397360623999948256, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
 --- !u!1 &1032554669
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,7 +342,62 @@ Transform:
   m_GameObject: {fileID: 1032554669}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.107612, y: -0.40305415, z: 2.3539271}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1096541653
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1096541655}
+  - component: {fileID: 1096541654}
+  m_Layer: 0
+  m_Name: BattleGrid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1096541654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096541653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79abeee95df864e4bbade4cf7c643d5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _walkableTilemap: {fileID: 0}
+  _blockedTilemap: {fileID: 0}
+  _cellSize: 1
+  _cellCheckSize: {x: 0.8, y: 0.8}
+  _usePhysicsBlockedCells: 0
+  _blockedCellsMask:
+    serializedVersion: 2
+    m_Bits: 0
+  _drawGridGizmos: 0
+  _gizmoExtents: {x: 12, y: 12}
+  _maxClosestCellSearch: 512
+--- !u!4 &1096541655
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096541653}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -315,15 +417,15 @@ PrefabInstance:
       objectReference: {fileID: 1032554670}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.0399497
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.3046961
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.49373668
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -369,3 +471,5 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 1131841152}
   - {fileID: 1032554671}
+  - {fileID: 826770792}
+  - {fileID: 1096541655}
