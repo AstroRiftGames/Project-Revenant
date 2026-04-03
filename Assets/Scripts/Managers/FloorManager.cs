@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using PrefabDungeonGeneration;
 
 public class FloorManager : MonoBehaviour
 {
@@ -9,6 +10,13 @@ public class FloorManager : MonoBehaviour
     public GameObject CurrentRoom => _currentRoom;
 
     public static event Action<RoomDoor, GameObject> OnRoomEntered;
+    public static event Action OnNextFloorRequested;
+
+    [ContextMenu("Request Next Floor")]
+    public void RequestNextFloor()
+    {
+        OnNextFloorRequested?.Invoke();
+    }
 
     private void OnEnable()
     {
@@ -42,6 +50,8 @@ public class FloorManager : MonoBehaviour
         else
             Debug.LogWarning($"[FloorManager] La sala '{nextRoom.name}' no tiene RoomContext.", this);
 
+        TriggerRoomContentGeneration(nextRoom);
+
         if (previousRoom != null)
             previousRoom.SetActive(false);
     }
@@ -69,5 +79,16 @@ public class FloorManager : MonoBehaviour
 
         EnterRoom(nextRoom);
         OnRoomEntered?.Invoke(door, nextRoom);
+    }
+
+    private void TriggerRoomContentGeneration(GameObject room)
+    {
+        if (room == null) return;
+
+        RoomContentGenerator generator = room.GetComponentInChildren<RoomContentGenerator>();
+        if (generator != null)
+        {
+            generator.GenerateContent();
+        }
     }
 }

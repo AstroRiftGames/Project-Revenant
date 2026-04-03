@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PrefabDungeonGeneration;
 using UnityEngine;
 using System.Linq;
 
@@ -18,6 +19,7 @@ namespace PrefabDungeonGeneration
         public int MinRooms = 8;
         public int MaxRooms = 13;
         public bool UseRandomSeed = true;
+        public float FloorOffsetDistance = 500f;
 
         private float _tileWorldSize = 1f;
 
@@ -33,15 +35,39 @@ namespace PrefabDungeonGeneration
             GenerateDungeon();
         }
 
+        private void OnEnable()
+        {
+            FloorManager.OnNextFloorRequested += GenerateNextFloor;
+        }
+
+        private void OnDisable()
+        {
+            FloorManager.OnNextFloorRequested -= GenerateNextFloor;
+        }
+
+        public void GenerateNextFloor()
+        {
+            FloorNumber++;
+            GenerateDungeon(false);
+        }
+
         [ContextMenu("Generate Prefab Dungeon")]
         public void GenerateDungeon()
+        {
+            GenerateDungeon(true);
+        }
+
+        public void GenerateDungeon(bool clearOld)
         {
             if (UseRandomSeed)
             {
                 Seed = Random.Range(int.MinValue, int.MaxValue);
             }
 
-            ClearDungeon();
+            if (clearOld)
+            {
+                ClearDungeon();
+            }
 
             if (RoomPrototypes == null || RoomPrototypes.Count == 0) return;
 
@@ -65,6 +91,11 @@ namespace PrefabDungeonGeneration
         {
             if (_currentFloor == null || _currentFloor.Rooms == null) return;
 
+            GameObject floorRoot = new GameObject($"Floor_{FloorNumber}");
+            floorRoot.transform.SetParent(transform);
+            floorRoot.transform.localPosition = new Vector3(FloorNumber * FloorOffsetDistance, 0, 0);
+            _spawnedInstances.Add(floorRoot);
+
             GridLayout generatorGrid = GetComponent<GridLayout>();
             var roomSpawnData = new List<(PDRoomNode room, Vector3 spawnPos)>();
 
@@ -83,12 +114,12 @@ namespace PrefabDungeonGeneration
                 if (activeGrid != null)
                 {
                     spawnPos = activeGrid.CellToLocal(new Vector3Int(roomNode.WorldPosition.x, roomNode.WorldPosition.y, 0));
-                    spawnPos = transform.TransformPoint(spawnPos);
+                    spawnPos = floorRoot.transform.TransformPoint(spawnPos);
                 }
                 else
                 {
                     spawnPos = new Vector3(roomNode.WorldPosition.x, roomNode.WorldPosition.y, 0) * _tileWorldSize;
-                    spawnPos = transform.TransformPoint(spawnPos);
+                    spawnPos = floorRoot.transform.TransformPoint(spawnPos);
                 }
                 
                 roomSpawnData.Add((roomNode, spawnPos));
@@ -104,7 +135,7 @@ namespace PrefabDungeonGeneration
                 PDRoomNode roomNode = data.room;
                 Vector3 spawnPos = data.spawnPos;
 
-                GameObject instance = Instantiate(roomNode.PrefabProfile.gameObject, spawnPos, Quaternion.identity, transform);
+                GameObject instance = Instantiate(roomNode.PrefabProfile.gameObject, spawnPos, Quaternion.identity, floorRoot.transform);
                 instance.name = $"{roomNode.RoomType}_Room_{roomNode.ID}";
                 
                 _spawnedInstances.Add(instance);
@@ -134,15 +165,40 @@ namespace PrefabDungeonGeneration
                             }
                         }
                     }
+
+                    if (roomNode.LocalConnectedDoorIndex >= 0 && roomNode.LocalConnectedDoorIndex < roomNode.PrefabProfile.Doors.Count)
+                    {
+                        var childDoorConfig = roomNode.PrefabProfile.Doors[roomNode.LocalConnectedDoorIndex];
+                        if (childDoorConfig.AnchorTransform != null)
+                        {
+                            string path = GetHierarchyPath(roomNode.PrefabProfile.transform, childDoorConfig.AnchorTransform);
+                            Transform anchorInstance = string.IsNullOrEmpty(path) ? instance.transform : instance.transform.Find(path);
+
+                            if (anchorInstance != null)
+                            {
+                                RoomDoor childDoorComponent = anchorInstance.GetComponent<RoomDoor>();
+                                if (childDoorComponent == null) childDoorComponent = anchorInstance.GetComponentInChildren<RoomDoor>();
+
+                                if (childDoorComponent != null)
+                                {
+                                    childDoorComponent.roomA = instance;
+                                    childDoorComponent.roomB = parentRoom;
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             _floorManager.EnterRoom(instantiatedRooms.Values.ToArray()[0]);
 
-            // Restore hierarchy order based on Y position (isometric/2dtilemap typical rendering trick)
-            var ySortedInstances = new List<GameObject>(_spawnedInstances);
-            ySortedInstances.Sort((a, b) => b.transform.position.y.CompareTo(a.transform.position.y));
-            foreach (var inst in ySortedInstances)
+            var currentFloorRooms = new List<GameObject>();
+            foreach (Transform child in floorRoot.transform)
+            {
+                currentFloorRooms.Add(child.gameObject);
+            }
+            currentFloorRooms.Sort((a, b) => b.transform.position.y.CompareTo(a.transform.position.y));
+            foreach (var inst in currentFloorRooms)
             {
                 inst.transform.SetAsLastSibling();
             }
@@ -208,6 +264,8 @@ namespace PrefabDungeonGeneration
                     sizeWorld = new Vector3(room.Size.x, room.Size.y, 1f) * _tileWorldSize;
                 }
                 
+                Vector3 currentFloorOffset = new Vector3(FloorNumber * FloorOffsetDistance, 0, 0);
+                centerWorld += currentFloorOffset;
                 centerWorld = transform.TransformPoint(centerWorld);
 
                 Gizmos.DrawCube(centerWorld, sizeWorld);
@@ -229,6 +287,8 @@ namespace PrefabDungeonGeneration
                         doorPos = new Vector3(door.Position.x + 0.5f, door.Position.y + 0.5f, 0) * _tileWorldSize;
                     }
                     
+                    Vector3 floorOffset = new Vector3(FloorNumber * FloorOffsetDistance, 0, 0);
+                    doorPos += floorOffset;
                     doorPos = transform.TransformPoint(doorPos);
                     Gizmos.DrawSphere(doorPos, (activeGrid != null ? 1f : _tileWorldSize) * 0.2f);
                 }

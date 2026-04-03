@@ -45,6 +45,7 @@ namespace PrefabDungeonGeneration
         
         public PDRoomNode ParentNode;
         public int ParentDoorIndex = -1;
+        public int LocalConnectedDoorIndex = -1;
     }
 
     public class PDFloorData

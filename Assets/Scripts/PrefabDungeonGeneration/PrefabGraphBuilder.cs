@@ -129,6 +129,7 @@ namespace PrefabDungeonGeneration
                     PDRoomNode newNode = CreateNode(floor.Rooms.Count, type, chosenTemplate, targetWorldPos, sourceNode.Depth + 1, tileSize);
                     newNode.ParentNode = sourceNode;
                     newNode.ParentDoorIndex = sourceDoor.OriginalIndex;
+                    newNode.LocalConnectedDoorIndex = chosenLocalDoor.OriginalIndex;
                     floor.Rooms.Add(newNode);
                     
                     sourceDoor.IsUsed = true;
