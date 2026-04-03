@@ -188,6 +188,24 @@ namespace PrefabDungeonGeneration
                         }
                     }
                 }
+
+                foreach (var globalDoor in roomNode.GlobalDoors)
+                {
+                    if (!globalDoor.IsUsed)
+                    {
+                        var doorConfig = roomNode.PrefabProfile.Doors[globalDoor.OriginalIndex];
+                        if (doorConfig.AnchorTransform != null)
+                        {
+                            string path = GetHierarchyPath(roomNode.PrefabProfile.transform, doorConfig.AnchorTransform);
+                            Transform anchorInstance = string.IsNullOrEmpty(path) ? instance.transform : instance.transform.Find(path);
+
+                            if (anchorInstance != null)
+                            {
+                                anchorInstance.gameObject.SetActive(false);
+                            }
+                        }
+                    }
+                }
             }
 
             _floorManager.EnterRoom(instantiatedRooms.Values.ToArray()[0]);
