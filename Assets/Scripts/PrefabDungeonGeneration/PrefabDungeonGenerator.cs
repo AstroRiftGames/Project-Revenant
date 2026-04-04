@@ -26,6 +26,8 @@ namespace PrefabDungeonGeneration
         public List<PrefabRoomDictionaryEntry> RoomPrototypes;
         public List<RoomTypeRule> BalanceRules;
 
+        public GameObject LastGeneratedStartRoom { get; private set; }
+
         private PDFloorData _currentFloor;
         private List<GameObject> _spawnedInstances = new List<GameObject>();
         [SerializeField] private FloorManager _floorManager;
@@ -208,7 +210,12 @@ namespace PrefabDungeonGeneration
                 }
             }
 
-            _floorManager.EnterRoom(instantiatedRooms.Values.ToArray()[0]);
+            LastGeneratedStartRoom = instantiatedRooms.Values.ToArray()[0];
+
+            if (FloorNumber <= 1)
+            {
+                _floorManager.EnterRoom(LastGeneratedStartRoom);
+            }
 
             var currentFloorRooms = new List<GameObject>();
             foreach (Transform child in floorRoot.transform)

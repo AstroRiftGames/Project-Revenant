@@ -32,7 +32,6 @@ public class FloorManager : MonoBehaviour
     {
         if (nextRoom == null)
         {
-            Debug.LogWarning("[FloorManager] EnterRoom: nextRoom es null.", this);
             return;
         }
 
@@ -47,8 +46,6 @@ public class FloorManager : MonoBehaviour
 
         if (nextRoom.TryGetComponent(out RoomContext roomContext))
             roomContext.InitializeRoom();
-        else
-            Debug.LogWarning($"[FloorManager] La sala '{nextRoom.name}' no tiene RoomContext.", this);
 
         TriggerRoomContentGeneration(nextRoom);
 
@@ -58,11 +55,8 @@ public class FloorManager : MonoBehaviour
 
     private void HandleRoomTransition(RoomDoor door)
     {
-        Debug.Log($"[FloorManager] currentRoom={_currentRoom?.name ?? "null"} doorA={door.roomA?.name ?? "null"} doorB={door.roomB?.name ?? "null"}", this);
-
         if (_currentRoom == null)
         {
-            Debug.LogWarning("[FloorManager] HandleRoomTransition: no hay sala actual asignada.", this);
             return;
         }
 
@@ -73,7 +67,6 @@ public class FloorManager : MonoBehaviour
             nextRoom = door.roomA;
         else
         {
-            Debug.LogWarning($"[FloorManager] La sala actual '{_currentRoom.name}' no está conectada a esta puerta.", this);
             return;
         }
 
