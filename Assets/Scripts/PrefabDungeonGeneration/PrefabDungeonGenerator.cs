@@ -29,6 +29,10 @@ namespace PrefabDungeonGeneration
         public GameObject LastGeneratedStartRoom { get; private set; }
 
         private PDFloorData _currentFloor;
+        public PDFloorData CurrentFloorData => _currentFloor;
+        public Dictionary<int, PDFloorData> FloorsCache { get; private set; } = new Dictionary<int, PDFloorData>();
+
+        public static event System.Action<PDFloorData> OnFloorGenerated;
         private List<GameObject> _spawnedInstances = new List<GameObject>();
         [SerializeField] private FloorManager _floorManager;
 
@@ -69,6 +73,7 @@ namespace PrefabDungeonGeneration
             if (clearOld)
             {
                 ClearDungeon();
+                FloorsCache.Clear();
             }
 
             if (RoomPrototypes == null || RoomPrototypes.Count == 0) return;
@@ -85,6 +90,12 @@ namespace PrefabDungeonGeneration
 
             var builder = new PrefabGraphBuilder(Seed);
             _currentFloor = builder.GenerateFloor(FloorNumber, MinRooms, MaxRooms, templates, _tileWorldSize, BalanceRules);
+            
+            if (_currentFloor != null)
+            {
+                _currentFloor.FloorIndex = FloorNumber; 
+            }
+            FloorsCache[FloorNumber] = _currentFloor;
 
             SpawnDungeon();
         }
@@ -227,6 +238,8 @@ namespace PrefabDungeonGeneration
             {
                 inst.transform.SetAsLastSibling();
             }
+
+            OnFloorGenerated?.Invoke(_currentFloor);
         }
 
         private string GetHierarchyPath(Transform root, Transform target)
