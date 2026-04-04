@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -256,6 +257,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb94405bfa37d2c449491f8ac2a6423c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Target: {fileID: 0}
+  SmoothTime: 0.3
+  Offset: {x: 0, y: 0, z: -10}
 --- !u!1 &826770790
 GameObject:
   m_ObjectHideFlags: 0
@@ -302,7 +318,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _necromancerPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
   _floorManager: {fileID: 1032554670}
-  _transitioner: {fileID: 6397360623999948256, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
 --- !u!1 &1032554669
 GameObject:
   m_ObjectHideFlags: 0
@@ -412,9 +427,17 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
+      propertyPath: Seed
+      value: -1844454601
+      objectReference: {fileID: 0}
+    - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: _floorManager
       value: 
       objectReference: {fileID: 1032554670}
+    - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
+      propertyPath: 'RoomPrototypes.Array.data[5].Templates.Array.data[0]'
+      value: 
+      objectReference: {fileID: -1078256696771541569, guid: 272d84ab6cc626846a7b31a043868c19, type: 3}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
