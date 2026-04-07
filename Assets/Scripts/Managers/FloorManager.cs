@@ -41,16 +41,13 @@ public class FloorManager : MonoBehaviour
         GameObject previousRoom = _currentRoom;
 
         nextRoom.SetActive(true);
-
         _currentRoom = nextRoom;
 
-        if (nextRoom.TryGetComponent(out RoomContext roomContext))
-            roomContext.InitializeRoom();
-
-        TriggerRoomContentGeneration(nextRoom);
-
-        if (previousRoom != null)
+        if (previousRoom != null && previousRoom != nextRoom)
             previousRoom.SetActive(false);
+
+        if (nextRoom.TryGetComponent(out RoomContext roomContext))
+            roomContext.EnterRoom();
     }
 
     private void HandleRoomTransition(RoomDoor door)
@@ -72,16 +69,5 @@ public class FloorManager : MonoBehaviour
 
         EnterRoom(nextRoom);
         OnRoomEntered?.Invoke(door, nextRoom);
-    }
-
-    private void TriggerRoomContentGeneration(GameObject room)
-    {
-        if (room == null) return;
-
-        RoomContentGenerator generator = room.GetComponentInChildren<RoomContentGenerator>();
-        if (generator != null)
-        {
-            generator.GenerateContent();
-        }
     }
 }

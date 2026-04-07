@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: TestDPS
   displayName: TestDPS
+  team: 1
   role: 1
   faction: 1
   sprite: {fileID: 0}

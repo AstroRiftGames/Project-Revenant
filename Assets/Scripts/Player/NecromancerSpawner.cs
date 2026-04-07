@@ -34,12 +34,32 @@ public class NecromancerSpawner : MonoBehaviour
 
     private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)
     {
+        List<Vector3Int> availableCells = roomContext.GetAvailableSpawnCells();
+        if (availableCells.Count > 0)
+        {
+            Vector3 roomOrigin = roomContext.transform.position;
+            Vector3Int bestCell = availableCells[0];
+            float bestDistance = Vector3.Distance(roomOrigin, grid.CellToWorld(bestCell));
+
+            for (int i = 1; i < availableCells.Count; i++)
+            {
+                Vector3Int candidate = availableCells[i];
+                float distance = Vector3.Distance(roomOrigin, grid.CellToWorld(candidate));
+                if (distance >= bestDistance)
+                    continue;
+
+                bestCell = candidate;
+                bestDistance = distance;
+            }
+
+            return bestCell;
+        }
+
         Vector3Int centerCell = grid.WorldToCell(roomContext.transform.position);
 
         if (grid.IsCellWalkable(centerCell))
             return centerCell;
 
-        // BFS para encontrar la celda walkable más cercana al centro de la sala
         var visited = new HashSet<Vector3Int> { centerCell };
         var queue = new Queue<Vector3Int>();
         queue.Enqueue(centerCell);

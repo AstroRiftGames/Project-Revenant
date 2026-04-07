@@ -6,105 +6,35 @@ using UnityEngine;
 [RequireComponent(typeof(TargetingStrategy))]
 public class UnitBrain : MonoBehaviour
 {
-    [SerializeField] private float _retargetInterval = 0.25f;
-    [SerializeField] private bool _runOnStart = true;
-    [SerializeField] private bool _debugBrain;
-
     private Unit _unit;
-    private UnitMovement _unitMovement;
-    private UnitCombat _unitCombat;
-    private TargetingStrategy _targetingStrategy;
+    private UnitMovement _movement;
+    private UnitCombat _combat;
+    private TargetingStrategy _targeting;
     private Unit _currentTarget;
-    private float _retargetTimer;
-    private BrainState _brainState;
-
-    private enum BrainState
-    {
-        Idle,
-        Chase,
-        Attack
-    }
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
-        _unitMovement = GetComponent<UnitMovement>();
-        _unitCombat = GetComponent<UnitCombat>();
-        _targetingStrategy = GetComponent<TargetingStrategy>();
+        _movement = GetComponent<UnitMovement>();
+        _combat = GetComponent<UnitCombat>();
+        _targeting = GetComponent<TargetingStrategy>();
     }
 
     private void Update()
     {
-        if (!_runOnStart || _unit == null || _unitMovement == null || _unitCombat == null || _targetingStrategy == null)
+        if (_unit == null || _movement == null || _combat == null || _targeting == null || !_unit.IsAlive)
             return;
 
-        _retargetTimer -= Time.deltaTime;
-        if (_retargetTimer > 0f)
-            return;
-
-        _retargetTimer = _retargetInterval;
-        UpdateTarget();
-        UpdateMovement();
-    }
-
-    private void UpdateTarget()
-    {
-        Unit previousTarget = _currentTarget;
-        _currentTarget = _targetingStrategy.SelectTarget(_unit, _currentTarget);
-
-        if (!_debugBrain || previousTarget == _currentTarget)
-            return;
-
-        if (_currentTarget == null)
-        {
-            Debug.Log($"[Brain] {_unit.Id} lost target.", this);
-            return;
-        }
-
-        Debug.Log($"[Brain] {_unit.Id} acquired target {_currentTarget.Id}.", this);
-    }
-
-    private void UpdateMovement()
-    {
-        if (_currentTarget == null)
-        {
-            _unitMovement.ClearDestination();
-            SetBrainState(BrainState.Idle);
-            return;
-        }
-
-        if (_unitCombat.IsTargetInRange(_currentTarget))
-        {
-            _unitMovement.ClearPath();
-            SetBrainState(BrainState.Attack);
-            _unitCombat.TryAttack(_currentTarget);
-            return;
-        }
-
-        SetBrainState(BrainState.Chase);
-        _unitMovement.SetTarget(_currentTarget, _unitCombat.AttackRangeInCells);
-    }
-
-    private void SetBrainState(BrainState nextState)
-    {
-        if (_brainState == nextState)
-            return;
-
-        _brainState = nextState;
-
-        if (!_debugBrain)
-            return;
-
-        string targetLabel = _currentTarget != null ? _currentTarget.Id : "none";
-        Debug.Log($"[Brain] {_unit.Id} -> {_brainState} (target: {targetLabel})", this);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
+        _currentTarget = _targeting.SelectTarget(_unit, _currentTarget);
         if (_currentTarget == null)
             return;
 
-        Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.9f);
-        Gizmos.DrawLine(transform.position, _currentTarget.Position);
+        if (_combat.IsTargetInRange(_currentTarget))
+        {
+            _combat.TryAttack(_currentTarget);
+            return;
+        }
+
+        _movement.SetTarget(_currentTarget, _combat.AttackRangeInCells);
     }
 }

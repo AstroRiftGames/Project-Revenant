@@ -13,11 +13,18 @@ public class UnitStatsData
     public float visionRange = 5f;
 }
 
+public enum UnitTeam
+{
+    Enemy,
+    NecromancerAlly
+}
+
 [CreateAssetMenu(fileName = "UnitData", menuName = "UnitData")]
 public class UnitData : ScriptableObject
 {
     public string unitId;
     public string displayName;
+    public UnitTeam team;
     public UnitRole role;
     public UnitFaction faction;
     public Sprite sprite;

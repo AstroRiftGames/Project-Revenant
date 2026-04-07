@@ -6,6 +6,7 @@ public class BattleGrid : MonoBehaviour
 {
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
+    [SerializeField] private RoomContext _roomContext;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
     [SerializeField] private bool _usePhysicsBlockedCells;
@@ -14,14 +15,13 @@ public class BattleGrid : MonoBehaviour
     [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
     [SerializeField] private int _maxClosestCellSearch = 512;
 
-    public static BattleGrid Instance { get; private set; }
-
     public float CellSize => CellWorldSize.x;
 
     public void Configure(Tilemap walkable, Tilemap blocked)
     {
         _walkableTilemap = walkable;
         _blockedTilemap = blocked;
+        ResolveRoomContext();
     }
 
     public Vector2 CellWorldSize
@@ -37,9 +37,9 @@ public class BattleGrid : MonoBehaviour
             return new Vector2(_cellSize, _cellSize);
         }
     }
-    private void Awake()
+    private void OnEnable()
     {
-        Instance = this;
+        ResolveRoomContext();
     }
 
     public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -66,6 +66,8 @@ public class BattleGrid : MonoBehaviour
 
     public bool IsCellWalkable(Vector3Int cell, Unit movingUnit = null)
     {
+        ResolveRoomContext();
+
         if (!IsCellInsideWalkableBounds(cell))
             return false;
 
@@ -84,17 +86,29 @@ public class BattleGrid : MonoBehaviour
                 return false;
         }
 
-        Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
-        for (int i = 0; i < units.Length; i++)
+        IReadOnlyList<Unit> units = _roomContext != null ? _roomContext.Units : null;
+        if (units == null)
+            return true;
+
+        for (int i = 0; i < units.Count; i++)
         {
-            if (units[i] == null || ReferenceEquals(units[i], movingUnit))
+            Unit unit = units[i];
+            if (unit == null || !unit.gameObject.activeInHierarchy || ReferenceEquals(unit, movingUnit))
                 continue;
 
-            if (WorldToCell(units[i].Position) == cell)
+            if (WorldToCell(unit.Position) == cell)
                 return false;
         }
 
         return true;
+    }
+
+    private void ResolveRoomContext()
+    {
+        if (_roomContext != null)
+            return;
+
+        _roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
     }
 
     public bool IsCellInsideWalkableBounds(Vector3Int cell)

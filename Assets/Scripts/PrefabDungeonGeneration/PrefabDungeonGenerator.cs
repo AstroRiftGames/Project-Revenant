@@ -221,9 +221,18 @@ namespace PrefabDungeonGeneration
                 }
             }
 
-            LastGeneratedStartRoom = instantiatedRooms.Values.ToArray()[0];
+            if (instantiatedRooms.Count == 0)
+                return;
 
-            if (FloorNumber <= 1)
+            LastGeneratedStartRoom = instantiatedRooms.OrderBy(pair => pair.Key).First().Value;
+
+            foreach (GameObject room in instantiatedRooms.Values)
+            {
+                if (room != null)
+                    room.SetActive(false);
+            }
+
+            if (_floorManager != null && LastGeneratedStartRoom != null && FloorNumber <= 1)
             {
                 _floorManager.EnterRoom(LastGeneratedStartRoom);
             }

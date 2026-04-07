@@ -1,16 +1,12 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [RequireComponent(typeof(LifeController))]
 public class Unit : Creature
 {
     [SerializeField] private UnitData _unitData;
-    [SerializeField] private bool _initializeOnAwake = true;
-    [SerializeField] private bool _drawDetectionGizmos = true;
 
     private RoomContext _roomContext;
-
-    private readonly List<IUnit> _detectionCandidates = new();
     private readonly List<IUnit> _visibleUnitsBuffer = new();
     private readonly List<IUnit> _visibleHostilesBuffer = new();
     private readonly List<Unit> _hostileUnitsBuffer = new();
@@ -19,54 +15,56 @@ public class Unit : Creature
     {
         base.Awake();
 
-        if (!_initializeOnAwake || _unitData == null || _data != null)
-            return;
+        if (_unitData != null)
+            Initialize(_unitData);
+    }
 
-        Initialize(_unitData);
+    private void OnEnable()
+    {
+        RoomContext context = GetComponentInParent<RoomContext>();
+        if (context != null)
+            context.RegisterUnit(this);
+    }
+
+    private void OnDisable()
+    {
+        if (_roomContext != null)
+            _roomContext.UnregisterUnit(this);
+    }
+
+    public RoomContext RoomContext => _roomContext;
+
+    public void AssignRoomContext(RoomContext context)
+    {
+        _roomContext = context;
     }
 
     public List<IUnit> GetVisibleUnitsInScene()
     {
-        if (_data == null)
-        {
-            _visibleUnitsBuffer.Clear();
-            return _visibleUnitsBuffer;
-        }
-
-        RefreshDetectionCandidates();
-        GetVisibleUnits(_detectionCandidates, _visibleUnitsBuffer);
+        _visibleUnitsBuffer.Clear();
+        PopulateRoomUnits(_visibleUnitsBuffer, includeOnlyHostiles: false);
         return _visibleUnitsBuffer;
     }
 
     public List<IUnit> GetVisibleHostileUnitsInScene()
     {
-        if (_data == null)
-        {
-            _visibleHostilesBuffer.Clear();
-            return _visibleHostilesBuffer;
-        }
-
-        RefreshDetectionCandidates();
-        GetVisibleHostileUnits(_detectionCandidates, _visibleHostilesBuffer);
+        _visibleHostilesBuffer.Clear();
+        PopulateRoomUnits(_visibleHostilesBuffer, includeOnlyHostiles: true);
         return _visibleHostilesBuffer;
     }
 
     public List<Unit> GetHostileUnitsInScene()
     {
-        if (_data == null)
-        {
-            _hostileUnitsBuffer.Clear();
-            return _hostileUnitsBuffer;
-        }
-
-        RefreshDetectionCandidates();
         _hostileUnitsBuffer.Clear();
-        for (int i = 0; i < _detectionCandidates.Count; i++)
-        {
-            if (_detectionCandidates[i] is not Unit candidate)
-                continue;
 
-            if (!candidate.IsAlive || !IsHostileTo(candidate))
+        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        if (roomUnits == null)
+            return _hostileUnitsBuffer;
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!IsValidRoomCandidate(candidate, includeOnlyHostiles: true))
                 continue;
 
             _hostileUnitsBuffer.Add(candidate);
@@ -77,64 +75,41 @@ public class Unit : Creature
 
     public Unit GetNearestVisibleHostileUnitInScene()
     {
-        if (_data == null)
-            return null;
-
-        RefreshDetectionCandidates();
-        return GetNearestVisibleHostileUnit(_detectionCandidates, _visibleHostilesBuffer) as Unit;
+        return GetNearestHostileUnitInScene();
     }
 
     public Unit GetNearestHostileUnitInScene()
     {
         List<Unit> hostiles = GetHostileUnitsInScene();
         Unit nearest = null;
-        float bestDistance = float.MaxValue;
+        float bestSqrDistance = float.MaxValue;
+        int bestHealth = int.MaxValue;
 
         for (int i = 0; i < hostiles.Count; i++)
         {
-            float distance = Vector3.Distance(Position, hostiles[i].Position);
-            if (distance >= bestDistance)
+            Unit candidate = hostiles[i];
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+
+            if (sqrDistance > bestSqrDistance)
                 continue;
 
-            bestDistance = distance;
-            nearest = hostiles[i];
+            if (Mathf.Approximately(sqrDistance, bestSqrDistance) && candidate.CurrentHealth >= bestHealth)
+                continue;
+
+            nearest = candidate;
+            bestSqrDistance = sqrDistance;
+            bestHealth = candidate.CurrentHealth;
         }
 
         return nearest;
     }
 
-    public RoomContext RoomContext => _roomContext;
-
-    public void AssignRoomContext(RoomContext context)
-    {
-        _roomContext = context;
-    }
-
-    private void RefreshDetectionCandidates()
-    {
-        _detectionCandidates.Clear();
-
-        if (_roomContext == null)
-            return;
-
-        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-
-            if (candidate == null || ReferenceEquals(candidate, this) || !candidate.gameObject.activeInHierarchy)
-                continue;
-
-            _detectionCandidates.Add(candidate);
-        }
-    }
-
     [ContextMenu("Snap To Grid")]
     public void SnapToGrid()
     {
-        BattleGrid grid = BattleGrid.Instance != null
-            ? BattleGrid.Instance
-            : FindAnyObjectByType<BattleGrid>();
+        BattleGrid grid = _roomContext != null
+            ? _roomContext.BattleGrid
+            : GetComponentInParent<BattleGrid>(includeInactive: true);
 
         if (grid == null)
             return;
@@ -147,50 +122,39 @@ public class Unit : Creature
         transform.position = grid.CellToWorld(targetCell);
     }
 
-    private void OnDrawGizmos()
+    private void PopulateRoomUnits(List<IUnit> results, bool includeOnlyHostiles)
     {
-        if (!_drawDetectionGizmos || _unitData == null)
+        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        if (roomUnits == null || results == null)
             return;
 
-        RefreshDetectionCandidates();
-
-        bool hasBlockedCandidateInRange = false;
-        for (int i = 0; i < _detectionCandidates.Count; i++)
+        for (int i = 0; i < roomUnits.Count; i++)
         {
-            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.stats.visionRange;
-            bool blocked = _data != null && inRange && IsDetectionBlocked(_detectionCandidates[i]);
+            Unit candidate = roomUnits[i];
+            if (!IsValidRoomCandidate(candidate, includeOnlyHostiles))
+                continue;
 
-            if (blocked)
-            {
-                hasBlockedCandidateInRange = true;
-                break;
-            }
+            results.Add(candidate);
         }
+    }
 
-        Color rangeFill = hasBlockedCandidateInRange
-            ? new Color(1f, 0.4f, 0f, 0.15f)
-            : new Color(1f, 1f, 0f, 0.15f);
-        Color rangeWire = hasBlockedCandidateInRange ? new Color(1f, 0.4f, 0f) : Color.yellow;
+    private bool IsValidRoomCandidate(Unit candidate, bool includeOnlyHostiles)
+    {
+        if (candidate == null || ReferenceEquals(candidate, this))
+            return false;
 
-        Gizmos.color = rangeFill;
-        Gizmos.DrawSphere(transform.position, _unitData.stats.visionRange);
-        Gizmos.color = rangeWire;
-        Gizmos.DrawWireSphere(transform.position, _unitData.stats.visionRange);
+        if (!candidate.gameObject.activeInHierarchy || !candidate.IsAlive)
+            return false;
 
-        for (int i = 0; i < _detectionCandidates.Count; i++)
-        {
-            bool inRange = Vector3.Distance(transform.position, _detectionCandidates[i].Position) <= _unitData.stats.visionRange;
-            bool blocked = _data != null && inRange && IsDetectionBlocked(_detectionCandidates[i]);
-            bool detected = _data != null
-                ? CanDetect(_detectionCandidates[i])
-                : inRange;
+        if (_roomContext == null || !ReferenceEquals(candidate.RoomContext, _roomContext))
+            return false;
 
-            Gizmos.color = detected
-                ? Color.green
-                : blocked
-                    ? new Color(1f, 0.4f, 0f)
-                    : Color.red;
-            Gizmos.DrawLine(transform.position, _detectionCandidates[i].Position);
-        }
+        if (!CanDetect(candidate))
+            return false;
+
+        if (includeOnlyHostiles && !IsHostileTo(candidate))
+            return false;
+
+        return true;
     }
 }

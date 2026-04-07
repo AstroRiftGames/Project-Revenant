@@ -188,7 +188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _retargetInterval: 0.25
   _runOnStart: 1
-  _debugBrain: 0
+  _debugBrain: 1
 --- !u!114 &8079215970449991445
 MonoBehaviour:
   m_ObjectHideFlags: 0

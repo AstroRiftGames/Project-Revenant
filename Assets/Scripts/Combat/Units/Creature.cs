@@ -6,24 +6,21 @@ public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
 
 public abstract class Creature : MonoBehaviour, IUnit
 {
-    [SerializeField] private bool _useObstacleDetection = true;
-    [SerializeField] private LayerMask _obstacleMask;
-
-    public string Id { get; private set; }
-    public UnitRole Role => _data.role;
-    public UnitFaction Faction => _data.faction;
-    public float VisionRange => _data.stats.visionRange;
-    public float MoveSpeed => _data.stats.moveSpeed;
-    public int AttackDamage => _data.stats.attackDamage;
-    public float AttackInterval => _data.stats.attackInterval;
-    public int AttackRangeInCells => _data.stats.attackRangeInCells;
-    public float Accuracy => _data.stats.accuracy;
-    public float Evasion => _data.stats.evasion;
+    public string Id { get; protected set; } = string.Empty;
+    public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
+    public UnitRole Role => _data != null ? _data.role : default;
+    public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
-    public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : BaseMaxHealth;
-    public bool IsAlive => _lifeController != null && _lifeController.IsAlive;
-    public int BaseMaxHealth => _data != null ? _data.stats.maxHealth : 0;
+    public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
+    public bool IsAlive => _lifeController == null || _lifeController.IsAlive;
+    public int BaseMaxHealth => _data != null && _data.stats != null ? _data.stats.maxHealth : 0;
+    public float MoveSpeed => _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f;
+    public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
+    public int AttackDamage => _data != null && _data.stats != null ? _data.stats.attackDamage : 0;
+    public float AttackInterval => _data != null && _data.stats != null ? _data.stats.attackInterval : 0f;
+    public float Accuracy => _data != null && _data.stats != null ? _data.stats.accuracy : 0f;
+    public float Evasion => _data != null && _data.stats != null ? _data.stats.evasion : 0f;
 
     protected UnitData _data;
     protected LifeController _lifeController;
@@ -35,129 +32,70 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     protected virtual void Initialize(UnitData data)
     {
-        if (data.stats == null)
-            data.stats = new UnitStatsData();
-
         _data = data;
-        Id = data.unitId;
+        Id = data != null ? data.unitId : string.Empty;
         _lifeController ??= GetComponent<LifeController>();
-        _lifeController?.Initialize(data.stats.maxHealth);
+
+        if (_lifeController != null)
+            _lifeController.Initialize(BaseMaxHealth);
     }
 
     public bool IsHostileTo(IUnit candidate)
     {
-        if (candidate == null)
+        if (candidate == null || ReferenceEquals(candidate, this))
             return false;
 
-        if (ReferenceEquals(candidate, this))
+        if (candidate is not Creature creature)
             return false;
 
-        if (!candidate.IsAlive)
+        if (!IsAlive || !creature.IsAlive)
             return false;
 
-        return Faction != candidate.Faction;
+        return Team != creature.Team;
     }
 
     public bool CanDetect(IUnit candidate)
     {
-        if (candidate == null)
+        if (candidate == null || ReferenceEquals(candidate, this))
             return false;
 
-        if (ReferenceEquals(candidate, this))
+        if (candidate is not MonoBehaviour behaviour)
             return false;
 
-        if (_data == null)
-            return false;
-
-        if (!IsAlive)
-            return false;
-
-        if (!candidate.IsAlive)
-            return false;
-
-        bool inRange = IsWithinVisionRange(candidate);
-        bool blocked = IsDetectionBlocked(candidate);
-        return inRange && !blocked;
+        return behaviour.gameObject.activeInHierarchy;
     }
 
     public void GetVisibleUnits(List<IUnit> candidates, List<IUnit> results)
     {
-        if (results == null)
-            return;
-
-        results.Clear();
-        if (candidates == null)
-            return;
-
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            IUnit candidate = candidates[i];
-            if (CanDetect(candidate))
-                results.Add(candidate);
-        }
+        results?.Clear();
     }
 
     public void GetVisibleHostileUnits(List<IUnit> candidates, List<IUnit> results)
     {
-        if (results == null)
-            return;
-
-        results.Clear();
-        if (candidates == null)
-            return;
-
-        for (int i = 0; i < candidates.Count; i++)
-        {
-            IUnit candidate = candidates[i];
-            if (candidate != null && IsHostileTo(candidate) && CanDetect(candidate))
-                results.Add(candidate);
-        }
+        results?.Clear();
     }
 
     public IUnit GetNearestVisibleHostileUnit(List<IUnit> candidates, List<IUnit> visibleHostilesBuffer)
     {
+        if (visibleHostilesBuffer == null)
+            return null;
+
         GetVisibleHostileUnits(candidates, visibleHostilesBuffer);
         IUnit nearest = null;
-        float bestDistance = float.MaxValue;
+        float bestSqrDistance = float.MaxValue;
 
         for (int i = 0; i < visibleHostilesBuffer.Count; i++)
         {
-            float distance = Vector3.Distance(Position, visibleHostilesBuffer[i].Position);
-            if (distance >= bestDistance)
+            IUnit candidate = visibleHostilesBuffer[i];
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+            if (sqrDistance >= bestSqrDistance)
                 continue;
 
-            bestDistance = distance;
-            nearest = visibleHostilesBuffer[i];
+            bestSqrDistance = sqrDistance;
+            nearest = candidate;
         }
 
         return nearest;
-    }
-
-    protected virtual bool IsWithinVisionRange(IUnit candidate)
-        => Vector3.Distance(Position, candidate.Position) <= VisionRange;
-
-    protected virtual bool IsDetectionBlocked(IUnit candidate)
-    {
-        if (!_useObstacleDetection)
-            return false;
-
-        Vector2 origin = Position;
-        Vector2 target = candidate.Position;
-        RaycastHit2D[] hits = Physics2D.LinecastAll(origin, target, _obstacleMask);
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            Collider2D hitCollider = hits[i].collider;
-            if (hitCollider == null)
-                continue;
-
-            if (hitCollider.transform == transform)
-                continue;
-
-            return true;
-        }
-
-        return false;
     }
 
     public void TakeDamage(int amount, IUnit source = null)
@@ -167,12 +105,11 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     public Unit GetLastAttacker()
     {
-        return _lifeController != null ? _lifeController.LastAttacker : null;
+        return null;
     }
 
     public List<Unit> GetAliveAggressors()
     {
-        return _lifeController != null ? _lifeController.GetAliveAggressors() : new List<Unit>();
+        return new List<Unit>();
     }
-
 }

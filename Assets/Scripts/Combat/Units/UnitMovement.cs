@@ -1,62 +1,31 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
 public class UnitMovement : MonoBehaviour
 {
     [SerializeField] private BattleGrid _grid;
-    [SerializeField] private float _repathInterval = 0.2f;
-    [SerializeField] private bool _drawPathGizmos = true;
+    [SerializeField] private bool _allowSerializedGridFallback;
 
     private Unit _unit;
-    private readonly List<Vector3Int> _currentPath = new();
-    private int _pathIndex;
-    private bool _hasDestination;
-    private Vector3Int _destinationCell;
     private Vector3Int _currentCell;
-    private bool _hasCurrentCell;
-    private Unit _targetUnit;
-    private int _targetRangeInCells;
-    private float _repathTimer;
+    private float _nextStepTime;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
-        if (_grid != null)
-            SnapToCurrentCell();
     }
 
     private void Start()
     {
-        if (_grid != null)
-            SnapToCurrentCell();
-    }
-
-    private void Update()
-    {
-        if (_grid == null || _unit == null)
+        if (!_allowSerializedGridFallback || _grid == null)
             return;
 
-        if (_targetUnit != null)
-            UpdateTargetPath();
-
-        if (!_hasDestination)
-            return;
-
-        FollowPath();
+        SnapToCurrentCell();
     }
 
     public void SetGrid(BattleGrid grid)
     {
-        if (grid == _grid)
-            return;
-
         _grid = grid;
-
-        ClearDestination();
-
-        _hasCurrentCell = false;
-
         SnapToCurrentCell();
     }
 
@@ -65,141 +34,61 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null || _unit == null)
             return false;
 
-        Vector3Int startCell = GetCurrentCell();
         if (!_grid.IsCellWalkable(destinationCell, _unit))
             return false;
 
-        if (startCell == destinationCell)
-        {
-            _currentPath.Clear();
-            _pathIndex = 0;
-            _destinationCell = destinationCell;
-            _hasDestination = false;
-            return true;
-        }
-
-        List<Vector3Int> path = GridPathfinder.FindPath(_grid, startCell, destinationCell, _unit);
-        if (path.Count <= 1)
-            return false;
-
-        _currentPath.Clear();
-        _currentPath.AddRange(path);
-        _pathIndex = 1;
-        _destinationCell = destinationCell;
-        _targetUnit = null;
-        _hasDestination = true;
+        _currentCell = destinationCell;
+        transform.position = _grid.CellToWorld(destinationCell);
         return true;
     }
 
     public bool SetTarget(Unit targetUnit, int rangeInCells)
     {
-        if (_grid == null || _unit == null || targetUnit == null)
+        if (_grid == null || _unit == null || targetUnit == null || !targetUnit.IsAlive)
             return false;
 
-        _targetUnit = targetUnit;
-        _targetRangeInCells = Mathf.Max(0, rangeInCells);
-        _repathTimer = 0f;
+        if (IsWithinRange(targetUnit, rangeInCells))
+            return false;
+
+        if (Time.time < _nextStepTime)
+            return false;
+
+        Vector3Int originCell = GetCurrentCell();
+        Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
+        Vector3Int desiredCell = targetCell;
+
+        if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, Mathf.Max(0, rangeInCells), _unit, out desiredCell))
+            desiredCell = targetCell;
+
+        Vector3Int nextStep = GetNextStepTowards(originCell, desiredCell);
+
+        if (nextStep == originCell)
+            return false;
+
+        if (!SetDestinationCell(nextStep))
+            return false;
+
+        float moveSpeed = Mathf.Max(0.01f, _unit.MoveSpeed);
+        _nextStepTime = Time.time + (1f / moveSpeed);
         return true;
     }
 
     public bool IsWithinRange(Unit targetUnit, int rangeInCells)
     {
-        if (_grid == null || _unit == null || targetUnit == null)
+        if (_grid == null || _unit == null || targetUnit == null || !targetUnit.IsAlive)
             return false;
 
-        Vector3Int startCell = GetCurrentCell();
+        Vector3Int selfCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
-        int distance = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
-        return distance <= Mathf.Max(0, rangeInCells);
+        return ManhattanDistance(selfCell, targetCell) <= Mathf.Max(0, rangeInCells);
     }
 
     public void ClearDestination()
     {
-        _currentPath.Clear();
-        _pathIndex = 0;
-        _hasDestination = false;
-        _targetUnit = null;
     }
 
     public void ClearPath()
     {
-        _currentPath.Clear();
-        _pathIndex = 0;
-        _hasDestination = false;
-    }
-
-    private void UpdateTargetPath()
-    {
-        if (_targetUnit == null)
-            return;
-
-        _repathTimer -= Time.deltaTime;
-        if (_repathTimer > 0f)
-            return;
-
-        _repathTimer = _repathInterval;
-
-        Vector3Int startCell = GetCurrentCell();
-        Vector3Int targetCell = _grid.WorldToCell(_targetUnit.Position);
-        int distanceToTarget = Mathf.Abs(startCell.x - targetCell.x) + Mathf.Abs(startCell.y - targetCell.y);
-
-        if (distanceToTarget <= _targetRangeInCells)
-        {
-            SnapToCurrentCell();
-            ClearPath();
-            return;
-        }
-
-        if (!_grid.TryFindWalkableCellInRange(targetCell, startCell, _targetRangeInCells, _unit, out Vector3Int destinationCell))
-        {
-            ClearPath();
-            return;
-        }
-
-        if (startCell == destinationCell)
-        {
-            ClearPath();
-            return;
-        }
-
-        List<Vector3Int> path = GridPathfinder.FindPath(_grid, startCell, destinationCell, _unit);
-        if (path.Count <= 1)
-        {
-            ClearPath();
-            return;
-        }
-
-        _currentPath.Clear();
-        _currentPath.AddRange(path);
-        _pathIndex = 1;
-        _destinationCell = destinationCell;
-        _hasDestination = true;
-    }
-
-    private void FollowPath()
-    {
-        if (_currentPath.Count == 0 || _pathIndex >= _currentPath.Count)
-        {
-            ClearPath();
-            return;
-        }
-
-        Vector3 targetWorld = _grid.CellToWorld(_currentPath[_pathIndex]);
-        transform.position = Vector3.MoveTowards(transform.position, targetWorld, _unit.MoveSpeed * Time.deltaTime);
-
-        if (Vector3.Distance(transform.position, targetWorld) > 0.01f)
-            return;
-
-        transform.position = targetWorld;
-        _currentCell = _currentPath[_pathIndex];
-        _hasCurrentCell = true;
-        _pathIndex++;
-
-        if (_pathIndex >= _currentPath.Count)
-        {
-            SnapToCurrentCell();
-            ClearPath();
-        }
     }
 
     private void SnapToCurrentCell()
@@ -207,8 +96,10 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null)
             return;
 
-        _currentCell = _grid.WorldToCell(transform.position);
-        _hasCurrentCell = true;
+        Vector3Int rawCell = _grid.WorldToCell(transform.position);
+        _currentCell = _grid.IsCellWalkable(rawCell, _unit)
+            ? rawCell
+            : _grid.FindClosestWalkableCell(rawCell, _unit);
         transform.position = _grid.CellToWorld(_currentCell);
     }
 
@@ -217,32 +108,54 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null)
             return Vector3Int.zero;
 
-        if (!_hasCurrentCell)
-            _currentCell = _grid.WorldToCell(transform.position);
-        _hasCurrentCell = true;
-
+        _currentCell = _grid.WorldToCell(transform.position);
         return _currentCell;
     }
 
-    private void OnDrawGizmos()
+    private Vector3Int GetNextStepTowards(Vector3Int originCell, Vector3Int targetCell)
     {
-        if (!_drawPathGizmos || _grid == null || _currentPath.Count == 0)
-            return;
+        if (_grid == null || _unit == null)
+            return originCell;
 
-        Gizmos.color = Color.cyan;
-        for (int i = 0; i < _currentPath.Count; i++)
+        int originDistance = ManhattanDistance(originCell, targetCell);
+        Vector3Int bestImprovingStep = originCell;
+        int bestImprovingDistance = originDistance;
+        Vector3Int bestFallbackStep = originCell;
+        int bestFallbackDistance = int.MaxValue;
+
+        System.Collections.Generic.List<Vector3Int> neighbors = _grid.GetNeighbors(originCell);
+        for (int i = 0; i < neighbors.Count; i++)
         {
-            Vector3 worldPoint = _grid.CellToWorld(_currentPath[i]);
-            Gizmos.DrawSphere(worldPoint, 0.08f);
+            Vector3Int candidate = neighbors[i];
+            if (!_grid.IsCellWalkable(candidate, _unit))
+                continue;
 
-            if (i + 1 < _currentPath.Count)
-                Gizmos.DrawLine(worldPoint, _grid.CellToWorld(_currentPath[i + 1]));
+            int candidateDistance = ManhattanDistance(candidate, targetCell);
+
+            if (candidateDistance < bestImprovingDistance)
+            {
+                bestImprovingStep = candidate;
+                bestImprovingDistance = candidateDistance;
+            }
+
+            if (candidateDistance <= originDistance && candidateDistance < bestFallbackDistance)
+            {
+                bestFallbackStep = candidate;
+                bestFallbackDistance = candidateDistance;
+            }
         }
 
-        Vector3 destinationWorld = _grid.CellToWorld(_destinationCell);
-        Gizmos.color = new Color(0.2f, 1f, 1f, 0.35f);
-        Gizmos.DrawCube(destinationWorld, new Vector3(_grid.CellWorldSize.x, _grid.CellWorldSize.y, 0.05f));
-        Gizmos.color = new Color(0.2f, 1f, 1f, 1f);
-        Gizmos.DrawWireCube(destinationWorld, new Vector3(_grid.CellWorldSize.x, _grid.CellWorldSize.y, 0.05f));
+        if (bestImprovingStep != originCell)
+            return bestImprovingStep;
+
+        if (bestFallbackStep != originCell)
+            return bestFallbackStep;
+
+        return originCell;
+    }
+
+    private static int ManhattanDistance(Vector3Int a, Vector3Int b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 }

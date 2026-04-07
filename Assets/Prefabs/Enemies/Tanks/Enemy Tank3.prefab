@@ -158,7 +158,7 @@ MonoBehaviour:
     m_Bits: 0
   _unitData: {fileID: 11400000, guid: b048bd5ebf39c9b43aaa0db3daae0887, type: 2}
   _initializeOnAwake: 1
-  _drawDetectionGizmos: 0
+  _drawDetectionGizmos: 1
 --- !u!114 &5774226626785607199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
   _repathInterval: 0.2
-  _drawPathGizmos: 0
+  _drawPathGizmos: 1
 --- !u!114 &4321220089924871362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,7 +188,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _retargetInterval: 0.25
   _runOnStart: 1
-  _debugBrain: 0
+  _debugBrain: 1
 --- !u!114 &3010554441863723249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugCombat: 0
+  _debugCombat: 1
   _minHitChance: 0.1
   _maxHitChance: 0.95
 --- !u!114 &1132451354933908801
@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0656f010a052a8247841f5ac2f9b61f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugDamage: 0
+  _debugDamage: 1
 --- !u!114 &8428265930954497066
 MonoBehaviour:
   m_ObjectHideFlags: 0

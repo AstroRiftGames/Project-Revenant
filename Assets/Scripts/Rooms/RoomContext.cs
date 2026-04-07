@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PrefabDungeonGeneration;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -6,45 +7,103 @@ public class RoomContext : MonoBehaviour
 {
     [Header("Grid")]
     [SerializeField] private BattleGrid _battleGrid;
+    [SerializeField] private RoomContentGenerator _contentGenerator;
 
-    [Header("Tilemaps locales")]
+    [Header("Local tilemaps")]
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
 
     private readonly List<Unit> _units = new();
+    private bool _hasGeneratedContent;
 
     public BattleGrid BattleGrid => _battleGrid;
     public IReadOnlyList<Unit> Units => _units;
 
     private void Awake()
     {
-        ResolveGrid();
-        ResolveTilemaps();
+        ResolveDependencies();
     }
 
-    private void OnEnable()
+    public void EnterRoom()
     {
-        InitializeRoom();
-    }
-
-    public void InitializeRoom()
-    {
-        ResolveGrid();
-        ResolveTilemaps();
+        ResolveDependencies();
         ConfigureGrid();
+        GenerateContentIfNeeded();
         CacheUnits();
         InjectContextIntoUnits();
     }
 
     public void RegisterUnit(Unit unit)
     {
-        if (unit != null && !_units.Contains(unit))
-            _units.Add(unit);
+        if (unit == null || _units.Contains(unit))
+            return;
+
+        _units.Add(unit);
+        IntegrateUnit(unit);
     }
 
     public void UnregisterUnit(Unit unit)
     {
+        if (unit != null && ReferenceEquals(unit.RoomContext, this))
+            unit.AssignRoomContext(null);
+
         _units.Remove(unit);
+    }
+
+    public List<Vector3Int> GetAvailableSpawnCells(int edgePadding = 0)
+    {
+        ResolveDependencies();
+
+        var result = new List<Vector3Int>();
+        if (_battleGrid == null || _walkableTilemap == null)
+            return result;
+
+        BoundsInt bounds = _walkableTilemap.cellBounds;
+        bool hasWalkableTiles = false;
+        int minX = int.MaxValue;
+        int minY = int.MaxValue;
+        int maxX = int.MinValue;
+        int maxY = int.MinValue;
+
+        foreach (Vector3Int cell in bounds.allPositionsWithin)
+        {
+            if (!_walkableTilemap.HasTile(cell))
+                continue;
+
+            hasWalkableTiles = true;
+            minX = Mathf.Min(minX, cell.x);
+            minY = Mathf.Min(minY, cell.y);
+            maxX = Mathf.Max(maxX, cell.x);
+            maxY = Mathf.Max(maxY, cell.y);
+        }
+
+        if (!hasWalkableTiles)
+            return result;
+
+        int padding = Mathf.Max(0, edgePadding);
+        for (int x = minX + padding; x <= maxX - padding; x++)
+        {
+            for (int y = minY + padding; y <= maxY - padding; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+                if (!_walkableTilemap.HasTile(cell))
+                    continue;
+
+                if (!_battleGrid.IsCellWalkable(cell))
+                    continue;
+
+                result.Add(cell);
+            }
+        }
+
+        return result;
+    }
+
+    private void ResolveDependencies()
+    {
+        ResolveGrid();
+        ResolveTilemaps();
+        ResolveContentGenerator();
     }
 
     private void ResolveGrid()
@@ -53,18 +112,12 @@ public class RoomContext : MonoBehaviour
             return;
 
         _battleGrid = GetComponentInChildren<BattleGrid>(includeInactive: true);
-        if (_battleGrid != null)
-            return;
-
-        if (BattleGrid.Instance != null)
+        if (_battleGrid == null)
         {
-            _battleGrid = BattleGrid.Instance;
-            return;
+            Debug.LogWarning(
+                $"[RoomContext] '{name}': no se encontro ningun BattleGrid dentro de la sala.",
+                this);
         }
-
-        Debug.LogWarning(
-            $"[RoomContext] '{name}': no se encontró ningún BattleGrid en la sala ni en la escena.",
-            this);
     }
 
     private void ResolveTilemaps()
@@ -113,6 +166,14 @@ public class RoomContext : MonoBehaviour
         }
     }
 
+    private void ResolveContentGenerator()
+    {
+        if (_contentGenerator != null)
+            return;
+
+        _contentGenerator = GetComponentInChildren<RoomContentGenerator>(includeInactive: true);
+    }
+
     private void ConfigureGrid()
     {
         if (_battleGrid == null)
@@ -129,6 +190,23 @@ public class RoomContext : MonoBehaviour
         _battleGrid.Configure(_walkableTilemap, _blockedTilemap);
     }
 
+    private void GenerateContentIfNeeded()
+    {
+        if (_hasGeneratedContent || _contentGenerator == null)
+            return;
+
+        if (_battleGrid == null)
+        {
+            Debug.LogWarning(
+                $"[RoomContext] '{name}': no puede generar contenido porque BattleGrid es null.",
+                this);
+            return;
+        }
+
+        _contentGenerator.GenerateContent(this);
+        _hasGeneratedContent = true;
+    }
+
     private void CacheUnits()
     {
         _units.Clear();
@@ -137,14 +215,32 @@ public class RoomContext : MonoBehaviour
 
     private void InjectContextIntoUnits()
     {
+        if (_battleGrid == null)
+        {
+            Debug.LogWarning(
+                $"[RoomContext] '{name}': InjectContextIntoUnits abortado porque _battleGrid es null. " +
+                $"Revisa que la sala tenga un BattleGrid hijo con tilemaps configurados.",
+                this);
+            return;
+        }
+
         foreach (Unit unit in _units)
         {
             if (unit == null)
                 continue;
 
-            unit.GetComponent<UnitMovement>()?.SetGrid(_battleGrid);
-            unit.GetComponent<GridInputMover>()?.SetGrid(_battleGrid);
-            unit.AssignRoomContext(this);
+            IntegrateUnit(unit);
         }
+    }
+
+    private void IntegrateUnit(Unit unit)
+    {
+        unit.AssignRoomContext(this);
+
+        if (_battleGrid == null)
+            return;
+
+        unit.GetComponent<UnitMovement>()?.SetGrid(_battleGrid);
+        unit.GetComponent<GridInputMover>()?.SetGrid(_battleGrid);
     }
 }
