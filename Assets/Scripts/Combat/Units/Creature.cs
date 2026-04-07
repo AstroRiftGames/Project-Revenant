@@ -20,17 +20,17 @@ public abstract class Creature : MonoBehaviour, IUnit
     public float Accuracy => _data.stats.accuracy;
     public float Evasion => _data.stats.evasion;
     public Vector3 Position => transform.position;
-    public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
-    public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : BaseMaxHealth;
-    public bool IsAlive => _lifeController != null && _lifeController.IsAlive;
+    public int CurrentHealth => LifeController != null ? LifeController.CurrentHealth : 0;
+    public int MaxHealth => LifeController != null ? LifeController.MaxHealth : BaseMaxHealth;
+    public bool IsAlive => LifeController != null && LifeController.IsAlive;
     public int BaseMaxHealth => _data != null ? _data.stats.maxHealth : 0;
 
     protected UnitData _data;
-    protected LifeController _lifeController;
+    protected LifeController LifeController { get; private set; }
 
     protected virtual void Awake()
     {
-        _lifeController = GetComponent<LifeController>();
+        LifeController = GetComponent<LifeController>();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -40,8 +40,8 @@ public abstract class Creature : MonoBehaviour, IUnit
 
         _data = data;
         Id = data.unitId;
-        _lifeController ??= GetComponent<LifeController>();
-        _lifeController?.Initialize(data.stats.maxHealth);
+        LifeController ??= GetComponent<LifeController>();
+        LifeController?.Initialize(data.stats.maxHealth);
     }
 
     public bool IsHostileTo(IUnit candidate)
@@ -162,17 +162,17 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        _lifeController?.TakeDamage(amount, source);
+        LifeController?.TakeDamage(amount, source);
     }
 
     public Unit GetLastAttacker()
     {
-        return _lifeController != null ? _lifeController.LastAttacker : null;
+        return LifeController != null ? LifeController.LastAttacker : null;
     }
 
     public List<Unit> GetAliveAggressors()
     {
-        return _lifeController != null ? _lifeController.GetAliveAggressors() : new List<Unit>();
+        return LifeController != null ? LifeController.GetAliveAggressors() : new List<Unit>();
     }
 
 }
