@@ -20,6 +20,13 @@ public enum UnitTeam
     NecromancerAlly
 }
 
+public enum UnitCombatStyle
+{
+    Default,
+    Melee,
+    Ranged
+}
+
 [CreateAssetMenu(fileName = "UnitData", menuName = "UnitData")]
 public class UnitData : ScriptableObject
 {
@@ -28,6 +35,7 @@ public class UnitData : ScriptableObject
     public GameObject unitPrefab;
     public UnitTeam team;
     public UnitRole role;
+    public UnitCombatStyle combatStyle;
     public UnitFaction faction;
     public Sprite sprite;
     public int tileSize;

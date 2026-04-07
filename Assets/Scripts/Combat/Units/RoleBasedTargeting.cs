@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Unit))]
 public class RoleBasedTargeting : TargetingStrategy
@@ -22,38 +23,27 @@ public class RoleBasedTargeting : TargetingStrategy
         if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
             return currentTarget;
 
+        List<Unit> aggressors = self.GetAliveAggressors();
+        Unit bestAggressor = GetClosestUnit(self, aggressors);
+        if (bestAggressor != null)
+            return bestAggressor;
+
         return self.GetNearestHostileUnitInScene();
     }
 
     private Unit SelectDpsTarget(Unit self, Unit currentTarget)
     {
-        System.Collections.Generic.List<Unit> hostiles = self.GetHostileUnitsInScene();
+        List<Unit> hostiles = self.GetHostileUnitsInScene();
         if (hostiles.Count == 0)
             return null;
 
-        Unit bestTarget = null;
-        int lowestHealth = int.MaxValue;
-        float bestSqrDistance = float.MaxValue;
-
-        for (int i = 0; i < hostiles.Count; i++)
-        {
-            Unit candidate = hostiles[i];
-            float sqrDistance = (candidate.Position - self.Position).sqrMagnitude;
-
-            if (candidate.CurrentHealth > lowestHealth)
-                continue;
-
-            if (candidate.CurrentHealth == lowestHealth && sqrDistance >= bestSqrDistance)
-                continue;
-
-            bestTarget = candidate;
-            lowestHealth = candidate.CurrentHealth;
-            bestSqrDistance = sqrDistance;
-        }
+        Unit bestTarget = GetBestDpsTarget(self, hostiles);
+        if (bestTarget == null)
+            return null;
 
         if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile) &&
             currentTarget != null &&
-            currentTarget.CurrentHealth <= lowestHealth)
+            CompareDpsTargets(self, currentTarget, bestTarget) <= 0)
         {
             return currentTarget;
         }
@@ -63,9 +53,92 @@ public class RoleBasedTargeting : TargetingStrategy
 
     private Unit SelectSupportTarget(Unit self, Unit currentTarget)
     {
-        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Ally))
+        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Ally) &&
+            currentTarget.CurrentHealth < currentTarget.MaxHealth)
+        {
             return currentTarget;
+        }
 
-        return self.GetLowestHealthAllyInScene();
+        Unit injuredAlly = self.GetLowestHealthAllyNeedingHelpInScene();
+        if (injuredAlly != null)
+            return injuredAlly;
+
+        Unit frontliner = self.GetNearestAllyByRoleInScene(UnitRole.Tank);
+        if (frontliner != null)
+            return frontliner;
+
+        return self.GetNearestAllyInScene();
+    }
+
+    private static Unit GetBestDpsTarget(Unit self, List<Unit> hostiles)
+    {
+        Unit bestTarget = null;
+
+        for (int i = 0; i < hostiles.Count; i++)
+        {
+            Unit candidate = hostiles[i];
+            if (bestTarget == null || CompareDpsTargets(self, candidate, bestTarget) < 0)
+                bestTarget = candidate;
+        }
+
+        return bestTarget;
+    }
+
+    private static int CompareDpsTargets(Unit self, Unit candidate, Unit incumbent)
+    {
+        if (candidate == null)
+            return 1;
+
+        if (incumbent == null)
+            return -1;
+
+        int candidatePriority = GetDpsPriority(candidate);
+        int incumbentPriority = GetDpsPriority(incumbent);
+        if (candidatePriority != incumbentPriority)
+            return candidatePriority.CompareTo(incumbentPriority);
+
+        if (candidate.CurrentHealth != incumbent.CurrentHealth)
+            return candidate.CurrentHealth.CompareTo(incumbent.CurrentHealth);
+
+        float candidateDistance = (candidate.Position - self.Position).sqrMagnitude;
+        float incumbentDistance = (incumbent.Position - self.Position).sqrMagnitude;
+        return candidateDistance.CompareTo(incumbentDistance);
+    }
+
+    private static int GetDpsPriority(Unit candidate)
+    {
+        return candidate.Role switch
+        {
+            UnitRole.Support => 0,
+            UnitRole.DPS when candidate.IsDpsRanged => 1,
+            UnitRole.DPS => 2,
+            UnitRole.Tank => 3,
+            _ => 4
+        };
+    }
+
+    private static Unit GetClosestUnit(Unit self, List<Unit> units)
+    {
+        if (self == null || units == null || units.Count == 0)
+            return null;
+
+        Unit closest = null;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < units.Count; i++)
+        {
+            Unit candidate = units[i];
+            if (candidate == null || !candidate.IsAlive)
+                continue;
+
+            float sqrDistance = (candidate.Position - self.Position).sqrMagnitude;
+            if (sqrDistance >= bestSqrDistance)
+                continue;
+
+            closest = candidate;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return closest;
     }
 }

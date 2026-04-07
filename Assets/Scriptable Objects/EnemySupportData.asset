@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
+  m_Name: EnemySupportData
+  m_EditorClassIdentifier: 
+  unitId: EnemySupport
+  displayName: Enemy Support
+  unitPrefab: {fileID: 6436315245445220754, guid: c7bda3d703dbaa34a98114e067d0b217, type: 3}
+  team: 0
+  role: 2
+  combatStyle: 2
+  faction: 0
+  sprite: {fileID: -5528123580834267449, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
+  tileSize: 0
+  stats:
+    maxHealth: 9
+    attackDamage: 2
+    attackInterval: 1
+    attackRangeInCells: 3
+    preferredDistanceInCells: 3
+    accuracy: 0.9
+    evasion: 0.15
+    moveSpeed: 1
+    visionRange: 5

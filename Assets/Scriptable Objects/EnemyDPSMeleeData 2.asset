@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
-  m_Name: NecromancerData
+  m_Name: EnemyDPSMeleeData 2
   m_EditorClassIdentifier: 
-  unitId: Necromancer
-  displayName: Necromancer
-  unitPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
+  unitId: EnemyDpsMelee2
+  displayName: Enemy DPS Melee
+  unitPrefab: {fileID: 2323190928215289116, guid: 40a1ab1eaf2aa2243a39221ba0c5b645, type: 3}
   team: 0
-  role: 0
-  combatStyle: 0
+  role: 1
+  combatStyle: 1
   faction: 0
-  sprite: {fileID: 8124706622758157903, guid: 673af43bb818ab24cb26cdf7e9f79ec6, type: 3}
+  sprite: {fileID: 0}
   tileSize: 0
   stats:
-    maxHealth: 10
-    attackDamage: 1
-    attackInterval: 0.75
+    maxHealth: 12
+    attackDamage: 2
+    attackInterval: 0.65
     attackRangeInCells: 1
     preferredDistanceInCells: 1
-    accuracy: 0.85
-    evasion: 0.1
-    moveSpeed: 2.5
-    visionRange: 5
+    accuracy: 0.8
+    evasion: 0.2
+    moveSpeed: 1.3
+    visionRange: 4

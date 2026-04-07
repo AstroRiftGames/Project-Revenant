@@ -3156,23 +3156,37 @@ MonoBehaviour:
     SpawnCountRange: {x: 4, y: 8}
     Categories:
     - CategoryName: Tank Enemies
-      Weight: 35
+      Weight: 30
       Prefabs:
-      - Prefab: {fileID: 4094174674307024680, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
+      - Prefab: {fileID: 7122989231163767219, guid: 78bed5264f2be9d47875fca3bc3aa2e4, type: 3}
         Weight: 50
-      - Prefab: {fileID: 2776671400952486295, guid: 45f174a8ef9e1b54797580e2f3d6e8cc, type: 3}
+      - Prefab: {fileID: 7122989231163767219, guid: ae62686a24b2593469478b1a7254b128, type: 3}
         Weight: 25
-      - Prefab: {fileID: 6883692690905554994, guid: 9bac3f5a2c89a98488db70b6b4408ac8, type: 3}
-        Weight: 25
-    - CategoryName: DPS Enemies
-      Weight: 65
+      - Prefab: {fileID: 7122989231163767219, guid: 619b5998ab7ba394eb712afba407ff35, type: 3}
+        Weight: 10
+    - CategoryName: DPS Melee
+      Weight: 60
       Prefabs:
-      - Prefab: {fileID: 8765862917985790579, guid: 542b916115dc1e74a97576a1b031a5fd, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 29fedac9ab6591043b4a1afa35eeb240, type: 3}
         Weight: 50
-      - Prefab: {fileID: 7700707386755254228, guid: 3ea37b4361b6d9247b18ec5387620905, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 40a1ab1eaf2aa2243a39221ba0c5b645, type: 3}
         Weight: 25
-      - Prefab: {fileID: 1535996781197176903, guid: 23e7382fc2a997c4dac72215faa8b8ee, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 12b641d5974e0f44a9965e0a716be7bf, type: 3}
+        Weight: 10
+    - CategoryName: DPS Range
+      Weight: 55
+      Prefabs:
+      - Prefab: {fileID: 1093855413220510189, guid: 2fc8f7d06accedf4783233aec074bb54, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 1093855413220510189, guid: f21b485c48cb58f4abc9dee82bb349ea, type: 3}
         Weight: 25
+      - Prefab: {fileID: 1093855413220510189, guid: 8f5de870624d8bb4cbf39eaa460f9427, type: 3}
+        Weight: 10
+    - CategoryName: Support
+      Weight: 20
+      Prefabs:
+      - Prefab: {fileID: 6436315245445220754, guid: c7bda3d703dbaa34a98114e067d0b217, type: 3}
+        Weight: 50
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}
     Categories: []

@@ -93,6 +93,9 @@ public class HealAction : UnitAction
 [RequireComponent(typeof(UnitMovement))]
 public class UnitCombat : MonoBehaviour, IAction
 {
+    [SerializeField] private CombatProjectileVisual _projectileVisualPrefab;
+    [SerializeField] private CombatProjectileVisual _supportProjectileVisualPrefab;
+
     private Unit _unit;
     private float _nextAttackTime;
 
@@ -145,6 +148,7 @@ public class UnitCombat : MonoBehaviour, IAction
             return false;
 
         effect(target);
+        PlayAttackVisual(target);
         _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackInterval);
         return true;
     }
@@ -165,5 +169,29 @@ public class UnitCombat : MonoBehaviour, IAction
     public bool TryAttack(Unit target)
     {
         return TryExecute(target, candidate => candidate.TakeDamage(_unit.AttackDamage, _unit));
+    }
+
+    private void PlayAttackVisual(Unit target)
+    {
+        if (_unit == null || target == null)
+            return;
+
+        if (_unit.AttackPresentation == UnitAttackKind.Melee)
+            return;
+
+        CombatProjectileVisual projectilePrefab = ResolveProjectileVisualPrefab();
+        if (projectilePrefab == null)
+            return;
+
+        CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        projectile.Launch(transform.position, target.transform, target.Position);
+    }
+
+    private CombatProjectileVisual ResolveProjectileVisualPrefab()
+    {
+        if (_unit.AttackPresentation == UnitAttackKind.SupportProjectile)
+            return _supportProjectileVisualPrefab;
+
+        return _projectileVisualPrefab;
     }
 }
