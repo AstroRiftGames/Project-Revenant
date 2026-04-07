@@ -28,7 +28,11 @@ public class UnitBrain : MonoBehaviour
         if (_currentTarget == null)
             return;
 
-        int preferredDistance = Mathf.Max(0, Mathf.Min(_action.PreferredDistanceInCells, _action.RangeInCells));
+        int preferredDistance = _unit.GetPreferredDistance(_action);
+        Unit spacingThreat = _unit.GetSpacingThreat(_currentTarget);
+
+        if (TryMaintainSpacing(spacingThreat, preferredDistance))
+            return;
 
         if (!_action.IsInRange(_unit, _currentTarget))
         {
@@ -36,13 +40,18 @@ public class UnitBrain : MonoBehaviour
             return;
         }
 
-        if (preferredDistance > 0 && _movement.IsWithinRange(_currentTarget, preferredDistance - 1))
-        {
-            _movement.MoveAway(_currentTarget, preferredDistance);
-            return;
-        }
-
         if (_action.CanExecute(_unit, _currentTarget))
             _action.Execute(_unit, _currentTarget);
+    }
+
+    private bool TryMaintainSpacing(Unit threat, int preferredDistance)
+    {
+        if (threat == null || preferredDistance <= 0)
+            return false;
+
+        if (!_movement.IsWithinRange(threat, preferredDistance - 1))
+            return false;
+
+        return _movement.MoveAway(threat, preferredDistance);
     }
 }

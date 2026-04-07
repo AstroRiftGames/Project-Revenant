@@ -3158,21 +3158,35 @@ MonoBehaviour:
     - CategoryName: Tank Enemies
       Weight: 35
       Prefabs:
-      - Prefab: {fileID: 4094174674307024680, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
+      - Prefab: {fileID: 7122989231163767219, guid: 78bed5264f2be9d47875fca3bc3aa2e4, type: 3}
         Weight: 50
-      - Prefab: {fileID: 4094174674307024680, guid: 6b650a1aaf7f7c140921d6f7fbbc9042, type: 3}
+      - Prefab: {fileID: 7122989231163767219, guid: ae62686a24b2593469478b1a7254b128, type: 3}
         Weight: 25
-      - Prefab: {fileID: 4094174674307024680, guid: c4cc10a0472403d4581b041003542bef, type: 3}
-        Weight: 25
-    - CategoryName: DPS Enemies
+      - Prefab: {fileID: 7122989231163767219, guid: 619b5998ab7ba394eb712afba407ff35, type: 3}
+        Weight: 10
+    - CategoryName: DPS Melee
       Weight: 65
       Prefabs:
-      - Prefab: {fileID: 8765862917985790579, guid: 542b916115dc1e74a97576a1b031a5fd, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 29fedac9ab6591043b4a1afa35eeb240, type: 3}
         Weight: 50
-      - Prefab: {fileID: 8765862917985790579, guid: 05400f65ea6737b49a9f12f62123c5b5, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 40a1ab1eaf2aa2243a39221ba0c5b645, type: 3}
         Weight: 25
-      - Prefab: {fileID: 8765862917985790579, guid: 860b759cb32e9df4593a247da76684a2, type: 3}
+      - Prefab: {fileID: 2323190928215289116, guid: 12b641d5974e0f44a9965e0a716be7bf, type: 3}
+        Weight: 10
+    - CategoryName: DPS Range
+      Weight: 40
+      Prefabs:
+      - Prefab: {fileID: 1093855413220510189, guid: 2fc8f7d06accedf4783233aec074bb54, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 1093855413220510189, guid: f21b485c48cb58f4abc9dee82bb349ea, type: 3}
         Weight: 25
+      - Prefab: {fileID: 1093855413220510189, guid: 8f5de870624d8bb4cbf39eaa460f9427, type: 3}
+        Weight: 10
+    - CategoryName: Support
+      Weight: 50
+      Prefabs:
+      - Prefab: {fileID: 168480000053724679, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
+        Weight: 50
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}
     Categories: []

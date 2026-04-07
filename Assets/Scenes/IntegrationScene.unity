@@ -507,9 +507,10 @@ MonoBehaviour:
   _floorManager: {fileID: 1032554670}
   _startingPartyMembers:
   - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
-  - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
-  - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
-  _maxPartyMembers: 3
+  - {fileID: 11400000, guid: 811d17124cf6475d9df3d994125ad182, type: 2}
+  - {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
+  - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
+  _maxPartyMembers: 4
   _showPartyDebug: 1
 --- !u!1 &1032554669
 GameObject:

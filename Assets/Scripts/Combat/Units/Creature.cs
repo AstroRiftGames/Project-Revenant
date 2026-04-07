@@ -9,6 +9,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     public string Id { get; protected set; } = string.Empty;
     public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
     public UnitRole Role => _data != null ? _data.role : default;
+    public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
     public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
@@ -111,11 +112,11 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     public Unit GetLastAttacker()
     {
-        return null;
+        return _lifeController != null ? _lifeController.LastAttacker : null;
     }
 
     public List<Unit> GetAliveAggressors()
     {
-        return new List<Unit>();
+        return _lifeController != null ? _lifeController.GetAliveAggressors() : new List<Unit>();
     }
 }

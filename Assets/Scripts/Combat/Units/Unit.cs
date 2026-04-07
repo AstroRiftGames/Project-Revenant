@@ -37,6 +37,9 @@ public class Unit : Creature
 
     public RoomContext RoomContext => _roomContext;
     public IAction Action => _resolvedAction ??= ResolveAction();
+    public bool IsDpsMelee => Role == UnitRole.DPS && CombatStyle != UnitCombatStyle.Ranged;
+    public bool IsDpsRanged => Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged;
+    public bool WantsToHoldSpacing => Role == UnitRole.Support || IsDpsRanged;
 
     public void AssignRoomContext(RoomContext context)
     {
@@ -121,6 +124,100 @@ public class Unit : Creature
         }
 
         return lowestHealthAlly;
+    }
+
+    public Unit GetLowestHealthAllyNeedingHelpInScene()
+    {
+        List<Unit> allies = GetAlliedUnitsInScene();
+        Unit bestAlly = null;
+        int highestMissingHealth = 0;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit candidate = allies[i];
+            int missingHealth = candidate.MaxHealth - candidate.CurrentHealth;
+            if (missingHealth <= 0)
+                continue;
+
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+            if (missingHealth < highestMissingHealth)
+                continue;
+
+            if (missingHealth == highestMissingHealth && sqrDistance >= bestSqrDistance)
+                continue;
+
+            bestAlly = candidate;
+            highestMissingHealth = missingHealth;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return bestAlly;
+    }
+
+    public Unit GetNearestAllyInScene()
+    {
+        List<Unit> allies = GetAlliedUnitsInScene();
+        Unit nearest = null;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit candidate = allies[i];
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+            if (sqrDistance >= bestSqrDistance)
+                continue;
+
+            nearest = candidate;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return nearest;
+    }
+
+    public Unit GetNearestAllyByRoleInScene(UnitRole role)
+    {
+        List<Unit> allies = GetAlliedUnitsInScene();
+        Unit nearest = null;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit candidate = allies[i];
+            if (candidate.Role != role)
+                continue;
+
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+            if (sqrDistance >= bestSqrDistance)
+                continue;
+
+            nearest = candidate;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return nearest;
+    }
+
+    public int GetPreferredDistance(IAction action)
+    {
+        if (action == null)
+            return 0;
+
+        return Mathf.Max(0, Mathf.Min(action.PreferredDistanceInCells, action.RangeInCells));
+    }
+
+    public Unit GetSpacingThreat(Unit currentTarget)
+    {
+        if (!WantsToHoldSpacing)
+            return null;
+
+        if (Role == UnitRole.Support)
+            return GetNearestHostileUnitInScene();
+
+        if (currentTarget != null && IsHostileTo(currentTarget))
+            return currentTarget;
+
+        return GetNearestHostileUnitInScene();
     }
 
     [ContextMenu("Snap To Grid")]
@@ -208,6 +305,87 @@ public class Unit : Creature
         if (attachedAction != null)
             return attachedAction;
 
-        return GetComponent<UnitCombat>();
+        UnitCombat combat = GetComponent<UnitCombat>();
+        if (combat == null)
+            return null;
+
+        return Role == UnitRole.Support
+            ? new HealCombatAction(this, combat)
+            : new AttackCombatAction(this, combat);
+    }
+
+    private sealed class AttackCombatAction : IAction
+    {
+        private readonly UnitCombat _combat;
+        private readonly Unit _owner;
+
+        public AttackCombatAction(Unit owner, UnitCombat combat)
+        {
+            _owner = owner;
+            _combat = combat;
+        }
+
+        public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
+        public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
+
+        public bool IsInRange(Unit self, Unit target)
+        {
+            return _combat != null && _combat.IsTargetInRange(target);
+        }
+
+        public bool CanExecute(Unit self, Unit target)
+        {
+            if (self == null || target == null || _combat == null)
+                return false;
+
+            return self.IsHostileTo(target) && _combat.CanUseOn(target);
+        }
+
+        public bool Execute(Unit self, Unit target)
+        {
+            return CanExecute(self, target) && _combat.TryAttack(target);
+        }
+    }
+
+    private sealed class HealCombatAction : IAction
+    {
+        private readonly UnitCombat _combat;
+        private readonly Unit _owner;
+
+        public HealCombatAction(Unit owner, UnitCombat combat)
+        {
+            _owner = owner;
+            _combat = combat;
+        }
+
+        public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
+        public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
+
+        public bool IsInRange(Unit self, Unit target)
+        {
+            return _combat != null && _combat.IsTargetInRange(target);
+        }
+
+        public bool CanExecute(Unit self, Unit target)
+        {
+            if (self == null || target == null || _combat == null)
+                return false;
+
+            if (self.IsHostileTo(target))
+                return false;
+
+            if (target.CurrentHealth >= target.MaxHealth)
+                return false;
+
+            return _combat.CanUseOn(target);
+        }
+
+        public bool Execute(Unit self, Unit target)
+        {
+            if (!CanExecute(self, target))
+                return false;
+
+            return _combat.TryExecute(target, candidate => candidate.Heal(self.AttackDamage, self));
+        }
     }
 }
