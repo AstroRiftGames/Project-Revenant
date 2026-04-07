@@ -421,6 +421,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _lifeBar: {fileID: 1257135674242451}
+  DamageDealtPrefab: {fileID: 9153081796928895206, guid: 582f871958d93f14ea238cc880e4f79c, type: 3}
 --- !u!1 &3491733282545318813
 GameObject:
   m_ObjectHideFlags: 0
