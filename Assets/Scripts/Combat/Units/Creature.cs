@@ -29,7 +29,7 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     protected virtual void Awake()
     {
-        LifeController = GetComponent<LifeController>();
+        _lifeController = GetComponent<LifeController>();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -102,7 +102,7 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        LifeController?.TakeDamage(amount, source);
+        _lifeController?.TakeDamage(amount, source);
     }
 
     public void Heal(int amount, IUnit source = null)
