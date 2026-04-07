@@ -27,7 +27,7 @@ PrefabInstance:
     - target: {fileID: 8159651523802397675, guid: 4b3a2cd1f023292438b14d64de596a08, type: 3}
       propertyPath: _unitData
       value: 
-      objectReference: {fileID: 11400000, guid: b4889e3f0bc3d1449ab8c2c25bb772e4, type: 2}
+      objectReference: {fileID: 11400000, guid: 617ca59f408890844a878bafc45b24a1, type: 2}
     - target: {fileID: 8765862917985790579, guid: 4b3a2cd1f023292438b14d64de596a08, type: 3}
       propertyPath: m_Name
       value: Enemy DPS Range 2

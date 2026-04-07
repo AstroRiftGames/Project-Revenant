@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5648795244574345276}
   - component: {fileID: 7857667183074453583}
   - component: {fileID: 3495338766074419922}
-  - component: {fileID: 6878136570665203314}
+  - component: {fileID: 4013731938436298820}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -103,7 +103,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &6878136570665203314
+--- !u!114 &4013731938436298820
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -112,10 +112,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1836292101429644018}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83909481b9c85404e9c555d81020be32, type: 3}
+  m_Script: {fileID: 11500000, guid: 37a523bcf319b064dad0274fd47c5391, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _lifeBar: {fileID: 7156256890395504120}
+  DamageDealtPrefab: {fileID: 9153081796928895206, guid: 582f871958d93f14ea238cc880e4f79c, type: 3}
 --- !u!1 &6432867558534525314
 GameObject:
   m_ObjectHideFlags: 0
@@ -494,13 +495,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _useObstacleDetection: 1
-  _obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
   _unitData: {fileID: 11400000, guid: b86923acd10247d45bc11d58e87d1732, type: 2}
-  _initializeOnAwake: 1
-  _drawDetectionGizmos: 1
+  _actionSource: {fileID: 0}
 --- !u!114 &8181733057524159171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -514,8 +510,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
+  _allowSerializedGridFallback: 0
   _repathInterval: 0.2
-  _drawPathGizmos: 1
 --- !u!114 &7662884427873963594
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -528,9 +524,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fd6ea948014d2841ae7242af956a715, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _retargetInterval: 0.25
-  _runOnStart: 1
-  _debugBrain: 1
 --- !u!114 &4447924673430037714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,9 +536,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugCombat: 1
-  _minHitChance: 0.1
-  _maxHitChance: 0.95
+  _projectileVisualPrefab: {fileID: 0}
+  _supportProjectileVisualPrefab: {fileID: 0}
 --- !u!114 &705497465432100825
 MonoBehaviour:
   m_ObjectHideFlags: 0

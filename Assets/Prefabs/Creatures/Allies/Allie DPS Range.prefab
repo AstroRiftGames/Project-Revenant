@@ -89,6 +89,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8751091524275981618, guid: 765ee64fbb4d4b15b4514672f18bf851, type: 3}
     - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: _unitData
+      value: 
+      objectReference: {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
+    - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: _drawDetectionGizmos
       value: 0
       objectReference: {fileID: 0}

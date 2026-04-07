@@ -228,13 +228,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _useObstacleDetection: 1
-  _obstacleMask:
-    serializedVersion: 2
-    m_Bits: 0
   _unitData: {fileID: 11400000, guid: b048bd5ebf39c9b43aaa0db3daae0887, type: 2}
-  _initializeOnAwake: 1
-  _drawDetectionGizmos: 1
+  _actionSource: {fileID: 0}
 --- !u!114 &5774226626785607199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,8 +243,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
+  _allowSerializedGridFallback: 0
   _repathInterval: 0.2
-  _drawPathGizmos: 1
 --- !u!114 &4321220089924871362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -262,9 +257,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fd6ea948014d2841ae7242af956a715, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _retargetInterval: 0.25
-  _runOnStart: 1
-  _debugBrain: 1
 --- !u!114 &3010554441863723249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -277,9 +269,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _debugCombat: 1
-  _minHitChance: 0.1
-  _maxHitChance: 0.95
+  _projectileVisualPrefab: {fileID: 0}
+  _supportProjectileVisualPrefab: {fileID: 0}
 --- !u!114 &1132451354933908801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -492,10 +483,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 5353813344601049933}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83909481b9c85404e9c555d81020be32, type: 3}
+  m_Script: {fileID: 11500000, guid: 37a523bcf319b064dad0274fd47c5391, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _lifeBar: {fileID: 809824179957823978}
+  DamageDealtPrefab: {fileID: 9153081796928895206, guid: 582f871958d93f14ea238cc880e4f79c, type: 3}
 --- !u!1 &5651640848046580089
 GameObject:
   m_ObjectHideFlags: 0

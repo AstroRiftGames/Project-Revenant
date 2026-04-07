@@ -76,6 +76,10 @@ PrefabInstance:
       propertyPath: _supportProjectileVisualPrefab
       value: 
       objectReference: {fileID: 4177105108643093394, guid: b84d8f81fb2c4708894747ecf6b0f1e5, type: 3}
+    - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: _unitData
+      value: 
+      objectReference: {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
       value: Allie Support

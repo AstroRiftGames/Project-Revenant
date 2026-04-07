@@ -72,6 +72,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.34061146
       objectReference: {fileID: 0}
+    - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: _unitData
+      value: 
+      objectReference: {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
       value: Allie Tank

@@ -12,6 +12,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Enemy Support 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1278532778607664158, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
+      propertyPath: _unitData
+      value: 
+      objectReference: {fileID: 11400000, guid: 7542efe8aad34d219a8f34c7832106ab, type: 2}
     - target: {fileID: 2447790576316403408, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

@@ -194,6 +194,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba87037137d5282409d823e57b72df42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _projectileVisualPrefab: {fileID: 0}
+  _supportProjectileVisualPrefab: {fileID: 0}
 --- !u!114 &1922366374678765962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -406,10 +408,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 2091815586372410851}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83909481b9c85404e9c555d81020be32, type: 3}
+  m_Script: {fileID: 11500000, guid: 37a523bcf319b064dad0274fd47c5391, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _lifeBar: {fileID: 1257135674242451}
+  DamageDealtPrefab: {fileID: 9153081796928895206, guid: 582f871958d93f14ea238cc880e4f79c, type: 3}
 --- !u!1 &3491733282545318813
 GameObject:
   m_ObjectHideFlags: 0
