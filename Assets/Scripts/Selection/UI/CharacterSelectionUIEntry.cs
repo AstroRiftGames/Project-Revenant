@@ -47,13 +47,13 @@ namespace Selection.UI
             {
                 switch (currentStats.Role)
                 {
-                    case CharacterRole.Tank:
+                    case UnitRole.Tank:
                         roleIconImage.sprite = tankRoleIcon;
                         break;
-                    case CharacterRole.DPS:
+                    case UnitRole.DPS:
                         roleIconImage.sprite = dpsRoleIcon;
                         break;
-                    case CharacterRole.Support:
+                    case UnitRole.Support:
                         roleIconImage.sprite = supportRoleIcon;
                         break;
                 }
@@ -70,7 +70,7 @@ namespace Selection.UI
             {
                 if (currentStats.CurrentAbilityCooldown > 0f)
                 {
-                    cooldownText.text = $"{currentStats.CurrentAbilityCooldown:F1}s";
+                    cooldownText.text = $"{currentStats.CurrentAbilityCooldown}s";
                     cooldownText.enabled = true;
                 }
                 else

@@ -5,9 +5,9 @@ namespace Selection.Interfaces
 {
     public interface ICharacterStatsProvider
     {
-        float CurrentHealth { get; }
-        float MaxHealth { get; }
-        CharacterRole Role { get; }
+        int CurrentHealth { get; }
+        int MaxHealth { get; }
+        UnitRole Role { get; }
         float CurrentAbilityCooldown { get; }
         float MaxAbilityCooldown { get; }
         Sprite AbilityIcon { get; }

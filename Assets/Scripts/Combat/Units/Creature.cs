@@ -1,3 +1,5 @@
+using Selection.Core;
+using Selection.Interfaces;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,7 +7,7 @@ public enum UnitRole { Tank, DPS, Support }
 public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
 public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 
-public abstract class Creature : MonoBehaviour, IUnit
+public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public string Id { get; protected set; } = string.Empty;
     public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
@@ -29,6 +31,18 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     protected UnitData _data;
     protected LifeController _lifeController { get; private set; }
+
+
+    [Header("Selection Visuals")]
+    [SerializeField] private GameObject selectionIndicator;
+    public float CurrentAbilityCooldown => 10f; //TODO: This should come from UnitData when ability system is implemented
+    public float MaxAbilityCooldown => 10; //TODO: This should come from UnitData when ability system is implemented
+    public Sprite AbilityIcon => null;  //TODO: This should come from UnitData when ability system is implemented
+    public Sprite CharacterSprite => _data.sprite;
+    public bool IsSelected { get; private set; }
+    public GameObject SelectionGameObject => gameObject;
+    public ICharacterStatsProvider StatsProvider => this;
+    
 
     protected virtual void Awake()
     {
@@ -132,5 +146,23 @@ public abstract class Creature : MonoBehaviour, IUnit
             return UnitAttackKind.Projectile;
 
         return UnitAttackKind.Melee;
+    }
+
+    public void Select()
+    {
+        IsSelected = true;
+        if (selectionIndicator != null)
+        {
+            selectionIndicator.SetActive(true);
+        }
+    }
+
+    public void Deselect()
+    {
+        IsSelected = false;
+        if (selectionIndicator != null)
+        {
+            selectionIndicator.SetActive(false);
+        }
     }
 }
