@@ -11,6 +11,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
+    
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
     public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
     public bool IsAlive => _lifeController == null || _lifeController.IsAlive;
@@ -28,7 +29,7 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     protected virtual void Awake()
     {
-        _lifeController = GetComponent<LifeController>();
+        LifeController = GetComponent<LifeController>();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -101,7 +102,7 @@ public abstract class Creature : MonoBehaviour, IUnit
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        _lifeController?.TakeDamage(amount, source);
+        LifeController?.TakeDamage(amount, source);
     }
 
     public void Heal(int amount, IUnit source = null)

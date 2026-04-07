@@ -19,6 +19,9 @@ public class LifeController : MonoBehaviour, IDamageable
     public int MaxHealth => _unit != null ? _unit.BaseMaxHealth : 0;
     public bool IsAlive => CurrentHealth > 0;
 
+    public Action<int> OnLifeUpdated;
+    public Action<int> OnDamageTaken;
+
     private void Awake()
     {
         _unit = GetComponent<Unit>();
@@ -46,6 +49,7 @@ public class LifeController : MonoBehaviour, IDamageable
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
         OnLifeUpdated?.Invoke(CurrentHealth);
         NotifyHealthChanged();
+        OnDamageTaken?.Invoke(amount);
 
         if (_debugDamage && _unit != null)
             Debug.Log($"[Damage] {_unit.Id} took {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
