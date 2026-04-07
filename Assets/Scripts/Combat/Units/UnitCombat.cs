@@ -1,13 +1,104 @@
 using UnityEngine;
 
+public abstract class UnitAction : MonoBehaviour, IAction
+{
+    public abstract int RangeInCells { get; }
+    public abstract int PreferredDistanceInCells { get; }
+    public abstract bool IsInRange(Unit self, Unit target);
+    public abstract bool CanExecute(Unit self, Unit target);
+    public abstract bool Execute(Unit self, Unit target);
+}
+
+[RequireComponent(typeof(UnitCombat))]
+public class AttackAction : UnitAction
+{
+    private UnitCombat _combat;
+    private Unit _unit;
+
+    public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
+    public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
+
+    private void Awake()
+    {
+        _combat = GetComponent<UnitCombat>();
+        _unit = GetComponent<Unit>();
+    }
+
+    public override bool IsInRange(Unit self, Unit target)
+    {
+        return _combat != null && _combat.IsTargetInRange(target);
+    }
+
+    public override bool CanExecute(Unit self, Unit target)
+    {
+        if (self == null || target == null)
+            return false;
+
+        return self.IsHostileTo(target) && _combat != null && _combat.CanUseOn(target);
+    }
+
+    public override bool Execute(Unit self, Unit target)
+    {
+        if (!CanExecute(self, target))
+            return false;
+
+        return _combat.TryAttack(target);
+    }
+}
+
+[RequireComponent(typeof(UnitCombat))]
+public class HealAction : UnitAction
+{
+    private UnitCombat _combat;
+    private Unit _unit;
+
+    public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
+    public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
+
+    private void Awake()
+    {
+        _combat = GetComponent<UnitCombat>();
+        _unit = GetComponent<Unit>();
+    }
+
+    public override bool IsInRange(Unit self, Unit target)
+    {
+        return _combat != null && _combat.IsTargetInRange(target);
+    }
+
+    public override bool CanExecute(Unit self, Unit target)
+    {
+        if (self == null || target == null || _combat == null)
+            return false;
+
+        if (self.IsHostileTo(target))
+            return false;
+
+        if (target.CurrentHealth >= target.MaxHealth)
+            return false;
+
+        return _combat.CanUseOn(target);
+    }
+
+    public override bool Execute(Unit self, Unit target)
+    {
+        if (!CanExecute(self, target))
+            return false;
+
+        return _combat.TryExecute(target, candidate => candidate.Heal(self.AttackDamage, self));
+    }
+}
+
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(UnitMovement))]
-public class UnitCombat : MonoBehaviour
+public class UnitCombat : MonoBehaviour, IAction
 {
     private Unit _unit;
     private float _nextAttackTime;
 
     public int AttackRangeInCells => _unit != null ? Mathf.Max(0, _unit.AttackRangeInCells) : 0;
+    public int RangeInCells => AttackRangeInCells;
+    public int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
 
     private void Awake()
     {
@@ -32,7 +123,12 @@ public class UnitCombat : MonoBehaviour
         return distanceInCells <= AttackRangeInCells;
     }
 
-    public bool TryAttack(Unit target)
+    public bool IsInRange(Unit self, Unit target)
+    {
+        return IsTargetInRange(target);
+    }
+
+    public bool CanUseOn(Unit target)
     {
         if (_unit == null || target == null || !target.IsAlive)
             return false;
@@ -40,11 +136,34 @@ public class UnitCombat : MonoBehaviour
         if (Time.time < _nextAttackTime)
             return false;
 
-        if (!IsTargetInRange(target))
+        return IsTargetInRange(target);
+    }
+
+    public bool TryExecute(Unit target, System.Action<Unit> effect)
+    {
+        if (effect == null || !CanUseOn(target))
             return false;
 
-        target.TakeDamage(_unit.AttackDamage, _unit);
+        effect(target);
         _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackInterval);
         return true;
+    }
+
+    public bool CanExecute(Unit self, Unit target)
+    {
+        if (self == null || target == null)
+            return false;
+
+        return self.IsHostileTo(target) && CanUseOn(target);
+    }
+
+    public bool Execute(Unit self, Unit target)
+    {
+        return TryAttack(target);
+    }
+
+    public bool TryAttack(Unit target)
+    {
+        return TryExecute(target, candidate => candidate.TakeDamage(_unit.AttackDamage, _unit));
     }
 }

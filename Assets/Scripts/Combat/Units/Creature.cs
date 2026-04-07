@@ -17,6 +17,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     public int BaseMaxHealth => _data != null && _data.stats != null ? _data.stats.maxHealth : 0;
     public float MoveSpeed => _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f;
     public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
+    public int PreferredDistanceInCells => _data != null && _data.stats != null ? _data.stats.preferredDistanceInCells : 0;
     public int AttackDamage => _data != null && _data.stats != null ? _data.stats.attackDamage : 0;
     public float AttackInterval => _data != null && _data.stats != null ? _data.stats.attackInterval : 0f;
     public float Accuracy => _data != null && _data.stats != null ? _data.stats.accuracy : 0f;
@@ -101,6 +102,11 @@ public abstract class Creature : MonoBehaviour, IUnit
     public void TakeDamage(int amount, IUnit source = null)
     {
         _lifeController?.TakeDamage(amount, source);
+    }
+
+    public void Heal(int amount, IUnit source = null)
+    {
+        _lifeController?.Heal(amount, source);
     }
 
     public Unit GetLastAttacker()

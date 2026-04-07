@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
-  m_Name: AllieUnitData
+  m_Name: DPSData
   m_EditorClassIdentifier: 
-  unitId: TestDPS
-  displayName: TestDPS
-  team: 1
+  unitId: DPSData
+  displayName: DPS
+  team: 0
   role: 1
-  faction: 1
+  faction: 0
   sprite: {fileID: 0}
   tileSize: 0
   stats:
-    maxHealth: 15
-    attackDamage: 2
-    attackInterval: 0.75
-    attackRangeInCells: 1
-    preferredDistanceInCells: 1
+    maxHealth: 12
+    attackDamage: 4
+    attackInterval: 0.6
+    attackRangeInCells: 2
+    preferredDistanceInCells: 2
     accuracy: 0.85
-    evasion: 0.1
-    moveSpeed: 1
-    visionRange: 3.5
+    evasion: 0.25
+    moveSpeed: 1.2
+    visionRange: 5

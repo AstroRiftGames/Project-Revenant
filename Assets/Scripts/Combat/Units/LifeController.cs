@@ -46,6 +46,18 @@ public class LifeController : MonoBehaviour, IDamageable
             Die();
     }
 
+    public void Heal(int amount, IUnit source = null)
+    {
+        if (!IsAlive || amount <= 0 || CurrentHealth >= MaxHealth)
+            return;
+
+        int previousHealth = CurrentHealth;
+        CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+
+        if (_debugDamage && _unit != null)
+            Debug.Log($"[Heal] {_unit.Id} healed {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
+    }
+
     public List<Unit> GetAliveAggressors()
     {
         _aggressors.RemoveAll(aggressor => aggressor == null || !aggressor.IsAlive || !aggressor.gameObject.activeInHierarchy);

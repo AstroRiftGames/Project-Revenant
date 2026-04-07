@@ -5,9 +5,12 @@ using UnityEngine;
 public class Unit : Creature
 {
     [SerializeField] private UnitData _unitData;
+    [SerializeField] private MonoBehaviour _actionSource;
 
     private RoomContext _roomContext;
+    private IAction _resolvedAction;
     private readonly List<IUnit> _visibleUnitsBuffer = new();
+    private readonly List<Unit> _alliedUnitsBuffer = new();
     private readonly List<IUnit> _visibleHostilesBuffer = new();
     private readonly List<Unit> _hostileUnitsBuffer = new();
 
@@ -33,6 +36,7 @@ public class Unit : Creature
     }
 
     public RoomContext RoomContext => _roomContext;
+    public IAction Action => _resolvedAction ??= ResolveAction();
 
     public void AssignRoomContext(RoomContext context)
     {
@@ -41,36 +45,26 @@ public class Unit : Creature
 
     public List<IUnit> GetVisibleUnitsInScene()
     {
-        _visibleUnitsBuffer.Clear();
-        PopulateRoomUnits(_visibleUnitsBuffer, includeOnlyHostiles: false);
+        PopulateRoomUnits(_visibleUnitsBuffer, TargetRelationship.Any);
         return _visibleUnitsBuffer;
     }
 
     public List<IUnit> GetVisibleHostileUnitsInScene()
     {
-        _visibleHostilesBuffer.Clear();
-        PopulateRoomUnits(_visibleHostilesBuffer, includeOnlyHostiles: true);
+        PopulateRoomUnits(_visibleHostilesBuffer, TargetRelationship.Hostile);
         return _visibleHostilesBuffer;
     }
 
     public List<Unit> GetHostileUnitsInScene()
     {
-        _hostileUnitsBuffer.Clear();
-
-        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
-        if (roomUnits == null)
-            return _hostileUnitsBuffer;
-
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-            if (!IsValidRoomCandidate(candidate, includeOnlyHostiles: true))
-                continue;
-
-            _hostileUnitsBuffer.Add(candidate);
-        }
-
+        PopulateRoomUnits(_hostileUnitsBuffer, TargetRelationship.Hostile);
         return _hostileUnitsBuffer;
+    }
+
+    public List<Unit> GetAlliedUnitsInScene()
+    {
+        PopulateRoomUnits(_alliedUnitsBuffer, TargetRelationship.Ally);
+        return _alliedUnitsBuffer;
     }
 
     public Unit GetNearestVisibleHostileUnitInScene()
@@ -104,6 +98,31 @@ public class Unit : Creature
         return nearest;
     }
 
+    public Unit GetLowestHealthAllyInScene()
+    {
+        List<Unit> allies = GetAlliedUnitsInScene();
+        Unit lowestHealthAlly = null;
+        int lowestHealth = int.MaxValue;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit candidate = allies[i];
+            if (candidate.CurrentHealth > lowestHealth)
+                continue;
+
+            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
+            if (candidate.CurrentHealth == lowestHealth && sqrDistance >= bestSqrDistance)
+                continue;
+
+            lowestHealthAlly = candidate;
+            lowestHealth = candidate.CurrentHealth;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return lowestHealthAlly;
+    }
+
     [ContextMenu("Snap To Grid")]
     public void SnapToGrid()
     {
@@ -122,23 +141,43 @@ public class Unit : Creature
         transform.position = grid.CellToWorld(targetCell);
     }
 
-    private void PopulateRoomUnits(List<IUnit> results, bool includeOnlyHostiles)
+    private void PopulateRoomUnits(List<IUnit> results, TargetRelationship relationship)
     {
         IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
         if (roomUnits == null || results == null)
             return;
 
+        results.Clear();
+
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (!IsValidRoomCandidate(candidate, includeOnlyHostiles))
+            if (!IsValidRoomCandidate(candidate, relationship))
                 continue;
 
             results.Add(candidate);
         }
     }
 
-    private bool IsValidRoomCandidate(Unit candidate, bool includeOnlyHostiles)
+    private void PopulateRoomUnits(List<Unit> results, TargetRelationship relationship)
+    {
+        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        if (roomUnits == null || results == null)
+            return;
+
+        results.Clear();
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!IsValidRoomCandidate(candidate, relationship))
+                continue;
+
+            results.Add(candidate);
+        }
+    }
+
+    private bool IsValidRoomCandidate(Unit candidate, TargetRelationship relationship)
     {
         if (candidate == null || ReferenceEquals(candidate, this))
             return false;
@@ -152,9 +191,23 @@ public class Unit : Creature
         if (!CanDetect(candidate))
             return false;
 
-        if (includeOnlyHostiles && !IsHostileTo(candidate))
-            return false;
+        return relationship switch
+        {
+            TargetRelationship.Hostile => IsHostileTo(candidate),
+            TargetRelationship.Ally => !IsHostileTo(candidate),
+            _ => true
+        };
+    }
 
-        return true;
+    private IAction ResolveAction()
+    {
+        if (_actionSource is IAction explicitAction)
+            return explicitAction;
+
+        UnitAction attachedAction = GetComponent<UnitAction>();
+        if (attachedAction != null)
+            return attachedAction;
+
+        return GetComponent<UnitCombat>();
     }
 }
