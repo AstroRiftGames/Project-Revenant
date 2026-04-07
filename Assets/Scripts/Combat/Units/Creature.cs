@@ -24,7 +24,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     public float Evasion => _data != null && _data.stats != null ? _data.stats.evasion : 0f;
 
     protected UnitData _data;
-    protected LifeController _lifeController;
+    protected LifeController _lifeController { get; private set; }
 
     protected virtual void Awake()
     {
