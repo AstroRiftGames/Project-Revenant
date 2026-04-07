@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.027450994
       objectReference: {fileID: 0}
+    - target: {fileID: 4447924673430037714, guid: 4b3a2cd1f023292438b14d64de596a08, type: 3}
+      propertyPath: _projectileVisualPrefab
+      value: 
+      objectReference: {fileID: 8751091524275981618, guid: 765ee64fbb4d4b15b4514672f18bf851, type: 3}
     - target: {fileID: 8159651523802397675, guid: 4b3a2cd1f023292438b14d64de596a08, type: 3}
       propertyPath: _unitData
       value: 

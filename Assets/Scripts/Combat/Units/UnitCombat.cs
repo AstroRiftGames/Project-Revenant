@@ -93,12 +93,6 @@ public class HealAction : UnitAction
 [RequireComponent(typeof(UnitMovement))]
 public class UnitCombat : MonoBehaviour, IAction
 {
-    private const string OffensiveProjectileVisualResourcePath = "CombatProjectileVisual";
-    private const string SupportProjectileVisualResourcePath = "SupportProjectileVisual";
-
-    private static CombatProjectileVisual _defaultProjectileVisualPrefab;
-    private static CombatProjectileVisual _defaultSupportProjectileVisualPrefab;
-
     [SerializeField] private CombatProjectileVisual _projectileVisualPrefab;
     [SerializeField] private CombatProjectileVisual _supportProjectileVisualPrefab;
 
@@ -182,7 +176,7 @@ public class UnitCombat : MonoBehaviour, IAction
         if (_unit == null || target == null)
             return;
 
-        if (_unit.AttackPresentation == UnitAttackPresentationKind.Melee)
+        if (_unit.AttackPresentation == UnitAttackKind.Melee)
             return;
 
         CombatProjectileVisual projectilePrefab = ResolveProjectileVisualPrefab();
@@ -195,23 +189,9 @@ public class UnitCombat : MonoBehaviour, IAction
 
     private CombatProjectileVisual ResolveProjectileVisualPrefab()
     {
-        if (_unit.AttackPresentation == UnitAttackPresentationKind.SupportProjectile)
-        {
-            if (_supportProjectileVisualPrefab != null)
-                return _supportProjectileVisualPrefab;
+        if (_unit.AttackPresentation == UnitAttackKind.SupportProjectile)
+            return _supportProjectileVisualPrefab;
 
-            if (_defaultSupportProjectileVisualPrefab == null)
-                _defaultSupportProjectileVisualPrefab = Resources.Load<CombatProjectileVisual>(SupportProjectileVisualResourcePath);
-
-            return _defaultSupportProjectileVisualPrefab;
-        }
-
-        if (_projectileVisualPrefab != null)
-            return _projectileVisualPrefab;
-
-        if (_defaultProjectileVisualPrefab == null)
-            _defaultProjectileVisualPrefab = Resources.Load<CombatProjectileVisual>(OffensiveProjectileVisualResourcePath);
-
-        return _defaultProjectileVisualPrefab;
+        return _projectileVisualPrefab;
     }
 }

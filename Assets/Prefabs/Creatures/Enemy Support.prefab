@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 168480000053724679, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
       propertyPath: m_Name
-      value: Enemymy Support Variant
+      value: Enemy Support
       objectReference: {fileID: 0}
     - target: {fileID: 1278532778607664158, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
       propertyPath: _unitData
@@ -56,6 +56,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8079215970449991445, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
+      propertyPath: _supportProjectileVisualPrefab
+      value: 
+      objectReference: {fileID: 4177105108643093394, guid: b84d8f81fb2c4708894747ecf6b0f1e5, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
