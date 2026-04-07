@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
   m_Name: EnemyTankData 2
   m_EditorClassIdentifier: 
-  unitId: Tank 2
+  unitId: Tank2
   displayName: Tank 2
   unitPrefab: {fileID: 7122989231163767219, guid: ae62686a24b2593469478b1a7254b128, type: 3}
   team: 0
   role: 0
   combatStyle: 1
-  faction: 1
+  faction: 0
   sprite: {fileID: -5357433189053572707, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
   tileSize: 0
   stats:
@@ -30,4 +30,4 @@ MonoBehaviour:
     accuracy: 0.7
     evasion: 0.2
     moveSpeed: 0.75
-    visionRange: 4
+    visionRange: 10

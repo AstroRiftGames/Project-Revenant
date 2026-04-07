@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: AllyDpsMelee
   displayName: DPS Melee
-  unitPrefab: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+  unitPrefab: {fileID: 7159805405016490059, guid: fff66658a920bc54e8c181cc460bddc3, type: 3}
   team: 1
   role: 1
   combatStyle: 1
   faction: 1
-  sprite: {fileID: 0}
+  sprite: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
   stats:
     maxHealth: 14

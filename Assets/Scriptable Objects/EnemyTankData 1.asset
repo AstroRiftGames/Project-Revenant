@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
   m_Name: EnemyTankData 1
   m_EditorClassIdentifier: 
-  unitId: Tank 1
+  unitId: Tank1
   displayName: Tank 1
   unitPrefab: {fileID: 7122989231163767219, guid: 78bed5264f2be9d47875fca3bc3aa2e4, type: 3}
   team: 0
@@ -30,4 +30,4 @@ MonoBehaviour:
     accuracy: 0.6
     evasion: 0.15
     moveSpeed: 0.75
-    visionRange: 4
+    visionRange: 10

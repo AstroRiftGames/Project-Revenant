@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
-  m_Name: EnemyDPSMeleeData
+  m_Name: EnemyDPSMeleeData 3
   m_EditorClassIdentifier: 
-  unitId: EnemyDpsMelee
+  unitId: EnemyDpsMelee3
   displayName: Enemy DPS Melee
-  unitPrefab: {fileID: 2323190928215289116, guid: 29fedac9ab6591043b4a1afa35eeb240, type: 3}
+  unitPrefab: {fileID: 2323190928215289116, guid: 12b641d5974e0f44a9965e0a716be7bf, type: 3}
   team: 0
   role: 1
   combatStyle: 1

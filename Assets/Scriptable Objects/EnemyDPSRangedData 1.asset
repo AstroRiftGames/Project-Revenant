@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
   m_Name: EnemyDPSRangedData 1
   m_EditorClassIdentifier: 
-  unitId: EnemyDpsRanged
+  unitId: EnemyDpsRanged1
   displayName: Enemy DPS Ranged
-  unitPrefab: {fileID: 1093855413220510189, guid: f21b485c48cb58f4abc9dee82bb349ea, type: 3}
+  unitPrefab: {fileID: 1093855413220510189, guid: 2fc8f7d06accedf4783233aec074bb54, type: 3}
   team: 0
   role: 1
   combatStyle: 2
@@ -25,9 +25,9 @@ MonoBehaviour:
     maxHealth: 9
     attackDamage: 3
     attackInterval: 0.85
-    attackRangeInCells: 3
-    preferredDistanceInCells: 2
+    attackRangeInCells: 8
+    preferredDistanceInCells: 5
     accuracy: 0.7
     evasion: 0.2
     moveSpeed: 1.1
-    visionRange: 5
+    visionRange: 8

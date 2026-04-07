@@ -12,22 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
   m_Name: AllieSupportData
   m_EditorClassIdentifier: 
-  unitId: Support
-  displayName: Suppor
-  unitPrefab: {fileID: 168480000053724679, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
+  unitId: AllySupport
+  displayName: Support
+  unitPrefab: {fileID: 752399050272230644, guid: 0431511c4e63224409b66ffe98bb0e28, type: 3}
   team: 1
   role: 2
-  combatStyle: 0
-  faction: 0
-  sprite: {fileID: 0}
+  combatStyle: 2
+  faction: 1
+  sprite: {fileID: -5528123580834267449, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
   tileSize: 0
   stats:
-    maxHealth: 10
-    attackDamage: 1
-    attackInterval: 0.75
-    attackRangeInCells: 1
-    preferredDistanceInCells: 1
-    accuracy: 0.85
-    evasion: 0.1
-    moveSpeed: 2.5
+    maxHealth: 9
+    attackDamage: 2
+    attackInterval: 1
+    attackRangeInCells: 3
+    preferredDistanceInCells: 3
+    accuracy: 0.9
+    evasion: 0.15
+    moveSpeed: 1
     visionRange: 5

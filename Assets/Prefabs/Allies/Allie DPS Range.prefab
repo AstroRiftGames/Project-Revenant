@@ -12,6 +12,14 @@ PrefabInstance:
       propertyPath: _debugDamage
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1321295952508599020, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1321295952508599020, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_SpriteTilingProperty.oldSize.y
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.814
@@ -53,6 +61,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
+    - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_Color.r
+      value: 0.34061146
+      objectReference: {fileID: 0}
+    - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_SortingLayerID
       value: 1008339267
       objectReference: {fileID: 0}
@@ -74,7 +98,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
-      value: Allie Role Based Targeting
+      value: Allie DPS Range
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

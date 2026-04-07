@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
   m_Name: EnemyDPSMeleeData 1
   m_EditorClassIdentifier: 
-  unitId: EnemyDpsMelee
+  unitId: EnemyDpsMelee1
   displayName: Enemy DPS Melee
-  unitPrefab: {fileID: 2323190928215289116, guid: 40a1ab1eaf2aa2243a39221ba0c5b645, type: 3}
+  unitPrefab: {fileID: 2323190928215289116, guid: 29fedac9ab6591043b4a1afa35eeb240, type: 3}
   team: 0
   role: 1
   combatStyle: 1

@@ -3156,7 +3156,7 @@ MonoBehaviour:
     SpawnCountRange: {x: 4, y: 8}
     Categories:
     - CategoryName: Tank Enemies
-      Weight: 35
+      Weight: 30
       Prefabs:
       - Prefab: {fileID: 7122989231163767219, guid: 78bed5264f2be9d47875fca3bc3aa2e4, type: 3}
         Weight: 50
@@ -3165,7 +3165,7 @@ MonoBehaviour:
       - Prefab: {fileID: 7122989231163767219, guid: 619b5998ab7ba394eb712afba407ff35, type: 3}
         Weight: 10
     - CategoryName: DPS Melee
-      Weight: 65
+      Weight: 60
       Prefabs:
       - Prefab: {fileID: 2323190928215289116, guid: 29fedac9ab6591043b4a1afa35eeb240, type: 3}
         Weight: 50
@@ -3174,7 +3174,7 @@ MonoBehaviour:
       - Prefab: {fileID: 2323190928215289116, guid: 12b641d5974e0f44a9965e0a716be7bf, type: 3}
         Weight: 10
     - CategoryName: DPS Range
-      Weight: 40
+      Weight: 55
       Prefabs:
       - Prefab: {fileID: 1093855413220510189, guid: 2fc8f7d06accedf4783233aec074bb54, type: 3}
         Weight: 50
@@ -3183,9 +3183,9 @@ MonoBehaviour:
       - Prefab: {fileID: 1093855413220510189, guid: 8f5de870624d8bb4cbf39eaa460f9427, type: 3}
         Weight: 10
     - CategoryName: Support
-      Weight: 50
+      Weight: 20
       Prefabs:
-      - Prefab: {fileID: 168480000053724679, guid: 1beb3c9a75e7c48448fc9d7d657e05d4, type: 3}
+      - Prefab: {fileID: 6436315245445220754, guid: c7bda3d703dbaa34a98114e067d0b217, type: 3}
         Weight: 50
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}

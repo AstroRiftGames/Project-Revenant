@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: TankData
   displayName: Tank
-  unitPrefab: {fileID: 7122989231163767219, guid: 78bed5264f2be9d47875fca3bc3aa2e4, type: 3}
+  unitPrefab: {fileID: 6509095685755233290, guid: c898f9f988bd2c44eb8846f85d853d9b, type: 3}
   team: 1
   role: 0
   combatStyle: 1
@@ -30,4 +30,4 @@ MonoBehaviour:
     accuracy: 0.7
     evasion: 0.2
     moveSpeed: 1
-    visionRange: 4
+    visionRange: 8

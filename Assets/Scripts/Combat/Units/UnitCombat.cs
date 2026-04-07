@@ -93,6 +93,15 @@ public class HealAction : UnitAction
 [RequireComponent(typeof(UnitMovement))]
 public class UnitCombat : MonoBehaviour, IAction
 {
+    private const string OffensiveProjectileVisualResourcePath = "CombatProjectileVisual";
+    private const string SupportProjectileVisualResourcePath = "SupportProjectileVisual";
+
+    private static CombatProjectileVisual _defaultProjectileVisualPrefab;
+    private static CombatProjectileVisual _defaultSupportProjectileVisualPrefab;
+
+    [SerializeField] private CombatProjectileVisual _projectileVisualPrefab;
+    [SerializeField] private CombatProjectileVisual _supportProjectileVisualPrefab;
+
     private Unit _unit;
     private float _nextAttackTime;
 
@@ -145,6 +154,7 @@ public class UnitCombat : MonoBehaviour, IAction
             return false;
 
         effect(target);
+        PlayAttackVisual(target);
         _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackInterval);
         return true;
     }
@@ -165,5 +175,43 @@ public class UnitCombat : MonoBehaviour, IAction
     public bool TryAttack(Unit target)
     {
         return TryExecute(target, candidate => candidate.TakeDamage(_unit.AttackDamage, _unit));
+    }
+
+    private void PlayAttackVisual(Unit target)
+    {
+        if (_unit == null || target == null)
+            return;
+
+        if (_unit.AttackPresentation == UnitAttackPresentationKind.Melee)
+            return;
+
+        CombatProjectileVisual projectilePrefab = ResolveProjectileVisualPrefab();
+        if (projectilePrefab == null)
+            return;
+
+        CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        projectile.Launch(transform.position, target.transform, target.Position);
+    }
+
+    private CombatProjectileVisual ResolveProjectileVisualPrefab()
+    {
+        if (_unit.AttackPresentation == UnitAttackPresentationKind.SupportProjectile)
+        {
+            if (_supportProjectileVisualPrefab != null)
+                return _supportProjectileVisualPrefab;
+
+            if (_defaultSupportProjectileVisualPrefab == null)
+                _defaultSupportProjectileVisualPrefab = Resources.Load<CombatProjectileVisual>(SupportProjectileVisualResourcePath);
+
+            return _defaultSupportProjectileVisualPrefab;
+        }
+
+        if (_projectileVisualPrefab != null)
+            return _projectileVisualPrefab;
+
+        if (_defaultProjectileVisualPrefab == null)
+            _defaultProjectileVisualPrefab = Resources.Load<CombatProjectileVisual>(OffensiveProjectileVisualResourcePath);
+
+        return _defaultProjectileVisualPrefab;
     }
 }

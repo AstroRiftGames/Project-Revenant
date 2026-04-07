@@ -3,6 +3,7 @@ using UnityEngine;
 
 public enum UnitRole { Tank, DPS, Support }
 public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
+public enum UnitAttackPresentationKind { Melee, Projectile, SupportProjectile }
 
 public abstract class Creature : MonoBehaviour, IUnit
 {
@@ -10,6 +11,7 @@ public abstract class Creature : MonoBehaviour, IUnit
     public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
+    public UnitAttackPresentationKind AttackPresentation => ResolveAttackPresentation();
     public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
@@ -118,5 +120,16 @@ public abstract class Creature : MonoBehaviour, IUnit
     public List<Unit> GetAliveAggressors()
     {
         return _lifeController != null ? _lifeController.GetAliveAggressors() : new List<Unit>();
+    }
+
+    private UnitAttackPresentationKind ResolveAttackPresentation()
+    {
+        if (Role == UnitRole.Support)
+            return UnitAttackPresentationKind.SupportProjectile;
+
+        if (Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged)
+            return UnitAttackPresentationKind.Projectile;
+
+        return UnitAttackPresentationKind.Melee;
     }
 }

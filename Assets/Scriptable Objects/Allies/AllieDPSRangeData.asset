@@ -14,20 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: DPSData
   displayName: DPS Ranged
-  unitPrefab: {fileID: 2779369109141054516, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
+  unitPrefab: {fileID: 7803597328171877914, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
   team: 1
   role: 1
   combatStyle: 2
   faction: 1
-  sprite: {fileID: 0}
+  sprite: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
   stats:
     maxHealth: 10
     attackDamage: 3
-    attackInterval: 0.8
-    attackRangeInCells: 3
+    attackInterval: 0.6
+    attackRangeInCells: 5
     preferredDistanceInCells: 2
     accuracy: 0.85
     evasion: 0.25
     moveSpeed: 1.1
-    visionRange: 5
+    visionRange: 8
