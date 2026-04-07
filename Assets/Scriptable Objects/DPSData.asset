@@ -14,9 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: DPSData
   displayName: DPS
-  team: 0
+  unitPrefab: {fileID: 2779369109141054516, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
+  team: 1
   role: 1
-  faction: 0
+  faction: 1
   sprite: {fileID: 0}
   tileSize: 0
   stats:

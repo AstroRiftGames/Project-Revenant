@@ -505,7 +505,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _necromancerPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
   _floorManager: {fileID: 1032554670}
-  _spawnSetupTimeout: 2
+  _startingPartyMembers:
+  - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
+  - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
+  - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
+  _maxPartyMembers: 3
+  _showPartyDebug: 1
 --- !u!1 &1032554669
 GameObject:
   m_ObjectHideFlags: 0

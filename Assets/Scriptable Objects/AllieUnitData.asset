@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: TestDPS
   displayName: TestDPS
+  unitPrefab: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
   team: 1
   role: 1
   faction: 1

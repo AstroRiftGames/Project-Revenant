@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class LifeController : MonoBehaviour, IDamageable
 {
@@ -7,6 +8,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
     private Unit _unit;
     private readonly List<Unit> _aggressors = new();
+
+    public static event Action<Unit> OnUnitDied;
+    public static event Action<Unit> OnHealthChanged;
 
     public Unit LastAttacker { get; private set; }
 
@@ -22,6 +26,7 @@ public class LifeController : MonoBehaviour, IDamageable
     public void Initialize(int maxHealth)
     {
         CurrentHealth = Mathf.Max(0, maxHealth);
+        NotifyHealthChanged();
     }
 
     public void TakeDamage(int amount, IUnit source = null)
@@ -38,6 +43,7 @@ public class LifeController : MonoBehaviour, IDamageable
 
         int previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+        NotifyHealthChanged();
 
         if (_debugDamage && _unit != null)
             Debug.Log($"[Damage] {_unit.Id} took {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
@@ -53,6 +59,7 @@ public class LifeController : MonoBehaviour, IDamageable
 
         int previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+        NotifyHealthChanged();
 
         if (_debugDamage && _unit != null)
             Debug.Log($"[Heal] {_unit.Id} healed {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
@@ -73,6 +80,19 @@ public class LifeController : MonoBehaviour, IDamageable
         if (_debugDamage && _unit != null)
             Debug.Log($"[Death] {_unit.Id} died.", this);
 
+        OnUnitDied?.Invoke(_unit);
         gameObject.SetActive(false);
+    }
+
+    public void SetCurrentHealth(int currentHealth)
+    {
+        CurrentHealth = Mathf.Clamp(currentHealth, 0, MaxHealth);
+        NotifyHealthChanged();
+    }
+
+    private void NotifyHealthChanged()
+    {
+        if (_unit != null)
+            OnHealthChanged?.Invoke(_unit);
     }
 }

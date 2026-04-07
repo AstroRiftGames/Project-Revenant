@@ -6,6 +6,17 @@ public class NecromancerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject _necromancerPrefab;
     [SerializeField] private FloorManager _floorManager;
+    [SerializeField] private List<UnitData> _startingPartyMembers = new();
+    [SerializeField] private int _maxPartyMembers = 3;
+    [SerializeField] private bool _showPartyDebug;
+
+    private NecromancerParty _party;
+    private RoomPartySpawner _partySpawner;
+
+    private void Awake()
+    {
+        EnsurePartySystems();
+    }
 
     private void Start()
     {
@@ -30,6 +41,21 @@ public class NecromancerSpawner : MonoBehaviour
         }
 
         necromancer.SetGrid(grid);
+    }
+
+    private void EnsurePartySystems()
+    {
+        _party = GetComponent<NecromancerParty>();
+        if (_party == null)
+            _party = gameObject.AddComponent<NecromancerParty>();
+
+        _party.Configure(_startingPartyMembers, _maxPartyMembers, _showPartyDebug);
+
+        _partySpawner = GetComponent<RoomPartySpawner>();
+        if (_partySpawner == null)
+            _partySpawner = gameObject.AddComponent<RoomPartySpawner>();
+
+        _partySpawner.Configure(_floorManager, _party);
     }
 
     private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)

@@ -3173,15 +3173,6 @@ MonoBehaviour:
         Weight: 25
       - Prefab: {fileID: 8765862917985790579, guid: 860b759cb32e9df4593a247da76684a2, type: 3}
         Weight: 25
-    - CategoryName: Allies
-      Weight: 70
-      Prefabs:
-      - Prefab: {fileID: 7159805405016490059, guid: fff66658a920bc54e8c181cc460bddc3, type: 3}
-        Weight: 50
-      - Prefab: {fileID: 7159805405016490059, guid: fff66658a920bc54e8c181cc460bddc3, type: 3}
-        Weight: 25
-      - Prefab: {fileID: 7159805405016490059, guid: fff66658a920bc54e8c181cc460bddc3, type: 3}
-        Weight: 25
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}
     Categories: []

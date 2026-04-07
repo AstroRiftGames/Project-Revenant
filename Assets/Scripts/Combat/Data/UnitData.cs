@@ -25,6 +25,7 @@ public class UnitData : ScriptableObject
 {
     public string unitId;
     public string displayName;
+    public GameObject unitPrefab;
     public UnitTeam team;
     public UnitRole role;
     public UnitFaction faction;
