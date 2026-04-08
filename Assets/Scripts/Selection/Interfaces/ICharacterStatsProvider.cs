@@ -5,6 +5,7 @@ namespace Selection.Interfaces
 {
     public interface ICharacterStatsProvider
     {
+        UnitTeam Team { get; }
         int CurrentHealth { get; }
         int MaxHealth { get; }
         UnitRole Role { get; }

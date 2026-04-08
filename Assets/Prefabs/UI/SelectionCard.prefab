@@ -1443,6 +1443,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthSlider: {fileID: 1461547622812607000}
+  healthFill: {fileID: 7757383391547614929}
   cooldownSlider: {fileID: 8049393268947507565}
   healthText: {fileID: 6163542477388604569}
   cooldownText: {fileID: 2623924942583843917}

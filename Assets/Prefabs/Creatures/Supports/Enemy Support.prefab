@@ -17,8 +17,8 @@ GameObject:
   - component: {fileID: 8079215970449991445}
   - component: {fileID: 1922366374678765962}
   - component: {fileID: 8484302720107290866}
-  m_Layer: 0
-  m_Name: Support
+  m_Layer: 8
+  m_Name: Enemy Support
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectionIndicator: {fileID: 0}
   _unitData: {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
   _actionSource: {fileID: 0}
 --- !u!114 &1130936505597763873
@@ -232,7 +233,7 @@ GameObject:
   - component: {fileID: 6198565880212951774}
   - component: {fileID: 4128176590454114111}
   - component: {fileID: 6318870569317219975}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -309,7 +310,7 @@ GameObject:
   - component: {fileID: 8490633814479897767}
   - component: {fileID: 3119117918236701002}
   - component: {fileID: 6546383488104993113}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -424,7 +425,7 @@ GameObject:
   - component: {fileID: 7116078533183155687}
   - component: {fileID: 3873415574005563015}
   - component: {fileID: 6171143250776953937}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,7 +499,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3871774136593412135}
   - component: {fileID: 1257135674242451}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: LifeBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -589,7 +590,7 @@ GameObject:
   - component: {fileID: 5651711142521702517}
   - component: {fileID: 2671060003391598977}
   - component: {fileID: 7671212339455782881}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Border
   m_TagString: Untagged
   m_Icon: {fileID: 0}

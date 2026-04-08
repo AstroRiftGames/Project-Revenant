@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2530779472499519999}
   - component: {fileID: 7397078867624149813}
   - component: {fileID: 3609740325020901574}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -92,7 +92,7 @@ GameObject:
   - component: {fileID: 3010554441863723249}
   - component: {fileID: 1132451354933908801}
   - component: {fileID: 8428265930954497066}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Enemy Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -228,6 +228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectionIndicator: {fileID: 0}
   _unitData: {fileID: 11400000, guid: b048bd5ebf39c9b43aaa0db3daae0887, type: 2}
   _actionSource: {fileID: 0}
 --- !u!114 &5774226626785607199
@@ -307,7 +308,7 @@ GameObject:
   - component: {fileID: 8291799895149103499}
   - component: {fileID: 2628531571457939219}
   - component: {fileID: 5004771601103694837}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Border
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -384,7 +385,7 @@ GameObject:
   - component: {fileID: 6849745707779006939}
   - component: {fileID: 6077905654652632416}
   - component: {fileID: 412715076382673209}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -499,7 +500,7 @@ GameObject:
   - component: {fileID: 4060199064224681332}
   - component: {fileID: 5179859178842018646}
   - component: {fileID: 6378683131939799818}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -573,7 +574,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5373346356694063968}
   - component: {fileID: 809824179957823978}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: LifeBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}

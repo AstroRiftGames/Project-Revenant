@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7857667183074453583}
   - component: {fileID: 3495338766074419922}
   - component: {fileID: 4013731938436298820}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 8449625638776113256}
   - component: {fileID: 8426596115607252536}
   - component: {fileID: 402078136697074941}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Border
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -203,7 +203,7 @@ GameObject:
   - component: {fileID: 19005907070199685}
   - component: {fileID: 2028307924577445172}
   - component: {fileID: 539787838924949704}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -278,7 +278,7 @@ GameObject:
   - component: {fileID: 7975174213736095589}
   - component: {fileID: 5319869391125117343}
   - component: {fileID: 9171233793850789745}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -359,7 +359,7 @@ GameObject:
   - component: {fileID: 4447924673430037714}
   - component: {fileID: 705497465432100825}
   - component: {fileID: 1571094665804335257}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Enemy DPS Melee
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -495,6 +495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 659d1d339a6b4e843a19c3d4607411a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectionIndicator: {fileID: 0}
   _unitData: {fileID: 11400000, guid: b86923acd10247d45bc11d58e87d1732, type: 2}
   _actionSource: {fileID: 0}
 --- !u!114 &8181733057524159171
@@ -573,7 +574,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2798448689305657558}
   - component: {fileID: 7156256890395504120}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: LifeBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
