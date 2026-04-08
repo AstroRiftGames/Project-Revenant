@@ -7,7 +7,10 @@ public class LifeController : MonoBehaviour, IDamageable
     [SerializeField] private bool _debugDamage;
 
     private Unit _unit;
+    private UnitDeathHandler _deathHandler;
+    private RecruitableUnitState _recruitableState;
     private readonly List<Unit> _aggressors = new();
+    private bool _hasResolvedDeath;
 
     public static event Action<Unit> OnUnitDied;
     public static event Action<Unit> OnHealthChanged;
@@ -18,16 +21,23 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public int CurrentHealth { get; private set; }
     public int MaxHealth => _unit != null ? _unit.BaseMaxHealth : 0;
-    public bool IsAlive => CurrentHealth > 0;
+    public bool IsAlive => _recruitableState != null ? _recruitableState.IsAlive : CurrentHealth > 0;
+    public UnitLifecycleState LifecycleState => _recruitableState != null
+        ? _recruitableState.CurrentState
+        : CurrentHealth > 0 ? UnitLifecycleState.Alive : UnitLifecycleState.Dead;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        _recruitableState = GetComponent<RecruitableUnitState>() ?? gameObject.AddComponent<RecruitableUnitState>();
+        _deathHandler = GetComponent<UnitDeathHandler>() ?? gameObject.AddComponent<UnitDeathHandler>();
     }
 
     public void Initialize(int maxHealth)
     {
         CurrentHealth = Mathf.Max(0, maxHealth);
+        _hasResolvedDeath = false;
+        _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
         NotifyHealthChanged();
     }
 
@@ -86,10 +96,22 @@ public class LifeController : MonoBehaviour, IDamageable
 
     private void Die()
     {
+        if (_hasResolvedDeath)
+            return;
+
+        _hasResolvedDeath = true;
+
         if (_debugDamage && _unit != null)
             Debug.Log($"[Death] {_unit.Id} died.", this);
 
         OnUnitDied?.Invoke(_unit);
+
+        if (_deathHandler != null)
+        {
+            _deathHandler.ResolveDeath();
+            return;
+        }
+
         gameObject.SetActive(false);
     }
 

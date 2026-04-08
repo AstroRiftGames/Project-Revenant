@@ -93,7 +93,7 @@ public class BattleGrid : MonoBehaviour
         for (int i = 0; i < units.Count; i++)
         {
             Unit unit = units[i];
-            if (unit == null || !unit.gameObject.activeInHierarchy || ReferenceEquals(unit, movingUnit))
+            if (unit == null || !unit.gameObject.activeInHierarchy || !unit.IsAlive || ReferenceEquals(unit, movingUnit))
                 continue;
 
             if (WorldToCell(unit.Position) == cell)

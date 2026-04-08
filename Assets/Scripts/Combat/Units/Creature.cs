@@ -17,10 +17,16 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public UnitAttackKind AttackPresentation => ResolveAttackPresentation();
     public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
-    
+    public bool IsEnemy => Team == UnitTeam.Enemy;
+    public bool IsAlly => Team == UnitTeam.NecromancerAlly;
+    public UnitLifecycleState LifecycleState => ResolveRecruitableState() != null
+        ? _recruitableState.CurrentState
+        : UnitLifecycleState.Dead;
+    public bool IsRecruitable => ResolveRecruitableState() != null && _recruitableState.IsRecruitable;
+
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
     public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
-    public bool IsAlive => _lifeController == null || _lifeController.IsAlive;
+    public bool IsAlive => ResolveRecruitableState() != null && _recruitableState.IsAlive;
     public int BaseMaxHealth => _data != null && _data.stats != null ? _data.stats.maxHealth : 0;
     public float MoveSpeed => _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f;
     public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
@@ -32,6 +38,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     protected UnitData _data;
     protected LifeController _lifeController { get; private set; }
+    private RecruitableUnitState _recruitableState;
 
 
     [Header("Selection Visuals")]
@@ -48,6 +55,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     protected virtual void Awake()
     {
         _lifeController = GetComponent<LifeController>();
+        _recruitableState = GetComponent<RecruitableUnitState>();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -55,6 +63,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _data = data;
         Id = data != null ? data.unitId : string.Empty;
         _lifeController ??= GetComponent<LifeController>();
+        _recruitableState ??= GetComponent<RecruitableUnitState>();
 
         if (_lifeController != null)
             _lifeController.Initialize(BaseMaxHealth);
@@ -147,6 +156,12 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
             return UnitAttackKind.Projectile;
 
         return UnitAttackKind.Melee;
+    }
+
+    private RecruitableUnitState ResolveRecruitableState()
+    {
+        _recruitableState ??= GetComponent<RecruitableUnitState>();
+        return _recruitableState;
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;
