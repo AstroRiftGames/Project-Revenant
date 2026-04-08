@@ -10,24 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e5f42eba10b5734cb37457229de4a60, type: 3}
-  m_Name: AllieTankData
+  m_Name: AllySupportData
   m_EditorClassIdentifier: 
-  unitId: TankData
-  displayName: Tank
-  unitPrefab: {fileID: 6509095685755233290, guid: c898f9f988bd2c44eb8846f85d853d9b, type: 3}
+  unitId: AllySupport
+  displayName: Support
+  unitPrefab: {fileID: 752399050272230644, guid: 0431511c4e63224409b66ffe98bb0e28, type: 3}
   team: 1
-  role: 0
-  combatStyle: 1
+  role: 2
+  combatStyle: 2
+  targetingMode: 1
   faction: 1
-  sprite: {fileID: -5357433189053572707, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
+  sprite: {fileID: -5528123580834267449, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
   tileSize: 0
   stats:
-    maxHealth: 20
+    maxHealth: 9
     attackDamage: 2
-    attackInterval: 0.9
-    attackRangeInCells: 1
-    preferredDistanceInCells: 1
-    accuracy: 0.7
-    evasion: 0.2
+    attackInterval: 1
+    attackRangeInCells: 3
+    preferredDistanceInCells: 3
+    accuracy: 0.9
+    evasion: 0.15
     moveSpeed: 1
-    visionRange: 8
+    visionRange: 5

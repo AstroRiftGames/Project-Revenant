@@ -18,6 +18,7 @@ MonoBehaviour:
   team: 0
   role: 1
   combatStyle: 2
+  targetingMode: 1
   faction: 0
   sprite: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0

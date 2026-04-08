@@ -82,7 +82,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
-      value: Allie DPS Melee
+      value: Ally DPS Melee
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 677521004704075058, guid: e849b9c54d164c543b3c49d143d75296, type: 3}

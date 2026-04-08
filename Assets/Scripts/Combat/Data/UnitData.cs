@@ -5,7 +5,7 @@ public class UnitStatsData
 {
     public int maxHealth = 10;
     public int attackDamage = 1;
-    public float attackInterval = 0.75f;
+    public float attackCooldown = 0.75f;
     public int attackRangeInCells = 1;
     public int preferredDistanceInCells = 1;
     [Range(0f, 1f)] public float accuracy = 0.85f;
@@ -27,6 +27,12 @@ public enum UnitCombatStyle
     Ranged
 }
 
+public enum UnitTargetingMode
+{
+    RolePriority,
+    Dynamic
+}
+
 [CreateAssetMenu(fileName = "UnitData", menuName = "UnitData")]
 public class UnitData : ScriptableObject
 {
@@ -36,6 +42,7 @@ public class UnitData : ScriptableObject
     public UnitTeam team;
     public UnitRole role;
     public UnitCombatStyle combatStyle;
+    public UnitTargetingMode targetingMode;
     public UnitFaction faction;
     public Sprite sprite;
     public int tileSize;
