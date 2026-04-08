@@ -29,8 +29,9 @@ public class Unit : Creature
             context.RegisterUnit(this);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         if (_roomContext != null)
             _roomContext.UnregisterUnit(this);
     }

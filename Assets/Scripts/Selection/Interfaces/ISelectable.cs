@@ -8,6 +8,8 @@ namespace Selection.Interfaces
         GameObject SelectionGameObject { get; }
         ICharacterStatsProvider StatsProvider { get; }
 
+        event System.Action<ISelectable> OnSelectionInvalidated;
+
         void Select();
         void Deselect();
     }

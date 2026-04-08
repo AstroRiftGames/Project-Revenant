@@ -149,6 +149,16 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         return UnitAttackKind.Melee;
     }
 
+    public event System.Action<ISelectable> OnSelectionInvalidated;
+
+    protected virtual void OnDisable()
+    {
+        if (IsSelected)
+        {
+            OnSelectionInvalidated?.Invoke(this);
+        }
+    }
+
     public void Select()
     {
         IsSelected = true;

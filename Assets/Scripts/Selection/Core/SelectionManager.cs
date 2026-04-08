@@ -54,6 +54,7 @@ namespace Selection.Core
             }
 
             selectedCharacters.Add(selectable);
+            selectable.OnSelectionInvalidated += HandleSelectionInvalidated;
             selectable.Select();
             NotifySelectionChanged();
         }
@@ -63,6 +64,7 @@ namespace Selection.Core
             if (selectable == null || !selectedCharacters.Contains(selectable)) return;
 
             selectedCharacters.Remove(selectable);
+            selectable.OnSelectionInvalidated -= HandleSelectionInvalidated;
             selectable.Deselect();
             NotifySelectionChanged();
         }
@@ -73,11 +75,17 @@ namespace Selection.Core
 
             foreach (var selectable in selectedCharacters)
             {
+                selectable.OnSelectionInvalidated -= HandleSelectionInvalidated;
                 selectable.Deselect();
             }
             
             selectedCharacters.Clear();
             NotifySelectionChanged();
+        }
+
+        private void HandleSelectionInvalidated(ISelectable selectable)
+        {
+            Deselect(selectable);
         }
 
         private void NotifySelectionChanged()
