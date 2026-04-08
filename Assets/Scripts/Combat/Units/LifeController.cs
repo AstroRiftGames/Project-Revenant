@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 using System.Collections.Generic;
-using System;
 
+[RequireComponent(typeof(Unit))]
+[RequireComponent(typeof(RecruitableUnitState))]
 public class LifeController : MonoBehaviour, IDamageable
 {
     [SerializeField] private bool _debugDamage;
@@ -29,8 +31,11 @@ public class LifeController : MonoBehaviour, IDamageable
     private void Awake()
     {
         _unit = GetComponent<Unit>();
-        _recruitableState = GetComponent<RecruitableUnitState>() ?? gameObject.AddComponent<RecruitableUnitState>();
+        _recruitableState = GetComponent<RecruitableUnitState>();
         _deathHandler = GetComponent<UnitDeathHandler>() ?? gameObject.AddComponent<UnitDeathHandler>();
+
+        if (_recruitableState == null)
+            throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required {nameof(RecruitableUnitState)} on '{name}'.");
     }
 
     public void Initialize(int maxHealth)
@@ -126,6 +131,11 @@ public class LifeController : MonoBehaviour, IDamageable
         _hasResolvedDeath = false;
         SetCurrentHealth(Mathf.Max(1, currentHealth));
         OnLifeUpdated?.Invoke(CurrentHealth);
+    }
+
+    public void RestoreHealth(int currentHealth)
+    {
+        Revive(currentHealth);
     }
 
     private void NotifyHealthChanged()

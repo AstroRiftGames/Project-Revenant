@@ -198,19 +198,34 @@ public class NecromancerParty : MonoBehaviour
         if (!_showDebugOverlay)
             return;
 
-        GUILayout.BeginArea(new Rect(10f, 10f, 360f, 400f), GUI.skin.box);
+        const float panelWidth = 360f;
+        const float panelHeight = 220f;
+        float panelX = Screen.width - panelWidth - 10f;
+        float panelY = 10f;
+
+        GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
         GUILayout.Label($"Necromancer Party {SlotsUsed}/{_maxPartyMembers}");
 
-        for (int i = 0; i < _members.Count; i++)
-        {
-            PartyMemberData member = _members[i];
-            if (member == null)
-                continue;
+        List<PartyMemberData> activeMembers = _members
+            .Where(member => member != null && member.IsAlive)
+            .OrderBy(member => member.FormationIndex)
+            .ToList();
 
-            string unitName = member.UnitDefinition != null ? member.UnitDefinition.displayName : "Missing UnitData";
-            GUILayout.Label(
-                $"[{member.FormationIndex}] {unitName} | HP {member.CurrentHealth} | " +
-                $"{(member.IsAlive ? "Alive" : "Dead")} | {(member.IsDeployed ? "Deployed" : "Idle")}");
+        if (activeMembers.Count == 0)
+        {
+            GUILayout.Label("No active party members.");
+        }
+        else
+        {
+            for (int i = 0; i < activeMembers.Count; i++)
+            {
+                PartyMemberData member = activeMembers[i];
+
+                string unitName = member.UnitDefinition != null ? member.UnitDefinition.displayName : "Missing UnitData";
+                GUILayout.Label(
+                    $"[{member.FormationIndex}] {unitName} | HP {member.CurrentHealth} | " +
+                    $"{(member.IsDeployed ? "Deployed" : "Idle")}");
+            }
         }
 
         GUILayout.EndArea();

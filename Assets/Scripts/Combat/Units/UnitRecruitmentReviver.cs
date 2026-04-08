@@ -10,7 +10,6 @@ public class UnitRecruitmentReviver : MonoBehaviour
     [SerializeField] private int _minimumRecruitHealth = 1;
 
     private Unit _unit;
-    private LifeController _lifeController;
     private UnitDeathHandler _deathHandler;
     private UnitAffiliationState _affiliationState;
     private PartyMemberLink _partyMemberLink;
@@ -18,7 +17,6 @@ public class UnitRecruitmentReviver : MonoBehaviour
     private void Awake()
     {
         _unit = GetComponent<Unit>();
-        _lifeController = GetComponent<LifeController>();
         _deathHandler = GetComponent<UnitDeathHandler>();
         _affiliationState = GetComponent<UnitAffiliationState>();
         _partyMemberLink = GetComponent<PartyMemberLink>();
@@ -26,7 +24,7 @@ public class UnitRecruitmentReviver : MonoBehaviour
 
     public void RestoreRecruitedUnit(PartyMemberData member)
     {
-        if (member == null || _unit == null || _lifeController == null || _deathHandler == null || _affiliationState == null)
+        if (member == null || _unit == null || _deathHandler == null || _affiliationState == null)
             return;
 
         _partyMemberLink ??= GetComponent<PartyMemberLink>() ?? gameObject.AddComponent<PartyMemberLink>();
@@ -34,7 +32,6 @@ public class UnitRecruitmentReviver : MonoBehaviour
         _affiliationState.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
 
         int restoredHealth = Mathf.Clamp(member.CurrentHealth, Mathf.Max(1, _minimumRecruitHealth), _unit.MaxHealth);
-        _lifeController.Revive(restoredHealth);
-        _deathHandler.RestoreAliveState();
+        _deathHandler.RestoreOperationalState(restoredHealth);
     }
 }

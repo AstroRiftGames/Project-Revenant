@@ -1,3 +1,4 @@
+using System;
 using Selection.Core;
 using Selection.Interfaces;
 using System.Collections.Generic;
@@ -7,22 +8,23 @@ public enum UnitRole { Tank, DPS, Support }
 public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
 public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 
+[RequireComponent(typeof(LifeController))]
+[RequireComponent(typeof(RecruitableUnitState))]
+[RequireComponent(typeof(UnitAffiliationState))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public string Id { get; protected set; } = string.Empty;
-    public UnitTeam Team => ResolveAffiliationState() != null ? _affiliationState.Team : UnitTeam.Enemy;
+    public UnitTeam Team => _affiliationState.Team;
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
     public UnitTargetingMode TargetingMode => _data != null ? _data.targetingMode : UnitTargetingMode.RolePriority;
     public UnitAttackKind AttackPresentation => ResolveAttackPresentation();
-    public UnitFaction Faction => ResolveAffiliationState() != null ? _affiliationState.Faction : default;
+    public UnitFaction Faction => _affiliationState.Faction;
     public Vector3 Position => transform.position;
     public bool IsEnemy => Team == UnitTeam.Enemy;
     public bool IsAlly => Team == UnitTeam.NecromancerAlly;
-    public UnitLifecycleState LifecycleState => ResolveRecruitableState() != null
-        ? _recruitableState.CurrentState
-        : UnitLifecycleState.Dead;
-    public bool IsRecruitable => ResolveRecruitableState() != null && _recruitableState.IsRecruitable;
+    public UnitLifecycleState LifecycleState => _recruitableState.CurrentState;
+    public bool IsRecruitable => _recruitableState.IsRecruitable;
 
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
     public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
@@ -58,6 +60,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
+        ValidateRequiredComponents();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -66,7 +69,8 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         Id = data != null ? data.unitId : string.Empty;
         _lifeController ??= GetComponent<LifeController>();
         _recruitableState ??= GetComponent<RecruitableUnitState>();
-        ResolveAffiliationState()?.Initialize(data);
+        _affiliationState ??= GetComponent<UnitAffiliationState>();
+        _affiliationState.Initialize(data);
 
         if (_lifeController != null)
             _lifeController.Initialize(BaseMaxHealth);
@@ -74,12 +78,12 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     public void SetAffiliation(UnitTeam team, UnitFaction faction)
     {
-        ResolveAffiliationState()?.SetAffiliation(team, faction);
+        _affiliationState.SetAffiliation(team, faction);
     }
 
     public void ResetAffiliationFromData()
     {
-        ResolveAffiliationState()?.Initialize(_data);
+        _affiliationState.Initialize(_data);
     }
 
     public UnitData GetUnitData()
@@ -176,16 +180,10 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         return UnitAttackKind.Melee;
     }
 
-    private RecruitableUnitState ResolveRecruitableState()
+    private void ValidateRequiredComponents()
     {
-        _recruitableState ??= GetComponent<RecruitableUnitState>();
-        return _recruitableState;
-    }
-
-    private UnitAffiliationState ResolveAffiliationState()
-    {
-        _affiliationState ??= GetComponent<UnitAffiliationState>() ?? gameObject.AddComponent<UnitAffiliationState>();
-        return _affiliationState;
+        if (_lifeController == null || _recruitableState == null || _affiliationState == null)
+            throw new InvalidOperationException($"[{nameof(Creature)}] Missing required runtime components on '{name}'.");
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;

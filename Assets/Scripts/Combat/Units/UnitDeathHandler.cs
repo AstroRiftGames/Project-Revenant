@@ -13,6 +13,7 @@ public class UnitDeathHandler : MonoBehaviour
     [SerializeField] private Behaviour[] _behavioursToDisableForRecruitableDeath;
 
     private Unit _unit;
+    private LifeController _lifeController;
     private RecruitableUnitState _recruitableState;
     private RecruitableUnitInteraction _recruitableInteraction;
     private Color[] _initialSpriteColors = Array.Empty<Color>();
@@ -26,6 +27,7 @@ public class UnitDeathHandler : MonoBehaviour
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _recruitableInteraction = GetComponent<RecruitableUnitInteraction>();
 
@@ -137,6 +139,15 @@ public class UnitDeathHandler : MonoBehaviour
     public void RestoreAliveState()
     {
         ResetDeathState(UnitLifecycleState.Alive);
+    }
+
+    public void RestoreOperationalState(int currentHealth)
+    {
+        if (_lifeController == null)
+            return;
+
+        _lifeController.RestoreHealth(currentHealth);
+        RestoreAliveState();
     }
 
     private void CacheInitialState()
