@@ -26,7 +26,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
     public int PreferredDistanceInCells => _data != null && _data.stats != null ? _data.stats.preferredDistanceInCells : 0;
     public int AttackDamage => _data != null && _data.stats != null ? _data.stats.attackDamage : 0;
-    public float AttackInterval => _data != null && _data.stats != null ? _data.stats.attackCooldown : 0f;
+    public float AttackCooldown => _data != null && _data.stats != null ? _data.stats.attackCooldown : 0f;
     public float Accuracy => _data != null && _data.stats != null ? _data.stats.accuracy : 0f;
     public float Evasion => _data != null && _data.stats != null ? _data.stats.evasion : 0f;
 

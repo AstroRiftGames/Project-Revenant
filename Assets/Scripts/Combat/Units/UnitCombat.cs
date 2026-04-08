@@ -149,7 +149,7 @@ public class UnitCombat : MonoBehaviour, IAction
 
         effect(target);
         PlayAttackVisual(target);
-        _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackInterval);
+        _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackCooldown);
         return true;
     }
 

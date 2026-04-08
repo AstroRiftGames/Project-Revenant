@@ -241,11 +241,13 @@ public class Unit : Creature
 
     private void PopulateRoomUnits(List<IUnit> results, TargetRelationship relationship)
     {
-        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
-        if (roomUnits == null || results == null)
+        if (results == null)
             return;
 
         results.Clear();
+        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        if (roomUnits == null)
+            return;
 
         for (int i = 0; i < roomUnits.Count; i++)
         {
@@ -259,11 +261,13 @@ public class Unit : Creature
 
     private void PopulateRoomUnits(List<Unit> results, TargetRelationship relationship)
     {
-        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
-        if (roomUnits == null || results == null)
+        if (results == null)
             return;
 
         results.Clear();
+        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        if (roomUnits == null)
+            return;
 
         for (int i = 0; i < roomUnits.Count; i++)
         {

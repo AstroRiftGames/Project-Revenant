@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class UnitStatsData
 {
     public int maxHealth = 10;
     public int attackDamage = 1;
+    [FormerlySerializedAs("attackInterval")]
     public float attackCooldown = 0.75f;
     public int attackRangeInCells = 1;
     public int preferredDistanceInCells = 1;
