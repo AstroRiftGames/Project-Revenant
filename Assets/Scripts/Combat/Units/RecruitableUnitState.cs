@@ -5,7 +5,6 @@ using UnityEngine;
 public class RecruitableUnitState : MonoBehaviour
 {
     public UnitLifecycleState CurrentState { get; private set; } = UnitLifecycleState.Dead;
-    public bool IsAlive => CurrentState == UnitLifecycleState.Alive;
     public bool IsRecruitable => CurrentState == UnitLifecycleState.Recruitable;
     public bool IsDead => CurrentState == UnitLifecycleState.Dead;
 

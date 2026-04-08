@@ -7,7 +7,9 @@ using UnityEngine;
 public class PartyMemberData
 {
     public string PartyMemberId;
-    public UnitData UnitData;
+    public UnitData UnitDefinition;
+    public UnitTeam RuntimeTeam;
+    public UnitFaction RuntimeFaction;
     public bool IsAlive = true;
     public int FormationIndex;
     public bool IsDeployed;
@@ -57,7 +59,7 @@ public class NecromancerParty : MonoBehaviour
     public IEnumerable<PartyMemberData> GetDeployableMembers()
     {
         return _members
-            .Where(member => member != null && member.IsAlive && member.UnitData != null)
+            .Where(member => member != null && member.IsAlive && member.UnitDefinition != null)
             .OrderBy(member => member.FormationIndex)
             .Take(_maxPartyMembers);
     }
@@ -87,11 +89,35 @@ public class NecromancerParty : MonoBehaviour
 
     public bool TryAddMember(UnitData unitData, int formationIndex = -1)
     {
-        if (unitData == null || _members.Count >= _maxPartyMembers)
+        if (unitData == null || SlotsUsed >= _maxPartyMembers)
             return false;
 
-        int nextFormationIndex = formationIndex >= 0 ? formationIndex : _members.Count;
+        int nextFormationIndex = formationIndex >= 0 ? formationIndex : GetNextFormationIndex();
         _members.Add(CreateMember(unitData, nextFormationIndex));
+        NormalizeFormationIndices();
+        return true;
+    }
+
+    public bool TryRecruitUnit(Unit unit, out PartyMemberData member)
+    {
+        member = null;
+
+        if (unit == null || SlotsUsed >= _maxPartyMembers)
+            return false;
+
+        UnitData unitData = unit.GetUnitData();
+        if (unitData == null)
+            return false;
+
+        PartyMemberLink existingLink = unit.GetComponent<PartyMemberLink>();
+        if (existingLink != null && existingLink.IsFromNecromancerParty && TryGetMember(existingLink.PartyMemberId, out member))
+            return true;
+
+        int currentHealth = Mathf.Max(1, unit.BaseMaxHealth);
+        member = CreateMember(unitData, GetNextFormationIndex(), UnitTeam.NecromancerAlly, unit.Faction, currentHealth);
+        member.IsDeployed = true;
+        _members.Add(member);
+        NormalizeFormationIndices();
         return true;
     }
 
@@ -100,7 +126,7 @@ public class NecromancerParty : MonoBehaviour
         if (_members.Count > 0 || _startingMembers == null || _startingMembers.Count == 0)
             return;
 
-        for (int i = 0; i < _startingMembers.Count && _members.Count < _maxPartyMembers; i++)
+        for (int i = 0; i < _startingMembers.Count && SlotsUsed < _maxPartyMembers; i++)
         {
             UnitData unitData = _startingMembers[i];
             if (unitData == null)
@@ -108,18 +134,32 @@ public class NecromancerParty : MonoBehaviour
 
             _members.Add(CreateMember(unitData, i));
         }
+
+        NormalizeFormationIndices();
     }
 
     private PartyMemberData CreateMember(UnitData unitData, int formationIndex)
     {
+        return CreateMember(
+            unitData,
+            formationIndex,
+            unitData != null ? unitData.team : UnitTeam.Enemy,
+            unitData != null ? unitData.faction : default,
+            unitData != null && unitData.stats != null ? Mathf.Max(1, unitData.stats.maxHealth) : 1);
+    }
+
+    private PartyMemberData CreateMember(UnitData unitData, int formationIndex, UnitTeam team, UnitFaction faction, int currentHealth)
+    {
         return new PartyMemberData
         {
             PartyMemberId = Guid.NewGuid().ToString("N"),
-            UnitData = unitData,
+            UnitDefinition = unitData,
+            RuntimeTeam = team,
+            RuntimeFaction = faction,
             IsAlive = true,
             FormationIndex = formationIndex,
             IsDeployed = false,
-            CurrentHealth = unitData != null && unitData.stats != null ? Mathf.Max(1, unitData.stats.maxHealth) : 1
+            CurrentHealth = Mathf.Max(1, currentHealth)
         };
     }
 
@@ -135,9 +175,7 @@ public class NecromancerParty : MonoBehaviour
         if (!TryGetMember(link.PartyMemberId, out PartyMemberData member))
             return;
 
-        member.IsAlive = false;
-        member.IsDeployed = false;
-        member.CurrentHealth = 0;
+        RemoveMember(member);
     }
 
     private void HandleUnitHealthChanged(Unit unit)
@@ -169,12 +207,40 @@ public class NecromancerParty : MonoBehaviour
             if (member == null)
                 continue;
 
-            string unitName = member.UnitData != null ? member.UnitData.displayName : "Missing UnitData";
+            string unitName = member.UnitDefinition != null ? member.UnitDefinition.displayName : "Missing UnitData";
             GUILayout.Label(
                 $"[{member.FormationIndex}] {unitName} | HP {member.CurrentHealth} | " +
                 $"{(member.IsAlive ? "Alive" : "Dead")} | {(member.IsDeployed ? "Deployed" : "Idle")}");
         }
 
         GUILayout.EndArea();
+    }
+
+    private int GetNextFormationIndex()
+    {
+        return _members.Count;
+    }
+
+    private void RemoveMember(PartyMemberData member)
+    {
+        if (member == null)
+            return;
+
+        _members.Remove(member);
+        NormalizeFormationIndices();
+    }
+
+    private void NormalizeFormationIndices()
+    {
+        _members.Sort((left, right) => left.FormationIndex.CompareTo(right.FormationIndex));
+
+        for (int i = 0; i < _members.Count; i++)
+        {
+            PartyMemberData member = _members[i];
+            if (member == null)
+                continue;
+
+            member.FormationIndex = i;
+        }
     }
 }

@@ -4,6 +4,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(LifeController))]
+[RequireComponent(typeof(RecruitableUnitState))]
 public class UnitDeathHandler : MonoBehaviour
 {
     [Header("Enemy Death Presentation")]
@@ -128,7 +129,14 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _recruitableState ??= GetComponent<RecruitableUnitState>() ?? gameObject.AddComponent<RecruitableUnitState>();
         _recruitableInteraction ??= GetComponent<RecruitableUnitInteraction>() ?? gameObject.AddComponent<RecruitableUnitInteraction>();
+        UnitRecruitmentHandler recruitmentHandler = GetComponent<UnitRecruitmentHandler>() ?? gameObject.AddComponent<UnitRecruitmentHandler>();
+        recruitmentHandler.Configure(NecromancerPartyContext.Current);
         _recruitableInteraction.SetInteractionEnabled(false);
+    }
+
+    public void RestoreAliveState()
+    {
+        ResetDeathState(UnitLifecycleState.Alive);
     }
 
     private void CacheInitialState()

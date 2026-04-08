@@ -10,12 +10,12 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public string Id { get; protected set; } = string.Empty;
-    public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
+    public UnitTeam Team => ResolveAffiliationState() != null ? _affiliationState.Team : UnitTeam.Enemy;
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
     public UnitTargetingMode TargetingMode => _data != null ? _data.targetingMode : UnitTargetingMode.RolePriority;
     public UnitAttackKind AttackPresentation => ResolveAttackPresentation();
-    public UnitFaction Faction => _data != null ? _data.faction : default;
+    public UnitFaction Faction => ResolveAffiliationState() != null ? _affiliationState.Faction : default;
     public Vector3 Position => transform.position;
     public bool IsEnemy => Team == UnitTeam.Enemy;
     public bool IsAlly => Team == UnitTeam.NecromancerAlly;
@@ -26,7 +26,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     public int CurrentHealth => _lifeController != null ? _lifeController.CurrentHealth : 0;
     public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
-    public bool IsAlive => ResolveRecruitableState() != null && _recruitableState.IsAlive;
+    public bool IsAlive => _lifeController == null || _lifeController.IsAlive;
     public int BaseMaxHealth => _data != null && _data.stats != null ? _data.stats.maxHealth : 0;
     public float MoveSpeed => _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f;
     public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
@@ -39,6 +39,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     protected UnitData _data;
     protected LifeController _lifeController { get; private set; }
     private RecruitableUnitState _recruitableState;
+    private UnitAffiliationState _affiliationState;
 
 
     [Header("Selection Visuals")]
@@ -56,6 +57,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     {
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
+        _affiliationState = GetComponent<UnitAffiliationState>();
     }
 
     protected virtual void Initialize(UnitData data)
@@ -64,9 +66,25 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         Id = data != null ? data.unitId : string.Empty;
         _lifeController ??= GetComponent<LifeController>();
         _recruitableState ??= GetComponent<RecruitableUnitState>();
+        ResolveAffiliationState()?.Initialize(data);
 
         if (_lifeController != null)
             _lifeController.Initialize(BaseMaxHealth);
+    }
+
+    public void SetAffiliation(UnitTeam team, UnitFaction faction)
+    {
+        ResolveAffiliationState()?.SetAffiliation(team, faction);
+    }
+
+    public void ResetAffiliationFromData()
+    {
+        ResolveAffiliationState()?.Initialize(_data);
+    }
+
+    public UnitData GetUnitData()
+    {
+        return _data;
     }
 
     public bool IsHostileTo(IUnit candidate)
@@ -162,6 +180,12 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     {
         _recruitableState ??= GetComponent<RecruitableUnitState>();
         return _recruitableState;
+    }
+
+    private UnitAffiliationState ResolveAffiliationState()
+    {
+        _affiliationState ??= GetComponent<UnitAffiliationState>() ?? gameObject.AddComponent<UnitAffiliationState>();
+        return _affiliationState;
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;

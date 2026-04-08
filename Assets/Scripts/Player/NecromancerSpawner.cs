@@ -12,6 +12,7 @@ public class NecromancerSpawner : MonoBehaviour
 
     private NecromancerParty _party;
     private RoomPartySpawner _partySpawner;
+    private NecromancerPartyContext _partyContext;
 
     private void Awake()
     {
@@ -56,6 +57,12 @@ public class NecromancerSpawner : MonoBehaviour
             _partySpawner = gameObject.AddComponent<RoomPartySpawner>();
 
         _partySpawner.Configure(_floorManager, _party);
+
+        _partyContext = GetComponent<NecromancerPartyContext>();
+        if (_partyContext == null)
+            _partyContext = gameObject.AddComponent<NecromancerPartyContext>();
+
+        _partyContext.Configure(_party, _partySpawner);
     }
 
     private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)

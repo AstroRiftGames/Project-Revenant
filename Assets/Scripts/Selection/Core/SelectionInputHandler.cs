@@ -7,6 +7,7 @@ namespace Selection.Core
     {
         [SerializeField] private SelectionManager selectionManager;
         [SerializeField] private LayerMask selectableLayer;
+        [SerializeField] private LayerMask interactableLayer;
         [SerializeField] private Camera mainCamera;
 
         private void Awake()
@@ -28,6 +29,11 @@ namespace Selection.Core
             {
                 HandleSelectionClick();
             }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                HandleInteractionClick();
+            }
         }
 
         private void HandleSelectionClick()
@@ -43,6 +49,19 @@ namespace Selection.Core
                     selectionManager.ToggleSelection(selectable);
                 }
             }
+        }
+
+        private void HandleInteractionClick()
+        {
+            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            int interactionMask = interactableLayer.value != 0 ? interactableLayer : selectableLayer;
+            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, interactionMask);
+
+            if (hit.collider == null)
+                return;
+
+            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            interactable?.Interact();
         }
     }
 }

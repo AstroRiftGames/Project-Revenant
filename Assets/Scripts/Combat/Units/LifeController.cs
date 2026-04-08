@@ -21,7 +21,7 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public int CurrentHealth { get; private set; }
     public int MaxHealth => _unit != null ? _unit.BaseMaxHealth : 0;
-    public bool IsAlive => _recruitableState != null ? _recruitableState.IsAlive : CurrentHealth > 0;
+    public bool IsAlive => CurrentHealth > 0;
     public UnitLifecycleState LifecycleState => _recruitableState != null
         ? _recruitableState.CurrentState
         : CurrentHealth > 0 ? UnitLifecycleState.Alive : UnitLifecycleState.Dead;
@@ -119,6 +119,13 @@ public class LifeController : MonoBehaviour, IDamageable
     {
         CurrentHealth = Mathf.Clamp(currentHealth, 0, MaxHealth);
         NotifyHealthChanged();
+    }
+
+    public void Revive(int currentHealth)
+    {
+        _hasResolvedDeath = false;
+        SetCurrentHealth(Mathf.Max(1, currentHealth));
+        OnLifeUpdated?.Invoke(CurrentHealth);
     }
 
     private void NotifyHealthChanged()

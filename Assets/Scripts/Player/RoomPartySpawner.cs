@@ -57,18 +57,18 @@ public class RoomPartySpawner : MonoBehaviour
         int spawnIndex = 0;
         foreach (PartyMemberData member in _party.GetDeployableMembers())
         {
-            if (member == null || member.UnitData == null || member.UnitData.unitPrefab == null)
+            if (member == null || member.UnitDefinition == null || member.UnitDefinition.unitPrefab == null)
                 continue;
 
             if (spawnIndex >= spawnCells.Count)
                 break;
 
             Vector3 spawnPosition = roomContext.BattleGrid.CellToWorld(spawnCells[spawnIndex]);
-            GameObject instance = Instantiate(member.UnitData.unitPrefab, spawnPosition, Quaternion.identity, roomContext.transform);
+            GameObject instance = Instantiate(member.UnitDefinition.unitPrefab, spawnPosition, Quaternion.identity, roomContext.transform);
 
             if (!instance.TryGetComponent(out Unit unit))
             {
-                Debug.LogWarning($"[RoomPartySpawner] '{member.UnitData.name}' prefab does not contain Unit.", this);
+                Debug.LogWarning($"[RoomPartySpawner] '{member.UnitDefinition.name}' prefab does not contain Unit.", this);
                 Destroy(instance);
                 continue;
             }
@@ -78,10 +78,10 @@ public class RoomPartySpawner : MonoBehaviour
                 link = instance.AddComponent<PartyMemberLink>();
 
             link.Initialize(member.PartyMemberId, true);
+            unit.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
             instance.GetComponent<LifeController>()?.SetCurrentHealth(Mathf.Max(1, member.CurrentHealth));
 
-            _party.MarkDeployed(member.PartyMemberId, true);
-            _spawnedPartyUnits.Add(instance);
+            TrackDeployment(instance, member.PartyMemberId);
             spawnIndex++;
         }
     }
@@ -99,6 +99,17 @@ public class RoomPartySpawner : MonoBehaviour
         }
 
         _spawnedPartyUnits.Clear();
+    }
+
+    public void TrackDeployment(GameObject instance, string partyMemberId)
+    {
+        if (instance == null)
+            return;
+
+        if (!_spawnedPartyUnits.Contains(instance))
+            _spawnedPartyUnits.Add(instance);
+
+        _party?.MarkDeployed(partyMemberId, true);
     }
 
     private static bool IsCombatRoom(GameObject roomObject)
