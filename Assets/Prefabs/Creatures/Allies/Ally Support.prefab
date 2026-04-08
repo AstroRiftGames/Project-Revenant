@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &1601488846531195223
+--- !u!1001 &8071397217701985209
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -8,10 +8,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1177492162369679053, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _debugDamage
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1321295952508599020, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
       value: 0.5
@@ -22,11 +18,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.814
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.376
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.z
@@ -63,7 +59,7 @@ PrefabInstance:
     - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
+      objectReference: {fileID: -5528123580834267449, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
     - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -76,37 +72,17 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.34061146
       objectReference: {fileID: 0}
-    - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: m_SortingLayerID
-      value: 1008339267
-      objectReference: {fileID: 0}
     - target: {fileID: 4996026872253235626, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _debugCombat
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4996026872253235626, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _projectileVisualPrefab
+      propertyPath: _supportProjectileVisualPrefab
       value: 
-      objectReference: {fileID: 8751091524275981618, guid: 765ee64fbb4d4b15b4514672f18bf851, type: 3}
+      objectReference: {fileID: 4177105108643093394, guid: b84d8f81fb2c4708894747ecf6b0f1e5, type: 3}
     - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: _unitData
       value: 
-      objectReference: {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
-    - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _drawDetectionGizmos
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6099419616565794161, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _drawPathGizmos
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7167257448602601415, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _debugBrain
-      value: 0
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
-      value: Allie DPS Range
+      value: Ally Support
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 0}

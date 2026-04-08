@@ -13,6 +13,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public UnitTeam Team => _data != null ? _data.team : UnitTeam.Enemy;
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
+    public UnitTargetingMode TargetingMode => _data != null ? _data.targetingMode : UnitTargetingMode.RolePriority;
     public UnitAttackKind AttackPresentation => ResolveAttackPresentation();
     public UnitFaction Faction => _data != null ? _data.faction : default;
     public Vector3 Position => transform.position;
@@ -25,7 +26,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
     public int PreferredDistanceInCells => _data != null && _data.stats != null ? _data.stats.preferredDistanceInCells : 0;
     public int AttackDamage => _data != null && _data.stats != null ? _data.stats.attackDamage : 0;
-    public float AttackInterval => _data != null && _data.stats != null ? _data.stats.attackInterval : 0f;
+    public float AttackInterval => _data != null && _data.stats != null ? _data.stats.attackCooldown : 0f;
     public float Accuracy => _data != null && _data.stats != null ? _data.stats.accuracy : 0f;
     public float Evasion => _data != null && _data.stats != null ? _data.stats.evasion : 0f;
 

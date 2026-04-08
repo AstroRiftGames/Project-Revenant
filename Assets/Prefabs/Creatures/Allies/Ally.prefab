@@ -105,7 +105,7 @@ GameObject:
   - component: {fileID: 1177492162369679053}
   - component: {fileID: -6702437590369737203}
   m_Layer: 8
-  m_Name: Allie
+  m_Name: Ally
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -306,6 +306,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 8823206920075786061}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b14543bddcaded3439f8d3ecc0925457, type: 3}
+  m_Script: {fileID: 11500000, guid: 440218cdd39837448a19dbbc1b1b1e10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

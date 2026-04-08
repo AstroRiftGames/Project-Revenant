@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &8071397217701985209
+--- !u!1001 &2316723743341499207
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -18,11 +18,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -0.814
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -2.376
       objectReference: {fileID: 0}
     - target: {fileID: 1389517390705758261, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_LocalPosition.z
@@ -59,7 +59,7 @@ PrefabInstance:
     - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -5528123580834267449, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
+      objectReference: {fileID: -5357433189053572707, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
     - target: {fileID: 1890298273730405526, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -72,17 +72,13 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.34061146
       objectReference: {fileID: 0}
-    - target: {fileID: 4996026872253235626, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
-      propertyPath: _supportProjectileVisualPrefab
-      value: 
-      objectReference: {fileID: 4177105108643093394, guid: b84d8f81fb2c4708894747ecf6b0f1e5, type: 3}
     - target: {fileID: 6021780588949483514, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: _unitData
       value: 
-      objectReference: {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
+      objectReference: {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
-      value: Allie Support
+      value: Ally Tank
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 0}
