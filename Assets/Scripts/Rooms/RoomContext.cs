@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 public class RoomContext : MonoBehaviour
 {
     [Header("Grid")]
-    [SerializeField] private BattleGrid _battleGrid;
+    [SerializeField] private RoomGrid _battleGrid;
     [SerializeField] private RoomContentGenerator _contentGenerator;
 
     [Header("Local tilemaps")]
@@ -16,7 +16,7 @@ public class RoomContext : MonoBehaviour
     private readonly List<Unit> _units = new();
     private bool _hasGeneratedContent;
 
-    public BattleGrid BattleGrid => _battleGrid;
+    public RoomGrid BattleGrid => _battleGrid;
     public IReadOnlyList<Unit> Units => _units;
 
     private void Awake()
@@ -111,7 +111,7 @@ public class RoomContext : MonoBehaviour
         if (_battleGrid != null)
             return;
 
-        _battleGrid = GetComponentInChildren<BattleGrid>(includeInactive: true);
+        _battleGrid = GetComponentInChildren<RoomGrid>(includeInactive: true);
         if (_battleGrid == null)
         {
             Debug.LogWarning(

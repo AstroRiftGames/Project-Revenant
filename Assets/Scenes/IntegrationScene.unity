@@ -232,6 +232,9 @@ MonoBehaviour:
   selectableLayer:
     serializedVersion: 2
     m_Bits: 256
+  interactableLayer:
+    serializedVersion: 2
+    m_Bits: 0
   mainCamera: {fileID: 519420031}
 --- !u!114 &419774561
 MonoBehaviour:
@@ -469,7 +472,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
   - {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
   _maxPartyMembers: 6
-  _showPartyDebug: 0
+  _showPartyDebug: 1
 --- !u!1 &1032554669
 GameObject:
   m_ObjectHideFlags: 0

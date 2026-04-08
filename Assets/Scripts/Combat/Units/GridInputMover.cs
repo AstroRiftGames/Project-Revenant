@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(UnitMovement))]
 public class GridInputMover : MonoBehaviour
 {
-    [SerializeField] private BattleGrid _grid;
+    [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
 
@@ -24,7 +24,7 @@ public class GridInputMover : MonoBehaviour
         _mainCamera = Camera.main;
     }
 
-    public void SetGrid(BattleGrid grid)
+    public void SetGrid(RoomGrid grid)
     {
         _grid = grid;
     }

@@ -113,7 +113,7 @@ public class UnitCombat : MonoBehaviour, IAction
         if (_unit == null || target == null || !target.IsAlive)
             return false;
 
-        BattleGrid grid = _unit.RoomContext != null ? _unit.RoomContext.BattleGrid : null;
+        RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.BattleGrid : null;
         if (grid == null)
         {
             float distance = Vector3.Distance(_unit.Position, target.Position);

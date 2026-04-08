@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class UnitMovement : MonoBehaviour
 {
-    [SerializeField] private BattleGrid _grid;
+    [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _allowSerializedGridFallback;
     [SerializeField] private float _repathInterval = 0.2f;
 
@@ -31,10 +31,22 @@ public class UnitMovement : MonoBehaviour
         SnapToCurrentCell();
     }
 
-    public void SetGrid(BattleGrid grid)
+    private void OnEnable()
+    {
+        if (_grid != null)
+            RegisterCurrentOccupancy();
+    }
+
+    private void OnDisable()
+    {
+        _grid?.OccupancyService.ReleaseOccupant(_unit);
+    }
+
+    public void SetGrid(RoomGrid grid)
     {
         _grid = grid;
         InvalidatePathCache();
+        ClearCorpseOccupancy();
         SnapToCurrentCell();
     }
 
@@ -43,9 +55,10 @@ public class UnitMovement : MonoBehaviour
         if (_grid == null || _unit == null)
             return false;
 
-        if (!_grid.IsCellWalkable(destinationCell, _unit))
+        if (!_grid.IsCellEnterable(destinationCell, _unit))
             return false;
 
+        _grid.OccupancyService.MoveOccupant(_unit, destinationCell);
         _currentCell = destinationCell;
         transform.position = _grid.CellToWorld(destinationCell);
         return true;
@@ -67,7 +80,7 @@ public class UnitMovement : MonoBehaviour
         Vector3Int desiredCell = targetCell;
 
         if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, Mathf.Max(0, rangeInCells), _unit, out desiredCell))
-            desiredCell = targetCell;
+            return false;
 
         RefreshPathCache(originCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
 
@@ -141,10 +154,11 @@ public class UnitMovement : MonoBehaviour
             return;
 
         Vector3Int rawCell = _grid.WorldToCell(transform.position);
-        _currentCell = _grid.IsCellWalkable(rawCell, _unit)
+        _currentCell = _grid.IsCellEnterable(rawCell, _unit)
             ? rawCell
             : _grid.FindClosestWalkableCell(rawCell, _unit);
         transform.position = _grid.CellToWorld(_currentCell);
+        RegisterCurrentOccupancy();
     }
 
     private Vector3Int GetCurrentCell()
@@ -174,7 +188,7 @@ public class UnitMovement : MonoBehaviour
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            if (!_grid.IsCellWalkable(candidate, _unit))
+            if (!_grid.IsCellEnterable(candidate, _unit))
                 continue;
 
             int candidateDistance = ManhattanDistance(candidate, targetCell);
@@ -217,7 +231,7 @@ public class UnitMovement : MonoBehaviour
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            if (!_grid.IsCellWalkable(candidate, _unit))
+            if (!_grid.IsCellEnterable(candidate, _unit))
                 continue;
 
             int candidateDistance = ManhattanDistance(candidate, targetCell);
@@ -280,7 +294,7 @@ public class UnitMovement : MonoBehaviour
 
         for (int i = 1; i < _cachedPath.Count; i++)
         {
-            if (!_grid.IsCellWalkable(_cachedPath[i], _unit))
+            if (!_grid.IsCellEnterable(_cachedPath[i], _unit))
                 return false;
         }
 
@@ -289,56 +303,10 @@ public class UnitMovement : MonoBehaviour
 
     private List<Vector3Int> FindPath(Vector3Int startCell, Vector3Int targetCell)
     {
-        var path = new List<Vector3Int>();
-
         if (_grid == null || _unit == null)
-            return path;
+            return new List<Vector3Int>();
 
-        if (startCell == targetCell)
-        {
-            path.Add(startCell);
-            return path;
-        }
-
-        var openSet = new List<Vector3Int> { startCell };
-        var closedSet = new HashSet<Vector3Int>();
-        var cameFrom = new Dictionary<Vector3Int, Vector3Int>();
-        var gScore = new Dictionary<Vector3Int, int> { [startCell] = 0 };
-        var fScore = new Dictionary<Vector3Int, int> { [startCell] = ManhattanDistance(startCell, targetCell) };
-
-        while (openSet.Count > 0)
-        {
-            Vector3Int current = GetLowestScoreCell(openSet, fScore);
-            if (current == targetCell)
-                return ReconstructPath(cameFrom, current);
-
-            openSet.Remove(current);
-            closedSet.Add(current);
-
-            List<Vector3Int> neighbors = _grid.GetNeighbors(current);
-            for (int i = 0; i < neighbors.Count; i++)
-            {
-                Vector3Int neighbor = neighbors[i];
-                if (closedSet.Contains(neighbor))
-                    continue;
-
-                if (neighbor != targetCell && !_grid.IsCellWalkable(neighbor, _unit))
-                    continue;
-
-                int tentativeGScore = gScore[current] + 1;
-                if (gScore.TryGetValue(neighbor, out int existingGScore) && tentativeGScore >= existingGScore)
-                    continue;
-
-                cameFrom[neighbor] = current;
-                gScore[neighbor] = tentativeGScore;
-                fScore[neighbor] = tentativeGScore + ManhattanDistance(neighbor, targetCell);
-
-                if (!openSet.Contains(neighbor))
-                    openSet.Add(neighbor);
-            }
-        }
-
-        return path;
+        return GridPathfinder.FindPath(_grid, startCell, targetCell, _unit);
     }
 
     private void InvalidatePathCache()
@@ -351,37 +319,25 @@ public class UnitMovement : MonoBehaviour
         _cachedPath.Clear();
     }
 
-    private static Vector3Int GetLowestScoreCell(List<Vector3Int> openSet, Dictionary<Vector3Int, int> fScore)
+    public void CaptureCorpseOccupancy()
     {
-        Vector3Int bestCell = openSet[0];
-        int bestScore = fScore.TryGetValue(bestCell, out int currentScore) ? currentScore : int.MaxValue;
+        if (_grid == null || _unit == null)
+            return;
 
-        for (int i = 1; i < openSet.Count; i++)
-        {
-            Vector3Int candidate = openSet[i];
-            int candidateScore = fScore.TryGetValue(candidate, out int score) ? score : int.MaxValue;
-            if (candidateScore >= bestScore)
-                continue;
-
-            bestCell = candidate;
-            bestScore = candidateScore;
-        }
-
-        return bestCell;
+        _grid.OccupancyService.RegisterPersistentBlocker(_unit, GetCurrentCell());
     }
 
-    private static List<Vector3Int> ReconstructPath(Dictionary<Vector3Int, Vector3Int> cameFrom, Vector3Int current)
+    public void ClearCorpseOccupancy()
     {
-        var path = new List<Vector3Int> { current };
+        _grid?.OccupancyService.ReleasePersistentBlocker(_unit);
+    }
 
-        while (cameFrom.TryGetValue(current, out Vector3Int previous))
-        {
-            current = previous;
-            path.Add(current);
-        }
+    private void RegisterCurrentOccupancy()
+    {
+        if (_grid == null || _unit == null)
+            return;
 
-        path.Reverse();
-        return path;
+        _grid.OccupancyService.RegisterOccupant(_unit, GetCurrentCell());
     }
 
     private static int ManhattanDistance(Vector3Int a, Vector3Int b)

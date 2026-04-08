@@ -63,6 +63,7 @@ public class UnitDeathHandler : MonoBehaviour
     public void ResetDeathState(UnitLifecycleState state)
     {
         _hasResolvedDeath = false;
+        GetComponent<UnitMovement>()?.ClearCorpseOccupancy();
         RestoreSpriteColors();
         RestoreBehaviours();
         _recruitableState?.SetState(state);
@@ -71,6 +72,7 @@ public class UnitDeathHandler : MonoBehaviour
 
     private void ResolveDefaultDeath()
     {
+        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         _recruitableState?.SetState(UnitLifecycleState.Dead);
         gameObject.SetActive(false);
     }
@@ -78,6 +80,7 @@ public class UnitDeathHandler : MonoBehaviour
     private void ResolveRecruitableEnemyDeath()
     {
         EnsureRecruitableComponents();
+        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         ApplyDeadEnemyVisuals();
         DisableBehavioursForRecruitableDeath();
         _recruitableState?.SetState(UnitLifecycleState.Recruitable);

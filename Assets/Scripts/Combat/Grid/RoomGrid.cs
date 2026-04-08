@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class BattleGrid : MonoBehaviour
+public class RoomGrid : MonoBehaviour
 {
+    private static readonly IGridCellMovementValidator DefaultMovementValidator = new GridCellMovementValidator();
+
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
     [SerializeField] private RoomContext _roomContext;
+    [SerializeField] private GridOccupancyTracker _occupancyService;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
     [SerializeField] private bool _usePhysicsBlockedCells;
@@ -16,12 +19,21 @@ public class BattleGrid : MonoBehaviour
     [SerializeField] private int _maxClosestCellSearch = 512;
 
     public float CellSize => CellWorldSize.x;
+    public GridOccupancyTracker OccupancyService
+    {
+        get
+        {
+            ResolveOccupancyService();
+            return _occupancyService;
+        }
+    }
 
     public void Configure(Tilemap walkable, Tilemap blocked)
     {
         _walkableTilemap = walkable;
         _blockedTilemap = blocked;
         ResolveRoomContext();
+        ResolveOccupancyService();
     }
 
     public Vector2 CellWorldSize
@@ -40,6 +52,7 @@ public class BattleGrid : MonoBehaviour
     private void OnEnable()
     {
         ResolveRoomContext();
+        ResolveOccupancyService();
     }
 
     public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -64,10 +77,8 @@ public class BattleGrid : MonoBehaviour
         return new Vector3(cell.x * _cellSize, cell.y * _cellSize, 0f);
     }
 
-    public bool IsCellWalkable(Vector3Int cell, Unit movingUnit = null)
+    public bool IsCellStaticallyWalkable(Vector3Int cell)
     {
-        ResolveRoomContext();
-
         if (!IsCellInsideWalkableBounds(cell))
             return false;
 
@@ -86,21 +97,29 @@ public class BattleGrid : MonoBehaviour
                 return false;
         }
 
-        IReadOnlyList<Unit> units = _roomContext != null ? _roomContext.Units : null;
-        if (units == null)
-            return true;
-
-        for (int i = 0; i < units.Count; i++)
-        {
-            Unit unit = units[i];
-            if (unit == null || !unit.gameObject.activeInHierarchy || !unit.IsAlive || ReferenceEquals(unit, movingUnit))
-                continue;
-
-            if (WorldToCell(unit.Position) == cell)
-                return false;
-        }
-
         return true;
+    }
+
+    public bool IsCellOccupied(Vector3Int cell, IGridOccupant movingOccupant = null)
+    {
+        ResolveOccupancyService();
+        return _occupancyService != null && _occupancyService.IsOccupied(cell, movingOccupant);
+    }
+
+    public bool DoesCellBlockMovement(Vector3Int cell, IGridOccupant movingOccupant = null)
+    {
+        ResolveOccupancyService();
+        return _occupancyService != null && _occupancyService.DoesCellBlockMovement(cell, movingOccupant);
+    }
+
+    public bool IsCellEnterable(Vector3Int cell, IGridOccupant movingOccupant = null)
+    {
+        return DefaultMovementValidator.CanEnter(this, new GridCellMovementQuery(cell, movingOccupant));
+    }
+
+    public bool IsCellWalkable(Vector3Int cell, IGridOccupant movingOccupant = null)
+    {
+        return IsCellEnterable(cell, movingOccupant);
     }
 
     private void ResolveRoomContext()
@@ -109,6 +128,15 @@ public class BattleGrid : MonoBehaviour
             return;
 
         _roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
+    }
+
+    private void ResolveOccupancyService()
+    {
+        if (_occupancyService == null)
+            _occupancyService = GetComponent<GridOccupancyTracker>();
+
+        if (_occupancyService == null)
+            _occupancyService = gameObject.AddComponent<GridOccupancyTracker>();
     }
 
     public bool IsCellInsideWalkableBounds(Vector3Int cell)
@@ -136,7 +164,7 @@ public class BattleGrid : MonoBehaviour
         if (!IsCellInsideWalkableBounds(targetCell))
             return WorldToCell(movingUnit.Position);
 
-        if (IsCellWalkable(targetCell, movingUnit))
+        if (IsCellEnterable(targetCell, movingUnit))
             return targetCell;
 
         var visited = new HashSet<Vector3Int> { targetCell };
@@ -159,7 +187,7 @@ public class BattleGrid : MonoBehaviour
                 if (!visited.Add(neighbor))
                     continue;
 
-                if (IsCellWalkable(neighbor, movingUnit))
+                if (IsCellEnterable(neighbor, movingUnit))
                     return neighbor;
 
                 queue.Enqueue(neighbor);
@@ -187,7 +215,7 @@ public class BattleGrid : MonoBehaviour
                     continue;
 
                 Vector3Int candidateCell = targetCell + new Vector3Int(x, y, 0);
-                if (!IsCellWalkable(candidateCell, movingUnit))
+                if (!IsCellEnterable(candidateCell, movingUnit))
                     continue;
 
                 float distance = Vector3Int.Distance(originCell, candidateCell);

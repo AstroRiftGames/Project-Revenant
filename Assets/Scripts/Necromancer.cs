@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Necromancer : MonoBehaviour
 {
-    [SerializeField] private BattleGrid _grid;
+    [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
@@ -105,7 +105,7 @@ public class Necromancer : MonoBehaviour
         transform.position = _grid.CellToWorld(cell);
     }
 
-    public void SetGrid(BattleGrid grid)
+    public void SetGrid(RoomGrid grid)
     {
         _grid = grid;
     }

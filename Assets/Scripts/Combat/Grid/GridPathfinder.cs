@@ -3,10 +3,13 @@ using UnityEngine;
 
 public static class GridPathfinder
 {
-    public static List<Vector3Int> FindPath(BattleGrid grid, Vector3Int start, Vector3Int goal, Unit movingUnit = null)
+    public static List<Vector3Int> FindPath(RoomGrid grid, Vector3Int start, Vector3Int goal, IGridOccupant movingUnit = null)
     {
         if (start == goal)
             return new List<Vector3Int> { start };
+
+        if (!grid.IsCellEnterable(goal, movingUnit))
+            return new List<Vector3Int>();
 
         var frontier = new Queue<Vector3Int>();
         var cameFrom = new Dictionary<Vector3Int, Vector3Int>();
@@ -28,7 +31,7 @@ public static class GridPathfinder
                 if (!grid.IsCellInsideWalkableBounds(neighbor))
                     continue;
 
-                if (neighbor != goal && !grid.IsCellWalkable(neighbor, movingUnit))
+                if (!grid.IsCellEnterable(neighbor, movingUnit))
                     continue;
 
                 if (!visited.Add(neighbor))

@@ -3,6 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(LifeController))]
 public class Unit : Creature
+    , IGridOccupant
 {
     [SerializeField] private UnitData _unitData;
     [SerializeField] private MonoBehaviour _actionSource;
@@ -41,6 +42,9 @@ public class Unit : Creature
     public bool IsDpsMelee => Role == UnitRole.DPS && CombatStyle != UnitCombatStyle.Ranged;
     public bool IsDpsRanged => Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged;
     public bool WantsToHoldSpacing => Role == UnitRole.Support || IsDpsRanged;
+    public Vector3 OccupancyWorldPosition => transform.position;
+    public bool OccupiesCell => gameObject.activeInHierarchy;
+    public bool BlocksMovement => true;
 
     public void AssignRoomContext(RoomContext context)
     {
@@ -224,15 +228,15 @@ public class Unit : Creature
     [ContextMenu("Snap To Grid")]
     public void SnapToGrid()
     {
-        BattleGrid grid = _roomContext != null
+        RoomGrid grid = _roomContext != null
             ? _roomContext.BattleGrid
-            : GetComponentInParent<BattleGrid>(includeInactive: true);
+            : GetComponentInParent<RoomGrid>(includeInactive: true);
 
         if (grid == null)
             return;
 
         Vector3Int desiredCell = grid.WorldToCell(transform.position);
-        Vector3Int targetCell = grid.IsCellWalkable(desiredCell, this)
+        Vector3Int targetCell = grid.IsCellEnterable(desiredCell, this)
             ? desiredCell
             : grid.FindClosestWalkableCell(desiredCell, this);
 

@@ -32,7 +32,7 @@ public class NecromancerRoomTransitioner : MonoBehaviour
             return;
         }
 
-        BattleGrid grid = roomContext.BattleGrid;
+        RoomGrid grid = roomContext.BattleGrid;
         if (grid == null)
         {
             Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext de '{newRoom.name}' no tiene BattleGrid.", this);
@@ -46,7 +46,7 @@ public class NecromancerRoomTransitioner : MonoBehaviour
         _necromancer.Teleport(grid.CellToWorld(spawnCell));
     }
 
-    private static Vector3Int FindClosestWalkableCell(BattleGrid grid, Vector3Int origin)
+    private static Vector3Int FindClosestWalkableCell(RoomGrid grid, Vector3Int origin)
     {
         if (grid.IsCellWalkable(origin))
             return origin;

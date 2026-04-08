@@ -26,7 +26,7 @@ public class NecromancerSpawner : MonoBehaviour
 
     private void Spawn()
     {
-        if (!ValidateSetup(out RoomContext roomContext, out BattleGrid grid))
+        if (!ValidateSetup(out RoomContext roomContext, out RoomGrid grid))
             return;
 
         Vector3Int spawnCell = FindSpawnCell(grid, roomContext);
@@ -65,7 +65,7 @@ public class NecromancerSpawner : MonoBehaviour
         _partyContext.Configure(_party, _partySpawner);
     }
 
-    private Vector3Int FindSpawnCell(BattleGrid grid, RoomContext roomContext)
+    private Vector3Int FindSpawnCell(RoomGrid grid, RoomContext roomContext)
     {
         List<Vector3Int> availableCells = roomContext.GetAvailableSpawnCells();
         if (availableCells.Count > 0)
@@ -113,7 +113,7 @@ public class NecromancerSpawner : MonoBehaviour
         return centerCell;
     }
 
-    private bool ValidateSetup(out RoomContext roomContext, out BattleGrid grid)
+    private bool ValidateSetup(out RoomContext roomContext, out RoomGrid grid)
     {
         roomContext = null;
         grid = null;

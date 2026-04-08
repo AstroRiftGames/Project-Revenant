@@ -1,19 +1,14 @@
-using System;
 using UnityEngine;
 
-public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
+[DisallowMultipleComponent]
+public class GridCellBlocker : MonoBehaviour, IGridOccupant
 {
-    [Header("Connected Rooms")]
-    public GameObject roomA;
-    public GameObject roomB;
-
+    [SerializeField] private bool _occupiesCell = true;
     [SerializeField] private bool _blocksMovement = true;
     [SerializeField] private RoomGrid _grid;
 
-    public static event Action<RoomDoor> OnDoorInteracted;
-
     public Vector3 OccupancyWorldPosition => transform.position;
-    public bool OccupiesCell => gameObject.activeInHierarchy;
+    public bool OccupiesCell => _occupiesCell && gameObject.activeInHierarchy;
     public bool BlocksMovement => _blocksMovement;
 
     private void OnEnable()
@@ -28,27 +23,13 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     private void OnDisable()
     {
-        _grid?.OccupancyService?.ReleaseOccupant(this);
-    }
-
-    [ContextMenu("Interact")]
-    public virtual void Interact()
-    {
-        OnDoorInteracted?.Invoke(this);
-    }
-
-    public void HandleTriggerEnter(Collider2D other)
-    {
-        if (!other.CompareTag("Player"))
-            return;
-
-        Interact();
+        _grid?.OccupancyService.ReleaseOccupant(this);
     }
 
     private void RefreshOccupancy()
     {
         ResolveGrid();
-        _grid?.OccupancyService?.RegisterOccupant(this);
+        _grid?.OccupancyService.RegisterOccupant(this);
     }
 
     private void ResolveGrid()
