@@ -38,7 +38,7 @@ public class RoomPartySpawner : MonoBehaviour
         DeployToRoom(newRoom);
     }
 
-    private void DeployToRoom(GameObject roomObject)
+    public void DeployToRoom(GameObject roomObject)
     {
         ClearCurrentDeployment();
 

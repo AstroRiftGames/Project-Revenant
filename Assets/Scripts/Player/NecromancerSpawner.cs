@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PrefabDungeonGeneration;
 using UnityEngine;
 
 [DefaultExecutionOrder(100)]
@@ -15,6 +16,10 @@ public class NecromancerSpawner : MonoBehaviour
     private NecromancerPartyContext _partyContext;
     private SoulContext _soulContext;
     private SoulBank _soulBank;
+    private PartyDefeatDetector _partyDefeatDetector;
+    private PartyDefeatReturnHandler _partyDefeatResolver;
+    private NecromancerRoomTransitioner _roomTransitioner;
+    private PrefabDungeonGenerator _dungeonGenerator;
 
     private void Awake()
     {
@@ -74,6 +79,29 @@ public class NecromancerSpawner : MonoBehaviour
 
         _partyContext.Configure(_party, _partySpawner);
         _soulContext.Configure(_soulBank);
+
+        _partyDefeatDetector = GetComponent<PartyDefeatDetector>();
+        if (_partyDefeatDetector == null)
+            _partyDefeatDetector = gameObject.AddComponent<PartyDefeatDetector>();
+
+        _partyDefeatDetector.Configure(_party);
+
+        _partyDefeatResolver = GetComponent<PartyDefeatReturnHandler>();
+        if (_partyDefeatResolver == null)
+            _partyDefeatResolver = gameObject.AddComponent<PartyDefeatReturnHandler>();
+
+        _roomTransitioner = GetComponent<NecromancerRoomTransitioner>();
+        if (_roomTransitioner == null)
+            _roomTransitioner = gameObject.AddComponent<NecromancerRoomTransitioner>();
+
+        _dungeonGenerator = FindFirstObjectByType<PrefabDungeonGenerator>();
+
+        _partyDefeatResolver.Configure(
+            _partyDefeatDetector,
+            _floorManager,
+            _partySpawner,
+            _roomTransitioner,
+            _dungeonGenerator);
     }
 
     private Vector3Int FindSpawnCell(RoomGrid grid, RoomContext roomContext)

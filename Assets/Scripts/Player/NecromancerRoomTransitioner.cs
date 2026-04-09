@@ -16,32 +16,38 @@ public class NecromancerRoomTransitioner : MonoBehaviour
 
     private void HandleRoomEntered(RoomDoor door, GameObject newRoom)
     {
+        MoveNecromancerToRoom(newRoom);
+    }
+
+    public bool MoveNecromancerToRoom(GameObject roomObject)
+    {
         if (_necromancer == null)
             _necromancer = FindAnyObjectByType<Necromancer>();
 
         if (_necromancer == null)
         {
-            Debug.LogWarning("[NecromancerRoomTransitioner] No se encontró Necromancer en escena.", this);
-            return;
+            Debug.LogWarning("[NecromancerRoomTransitioner] No necromancer was found in the scene.", this);
+            return false;
         }
 
-        if (!newRoom.TryGetComponent(out RoomContext roomContext))
+        if (roomObject == null || !roomObject.TryGetComponent(out RoomContext roomContext))
         {
-            Debug.LogWarning($"[NecromancerRoomTransitioner] '{newRoom.name}' no tiene RoomContext.", this);
-            return;
+            Debug.LogWarning($"[NecromancerRoomTransitioner] '{roomObject?.name ?? "NULL"}' does not have a RoomContext.", this);
+            return false;
         }
 
         RoomGrid grid = roomContext.BattleGrid;
         if (grid == null)
         {
-            Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext de '{newRoom.name}' no tiene BattleGrid.", this);
-            return;
+            Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext for '{roomObject.name}' does not have a BattleGrid.", this);
+            return false;
         }
 
         _necromancer.SetGrid(grid);
 
-        Vector3Int centerCell = grid.WorldToCell(newRoom.transform.position);
+        Vector3Int centerCell = grid.WorldToCell(roomObject.transform.position);
         Vector3Int spawnCell = grid.FindClosestWalkableCell(centerCell, centerCell);
         _necromancer.Teleport(grid.CellToWorld(spawnCell));
+        return true;
     }
 }
