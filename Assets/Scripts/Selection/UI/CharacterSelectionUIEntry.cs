@@ -82,7 +82,7 @@ namespace Selection.UI
             {
                 if (!isEnemy && currentStats.CurrentAbilityCooldown > 0f)
                 {
-                    cooldownText.text = $"{currentStats.CurrentAbilityCooldown}s";
+                    cooldownText.text = $"{currentStats.CurrentAbilityCooldown:F1}s";
                     cooldownText.enabled = true;
                 }
                 else

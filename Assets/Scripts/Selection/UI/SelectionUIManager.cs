@@ -31,6 +31,14 @@ namespace Selection.UI
             }
         }
 
+        private void Update()
+        {
+            foreach (var entry in activeEntries)
+            {
+                entry.RefreshDisplay();
+            }
+        }
+
         private void HandleSelectionChanged(List<ISelectable> selectedCharacters)
         {
             ClearActiveEntries();
