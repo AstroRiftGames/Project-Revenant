@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(UnitDeathHandler))]
 [RequireComponent(typeof(RecruitableUnitState))]
 [RequireComponent(typeof(UnitRecruitmentReviver))]
-public class UnitRecruitmentHandler : MonoBehaviour
+public class UnitRecruitmentHandler : MonoBehaviour, IRoomContextUnitComponent
 {
     private Unit _unit;
     private RecruitableUnitState _recruitableState;
@@ -24,6 +24,11 @@ public class UnitRecruitmentHandler : MonoBehaviour
     public void Configure(NecromancerPartyContext partyContext)
     {
         _partyContext = partyContext;
+    }
+
+    public void IntegrateWithRoom(RoomContext roomContext)
+    {
+        Configure(NecromancerPartyContext.Current);
     }
 
     public bool AttemptRecruitment()

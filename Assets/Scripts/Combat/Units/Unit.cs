@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface IRoomContextUnitComponent
+{
+    void IntegrateWithRoom(RoomContext roomContext);
+}
+
 [RequireComponent(typeof(LifeController))]
 public class Unit : Creature
     , IGridOccupant
@@ -14,6 +19,7 @@ public class Unit : Creature
     private readonly List<Unit> _alliedUnitsBuffer = new();
     private readonly List<IUnit> _visibleHostilesBuffer = new();
     private readonly List<Unit> _hostileUnitsBuffer = new();
+    private readonly List<MonoBehaviour> _roomContextComponentsBuffer = new();
 
     protected override void Awake()
     {
@@ -49,6 +55,21 @@ public class Unit : Creature
     public void AssignRoomContext(RoomContext context)
     {
         _roomContext = context;
+    }
+
+    public void IntegrateIntoRoom(RoomContext roomContext)
+    {
+        AssignRoomContext(roomContext);
+
+        _roomContextComponentsBuffer.Clear();
+        GetComponents(_roomContextComponentsBuffer);
+
+        for (int i = 0; i < _roomContextComponentsBuffer.Count; i++)
+        {
+            MonoBehaviour component = _roomContextComponentsBuffer[i];
+            if (component is IRoomContextUnitComponent roomContextComponent)
+                roomContextComponent.IntegrateWithRoom(roomContext);
+        }
     }
 
     public List<IUnit> GetVisibleUnitsInScene()

@@ -13,7 +13,7 @@ public enum RecruitableCorpseResolutionOption
 [RequireComponent(typeof(RecruitableUnitInteraction))]
 [RequireComponent(typeof(UnitRecruitmentHandler))]
 [RequireComponent(typeof(UnitDeathHandler))]
-public class RecruitableCorpseHandler : MonoBehaviour
+public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 {
     private Unit _unit;
     private RecruitableUnitState _state;
@@ -58,6 +58,11 @@ public class RecruitableCorpseHandler : MonoBehaviour
         _partyContext = partyContext;
         _soulContext = soulContext;
         _recruitmentHandler?.Configure(partyContext);
+    }
+
+    public void IntegrateWithRoom(RoomContext roomContext)
+    {
+        Configure(NecromancerPartyContext.Current, SoulContext.Current);
     }
 
     public bool TryResolve(RecruitableCorpseResolutionOption option)

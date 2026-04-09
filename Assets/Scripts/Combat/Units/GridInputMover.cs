@@ -2,7 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(UnitMovement))]
-public class GridInputMover : MonoBehaviour
+public class GridInputMover : MonoBehaviour, IRoomContextUnitComponent
 {
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
@@ -27,6 +27,11 @@ public class GridInputMover : MonoBehaviour
     public void SetGrid(RoomGrid grid)
     {
         _grid = grid;
+    }
+
+    public void IntegrateWithRoom(RoomContext roomContext)
+    {
+        SetGrid(roomContext != null ? roomContext.BattleGrid : null);
     }
 
     private void Update()

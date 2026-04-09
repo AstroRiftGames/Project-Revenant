@@ -235,14 +235,6 @@ public class RoomContext : MonoBehaviour
 
     private void IntegrateUnit(Unit unit)
     {
-        unit.AssignRoomContext(this);
-
-        if (_battleGrid == null)
-            return;
-
-        unit.GetComponent<UnitMovement>()?.SetGrid(_battleGrid);
-        unit.GetComponent<GridInputMover>()?.SetGrid(_battleGrid);
-        unit.GetComponent<UnitRecruitmentHandler>()?.Configure(NecromancerPartyContext.Current);
-        unit.GetComponent<RecruitableCorpseHandler>()?.Configure(NecromancerPartyContext.Current, SoulContext.Current);
+        unit.IntegrateIntoRoom(this);
     }
 }

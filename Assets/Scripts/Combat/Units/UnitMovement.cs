@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
-public class UnitMovement : MonoBehaviour
+public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 {
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _allowSerializedGridFallback;
@@ -48,6 +48,11 @@ public class UnitMovement : MonoBehaviour
         InvalidatePathCache();
         ClearCorpseOccupancy();
         SnapToCurrentCell();
+    }
+
+    public void IntegrateWithRoom(RoomContext roomContext)
+    {
+        SetGrid(roomContext != null ? roomContext.BattleGrid : null);
     }
 
     public bool SetDestinationCell(Vector3Int destinationCell)
