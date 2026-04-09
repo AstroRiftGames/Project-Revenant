@@ -64,9 +64,6 @@ public class LifeController : MonoBehaviour, IDamageable
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(amount);
 
-        if (_debugDamage && _unit != null)
-            Debug.Log($"[Damage] {_unit.Id} took {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
-
         if (CurrentHealth == 0)
             Die();
     }
@@ -107,15 +104,15 @@ public class LifeController : MonoBehaviour, IDamageable
         _hasResolvedDeath = true;
 
         if (_debugDamage && _unit != null)
-            Debug.Log($"[Death] {_unit.Id} died.", this);
-
+            Debug.Log($"[LifeController] '{_unit.name}' has died by {(LastAttacker != null ? LastAttacker.name : "None")}.", this);
+            
         OnUnitDied?.Invoke(_unit);
-
         if (_deathHandler != null)
         {
             _deathHandler.ResolveDeath();
             return;
         }
+
 
         gameObject.SetActive(false);
     }
