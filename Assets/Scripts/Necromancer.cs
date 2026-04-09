@@ -85,15 +85,8 @@ public class Necromancer : MonoBehaviour
 
     private void SetDestination(Vector3Int from, Vector3Int to)
     {
-        _waypoints.Clear();
-
-        List<Vector3Int> path = GridPathfinder.FindPath(_grid, from, to);
-
-        if (path.Count <= 1)
+        if (!GridNavigationUtility.TryBuildWorldPath(_grid, from, to, _waypoints))
             return;
-
-        for (int i = 1; i < path.Count; i++)
-            _waypoints.Enqueue(_grid.CellToWorld(path[i]));
 
         _currentTarget = _waypoints.Dequeue();
         _isMoving = true;
@@ -101,8 +94,7 @@ public class Necromancer : MonoBehaviour
 
     private void SnapToGrid()
     {
-        Vector3Int cell = _grid.WorldToCell(transform.position);
-        transform.position = _grid.CellToWorld(cell);
+        transform.position = GridNavigationUtility.SnapWorldPositionToCell(_grid, transform.position);
     }
 
     public void SetGrid(RoomGrid grid)

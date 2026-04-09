@@ -256,12 +256,7 @@ public class Unit : Creature
         if (grid == null)
             return;
 
-        Vector3Int desiredCell = grid.WorldToCell(transform.position);
-        Vector3Int targetCell = grid.IsCellEnterable(desiredCell, this)
-            ? desiredCell
-            : grid.FindClosestWalkableCell(desiredCell, this);
-
-        transform.position = grid.CellToWorld(targetCell);
+        transform.position = GridNavigationUtility.ResolvePlacementWorldPosition(grid, transform.position, this);
     }
 
     private void PopulateRoomUnits(List<IUnit> results, TargetRelationship relationship)

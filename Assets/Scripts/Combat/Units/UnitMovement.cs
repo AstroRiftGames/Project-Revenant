@@ -163,10 +163,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null)
             return;
 
-        Vector3Int rawCell = _grid.WorldToCell(transform.position);
-        _currentCell = _grid.IsCellEnterable(rawCell, _unit)
-            ? rawCell
-            : _grid.FindClosestWalkableCell(rawCell, _unit);
+        _currentCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position, _unit);
         transform.position = _grid.CellToWorld(_currentCell);
         TryRegisterCurrentOccupancy();
     }
