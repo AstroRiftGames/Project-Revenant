@@ -22,10 +22,11 @@ MonoBehaviour:
   faction: 0
   sprite: {fileID: -5357433189053572707, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
   tileSize: 0
+  softCurrencyRewardOnSoulAbsorb: 5
   stats:
     maxHealth: 20
     attackDamage: 2
-    attackInterval: 0.9
+    attackCooldown: 0.75
     attackRangeInCells: 1
     preferredDistanceInCells: 1
     accuracy: 0.7

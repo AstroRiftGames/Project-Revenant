@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(RoomGrid))]
 public class GridOccupancyTracker : MonoBehaviour
 {
     private readonly Dictionary<IGridOccupant, Vector3Int> _cellsByOccupant = new();
@@ -145,7 +146,14 @@ public class GridOccupancyTracker : MonoBehaviour
         if (_grid != null)
             return;
 
-        _grid = GetComponent<RoomGrid>() ?? GetComponentInParent<RoomGrid>(includeInactive: true);
+        _grid = GetComponent<RoomGrid>();
+
+        if (_grid == null)
+        {
+            Debug.LogError(
+                $"[GridOccupancyTracker] '{name}' requiere un RoomGrid en el mismo GameObject.",
+                this);
+        }
     }
 
     private sealed class PersistentGridOccupant : IGridOccupant

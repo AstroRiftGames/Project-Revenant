@@ -10,8 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7719158441552037017}
   - component: {fileID: 6869323685653089202}
+  - component: {fileID: 5123456789012345678}
   m_Layer: 0
-  m_Name: BattleGrid
+  m_Name: RoomGrid
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,7 +48,7 @@ MonoBehaviour:
   _walkableTilemap: {fileID: 0}
   _blockedTilemap: {fileID: 0}
   _roomContext: {fileID: 0}
-  _occupancyService: {fileID: 0}
+  _occupancyService: {fileID: 5123456789012345678}
   _cellSize: 1
   _cellCheckSize: {x: 0.8, y: 0.8}
   _usePhysicsBlockedCells: 0
@@ -57,3 +58,15 @@ MonoBehaviour:
   _drawGridGizmos: 0
   _gizmoExtents: {x: 12, y: 12}
   _maxClosestCellSearch: 512
+--- !u!114 &5123456789012345678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 110857073650024161}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa8105ff221e6f3439ae1ba00c319155, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -182,6 +182,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
+  _blocksMovement: 1
+  _grid: {fileID: 0}
 --- !u!1 &1261821990994168952
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,6 +230,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
+  _blocksMovement: 1
+  _grid: {fileID: 0}
 --- !u!1 &1335042572350580095
 GameObject:
   m_ObjectHideFlags: 0
@@ -2782,6 +2786,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
+  _blocksMovement: 1
+  _grid: {fileID: 0}
 --- !u!1 &4347932947661017972
 GameObject:
   m_ObjectHideFlags: 0
@@ -3015,6 +3021,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
+  _blocksMovement: 1
+  _grid: {fileID: 0}
 --- !u!1 &8652037412062293294
 GameObject:
   m_ObjectHideFlags: 0
@@ -3060,7 +3068,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 110857073650024161, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_Name
-      value: BattleGrid
+      value: RoomGrid
       objectReference: {fileID: 0}
     - target: {fileID: 7719158441552037017, guid: 6e1b6729cc2629b47bb3d5a5ef6f3acb, type: 3}
       propertyPath: m_LocalPosition.x

@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+[DisallowMultipleComponent]
+[RequireComponent(typeof(GridOccupancyTracker))]
 public class RoomGrid : MonoBehaviour
 {
     private static readonly IGridCellMovementValidator DefaultMovementValidator = new GridCellMovementValidator();
@@ -17,23 +20,21 @@ public class RoomGrid : MonoBehaviour
     [SerializeField] private bool _drawGridGizmos;
     [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
     [SerializeField] private int _maxClosestCellSearch = 512;
+    private bool _hasLoggedMissingOccupancyService;
 
     public float CellSize => CellWorldSize.x;
-    public GridOccupancyTracker OccupancyService
+    public GridOccupancyTracker OccupancyService => RequireOccupancyService();
+
+    private void Awake()
     {
-        get
-        {
-            ResolveOccupancyService();
-            return _occupancyService;
-        }
+        ResolveDependencies();
     }
 
     public void Configure(Tilemap walkable, Tilemap blocked)
     {
         _walkableTilemap = walkable;
         _blockedTilemap = blocked;
-        ResolveRoomContext();
-        ResolveOccupancyService();
+        ResolveDependencies();
     }
 
     public Vector2 CellWorldSize
@@ -51,8 +52,21 @@ public class RoomGrid : MonoBehaviour
     }
     private void OnEnable()
     {
+        ResolveDependencies();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (_occupancyService == null)
+            _occupancyService = GetComponent<GridOccupancyTracker>();
+    }
+#endif
+
+    private void ResolveDependencies()
+    {
         ResolveRoomContext();
-        ResolveOccupancyService();
+        TryResolveOccupancyService();
     }
 
     public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -102,14 +116,12 @@ public class RoomGrid : MonoBehaviour
 
     public bool IsCellOccupied(Vector3Int cell, IGridOccupant movingOccupant = null)
     {
-        ResolveOccupancyService();
-        return _occupancyService != null && _occupancyService.IsOccupied(cell, movingOccupant);
+        return RequireOccupancyService().IsOccupied(cell, movingOccupant);
     }
 
     public bool DoesCellBlockMovement(Vector3Int cell, IGridOccupant movingOccupant = null)
     {
-        ResolveOccupancyService();
-        return _occupancyService != null && _occupancyService.DoesCellBlockMovement(cell, movingOccupant);
+        return RequireOccupancyService().DoesCellBlockMovement(cell, movingOccupant);
     }
 
     public bool IsCellEnterable(Vector3Int cell, IGridOccupant movingOccupant = null)
@@ -130,13 +142,32 @@ public class RoomGrid : MonoBehaviour
         _roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
     }
 
-    private void ResolveOccupancyService()
+    private void TryResolveOccupancyService()
     {
         if (_occupancyService == null)
             _occupancyService = GetComponent<GridOccupancyTracker>();
+        
+        if (_occupancyService != null)
+            return;
 
-        if (_occupancyService == null)
-            _occupancyService = gameObject.AddComponent<GridOccupancyTracker>();
+        if (_hasLoggedMissingOccupancyService)
+            return;
+
+        _hasLoggedMissingOccupancyService = true;
+        Debug.LogError(
+            $"[RoomGrid] '{name}' requiere un GridOccupancyTracker en el mismo GameObject. " +
+            "Se elimino la autocreacion silenciosa para evitar escenas mal armadas y dependencias ocultas de inicializacion.",
+            this);
+    }
+
+    private GridOccupancyTracker RequireOccupancyService()
+    {
+        TryResolveOccupancyService();
+        if (_occupancyService != null)
+            return _occupancyService;
+
+        throw new InvalidOperationException(
+            $"[RoomGrid] '{name}' no puede operar sin GridOccupancyTracker en el mismo GameObject.");
     }
 
     public bool IsCellInsideWalkableBounds(Vector3Int cell)
