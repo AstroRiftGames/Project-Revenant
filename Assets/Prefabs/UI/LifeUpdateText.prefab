@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4014573537084615295}
   - component: {fileID: 4874134014879898085}
   m_Layer: 0
-  m_Name: DamageDealtText
+  m_Name: LifeUpdateText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

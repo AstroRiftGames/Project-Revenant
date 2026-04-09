@@ -10,7 +10,9 @@ public class LifeUpdateText : MonoBehaviour
         TryGetComponent(out TextMeshProUGUI tmpro);
         tmpro.text = update.ToString();
         tmpro.color = update < 0 ? Color.red : Color.green;
+        transform.SetLocalPositionAndRotation(Vector2.zero, Quaternion.identity);
         SetRandomRotation();
+        Debug.Log("Initializing damage");
     }
 
     private void SetRandomRotation()

@@ -47,5 +47,6 @@ public class EnemyInfoCanvas : MonoBehaviour
         LifeUpdateText newText = lifeUpdate;
         newText.transform.SetParent(_canvas.transform, true);
         newText.Initialize(-damage);
+        Debug.Log("Showing Damage");
     }
 }
