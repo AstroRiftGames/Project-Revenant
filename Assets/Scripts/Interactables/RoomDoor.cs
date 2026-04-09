@@ -24,6 +24,7 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     private void Start()
     {
+        // Fallback
         TryRegisterOccupancy();
     }
 

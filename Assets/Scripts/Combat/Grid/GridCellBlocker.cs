@@ -19,6 +19,7 @@ public class GridCellBlocker : MonoBehaviour, IGridOccupant
 
     private void Start()
     {
+        // Fallback
         TryRegisterOccupancy();
     }
 
