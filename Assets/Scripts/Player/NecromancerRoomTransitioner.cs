@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class NecromancerRoomTransitioner : MonoBehaviour
@@ -42,35 +41,7 @@ public class NecromancerRoomTransitioner : MonoBehaviour
         _necromancer.SetGrid(grid);
 
         Vector3Int centerCell = grid.WorldToCell(newRoom.transform.position);
-        Vector3Int spawnCell = FindClosestWalkableCell(grid, centerCell);
+        Vector3Int spawnCell = grid.FindClosestWalkableCell(centerCell, centerCell);
         _necromancer.Teleport(grid.CellToWorld(spawnCell));
-    }
-
-    private static Vector3Int FindClosestWalkableCell(RoomGrid grid, Vector3Int origin)
-    {
-        if (grid.IsCellWalkable(origin))
-            return origin;
-
-        var visited = new HashSet<Vector3Int> { origin };
-        var queue = new Queue<Vector3Int>();
-        queue.Enqueue(origin);
-
-        while (queue.Count > 0)
-        {
-            Vector3Int cell = queue.Dequeue();
-
-            foreach (Vector3Int neighbor in grid.GetNeighbors(cell))
-            {
-                if (!grid.IsCellInsideWalkableBounds(neighbor) || !visited.Add(neighbor))
-                    continue;
-
-                if (grid.IsCellWalkable(neighbor))
-                    return neighbor;
-
-                queue.Enqueue(neighbor);
-            }
-        }
-
-        return origin;
     }
 }

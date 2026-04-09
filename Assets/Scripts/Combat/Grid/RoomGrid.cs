@@ -159,12 +159,12 @@ public class RoomGrid : MonoBehaviour
         return neighbors;
     }
 
-    public Vector3Int FindClosestWalkableCell(Vector3Int targetCell, Unit movingUnit)
+    public Vector3Int FindClosestWalkableCell(Vector3Int targetCell, Vector3Int fallbackCell, IGridOccupant movingOccupant = null)
     {
         if (!IsCellInsideWalkableBounds(targetCell))
-            return WorldToCell(movingUnit.Position);
+            return fallbackCell;
 
-        if (IsCellEnterable(targetCell, movingUnit))
+        if (IsCellEnterable(targetCell, movingOccupant))
             return targetCell;
 
         var visited = new HashSet<Vector3Int> { targetCell };
@@ -187,14 +187,23 @@ public class RoomGrid : MonoBehaviour
                 if (!visited.Add(neighbor))
                     continue;
 
-                if (IsCellEnterable(neighbor, movingUnit))
+                if (IsCellEnterable(neighbor, movingOccupant))
                     return neighbor;
 
                 queue.Enqueue(neighbor);
             }
         }
 
-        return WorldToCell(movingUnit.Position);
+        return fallbackCell;
+    }
+
+    public Vector3Int FindClosestWalkableCell(Vector3Int targetCell, Unit movingUnit)
+    {
+        Vector3Int fallbackCell = movingUnit != null
+            ? WorldToCell(movingUnit.Position)
+            : targetCell;
+
+        return FindClosestWalkableCell(targetCell, fallbackCell, movingUnit);
     }
 
     public bool TryFindWalkableCellInRange(Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit movingUnit, out Vector3Int resultCell)

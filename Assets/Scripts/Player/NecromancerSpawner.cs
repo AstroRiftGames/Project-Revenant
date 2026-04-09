@@ -101,27 +101,7 @@ public class NecromancerSpawner : MonoBehaviour
 
         Vector3Int centerCell = grid.WorldToCell(roomContext.transform.position);
 
-        if (grid.IsCellWalkable(centerCell))
-            return centerCell;
-
-        var visited = new HashSet<Vector3Int> { centerCell };
-        var queue = new Queue<Vector3Int>();
-        queue.Enqueue(centerCell);
-
-        while (queue.Count > 0)
-        {
-            Vector3Int cell = queue.Dequeue();
-            foreach (Vector3Int neighbor in grid.GetNeighbors(cell))
-            {
-                if (!grid.IsCellInsideWalkableBounds(neighbor) || !visited.Add(neighbor))
-                    continue;
-                if (grid.IsCellWalkable(neighbor))
-                    return neighbor;
-                queue.Enqueue(neighbor);
-            }
-        }
-
-        return centerCell;
+        return grid.FindClosestWalkableCell(centerCell, centerCell);
     }
 
     private bool ValidateSetup(out RoomContext roomContext, out RoomGrid grid)
