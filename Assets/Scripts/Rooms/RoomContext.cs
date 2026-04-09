@@ -243,5 +243,6 @@ public class RoomContext : MonoBehaviour
         unit.GetComponent<UnitMovement>()?.SetGrid(_battleGrid);
         unit.GetComponent<GridInputMover>()?.SetGrid(_battleGrid);
         unit.GetComponent<UnitRecruitmentHandler>()?.Configure(NecromancerPartyContext.Current);
+        unit.GetComponent<RecruitableCorpseHandler>()?.Configure(NecromancerPartyContext.Current, SoulContext.Current);
     }
 }

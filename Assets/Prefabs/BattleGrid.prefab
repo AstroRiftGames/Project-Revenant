@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7719158441552037017}
-  - component: {fileID: 2797703798169635397}
+  - component: {fileID: 6869323685653089202}
   m_Layer: 0
   m_Name: BattleGrid
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2797703798169635397
+--- !u!114 &6869323685653089202
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,17 +41,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 110857073650024161}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79abeee95df864e4bbade4cf7c643d5e, type: 3}
+  m_Script: {fileID: 11500000, guid: 557ca6e5003637f42ab544a77d62ce9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _walkableTilemap: {fileID: 0}
   _blockedTilemap: {fileID: 0}
+  _roomContext: {fileID: 0}
+  _occupancyService: {fileID: 0}
   _cellSize: 1
   _cellCheckSize: {x: 0.8, y: 0.8}
   _usePhysicsBlockedCells: 0
   _blockedCellsMask:
     serializedVersion: 2
     m_Bits: 0
-  _drawGridGizmos: 1
+  _drawGridGizmos: 0
   _gizmoExtents: {x: 12, y: 12}
   _maxClosestCellSearch: 512

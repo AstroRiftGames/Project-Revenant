@@ -12,7 +12,7 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
                                         _recruitableState != null &&
                                         _recruitableState.CurrentState == UnitLifecycleState.Recruitable;
 
-    public event Action<RecruitableUnitInteraction> OnInteractionRequested;
+    public event Action<RecruitableCorpseResolutionOption> OnInteractionRequested;
 
     private void Awake()
     {
@@ -29,6 +29,11 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
         if (!IsInteractionEnabled)
             return;
 
-        OnInteractionRequested?.Invoke(this);
+        RecruitableCorpseResolutionOption option =
+            Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)
+                ? RecruitableCorpseResolutionOption.AbsorbSoul
+                : RecruitableCorpseResolutionOption.Recruit;
+
+        OnInteractionRequested?.Invoke(option);
     }
 }

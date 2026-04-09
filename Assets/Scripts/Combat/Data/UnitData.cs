@@ -47,5 +47,6 @@ public class UnitData : ScriptableObject
     public UnitFaction faction;
     public Sprite sprite;
     public int tileSize;
+    public int softCurrencyRewardOnSoulAbsorb = 1;
     public UnitStatsData stats = new();
 }

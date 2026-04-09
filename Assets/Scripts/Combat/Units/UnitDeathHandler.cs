@@ -8,7 +8,8 @@ using UnityEngine;
 public class UnitDeathHandler : MonoBehaviour
 {
     [Header("Enemy Death Presentation")]
-    [SerializeField] private Color _deadEnemyColor = Color.black;
+    [SerializeField] private Color _recruitableCorpseColor = Color.black;
+    [SerializeField] private Color _soulAbsorbedCorpseColor = new Color(0.239f, 0.239f, 0.239f);
     [SerializeField] private SpriteRenderer[] _spriteRenderers;
     [SerializeField] private Behaviour[] _behavioursToDisableForRecruitableDeath;
 
@@ -81,13 +82,23 @@ public class UnitDeathHandler : MonoBehaviour
     {
         EnsureRecruitableComponents();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
-        ApplyDeadEnemyVisuals();
+        ApplyCorpseVisuals(_recruitableCorpseColor);
         DisableBehavioursForRecruitableDeath();
         _recruitableState?.SetState(UnitLifecycleState.Recruitable);
         _recruitableInteraction?.SetInteractionEnabled(true);
     }
 
-    private void ApplyDeadEnemyVisuals()
+    public void FinalizeSoulAbsorbedCorpse()
+    {
+        EnsureRecruitableComponents();
+        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
+        ApplyCorpseVisuals(_soulAbsorbedCorpseColor);
+        DisableBehavioursForRecruitableDeath();
+        _recruitableState?.SetState(UnitLifecycleState.Dead);
+        _recruitableInteraction?.SetInteractionEnabled(false);
+    }
+
+    private void ApplyCorpseVisuals(Color color)
     {
         if (_spriteRenderers == null)
             return;
@@ -98,7 +109,7 @@ public class UnitDeathHandler : MonoBehaviour
             if (spriteRenderer == null)
                 continue;
 
-            spriteRenderer.color = _deadEnemyColor;
+            spriteRenderer.color = color;
         }
     }
 
@@ -135,7 +146,9 @@ public class UnitDeathHandler : MonoBehaviour
         _recruitableState ??= GetComponent<RecruitableUnitState>() ?? gameObject.AddComponent<RecruitableUnitState>();
         _recruitableInteraction ??= GetComponent<RecruitableUnitInteraction>() ?? gameObject.AddComponent<RecruitableUnitInteraction>();
         UnitRecruitmentHandler recruitmentHandler = GetComponent<UnitRecruitmentHandler>() ?? gameObject.AddComponent<UnitRecruitmentHandler>();
+        RecruitableCorpseHandler corpseHandler = GetComponent<RecruitableCorpseHandler>() ?? gameObject.AddComponent<RecruitableCorpseHandler>();
         recruitmentHandler.Configure(NecromancerPartyContext.Current);
+        corpseHandler.Configure(NecromancerPartyContext.Current, SoulContext.Current);
         _recruitableInteraction.SetInteractionEnabled(false);
     }
 

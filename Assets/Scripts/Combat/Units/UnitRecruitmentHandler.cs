@@ -5,13 +5,11 @@ using UnityEngine;
 [RequireComponent(typeof(LifeController))]
 [RequireComponent(typeof(UnitDeathHandler))]
 [RequireComponent(typeof(RecruitableUnitState))]
-[RequireComponent(typeof(RecruitableUnitInteraction))]
 [RequireComponent(typeof(UnitRecruitmentReviver))]
 public class UnitRecruitmentHandler : MonoBehaviour
 {
     private Unit _unit;
     private RecruitableUnitState _recruitableState;
-    private RecruitableUnitInteraction _interaction;
     private UnitRecruitmentReviver _reviver;
     private NecromancerPartyContext _partyContext;
 
@@ -19,26 +17,8 @@ public class UnitRecruitmentHandler : MonoBehaviour
     {
         _unit = GetComponent<Unit>();
         _recruitableState = GetComponent<RecruitableUnitState>();
-        _interaction = GetComponent<RecruitableUnitInteraction>();
         _reviver = GetComponent<UnitRecruitmentReviver>();
         _partyContext = NecromancerPartyContext.Current;
-    }
-
-    private void OnEnable()
-    {
-        if (_interaction != null)
-            _interaction.OnInteractionRequested += HandleInteractionRequested;
-    }
-
-    private void OnDisable()
-    {
-        if (_interaction != null)
-            _interaction.OnInteractionRequested -= HandleInteractionRequested;
-    }
-
-    private void HandleInteractionRequested(RecruitableUnitInteraction interaction)
-    {
-        AttemptRecruitment();
     }
 
     public void Configure(NecromancerPartyContext partyContext)

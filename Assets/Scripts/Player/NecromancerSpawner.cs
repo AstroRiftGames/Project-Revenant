@@ -13,6 +13,8 @@ public class NecromancerSpawner : MonoBehaviour
     private NecromancerParty _party;
     private RoomPartySpawner _partySpawner;
     private NecromancerPartyContext _partyContext;
+    private SoulContext _soulContext;
+    private SoulBank _soulBank;
 
     private void Awake()
     {
@@ -62,7 +64,16 @@ public class NecromancerSpawner : MonoBehaviour
         if (_partyContext == null)
             _partyContext = gameObject.AddComponent<NecromancerPartyContext>();
 
+        _soulContext = GetComponent<SoulContext>();
+        if (_soulContext == null)
+            _soulContext = gameObject.AddComponent<SoulContext>();
+
+        _soulBank = GetComponent<SoulBank>();
+        if (_soulBank == null)
+            _soulBank = gameObject.AddComponent<SoulBank>();
+
         _partyContext.Configure(_party, _partySpawner);
+        _soulContext.Configure(_soulBank);
     }
 
     private Vector3Int FindSpawnCell(RoomGrid grid, RoomContext roomContext)
