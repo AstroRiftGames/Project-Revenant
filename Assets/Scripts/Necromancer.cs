@@ -9,8 +9,10 @@ public class Necromancer : MonoBehaviour
     [SerializeField] private bool _drawClickedCellGizmo = true;
 
     private Camera _mainCamera;
-    private readonly Queue<Vector3> _waypoints = new();
-    private Vector3 _currentTarget;
+    private readonly Queue<Vector3Int> _remainingPathCells = new();
+    private Vector3Int _currentStepCell;
+    private Vector3Int _destinationCell;
+    private bool _hasDestinationCell;
     private bool _isMoving;
     private Vector3Int _hoveredCell;
     private bool _hasHoveredCell;
@@ -40,17 +42,23 @@ public class Necromancer : MonoBehaviour
         if (!_isMoving)
             return;
 
-        transform.position = Vector3.MoveTowards(transform.position, _currentTarget, _moveSpeed * Time.deltaTime);
+        if (_grid == null)
+        {
+            StopMovement();
+            return;
+        }
 
-        if (Vector3.Distance(transform.position, _currentTarget) > 0.001f)
+        if (!EnsureCurrentStepIsEnterable())
             return;
 
-        transform.position = _currentTarget;
+        Vector3 currentTarget = _grid.CellToWorld(_currentStepCell);
+        transform.position = Vector3.MoveTowards(transform.position, currentTarget, _moveSpeed * Time.deltaTime);
 
-        if (_waypoints.Count > 0)
-            _currentTarget = _waypoints.Dequeue();
-        else
-            _isMoving = false;
+        if (Vector3.Distance(transform.position, currentTarget) > 0.001f)
+            return;
+
+        transform.position = currentTarget;
+        AdvanceToNextStep();
     }
 
     private void HandleInput()
@@ -74,22 +82,90 @@ public class Necromancer : MonoBehaviour
 
         _clickedCell = _hoveredCell;
         _hasClickedCell = true;
-        _clickedCellWasWalkable = _grid.IsCellWalkable(_hoveredCell);
-
-        if (!_clickedCellWasWalkable)
-            return;
+        Vector3Int resolvedDestination = GridNavigationUtility.ResolvePlacementCell(_grid, _grid.CellToWorld(_hoveredCell));
+        _clickedCellWasWalkable = resolvedDestination == _hoveredCell;
 
         Vector3Int currentCell = _grid.WorldToCell(transform.position);
-        SetDestination(currentCell, _hoveredCell);
+        SetDestination(currentCell, resolvedDestination);
     }
 
     private void SetDestination(Vector3Int from, Vector3Int to)
     {
-        if (!GridNavigationUtility.TryBuildWorldPath(_grid, from, to, _waypoints))
+        if (_grid == null)
             return;
 
-        _currentTarget = _waypoints.Dequeue();
+        _destinationCell = to;
+        _hasDestinationCell = true;
+
+        if (!TryBuildPath(from, _destinationCell))
+        {
+            StopMovement();
+            return;
+        }
+
+        BeginNextStep();
+    }
+
+    private bool EnsureCurrentStepIsEnterable()
+    {
+        if (_grid == null)
+            return false;
+
+        if (_grid.IsCellEnterable(_currentStepCell))
+            return true;
+
+        if (!_hasDestinationCell)
+        {
+            StopMovement();
+            return false;
+        }
+
+        Vector3Int currentCell = _grid.WorldToCell(transform.position);
+        if (!TryBuildPath(currentCell, _destinationCell))
+        {
+            StopMovement();
+            return false;
+        }
+
+        BeginNextStep();
+        return _grid.IsCellEnterable(_currentStepCell);
+    }
+
+    private bool TryBuildPath(Vector3Int from, Vector3Int to)
+    {
+        _remainingPathCells.Clear();
+
+        List<Vector3Int> path = GridPathfinder.FindPath(_grid, from, to);
+        if (path.Count <= 1)
+            return false;
+
+        for (int i = 1; i < path.Count; i++)
+            _remainingPathCells.Enqueue(path[i]);
+
+        return _remainingPathCells.Count > 0;
+    }
+
+    private void BeginNextStep()
+    {
+        if (_remainingPathCells.Count == 0)
+        {
+            StopMovement();
+            return;
+        }
+
+        _currentStepCell = _remainingPathCells.Dequeue();
         _isMoving = true;
+    }
+
+    private void AdvanceToNextStep()
+    {
+        if (_remainingPathCells.Count > 0)
+        {
+            BeginNextStep();
+            return;
+        }
+
+        StopMovement();
     }
 
     private void SnapToGrid()
@@ -104,9 +180,15 @@ public class Necromancer : MonoBehaviour
 
     public void Teleport(Vector3 worldPosition)
     {
-        _waypoints.Clear();
-        _isMoving = false;
+        StopMovement();
         transform.position = worldPosition;
+    }
+
+    private void StopMovement()
+    {
+        _remainingPathCells.Clear();
+        _isMoving = false;
+        _hasDestinationCell = false;
     }
 
 #if UNITY_EDITOR
