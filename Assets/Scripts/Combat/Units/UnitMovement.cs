@@ -76,7 +76,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public bool SetTarget(Unit targetUnit, int rangeInCells)
     {
-        if (_grid == null || _unit == null || targetUnit == null || !targetUnit.IsAlive)
+        if (!CanEvaluateTarget(targetUnit))
             return false;
 
         if (IsWithinRange(targetUnit, rangeInCells))
@@ -95,16 +95,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         RefreshPathCache(originCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
 
         Vector3Int nextStep = GetNextStepTowards(originCell, desiredCell);
-
-        if (nextStep == originCell)
-            return false;
-
-        if (!SetDestinationCell(nextStep))
-            return false;
-
-        float moveSpeed = Mathf.Max(0.01f, _unit.MoveSpeed);
-        _nextStepTime = Time.time + (1f / moveSpeed);
-        return true;
+        return TryCommitMovementStep(originCell, nextStep);
     }
 
     public bool MoveTowards(Unit targetUnit, int desiredDistance)
@@ -114,7 +105,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public bool MoveAway(Unit targetUnit, int desiredDistance)
     {
-        if (_grid == null || _unit == null || targetUnit == null || !targetUnit.IsAlive)
+        if (!CanEvaluateTarget(targetUnit))
             return false;
 
         if (Time.time < _nextStepTime)
@@ -127,20 +118,12 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             return false;
 
         Vector3Int nextStep = GetNextStepAway(originCell, targetCell, desiredDistance);
-        if (nextStep == originCell)
-            return false;
-
-        if (!SetDestinationCell(nextStep))
-            return false;
-
-        float moveSpeed = Mathf.Max(0.01f, _unit.MoveSpeed);
-        _nextStepTime = Time.time + (1f / moveSpeed);
-        return true;
+        return TryCommitMovementStep(originCell, nextStep);
     }
 
     public bool IsWithinRange(Unit targetUnit, int rangeInCells)
     {
-        if (_grid == null || _unit == null || targetUnit == null || !targetUnit.IsAlive)
+        if (!CanEvaluateTarget(targetUnit))
             return false;
 
         Vector3Int selfCell = GetCurrentCell();
@@ -350,6 +333,32 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         _grid.OccupancyService.RegisterOccupant(_unit, GetCurrentCell());
         _registeredGrid = _grid;
+    }
+
+    private bool CanEvaluateTarget(Unit targetUnit)
+    {
+        return _grid != null &&
+               _unit != null &&
+               targetUnit != null &&
+               targetUnit.IsAlive;
+    }
+
+    private bool TryCommitMovementStep(Vector3Int originCell, Vector3Int nextStep)
+    {
+        if (nextStep == originCell)
+            return false;
+
+        if (!SetDestinationCell(nextStep))
+            return false;
+
+        ScheduleNextStepTime();
+        return true;
+    }
+
+    private void ScheduleNextStepTime()
+    {
+        float moveSpeed = Mathf.Max(0.01f, _unit.MoveSpeed);
+        _nextStepTime = Time.time + (1f / moveSpeed);
     }
 
     private void ReleaseCurrentOccupancy()

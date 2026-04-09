@@ -5,6 +5,14 @@ using UnityEngine.Tilemaps;
 
 public sealed class RoomGridTopology
 {
+    private static readonly Vector3Int[] CardinalDirections =
+    {
+        Vector3Int.right,
+        Vector3Int.left,
+        Vector3Int.up,
+        Vector3Int.down
+    };
+
     private Tilemap _walkableTilemap;
     private Tilemap _blockedTilemap;
     private float _cellSize = 1f;
@@ -97,13 +105,12 @@ public sealed class RoomGridTopology
 
     public List<Vector3Int> GetNeighbors(Vector3Int cell)
     {
-        return new List<Vector3Int>(4)
-        {
-            cell + Vector3Int.right,
-            cell + Vector3Int.left,
-            cell + Vector3Int.up,
-            cell + Vector3Int.down
-        };
+        var neighbors = new List<Vector3Int>(CardinalDirections.Length);
+
+        for (int i = 0; i < CardinalDirections.Length; i++)
+            neighbors.Add(cell + CardinalDirections[i]);
+
+        return neighbors;
     }
 }
 
@@ -141,7 +148,6 @@ public class RoomGrid : MonoBehaviour
         _walkableTilemap = walkable;
         _blockedTilemap = blocked;
         ResolveDependencies();
-        ConfigureTopology();
     }
 
     public Vector2 CellWorldSize
