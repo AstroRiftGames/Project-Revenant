@@ -6,6 +6,7 @@ public class GridCellBlocker : MonoBehaviour, IGridOccupant
     [SerializeField] private bool _occupiesCell = true;
     [SerializeField] private bool _blocksMovement = true;
     [SerializeField] private RoomGrid _grid;
+    private bool _isOccupancyRegistered;
 
     public Vector3 OccupancyWorldPosition => transform.position;
     public bool OccupiesCell => _occupiesCell && gameObject.activeInHierarchy;
@@ -13,23 +14,39 @@ public class GridCellBlocker : MonoBehaviour, IGridOccupant
 
     private void OnEnable()
     {
-        RefreshOccupancy();
+        TryRegisterOccupancy();
     }
 
     private void Start()
     {
-        RefreshOccupancy();
+        TryRegisterOccupancy();
     }
 
     private void OnDisable()
     {
-        _grid?.OccupancyService.ReleaseOccupant(this);
+        ReleaseOccupancy();
     }
 
-    private void RefreshOccupancy()
+    private void TryRegisterOccupancy()
     {
         ResolveGrid();
-        _grid?.OccupancyService.RegisterOccupant(this);
+        if (_grid == null)
+            return;
+
+        if (_isOccupancyRegistered)
+            return;
+
+        _grid.OccupancyService.RegisterOccupant(this);
+        _isOccupancyRegistered = true;
+    }
+
+    private void ReleaseOccupancy()
+    {
+        if (_grid == null || !_isOccupancyRegistered)
+            return;
+
+        _grid.OccupancyService.ReleaseOccupant(this);
+        _isOccupancyRegistered = false;
     }
 
     private void ResolveGrid()

@@ -9,6 +9,7 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     [SerializeField] private bool _blocksMovement = true;
     [SerializeField] private RoomGrid _grid;
+    private bool _isOccupancyRegistered;
 
     public static event Action<RoomDoor> OnDoorInteracted;
 
@@ -18,17 +19,17 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     private void OnEnable()
     {
-        RefreshOccupancy();
+        TryRegisterOccupancy();
     }
 
     private void Start()
     {
-        RefreshOccupancy();
+        TryRegisterOccupancy();
     }
 
     private void OnDisable()
     {
-        _grid?.OccupancyService?.ReleaseOccupant(this);
+        ReleaseOccupancy();
     }
 
     [ContextMenu("Interact")]
@@ -45,10 +46,26 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
         Interact();
     }
 
-    private void RefreshOccupancy()
+    private void TryRegisterOccupancy()
     {
         ResolveGrid();
-        _grid?.OccupancyService?.RegisterOccupant(this);
+        if (_grid == null)
+            return;
+
+        if (_isOccupancyRegistered)
+            return;
+
+        _grid.OccupancyService.RegisterOccupant(this);
+        _isOccupancyRegistered = true;
+    }
+
+    private void ReleaseOccupancy()
+    {
+        if (_grid == null || !_isOccupancyRegistered)
+            return;
+
+        _grid.OccupancyService.ReleaseOccupant(this);
+        _isOccupancyRegistered = false;
     }
 
     private void ResolveGrid()

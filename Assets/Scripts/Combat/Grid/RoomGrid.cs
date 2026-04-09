@@ -3,38 +3,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(GridOccupancyTracker))]
-public class RoomGrid : MonoBehaviour
+public sealed class RoomGridTopology
 {
-    private static readonly IGridCellMovementValidator DefaultMovementValidator = new GridCellMovementValidator();
+    private Tilemap _walkableTilemap;
+    private Tilemap _blockedTilemap;
+    private float _cellSize = 1f;
+    private Vector2 _cellCheckSize = new(0.8f, 0.8f);
+    private bool _usePhysicsBlockedCells;
+    private LayerMask _blockedCellsMask;
 
-    [SerializeField] private Tilemap _walkableTilemap;
-    [SerializeField] private Tilemap _blockedTilemap;
-    [SerializeField] private RoomContext _roomContext;
-    [SerializeField] private GridOccupancyTracker _occupancyService;
-    [SerializeField] private float _cellSize = 1f;
-    [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
-    [SerializeField] private bool _usePhysicsBlockedCells;
-    [SerializeField] private LayerMask _blockedCellsMask;
-    [SerializeField] private bool _drawGridGizmos;
-    [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
-    [SerializeField] private int _maxClosestCellSearch = 512;
-    private bool _hasLoggedMissingOccupancyService;
-
-    public float CellSize => CellWorldSize.x;
-    public GridOccupancyTracker OccupancyService => RequireOccupancyService();
-
-    private void Awake()
+    public void Configure(
+        Tilemap walkableTilemap,
+        Tilemap blockedTilemap,
+        float cellSize,
+        Vector2 cellCheckSize,
+        bool usePhysicsBlockedCells,
+        LayerMask blockedCellsMask)
     {
-        ResolveDependencies();
-    }
-
-    public void Configure(Tilemap walkable, Tilemap blocked)
-    {
-        _walkableTilemap = walkable;
-        _blockedTilemap = blocked;
-        ResolveDependencies();
+        _walkableTilemap = walkableTilemap;
+        _blockedTilemap = blockedTilemap;
+        _cellSize = cellSize;
+        _cellCheckSize = cellCheckSize;
+        _usePhysicsBlockedCells = usePhysicsBlockedCells;
+        _blockedCellsMask = blockedCellsMask;
     }
 
     public Vector2 CellWorldSize
@@ -49,24 +40,6 @@ public class RoomGrid : MonoBehaviour
 
             return new Vector2(_cellSize, _cellSize);
         }
-    }
-    private void OnEnable()
-    {
-        ResolveDependencies();
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (_occupancyService == null)
-            _occupancyService = GetComponent<GridOccupancyTracker>();
-    }
-#endif
-
-    private void ResolveDependencies()
-    {
-        ResolveRoomContext();
-        TryResolveOccupancyService();
     }
 
     public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -91,6 +64,14 @@ public class RoomGrid : MonoBehaviour
         return new Vector3(cell.x * _cellSize, cell.y * _cellSize, 0f);
     }
 
+    public bool IsCellInsideWalkableBounds(Vector3Int cell)
+    {
+        if (_walkableTilemap == null)
+            return true;
+
+        return _walkableTilemap.cellBounds.Contains(cell);
+    }
+
     public bool IsCellStaticallyWalkable(Vector3Int cell)
     {
         if (!IsCellInsideWalkableBounds(cell))
@@ -112,6 +93,94 @@ public class RoomGrid : MonoBehaviour
         }
 
         return true;
+    }
+
+    public List<Vector3Int> GetNeighbors(Vector3Int cell)
+    {
+        return new List<Vector3Int>(4)
+        {
+            cell + Vector3Int.right,
+            cell + Vector3Int.left,
+            cell + Vector3Int.up,
+            cell + Vector3Int.down
+        };
+    }
+}
+
+[DisallowMultipleComponent]
+[RequireComponent(typeof(GridOccupancyTracker))]
+public class RoomGrid : MonoBehaviour
+{
+    private static readonly IGridCellMovementValidator DefaultMovementValidator = new GridCellMovementValidator();
+
+    [SerializeField] private Tilemap _walkableTilemap;
+    [SerializeField] private Tilemap _blockedTilemap;
+    [SerializeField] private RoomContext _roomContext;
+    [SerializeField] private GridOccupancyTracker _occupancyService;
+    [SerializeField] private float _cellSize = 1f;
+    [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
+    [SerializeField] private bool _usePhysicsBlockedCells;
+    [SerializeField] private LayerMask _blockedCellsMask;
+    [SerializeField] private bool _drawGridGizmos;
+    [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
+    [SerializeField] private int _maxClosestCellSearch = 512;
+    private bool _hasLoggedMissingOccupancyService;
+    private readonly RoomGridTopology _topology = new();
+
+    public float CellSize => CellWorldSize.x;
+    public GridOccupancyTracker OccupancyService => RequireOccupancyService();
+    public RoomGridTopology Topology => _topology;
+
+    private void Awake()
+    {
+        ResolveDependencies();
+    }
+
+    public void Configure(Tilemap walkable, Tilemap blocked)
+    {
+        _walkableTilemap = walkable;
+        _blockedTilemap = blocked;
+        ResolveDependencies();
+        ConfigureTopology();
+    }
+
+    public Vector2 CellWorldSize
+    {
+        get => _topology.CellWorldSize;
+    }
+    private void OnEnable()
+    {
+        ResolveDependencies();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (_occupancyService == null)
+            _occupancyService = GetComponent<GridOccupancyTracker>();
+    }
+#endif
+
+    private void ResolveDependencies()
+    {
+        ResolveRoomContext();
+        TryResolveOccupancyService();
+        ConfigureTopology();
+    }
+
+    public Vector3Int WorldToCell(Vector3 worldPosition)
+    {
+        return _topology.WorldToCell(worldPosition);
+    }
+
+    public Vector3 CellToWorld(Vector3Int cell)
+    {
+        return _topology.CellToWorld(cell);
+    }
+
+    public bool IsCellStaticallyWalkable(Vector3Int cell)
+    {
+        return _topology.IsCellStaticallyWalkable(cell);
     }
 
     public bool IsCellOccupied(Vector3Int cell, IGridOccupant movingOccupant = null)
@@ -170,24 +239,25 @@ public class RoomGrid : MonoBehaviour
             $"[RoomGrid] '{name}' no puede operar sin GridOccupancyTracker en el mismo GameObject.");
     }
 
+    private void ConfigureTopology()
+    {
+        _topology.Configure(
+            _walkableTilemap,
+            _blockedTilemap,
+            _cellSize,
+            _cellCheckSize,
+            _usePhysicsBlockedCells,
+            _blockedCellsMask);
+    }
+
     public bool IsCellInsideWalkableBounds(Vector3Int cell)
     {
-        if (_walkableTilemap == null)
-            return true;
-
-        return _walkableTilemap.cellBounds.Contains(cell);
+        return _topology.IsCellInsideWalkableBounds(cell);
     }
 
     public List<Vector3Int> GetNeighbors(Vector3Int cell)
     {
-        var neighbors = new List<Vector3Int>(4);
-
-        neighbors.Add(cell + Vector3Int.right);
-        neighbors.Add(cell + Vector3Int.left);
-        neighbors.Add(cell + Vector3Int.up);
-        neighbors.Add(cell + Vector3Int.down);
-
-        return neighbors;
+        return _topology.GetNeighbors(cell);
     }
 
     public Vector3Int FindClosestWalkableCell(Vector3Int targetCell, Vector3Int fallbackCell, IGridOccupant movingOccupant = null)

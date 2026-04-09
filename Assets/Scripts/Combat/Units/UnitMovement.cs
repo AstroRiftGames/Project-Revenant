@@ -17,6 +17,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private int _cachedTargetRange;
     private float _nextRepathTime;
     private readonly List<Vector3Int> _cachedPath = new();
+    private RoomGrid _registeredGrid;
 
     private void Awake()
     {
@@ -33,18 +34,22 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private void OnEnable()
     {
-        if (_grid != null)
-            RegisterCurrentOccupancy();
+        TryRegisterCurrentOccupancy();
     }
 
     private void OnDisable()
     {
-        _grid?.OccupancyService.ReleaseOccupant(_unit);
+        ReleaseCurrentOccupancy();
     }
 
     public void SetGrid(RoomGrid grid)
     {
-        _grid = grid;
+        if (!ReferenceEquals(_grid, grid))
+        {
+            ReleaseOccupancyFrom(_grid);
+            _grid = grid;
+        }
+
         InvalidatePathCache();
         ClearCorpseOccupancy();
         SnapToCurrentCell();
@@ -163,7 +168,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             ? rawCell
             : _grid.FindClosestWalkableCell(rawCell, _unit);
         transform.position = _grid.CellToWorld(_currentCell);
-        RegisterCurrentOccupancy();
+        TryRegisterCurrentOccupancy();
     }
 
     private Vector3Int GetCurrentCell()
@@ -329,6 +334,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null)
             return;
 
+        ReleaseCurrentOccupancy();
         _grid.OccupancyService.RegisterPersistentBlocker(_unit, GetCurrentCell());
     }
 
@@ -337,12 +343,37 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         _grid?.OccupancyService.ReleasePersistentBlocker(_unit);
     }
 
-    private void RegisterCurrentOccupancy()
+    private void TryRegisterCurrentOccupancy()
     {
-        if (_grid == null || _unit == null)
+        if (_grid == null || _unit == null || !isActiveAndEnabled)
             return;
 
+        if (!ReferenceEquals(_registeredGrid, _grid))
+            ReleaseCurrentOccupancy();
+
         _grid.OccupancyService.RegisterOccupant(_unit, GetCurrentCell());
+        _registeredGrid = _grid;
+    }
+
+    private void ReleaseCurrentOccupancy()
+    {
+        if (_unit == null || _registeredGrid == null)
+            return;
+
+        _registeredGrid.OccupancyService.ReleaseOccupant(_unit);
+        _registeredGrid = null;
+    }
+
+    private void ReleaseOccupancyFrom(RoomGrid grid)
+    {
+        if (grid == null || _unit == null)
+            return;
+
+        grid.OccupancyService.ReleaseOccupant(_unit);
+        grid.OccupancyService.ReleasePersistentBlocker(_unit);
+
+        if (ReferenceEquals(_registeredGrid, grid))
+            _registeredGrid = null;
     }
 
     private static int ManhattanDistance(Vector3Int a, Vector3Int b)
