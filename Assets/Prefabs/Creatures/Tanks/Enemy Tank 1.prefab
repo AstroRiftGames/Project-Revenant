@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4094174674307024680, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
       propertyPath: m_Name
-      value: Enemy Tank
+      value: Enemy Tank 1
       objectReference: {fileID: 0}
     - target: {fileID: 4476010332196557263, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
       propertyPath: m_LocalPosition.x
