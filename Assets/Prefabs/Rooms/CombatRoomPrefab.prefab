@@ -3160,6 +3160,13 @@ MonoBehaviour:
   RandomSeed: 0
   CombatRoomConfig:
     SpawnCountRange: {x: 4, y: 8}
+    FloorSpawnRanges:
+    - MinFloor: 1
+      SpawnCountRange: {x: 2, y: 4}
+    - MinFloor: 3
+      SpawnCountRange: {x: 3, y: 6}
+    - MinFloor: 5
+      SpawnCountRange: {x: 5, y: 10}
     Categories:
     - CategoryName: Tank Enemies
       Weight: 30
@@ -3195,6 +3202,7 @@ MonoBehaviour:
         Weight: 50
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}
+    FloorSpawnRanges: []
     Categories: []
 --- !u!114 &9175494840633092742
 MonoBehaviour:

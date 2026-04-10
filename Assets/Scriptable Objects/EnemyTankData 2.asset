@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: Tank2
   displayName: Tank 2
-  unitPrefab: {fileID: 7122989231163767219, guid: ae62686a24b2593469478b1a7254b128, type: 3}
+  unitPrefab: {fileID: 2776671400952486295, guid: 45f174a8ef9e1b54797580e2f3d6e8cc, type: 3}
   team: 0
   role: 0
   combatStyle: 1

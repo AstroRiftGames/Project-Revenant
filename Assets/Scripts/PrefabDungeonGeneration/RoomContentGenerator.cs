@@ -28,11 +28,46 @@ namespace PrefabDungeonGeneration
     }
 
     [Serializable]
-    public class RoomContentConfig
+    public class FloorSpawnRange
     {
+        [Tooltip("The minimum floor number required to use this range.")]
+        public int MinFloor = 0;
+        
         [Tooltip("Min and Max number of items to spawn.")]
         public Vector2Int SpawnCountRange = new Vector2Int(1, 4);
+    }
+
+    [Serializable]
+    public class RoomContentConfig
+    {
+        [Tooltip("Legacy simple range (used if FloorSpawnRanges is empty).")]
+        public Vector2Int SpawnCountRange = new Vector2Int(1, 4);
+        
+        [Tooltip("Ranges overrides based on floor thresholds. The highest MinFloor that is <= CurrentFloor is used.")]
+        public List<FloorSpawnRange> FloorSpawnRanges = new List<FloorSpawnRange>();
+        
         public List<ContentCategory> Categories = new List<ContentCategory>();
+
+        public Vector2Int GetSpawnRangeForFloor(int floor)
+        {
+            if (FloorSpawnRanges == null || FloorSpawnRanges.Count == 0)
+                return SpawnCountRange;
+
+            Vector2Int bestRange = SpawnCountRange;
+            int bestMatchedFloor = int.MinValue;
+
+            for (int i = 0; i < FloorSpawnRanges.Count; i++)
+            {
+                var entry = FloorSpawnRanges[i];
+                if (floor >= entry.MinFloor && entry.MinFloor > bestMatchedFloor)
+                {
+                    bestMatchedFloor = entry.MinFloor;
+                    bestRange = entry.SpawnCountRange;
+                }
+            }
+            
+            return bestMatchedFloor == int.MinValue ? SpawnCountRange : bestRange;
+        }
     }
 
     [RequireComponent(typeof(RoomPrefabProfile))]
@@ -100,7 +135,16 @@ namespace PrefabDungeonGeneration
             _hasGeneratedContent = true;
             _occupiedCells.Clear();
 
-            int spawnCount = UnityEngine.Random.Range(configToUse.SpawnCountRange.x, configToUse.SpawnCountRange.y + 1);
+            int currentFloor = 0;
+            PrefabDungeonGenerator generator = FindObjectOfType<PrefabDungeonGenerator>();
+            if (generator != null)
+            {
+                currentFloor = generator.FloorNumber;
+            }
+
+            Vector2Int floorRange = configToUse.GetSpawnRangeForFloor(currentFloor);
+            int spawnCount = UnityEngine.Random.Range(floorRange.x, floorRange.y + 1);
+            
             ShuffleList(spawnCells);
 
             int toSpawn = Mathf.Min(spawnCount, spawnCells.Count);
@@ -118,6 +162,7 @@ namespace PrefabDungeonGeneration
                 Instantiate(item.Prefab, grid.CellToWorld(spawnCell), Quaternion.identity, transform);
                 _occupiedCells.Add(spawnCell);
             }
+            Debug.Log($"Spawned {toSpawn} items in room {_roomProfile.RoomType}");
         }
 
         private RoomContentConfig GetConfigForRoomType()
