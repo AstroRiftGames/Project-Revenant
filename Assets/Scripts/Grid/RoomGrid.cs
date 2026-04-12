@@ -80,6 +80,20 @@ public sealed class RoomGridTopology
         return _walkableTilemap.cellBounds.Contains(cell);
     }
 
+    public bool HasCell(Vector3Int cell)
+    {
+        if (!IsCellInsideWalkableBounds(cell))
+            return false;
+
+        bool hasWalkableTile = _walkableTilemap != null && _walkableTilemap.HasTile(cell);
+        bool hasBlockedTile = _blockedTilemap != null && _blockedTilemap.HasTile(cell);
+
+        if (_walkableTilemap != null || _blockedTilemap != null)
+            return hasWalkableTile || hasBlockedTile;
+
+        return true;
+    }
+
     public bool IsCellStaticallyWalkable(Vector3Int cell)
     {
         if (!IsCellInsideWalkableBounds(cell))
@@ -204,6 +218,11 @@ public class RoomGrid : MonoBehaviour
     public bool IsCellStaticallyWalkable(Vector3Int cell)
     {
         return _topology.IsCellStaticallyWalkable(cell);
+    }
+
+    public bool HasCell(Vector3Int cell)
+    {
+        return _topology.HasCell(cell);
     }
 
     public bool IsCellOccupied(Vector3Int cell, IGridOccupant movingOccupant = null)

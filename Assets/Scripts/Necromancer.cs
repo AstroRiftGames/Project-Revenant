@@ -1,10 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(MovementTileFeedbackController))]
 public class Necromancer : MonoBehaviour
 {
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
+    [SerializeField] private Camera _inputCamera;
+    [SerializeField] private bool _cancelSelectionOnRightClick = true;
+    [SerializeField] private bool _cancelSelectionOnEscape = true;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
 
@@ -22,13 +27,19 @@ public class Necromancer : MonoBehaviour
 
     private void Awake()
     {
-        _mainCamera = Camera.main;
+        _mainCamera = _inputCamera != null ? _inputCamera : Camera.main;
+
+        if (_movementTileFeedback == null)
+            _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
     }
 
     private void Start()
     {
         if (_grid != null)
+        {
+            _movementTileFeedback?.SetGrid(_grid);
             SnapToGrid();
+        }
     }
 
     private void Update()
@@ -44,7 +55,13 @@ public class Necromancer : MonoBehaviour
 
         if (_grid == null)
         {
-            StopMovement();
+            ResetMovementContext();
+            return;
+        }
+
+        if (!IsDestinationContextValid())
+        {
+            ResetMovementContext();
             return;
         }
 
@@ -64,29 +81,52 @@ public class Necromancer : MonoBehaviour
     private void HandleInput()
     {
         if (_grid == null)
+        {
+            ResetMovementContext();
             return;
+        }
 
         if (_mainCamera == null)
-            _mainCamera = Camera.main;
+            _mainCamera = _inputCamera != null ? _inputCamera : Camera.main;
 
         if (_mainCamera == null)
+        {
+            _movementTileFeedback?.HideHover();
             return;
+        }
 
         Vector3 mouseWorld = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0f;
-        _hoveredCell = _grid.WorldToCell(mouseWorld);
+
+        Vector3Int hoveredCell = _grid.WorldToCell(mouseWorld);
+        if (!_grid.HasCell(hoveredCell))
+        {
+            _hasHoveredCell = false;
+            _movementTileFeedback?.HideHover();
+            HandleCancelInput();
+            return;
+        }
+
+        _hoveredCell = hoveredCell;
         _hasHoveredCell = true;
+        bool isHoveredCellEnterable = _grid.IsCellEnterable(_hoveredCell);
+        _movementTileFeedback?.ShowHover(_hoveredCell, isHoveredCellEnterable);
+
+        HandleCancelInput();
 
         if (!Input.GetMouseButtonDown(0))
             return;
 
+        if (!isHoveredCellEnterable)
+            return;
+
         _clickedCell = _hoveredCell;
         _hasClickedCell = true;
-        Vector3Int resolvedDestination = GridNavigationUtility.ResolvePlacementCell(_grid, _grid.CellToWorld(_hoveredCell));
-        _clickedCellWasWalkable = resolvedDestination == _hoveredCell;
+        _clickedCellWasWalkable = true;
+        _movementTileFeedback?.SetSelection(_clickedCell);
 
         Vector3Int currentCell = _grid.WorldToCell(transform.position);
-        SetDestination(currentCell, resolvedDestination);
+        SetDestination(currentCell, _hoveredCell);
     }
 
     private void SetDestination(Vector3Int from, Vector3Int to)
@@ -99,7 +139,7 @@ public class Necromancer : MonoBehaviour
 
         if (!TryBuildPath(from, _destinationCell))
         {
-            StopMovement();
+            ResetMovementContext();
             return;
         }
 
@@ -116,14 +156,14 @@ public class Necromancer : MonoBehaviour
 
         if (!_hasDestinationCell)
         {
-            StopMovement();
+            ResetMovementContext();
             return false;
         }
 
         Vector3Int currentCell = _grid.WorldToCell(transform.position);
         if (!TryBuildPath(currentCell, _destinationCell))
         {
-            StopMovement();
+            ResetMovementContext();
             return false;
         }
 
@@ -149,7 +189,7 @@ public class Necromancer : MonoBehaviour
     {
         if (_remainingPathCells.Count == 0)
         {
-            StopMovement();
+            ResetMovementContext();
             return;
         }
 
@@ -166,6 +206,8 @@ public class Necromancer : MonoBehaviour
         }
 
         StopMovement();
+        ClearSelectedDestinationState();
+        _movementTileFeedback?.ClearSelection();
     }
 
     private void SnapToGrid()
@@ -175,13 +217,38 @@ public class Necromancer : MonoBehaviour
 
     public void SetGrid(RoomGrid grid)
     {
+        if (ReferenceEquals(_grid, grid))
+        {
+            _movementTileFeedback?.SetGrid(grid);
+            return;
+        }
+
+        ResetMovementContext();
         _grid = grid;
+        _movementTileFeedback?.SetGrid(grid);
     }
 
     public void Teleport(Vector3 worldPosition)
     {
-        StopMovement();
+        ResetMovementContext();
         transform.position = worldPosition;
+    }
+
+    private void OnDisable()
+    {
+        ResetMovementContext();
+    }
+
+    private void HandleCancelInput()
+    {
+        bool cancelRequested =
+            (_cancelSelectionOnRightClick && Input.GetMouseButtonDown(1)) ||
+            (_cancelSelectionOnEscape && Input.GetKeyDown(KeyCode.Escape));
+
+        if (!cancelRequested)
+            return;
+
+        ResetMovementContext();
     }
 
     private void StopMovement()
@@ -189,6 +256,43 @@ public class Necromancer : MonoBehaviour
         _remainingPathCells.Clear();
         _isMoving = false;
         _hasDestinationCell = false;
+        _currentStepCell = Vector3Int.zero;
+    }
+
+    private void ResetMovementContext()
+    {
+        StopMovement();
+        ClearHoverState();
+        ClearSelectedDestinationState();
+        _movementTileFeedback?.HideAll();
+    }
+
+    private void ClearHoverState()
+    {
+        _hoveredCell = Vector3Int.zero;
+        _hasHoveredCell = false;
+    }
+
+    private void ClearSelectedDestinationState()
+    {
+        _destinationCell = Vector3Int.zero;
+        _clickedCell = Vector3Int.zero;
+        _hasClickedCell = false;
+        _clickedCellWasWalkable = false;
+    }
+
+    private bool IsDestinationContextValid()
+    {
+        if (_grid == null)
+            return false;
+
+        if (_hasDestinationCell && !_grid.HasCell(_destinationCell))
+            return false;
+
+        if (_isMoving && !_grid.HasCell(_currentStepCell))
+            return false;
+
+        return true;
     }
 
 #if UNITY_EDITOR
