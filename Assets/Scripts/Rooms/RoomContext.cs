@@ -14,6 +14,7 @@ public class RoomContext : MonoBehaviour
     [SerializeField] private Tilemap _blockedTilemap;
 
     private readonly List<Unit> _units = new();
+    private readonly List<MonoBehaviour> _roomComponents = new();
     private bool _hasGeneratedContent;
 
     public RoomGrid BattleGrid => _battleGrid;
@@ -29,6 +30,8 @@ public class RoomContext : MonoBehaviour
         ResolveDependencies();
         ConfigureGrid();
         GenerateContentIfNeeded();
+        CacheRoomComponents();
+        InjectContextIntoRoomComponents();
         CacheUnits();
         InjectContextIntoUnits();
     }
@@ -211,6 +214,22 @@ public class RoomContext : MonoBehaviour
     {
         _units.Clear();
         GetComponentsInChildren(includeInactive: true, _units);
+    }
+
+    private void CacheRoomComponents()
+    {
+        _roomComponents.Clear();
+        GetComponentsInChildren(includeInactive: true, _roomComponents);
+    }
+
+    private void InjectContextIntoRoomComponents()
+    {
+        for (int i = 0; i < _roomComponents.Count; i++)
+        {
+            MonoBehaviour component = _roomComponents[i];
+            if (component is IRoomContextComponent roomContextComponent)
+                roomContextComponent.IntegrateWithRoom(this);
+        }
     }
 
     private void InjectContextIntoUnits()

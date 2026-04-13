@@ -234,8 +234,9 @@ MonoBehaviour:
     m_Bits: 256
   interactableLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   mainCamera: {fileID: 519420031}
+  debugInteractionFlow: 0
 --- !u!114 &419774561
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ namespace Selection.Core
         [SerializeField] private LayerMask selectableLayer;
         [SerializeField] private LayerMask interactableLayer;
         [SerializeField] private Camera mainCamera;
+        [SerializeField] private bool debugInteractionFlow;
 
         private void Awake()
         {
@@ -53,14 +54,55 @@ namespace Selection.Core
 
         private void HandleInteractionClick()
         {
+            if (mainCamera == null)
+            {
+                if (debugInteractionFlow)
+                    Debug.LogWarning("[SelectionInputHandler] Interaction click ignored because mainCamera is null.", this);
+
+                return;
+            }
+
             Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            int interactionMask = interactableLayer.value != 0 ? interactableLayer : selectableLayer;
+            int fallbackInteractableMask = LayerMask.GetMask("Interactable");
+            int interactionMask = interactableLayer.value != 0
+                ? interactableLayer.value | selectableLayer.value
+                : selectableLayer.value | fallbackInteractableMask;
+
+            if (debugInteractionFlow)
+            {
+                Debug.Log(
+                    $"[SelectionInputHandler] Right-click interaction at {mousePosition}. " +
+                    $"interactableLayer={interactableLayer.value}, selectableLayer={selectableLayer.value}, effectiveMask={interactionMask}",
+                    this);
+            }
+
             RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, interactionMask);
 
             if (hit.collider == null)
+            {
+                if (debugInteractionFlow)
+                    Debug.Log("[SelectionInputHandler] Interaction raycast hit nothing.", this);
+
                 return;
+            }
+
+            if (debugInteractionFlow)
+            {
+                Debug.Log(
+                    $"[SelectionInputHandler] Interaction raycast hit collider '{hit.collider.name}' on layer '{LayerMask.LayerToName(hit.collider.gameObject.layer)}'.",
+                    hit.collider);
+            }
 
             IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (debugInteractionFlow)
+            {
+                Debug.Log(
+                    interactable != null
+                        ? $"[SelectionInputHandler] Resolved interactable '{((Component)interactable).name}'. Invoking Interact()."
+                        : "[SelectionInputHandler] Hit collider does not resolve to any IInteractable in parents.",
+                    hit.collider);
+            }
+
             interactable?.Interact();
         }
     }
