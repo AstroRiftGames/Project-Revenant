@@ -50,11 +50,11 @@ MonoBehaviour:
   _roomContext: {fileID: 0}
   _occupancyService: {fileID: 5123456789012345678}
   _cellSize: 1
-  _cellCheckSize: {x: 0.8, y: 0.8}
-  _usePhysicsBlockedCells: 0
+  _cellCheckSize: {x: 0.95, y: 0.95}
+  _usePhysicsBlockedCells: 1
   _blockedCellsMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512
   _drawGridGizmos: 0
   _gizmoExtents: {x: 12, y: 12}
   _maxClosestCellSearch: 512
