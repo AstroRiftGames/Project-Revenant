@@ -5,6 +5,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(ChestState))]
 public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOccupant, IRoomContextComponent
+    , IInteractionAvailabilitySource
 {
     private const int RequiredAdjacencyDistance = 1;
 
