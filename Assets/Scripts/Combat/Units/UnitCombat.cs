@@ -120,8 +120,8 @@ public class UnitCombat : MonoBehaviour, IAction
             return distance <= Mathf.Max(0f, AttackRangeInCells);
         }
 
-        Vector3Int selfCell = grid.WorldToCell(_unit.Position);
-        Vector3Int targetCell = grid.WorldToCell(target.Position);
+        Vector3Int selfCell = ResolveUnitCell(grid, _unit);
+        Vector3Int targetCell = ResolveUnitCell(grid, target);
         return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, AttackRangeInCells);
     }
 
@@ -192,5 +192,17 @@ public class UnitCombat : MonoBehaviour, IAction
             return _supportProjectileVisualPrefab;
 
         return _projectileVisualPrefab;
+    }
+
+    private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
+    {
+        if (grid == null || unit == null)
+            return Vector3Int.zero;
+
+        UnitMovement movement = unit.GetComponent<UnitMovement>();
+        if (movement != null && movement.TryGetLogicalCell(out Vector3Int cell))
+            return cell;
+
+        return grid.WorldToCell(unit.Position);
     }
 }

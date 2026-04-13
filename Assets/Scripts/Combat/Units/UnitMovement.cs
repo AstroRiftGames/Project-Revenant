@@ -10,6 +10,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private Unit _unit;
     private Vector3Int _currentCell;
+    private bool _hasCurrentCell;
     private float _nextStepTime;
     private Unit _cachedTargetUnit;
     private Vector3Int _cachedTargetCell;
@@ -18,6 +19,10 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private float _nextRepathTime;
     private readonly List<Vector3Int> _cachedPath = new();
     private RoomGrid _registeredGrid;
+    private bool _isMoving;
+    private Vector3 _stepStartWorld;
+    private Vector3 _stepTargetWorld;
+    private float _stepProgress;
 
     private void Awake()
     {
@@ -42,6 +47,13 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         ReleaseCurrentOccupancy();
     }
 
+    private void Update()
+    {
+        UpdateStepPresentation();
+    }
+
+    public bool IsMoving => _isMoving;
+
     public void SetGrid(RoomGrid grid)
     {
         if (!ReferenceEquals(_grid, grid))
@@ -52,6 +64,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         InvalidatePathCache();
         ClearCorpseOccupancy();
+        ResetVisualStep();
         SnapToCurrentCell();
     }
 
@@ -65,12 +78,20 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null)
             return false;
 
+        if (_isMoving)
+            return false;
+
+        Vector3Int originCell = GetCurrentCell();
+        if (destinationCell == originCell)
+            return false;
+
         if (!_grid.IsCellEnterable(destinationCell, _unit))
             return false;
 
         _grid.OccupancyService.MoveOccupant(_unit, destinationCell);
         _currentCell = destinationCell;
-        transform.position = _grid.CellToWorld(destinationCell);
+        _hasCurrentCell = true;
+        BeginVisualStep(originCell, destinationCell);
         return true;
     }
 
@@ -144,9 +165,13 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private void SnapToCurrentCell()
     {
         if (_grid == null)
+        {
+            _hasCurrentCell = false;
             return;
+        }
 
         _currentCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position, _unit);
+        _hasCurrentCell = true;
         transform.position = _grid.CellToWorld(_currentCell);
         TryRegisterCurrentOccupancy();
     }
@@ -156,8 +181,37 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null)
             return Vector3Int.zero;
 
-        _currentCell = _grid.WorldToCell(transform.position);
+        if (!_hasCurrentCell)
+        {
+            _currentCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position, _unit);
+            _hasCurrentCell = true;
+        }
+
         return _currentCell;
+    }
+
+    public bool TryGetLogicalCell(out Vector3Int cell)
+    {
+        if (_grid == null)
+        {
+            cell = Vector3Int.zero;
+            return false;
+        }
+
+        cell = GetCurrentCell();
+        return true;
+    }
+
+    public bool TryGetLogicalWorldPosition(out Vector3 worldPosition)
+    {
+        if (_grid == null)
+        {
+            worldPosition = transform.position;
+            return false;
+        }
+
+        worldPosition = _grid.CellToWorld(GetCurrentCell());
+        return true;
     }
 
     private Vector3Int GetNextStepTowards(Vector3Int originCell, Vector3Int targetCell)
@@ -357,6 +411,40 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     {
         float moveSpeed = Mathf.Max(0.01f, _unit.MoveSpeed);
         _nextStepTime = Time.time + (1f / moveSpeed);
+    }
+
+    private void BeginVisualStep(Vector3Int originCell, Vector3Int destinationCell)
+    {
+        if (_grid == null)
+            return;
+
+        _stepStartWorld = _grid.CellToWorld(originCell);
+        _stepTargetWorld = _grid.CellToWorld(destinationCell);
+        _stepProgress = 0f;
+        _isMoving = true;
+        transform.position = _stepStartWorld;
+    }
+
+    private void UpdateStepPresentation()
+    {
+        if (!_isMoving || _grid == null)
+            return;
+
+        float stepDuration = Mathf.Max(0.0001f, 1f / Mathf.Max(0.01f, _unit.MoveSpeed));
+        _stepProgress = Mathf.Min(1f, _stepProgress + (Time.deltaTime / stepDuration));
+        transform.position = Vector3.Lerp(_stepStartWorld, _stepTargetWorld, _stepProgress);
+
+        if (_stepProgress < 1f)
+            return;
+
+        transform.position = _stepTargetWorld;
+        ResetVisualStep();
+    }
+
+    private void ResetVisualStep()
+    {
+        _isMoving = false;
+        _stepProgress = 0f;
     }
 
     private void ReleaseCurrentOccupancy()

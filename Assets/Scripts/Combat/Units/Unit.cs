@@ -48,7 +48,17 @@ public class Unit : Creature
     public bool IsDpsMelee => Role == UnitRole.DPS && CombatStyle != UnitCombatStyle.Ranged;
     public bool IsDpsRanged => Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged;
     public bool WantsToHoldSpacing => Role == UnitRole.Support || IsDpsRanged;
-    public Vector3 OccupancyWorldPosition => transform.position;
+    public Vector3 OccupancyWorldPosition
+    {
+        get
+        {
+            UnitMovement movement = GetComponent<UnitMovement>();
+            if (movement != null && movement.TryGetLogicalWorldPosition(out Vector3 logicalWorldPosition))
+                return logicalWorldPosition;
+
+            return transform.position;
+        }
+    }
     public bool OccupiesCell => gameObject.activeInHierarchy;
     public bool BlocksMovement => true;
 

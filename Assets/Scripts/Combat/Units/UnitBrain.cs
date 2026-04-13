@@ -24,6 +24,9 @@ public class UnitBrain : MonoBehaviour
         if (_unit == null || _movement == null || _targeting == null || _action == null || !_unit.IsAlive)
             return;
 
+        if (_movement.IsMoving)
+            return;
+
         _currentTarget = _targeting.SelectTarget(_unit, _currentTarget);
         if (_currentTarget == null)
             return;
