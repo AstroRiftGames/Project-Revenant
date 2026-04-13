@@ -23,17 +23,11 @@ public static class GridPathfinder
             if (current == goal)
                 return ReconstructPath(cameFrom, current);
 
-            List<Vector3Int> neighbors = grid.Topology.GetNeighbors(current);
+            List<Vector3Int> neighbors = grid.GetNeighbors(current, movingUnit);
 
             for (int i = 0; i < neighbors.Count; i++)
             {
                 Vector3Int neighbor = neighbors[i];
-                if (!grid.Topology.IsCellInsideWalkableBounds(neighbor))
-                    continue;
-
-                if (!grid.IsCellEnterable(neighbor, movingUnit))
-                    continue;
-
                 if (!visited.Add(neighbor))
                     continue;
 

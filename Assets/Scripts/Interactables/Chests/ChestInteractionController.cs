@@ -154,8 +154,7 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
         if (!_grid.HasCell(necromancerCell))
             return false;
 
-        int manhattanDistance = Mathf.Abs(chestCell.x - necromancerCell.x) + Mathf.Abs(chestCell.y - necromancerCell.y);
-        return manhattanDistance == RequiredAdjacencyDistance;
+        return GridNavigationUtility.GetCellDistance(chestCell, necromancerCell) == RequiredAdjacencyDistance;
     }
 
     private Vector3 ResolveChestTopPosition()

@@ -13,6 +13,18 @@ public sealed class RoomGridTopology
         Vector3Int.down
     };
 
+    private static readonly Vector3Int[] EightDirections =
+    {
+        Vector3Int.right,
+        Vector3Int.left,
+        Vector3Int.up,
+        Vector3Int.down,
+        new Vector3Int(1, 1, 0),
+        new Vector3Int(1, -1, 0),
+        new Vector3Int(-1, 1, 0),
+        new Vector3Int(-1, -1, 0)
+    };
+
     private Tilemap _walkableTilemap;
     private Tilemap _blockedTilemap;
     private float _cellSize = 1f;
@@ -134,12 +146,31 @@ public sealed class RoomGridTopology
         return results.Count > 0;
     }
 
-    public List<Vector3Int> GetNeighbors(Vector3Int cell)
+    public bool TryGetNeighborsInsideBounds(Vector3Int cell, List<Vector3Int> results, bool includeDiagonals = true)
     {
-        var neighbors = new List<Vector3Int>(CardinalDirections.Length);
+        if (results == null)
+            return false;
 
-        for (int i = 0; i < CardinalDirections.Length; i++)
-            neighbors.Add(cell + CardinalDirections[i]);
+        results.Clear();
+
+        Vector3Int[] directions = includeDiagonals ? EightDirections : CardinalDirections;
+        for (int i = 0; i < directions.Length; i++)
+        {
+            Vector3Int neighbor = cell + directions[i];
+            if (IsCellInsideWalkableBounds(neighbor))
+                results.Add(neighbor);
+        }
+
+        return results.Count > 0;
+    }
+
+    public List<Vector3Int> GetNeighbors(Vector3Int cell, bool includeDiagonals = true)
+    {
+        Vector3Int[] directions = includeDiagonals ? EightDirections : CardinalDirections;
+        var neighbors = new List<Vector3Int>(directions.Length);
+
+        for (int i = 0; i < directions.Length; i++)
+            neighbors.Add(cell + directions[i]);
 
         return neighbors;
     }
@@ -299,7 +330,47 @@ public class RoomGrid : MonoBehaviour
 
     public List<Vector3Int> GetNeighbors(Vector3Int cell)
     {
-        return _topology.GetNeighbors(cell);
+        return GetNeighbors(cell, null);
+    }
+
+    public List<Vector3Int> GetNeighbors(Vector3Int cell, IGridOccupant movingOccupant)
+    {
+        List<Vector3Int> neighbors = _topology.GetNeighbors(cell);
+        for (int i = neighbors.Count - 1; i >= 0; i--)
+        {
+            if (!IsStepAllowed(cell, neighbors[i], movingOccupant))
+                neighbors.RemoveAt(i);
+        }
+
+        return neighbors;
+    }
+
+    public bool IsStepAllowed(Vector3Int fromCell, Vector3Int toCell, IGridOccupant movingOccupant = null)
+    {
+        Vector3Int delta = toCell - fromCell;
+        bool isNeighbor =
+            delta.z == 0 &&
+            Mathf.Abs(delta.x) <= 1 &&
+            Mathf.Abs(delta.y) <= 1 &&
+            (delta.x != 0 || delta.y != 0);
+
+        if (!isNeighbor)
+            return false;
+
+        if (!Topology.IsCellInsideWalkableBounds(toCell))
+            return false;
+
+        if (!IsCellEnterable(toCell, movingOccupant))
+            return false;
+
+        if (!GridNavigationUtility.IsDiagonalStep(fromCell, toCell))
+            return true;
+
+        Vector3Int horizontalStep = new Vector3Int(fromCell.x + delta.x, fromCell.y, fromCell.z);
+        Vector3Int verticalStep = new Vector3Int(fromCell.x, fromCell.y + delta.y, fromCell.z);
+        bool horizontalBlocked = !Topology.IsCellStaticallyWalkable(horizontalStep);
+        bool verticalBlocked = !Topology.IsCellStaticallyWalkable(verticalStep);
+        return !(horizontalBlocked && verticalBlocked);
     }
 
     public Vector3Int FindClosestWalkableCell(Vector3Int targetCell, Vector3Int fallbackCell, IGridOccupant movingOccupant = null)
@@ -312,7 +383,7 @@ public class RoomGrid : MonoBehaviour
 
         var visited = new HashSet<Vector3Int> { targetCell };
         var queue = new Queue<Vector3Int>();
-        var neighbors = new List<Vector3Int>(4);
+        var neighbors = new List<Vector3Int>(8);
         queue.Enqueue(targetCell);
         int explored = 0;
 
@@ -320,7 +391,7 @@ public class RoomGrid : MonoBehaviour
         {
             Vector3Int current = queue.Dequeue();
             explored++;
-            Topology.TryGetCardinalNeighborsInsideBounds(current, neighbors);
+            Topology.TryGetNeighborsInsideBounds(current, neighbors);
 
             for (int i = 0; i < neighbors.Count; i++)
             {
@@ -355,20 +426,20 @@ public class RoomGrid : MonoBehaviour
             return false;
 
         bool found = false;
-        float bestDistance = float.MaxValue;
+        int bestDistance = int.MaxValue;
 
         for (int x = -rangeInCells; x <= rangeInCells; x++)
         {
             for (int y = -rangeInCells; y <= rangeInCells; y++)
             {
-                if (Mathf.Abs(x) + Mathf.Abs(y) > rangeInCells)
+                Vector3Int candidateCell = targetCell + new Vector3Int(x, y, 0);
+                if (!GridNavigationUtility.IsWithinCellRange(targetCell, candidateCell, rangeInCells))
                     continue;
 
-                Vector3Int candidateCell = targetCell + new Vector3Int(x, y, 0);
                 if (!IsCellEnterable(candidateCell, movingUnit))
                     continue;
 
-                float distance = Vector3Int.Distance(originCell, candidateCell);
+                int distance = GridNavigationUtility.GetCellDistance(originCell, candidateCell);
                 if (distance >= bestDistance)
                     continue;
 

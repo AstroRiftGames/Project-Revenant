@@ -135,7 +135,6 @@ public class UnitDeathHandler : MonoBehaviour
             GetComponent<UnitBrain>(),
             GetComponent<UnitMovement>(),
             GetComponent<UnitCombat>(),
-            GetComponent<GridInputMover>(),
             GetComponent<TargetingStrategy>(),
             GetComponent<UnitAction>()
         };

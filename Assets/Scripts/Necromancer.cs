@@ -15,6 +15,8 @@ public class Necromancer : MonoBehaviour
 
     private Camera _mainCamera;
     private readonly Queue<Vector3Int> _remainingPathCells = new();
+    private Vector3Int _currentCell;
+    private bool _hasCurrentCell;
     private Vector3Int _currentStepCell;
     private Vector3Int _destinationCell;
     private bool _hasDestinationCell;
@@ -65,7 +67,7 @@ public class Necromancer : MonoBehaviour
             return;
         }
 
-        if (!EnsureCurrentStepIsEnterable())
+        if (!EnsureCurrentStepIsTraversable())
             return;
 
         Vector3 currentTarget = _grid.CellToWorld(_currentStepCell);
@@ -74,7 +76,7 @@ public class Necromancer : MonoBehaviour
         if (Vector3.Distance(transform.position, currentTarget) > 0.001f)
             return;
 
-        transform.position = currentTarget;
+        SetCurrentCell(_currentStepCell);
         AdvanceToNextStep();
     }
 
@@ -125,7 +127,7 @@ public class Necromancer : MonoBehaviour
         _clickedCellWasWalkable = true;
         _movementTileFeedback?.SetSelection(_clickedCell);
 
-        Vector3Int currentCell = _grid.WorldToCell(transform.position);
+        Vector3Int currentCell = ResolveCurrentCell();
         SetDestination(currentCell, _hoveredCell);
     }
 
@@ -146,12 +148,13 @@ public class Necromancer : MonoBehaviour
         BeginNextStep();
     }
 
-    private bool EnsureCurrentStepIsEnterable()
+    private bool EnsureCurrentStepIsTraversable()
     {
         if (_grid == null)
             return false;
 
-        if (_grid.IsCellEnterable(_currentStepCell))
+        Vector3Int currentCell = ResolveCurrentCell();
+        if (_grid.IsStepAllowed(currentCell, _currentStepCell))
             return true;
 
         if (!_hasDestinationCell)
@@ -160,7 +163,6 @@ public class Necromancer : MonoBehaviour
             return false;
         }
 
-        Vector3Int currentCell = _grid.WorldToCell(transform.position);
         if (!TryBuildPath(currentCell, _destinationCell))
         {
             ResetMovementContext();
@@ -168,7 +170,7 @@ public class Necromancer : MonoBehaviour
         }
 
         BeginNextStep();
-        return _grid.IsCellEnterable(_currentStepCell);
+        return _grid.IsStepAllowed(currentCell, _currentStepCell);
     }
 
     private bool TryBuildPath(Vector3Int from, Vector3Int to)
@@ -206,13 +208,18 @@ public class Necromancer : MonoBehaviour
         }
 
         StopMovement();
+        SnapToGrid();
         ClearSelectedDestinationState();
         _movementTileFeedback?.ClearSelection();
     }
 
     private void SnapToGrid()
     {
-        transform.position = GridNavigationUtility.SnapWorldPositionToCell(_grid, transform.position);
+        if (_grid == null)
+            return;
+
+        Vector3Int snappedCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position);
+        SetCurrentCell(snappedCell);
     }
 
     public void SetGrid(RoomGrid grid)
@@ -226,12 +233,21 @@ public class Necromancer : MonoBehaviour
         ResetMovementContext();
         _grid = grid;
         _movementTileFeedback?.SetGrid(grid);
+        SnapToGrid();
     }
 
     public void Teleport(Vector3 worldPosition)
     {
         ResetMovementContext();
-        transform.position = worldPosition;
+        if (_grid == null)
+        {
+            transform.position = worldPosition;
+            _hasCurrentCell = false;
+            return;
+        }
+
+        Vector3Int destinationCell = GridNavigationUtility.ResolvePlacementCell(_grid, worldPosition);
+        SetCurrentCell(destinationCell);
     }
 
     private void OnDisable()
@@ -279,6 +295,26 @@ public class Necromancer : MonoBehaviour
         _clickedCell = Vector3Int.zero;
         _hasClickedCell = false;
         _clickedCellWasWalkable = false;
+    }
+
+    private Vector3Int ResolveCurrentCell()
+    {
+        if (_grid == null)
+            return Vector3Int.zero;
+
+        if (_hasCurrentCell)
+            return _currentCell;
+
+        Vector3Int resolvedCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position);
+        SetCurrentCell(resolvedCell);
+        return resolvedCell;
+    }
+
+    private void SetCurrentCell(Vector3Int cell)
+    {
+        _currentCell = cell;
+        _hasCurrentCell = true;
+        transform.position = _grid != null ? _grid.CellToWorld(cell) : transform.position;
     }
 
     private bool IsDestinationContextValid()

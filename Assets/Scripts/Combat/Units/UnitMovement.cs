@@ -113,7 +113,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         Vector3Int originCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
-        int currentDistance = ManhattanDistance(originCell, targetCell);
+        int currentDistance = GridNavigationUtility.GetCellDistance(originCell, targetCell);
         if (currentDistance >= desiredDistance)
             return false;
 
@@ -128,7 +128,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         Vector3Int selfCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
-        return ManhattanDistance(selfCell, targetCell) <= Mathf.Max(0, rangeInCells);
+        return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, rangeInCells);
     }
 
     public void ClearDestination()
@@ -168,20 +168,17 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_cachedPath.Count > 1 && _cachedPath[0] == originCell)
             return _cachedPath[1];
 
-        int originDistance = ManhattanDistance(originCell, targetCell);
+        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetCell);
         Vector3Int bestImprovingStep = originCell;
         int bestImprovingDistance = originDistance;
         Vector3Int bestFallbackStep = originCell;
         int bestFallbackDistance = int.MaxValue;
 
-        List<Vector3Int> neighbors = _grid.GetNeighbors(originCell);
+        List<Vector3Int> neighbors = _grid.GetNeighbors(originCell, _unit);
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            if (!_grid.IsCellEnterable(candidate, _unit))
-                continue;
-
-            int candidateDistance = ManhattanDistance(candidate, targetCell);
+            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetCell);
 
             if (candidateDistance < bestImprovingDistance)
             {
@@ -210,21 +207,18 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null)
             return originCell;
 
-        int currentDistance = ManhattanDistance(originCell, targetCell);
+        int currentDistance = GridNavigationUtility.GetCellDistance(originCell, targetCell);
         Vector3Int bestCandidate = originCell;
         int bestDistanceGap = int.MaxValue;
         int bestCandidateDistance = currentDistance;
         Vector3Int fallbackCandidate = originCell;
         int fallbackDistance = currentDistance;
 
-        List<Vector3Int> neighbors = _grid.GetNeighbors(originCell);
+        List<Vector3Int> neighbors = _grid.GetNeighbors(originCell, _unit);
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            if (!_grid.IsCellEnterable(candidate, _unit))
-                continue;
-
-            int candidateDistance = ManhattanDistance(candidate, targetCell);
+            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetCell);
             if (candidateDistance <= currentDistance)
                 continue;
 
@@ -282,10 +276,14 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_cachedPath[0] != originCell)
             return false;
 
+        Vector3Int previousCell = _cachedPath[0];
         for (int i = 1; i < _cachedPath.Count; i++)
         {
-            if (!_grid.IsCellEnterable(_cachedPath[i], _unit))
+            Vector3Int currentCell = _cachedPath[i];
+            if (!_grid.IsStepAllowed(previousCell, currentCell, _unit))
                 return false;
+
+            previousCell = currentCell;
         }
 
         return true;
@@ -380,10 +378,5 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (ReferenceEquals(_registeredGrid, grid))
             _registeredGrid = null;
-    }
-
-    private static int ManhattanDistance(Vector3Int a, Vector3Int b)
-    {
-        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
     }
 }

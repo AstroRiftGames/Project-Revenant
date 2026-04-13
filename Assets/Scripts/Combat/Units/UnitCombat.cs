@@ -122,8 +122,7 @@ public class UnitCombat : MonoBehaviour, IAction
 
         Vector3Int selfCell = grid.WorldToCell(_unit.Position);
         Vector3Int targetCell = grid.WorldToCell(target.Position);
-        int distanceInCells = Mathf.Abs(selfCell.x - targetCell.x) + Mathf.Abs(selfCell.y - targetCell.y);
-        return distanceInCells <= AttackRangeInCells;
+        return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, AttackRangeInCells);
     }
 
     public bool IsInRange(Unit self, Unit target)
