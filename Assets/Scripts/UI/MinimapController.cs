@@ -90,9 +90,22 @@ namespace ProjectRevenant.UI
                 }
             }
 
-            if (_floorManager != null)
+            if (_floorManager != null && _floorManager.CurrentRoom != null)
             {
-                UpdateCurrentRoomHighlight(_floorManager.CurrentRoom);
+                bool belongsToCurrentFloor = false;
+                if (_floorManager.CurrentRoom.transform.parent != null)
+                {
+                    string parentName = _floorManager.CurrentRoom.transform.parent.name;
+                    if (parentName.StartsWith("Floor_") && int.TryParse(parentName.Substring(6), out int floorIndex))
+                    {
+                        belongsToCurrentFloor = (floorIndex == _currentDisplayedFloor);
+                    }
+                }
+
+                if (belongsToCurrentFloor)
+                {
+                    UpdateCurrentRoomHighlight(_floorManager.CurrentRoom);
+                }
             }
         }
 
