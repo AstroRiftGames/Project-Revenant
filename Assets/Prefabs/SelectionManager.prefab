@@ -63,7 +63,7 @@ MonoBehaviour:
   selectionManager: {fileID: 916580169646625319}
   selectableLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 1024
   interactableLayer:
     serializedVersion: 2
     m_Bits: 128

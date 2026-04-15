@@ -29,7 +29,7 @@ public class UnitRecruitmentReviver : MonoBehaviour
 
         _partyMemberLink ??= GetComponent<PartyMemberLink>() ?? gameObject.AddComponent<PartyMemberLink>();
         _partyMemberLink.Initialize(member.PartyMemberId, true);
-        _affiliationState.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
+        _unit.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
 
         int restoredHealth = Mathf.Clamp(member.CurrentHealth, Mathf.Max(1, _minimumRecruitHealth), _unit.MaxHealth);
         _deathHandler.RestoreOperationalState(restoredHealth);

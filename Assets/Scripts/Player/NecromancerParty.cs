@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+using Selection.Interfaces;
+
 [Serializable]
-public class PartyMemberData
+public class PartyMemberData : ISelectable, ICharacterStatsProvider
 {
     public string PartyMemberId;
     public UnitData UnitDefinition;
@@ -14,10 +16,29 @@ public class PartyMemberData
     public int FormationIndex;
     public bool IsDeployed;
     public int CurrentHealth;
+
+    // ISelectable logic
+    public bool IsSelected => true;
+    public GameObject SelectionGameObject => null;
+    public ICharacterStatsProvider StatsProvider => this;
+    public event Action<ISelectable> OnSelectionInvalidated { add { } remove { } }
+    public void Select() { }
+    public void Deselect() { }
+
+    // ICharacterStatsProvider logic
+    public UnitTeam Team => RuntimeTeam;
+    int ICharacterStatsProvider.CurrentHealth => CurrentHealth;
+    public int MaxHealth => UnitDefinition != null && UnitDefinition.stats != null ? Mathf.Max(1, UnitDefinition.stats.maxHealth) : 1;
+    public UnitRole Role => UnitDefinition != null ? UnitDefinition.role : default;
+    public float CurrentAbilityCooldown => 0;
+    public float MaxAbilityCooldown => 1;
+    public Sprite AbilityIcon => null;
+    public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
 }
 
 public class NecromancerParty : MonoBehaviour
 {
+    public static event Action OnPartyUpdated;
     [SerializeField] private int _maxPartyMembers = 3;
     [SerializeField] private bool _showDebugOverlay;
     [SerializeField] private List<UnitData> _startingMembers = new();
@@ -31,6 +52,11 @@ public class NecromancerParty : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
         SeedStartingPartyIfNeeded();
+    }
+
+    private void Start()
+    {
+        OnPartyUpdated?.Invoke();
     }
 
     private void OnEnable()
@@ -95,6 +121,7 @@ public class NecromancerParty : MonoBehaviour
         int nextFormationIndex = formationIndex >= 0 ? formationIndex : GetNextFormationIndex();
         _members.Add(CreateMember(unitData, nextFormationIndex));
         NormalizeFormationIndices();
+        OnPartyUpdated?.Invoke();
         return true;
     }
 
@@ -118,6 +145,7 @@ public class NecromancerParty : MonoBehaviour
         member.IsDeployed = true;
         _members.Add(member);
         NormalizeFormationIndices();
+        OnPartyUpdated?.Invoke();
         return true;
     }
 
@@ -136,6 +164,7 @@ public class NecromancerParty : MonoBehaviour
         }
 
         NormalizeFormationIndices();
+        OnPartyUpdated?.Invoke();
     }
 
     private PartyMemberData CreateMember(UnitData unitData, int formationIndex)
@@ -243,6 +272,7 @@ public class NecromancerParty : MonoBehaviour
 
         _members.Remove(member);
         NormalizeFormationIndices();
+        OnPartyUpdated?.Invoke();
     }
 
     private void NormalizeFormationIndices()

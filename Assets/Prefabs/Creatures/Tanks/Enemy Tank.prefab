@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2530779472499519999}
   - component: {fileID: 7397078867624149813}
   - component: {fileID: 3609740325020901574}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 130051355186326371}
   - component: {fileID: 6214880170915135759}
   - component: {fileID: 733623671321207387}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Enemy Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -324,7 +324,7 @@ GameObject:
   - component: {fileID: 8291799895149103499}
   - component: {fileID: 2628531571457939219}
   - component: {fileID: 5004771601103694837}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Border
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -401,7 +401,7 @@ GameObject:
   - component: {fileID: 6849745707779006939}
   - component: {fileID: 6077905654652632416}
   - component: {fileID: 412715076382673209}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -516,7 +516,7 @@ GameObject:
   - component: {fileID: 4060199064224681332}
   - component: {fileID: 5179859178842018646}
   - component: {fileID: 6378683131939799818}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -590,7 +590,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5373346356694063968}
   - component: {fileID: 809824179957823978}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: LifeBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}

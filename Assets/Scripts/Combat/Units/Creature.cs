@@ -13,6 +13,8 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(UnitAffiliationState))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
+    public static event Action<Creature> OnCreatureEnabled;
+    public static event Action<Creature> OnCreatureAffiliationChanged;
     public string Id { get; protected set; } = string.Empty;
     public UnitTeam Team => _affiliationState.Team;
     public UnitRole Role => _data != null ? _data.role : default;
@@ -63,6 +65,11 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         ValidateRequiredComponents();
     }
 
+    protected virtual void OnEnable()
+    {
+        OnCreatureEnabled?.Invoke(this);
+    }
+
     protected virtual void Initialize(UnitData data)
     {
         _data = data;
@@ -79,6 +86,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public void SetAffiliation(UnitTeam team, UnitFaction faction)
     {
         _affiliationState.SetAffiliation(team, faction);
+        OnCreatureAffiliationChanged?.Invoke(this);
     }
 
     public void ResetAffiliationFromData()

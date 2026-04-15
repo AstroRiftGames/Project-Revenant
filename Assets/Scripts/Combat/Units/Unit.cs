@@ -29,8 +29,9 @@ public class Unit : Creature
             Initialize(_unitData);
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         RoomContext context = GetComponentInParent<RoomContext>();
         if (context != null)
             context.RegisterUnit(this);
