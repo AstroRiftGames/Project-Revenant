@@ -55,6 +55,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public bool IsSelected { get; private set; }
     public GameObject SelectionGameObject => gameObject;
     public ICharacterStatsProvider StatsProvider => this;
+    public UnitStatsData CoreStats => _data != null ? _data.stats : null;
     
 
     protected virtual void Awake()

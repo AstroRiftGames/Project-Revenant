@@ -34,6 +34,7 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public float MaxAbilityCooldown => 1;
     public Sprite AbilityIcon => null;
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
+    public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;
 }
 
 public class NecromancerParty : MonoBehaviour

@@ -1400,6 +1400,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7691621692594327964}
   - component: {fileID: -2935357074270545806}
+  - component: {fileID: 9157332065711787482}
+  - component: {fileID: 6394243287034408128}
   m_Layer: 5
   m_Name: SelectionCard
   m_TagString: Untagged
@@ -1453,3 +1455,43 @@ MonoBehaviour:
   tankRoleIcon: {fileID: 21300000, guid: ec785febb56d8bb469dd6cb6235ebcd2, type: 3}
   dpsRoleIcon: {fileID: 21300000, guid: 039bf3a35a1472147bc6ead1c3b4ece6, type: 3}
   supportRoleIcon: {fileID: 21300000, guid: 321d8291ab2c6cb4b81d3dda37a91ef6, type: 3}
+--- !u!223 &9157332065711787482
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8228628151436181580}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!114 &6394243287034408128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8228628151436181580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295

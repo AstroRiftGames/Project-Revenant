@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using Selection.Interfaces;
 using Selection.Core;
 
 namespace Selection.UI
 {
-    public class CharacterSelectionUIEntry : MonoBehaviour
+    public class CharacterSelectionUIEntry : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [Header("UI References")]
         [SerializeField] private Slider healthSlider;
@@ -115,6 +116,22 @@ namespace Selection.UI
                 {
                     characterPortraitImage.enabled = false;
                 }
+            }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (currentStats != null && currentStats.CoreStats != null && FloatingStatsModal.Instance != null)
+            {
+                FloatingStatsModal.Instance.Show(currentStats.CoreStats);
+            }
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (FloatingStatsModal.Instance != null)
+            {
+                FloatingStatsModal.Instance.Hide();
             }
         }
     }

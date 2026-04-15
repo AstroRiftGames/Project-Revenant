@@ -13,5 +13,6 @@ namespace Selection.Interfaces
         float MaxAbilityCooldown { get; }
         Sprite AbilityIcon { get; }
         Sprite CharacterSprite { get; }
+        UnitStatsData CoreStats { get; }
     }
 }
