@@ -114,7 +114,6 @@ namespace ProjectRevenant.UI
             _logicalGridPos.Clear();
             if (floorData.Rooms.Count == 0) return;
 
-            // 1. Identificamos el origen
             PDRoomNode root = null;
             foreach (var r in floorData.Rooms)
             {
@@ -131,7 +130,6 @@ namespace ProjectRevenant.UI
             queue.Enqueue(root);
             _logicalGridPos[root.ID] = Vector2Int.zero;
 
-            // 2. Preparamos relaciones
             Dictionary<int, List<PDRoomNode>> childrenMap = new Dictionary<int, List<PDRoomNode>>();
             foreach (var r in floorData.Rooms)
             {
@@ -146,7 +144,6 @@ namespace ProjectRevenant.UI
             HashSet<Vector2Int> occupied = new HashSet<Vector2Int>();
             occupied.Add(Vector2Int.zero);
 
-            // 3. Atravesamos iterativamente infiriendo posiciones
             while (queue.Count > 0)
             {
                 var curr = queue.Dequeue();
@@ -215,7 +212,6 @@ namespace ProjectRevenant.UI
                 _currentScale = 1f;
                 if (MapContainer != null && MapContainer.rect.width > 0 && MapContainer.rect.height > 0)
                 {
-                    // Calculamos el espacio total necesario (incluyendo un margen extra equivalente al nodo)
                     float widthNeeded = (maxX - minX) * NodeSpacing + NodeSize * 2f;
                     float heightNeeded = (maxY - minY) * NodeSpacing + NodeSize * 2f;
                     

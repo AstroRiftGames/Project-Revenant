@@ -28,7 +28,7 @@ namespace Selection.UI
             {
                 Instance = this;
                 _rectTransform = GetComponent<RectTransform>();
-                Hide(); // Ocultar al inicio
+                Hide();
             }
             else
             {
@@ -70,12 +70,10 @@ namespace Selection.UI
         {
             Vector2 mousePos = Input.mousePosition;
 
-            // Determina de qué lado de la pantalla está el mouse para invertir el pivot
             float pivotX = mousePos.x / Screen.width > 0.5f ? 1f : 0f;
             float pivotY = mousePos.y / Screen.height > 0.5f ? 1f : 0f;
             _rectTransform.pivot = new Vector2(pivotX, pivotY);
 
-            // Invertimos el offset para alejarlo siempre del puntero en la dirección correcta
             Vector2 directionalOffset = new Vector2(
                 pivotX == 1f ? -Mathf.Abs(offset.x) : Mathf.Abs(offset.x),
                 pivotY == 1f ? -Mathf.Abs(offset.y) : Mathf.Abs(offset.y)
@@ -94,7 +92,6 @@ namespace Selection.UI
             }
             else
             {
-                // Screen Space Overlay
                 _rectTransform.position = mousePos + (Vector2)_rectTransform.TransformVector(directionalOffset);
             }
         }

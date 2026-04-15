@@ -138,7 +138,6 @@ namespace PrefabDungeonGeneration
                 roomSpawnData.Add((roomNode, spawnPos));
             }
 
-            // Sort by ID to ensure parent rooms are instantiated before child rooms
             roomSpawnData.Sort((a, b) => a.room.ID.CompareTo(b.room.ID));
 
             Dictionary<int, GameObject> instantiatedRooms = new Dictionary<int, GameObject>();
@@ -154,7 +153,6 @@ namespace PrefabDungeonGeneration
                 _spawnedInstances.Add(instance);
                 instantiatedRooms[roomNode.ID] = instance;
 
-                // When instantiating a room, grab reference to previous room and assign RoomB
                 if (roomNode.ParentNode != null && instantiatedRooms.TryGetValue(roomNode.ParentNode.ID, out GameObject parentRoom))
                 {
                     if (roomNode.ParentDoorIndex >= 0 && roomNode.ParentDoorIndex < roomNode.ParentNode.PrefabProfile.Doors.Count)

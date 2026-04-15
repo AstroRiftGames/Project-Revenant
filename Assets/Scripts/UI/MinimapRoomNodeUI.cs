@@ -37,7 +37,6 @@ namespace ProjectRevenant.UI
                     color.a = isCurrent ? 1f : 0.5f;
                     BackgroundImage.color = color;
                     
-                    // We also make it a bit larger if it's current, just in case there's no highlight image
                     transform.localScale = isCurrent ? Vector3.one * 1.5f : Vector3.one;
                 }
             }
@@ -52,8 +51,8 @@ namespace ProjectRevenant.UI
                 case PDRoomType.Loot: return Color.yellow;
                 case PDRoomType.Shop: return Color.blue;
                 case PDRoomType.Altar: return Color.cyan;
-                case PDRoomType.MiniBoss: return new Color(1f, 0.5f, 0f); // Naranja
-                case PDRoomType.Boss: return new Color(0.5f, 0f, 0.5f); // Morado
+                case PDRoomType.MiniBoss: return new Color(1f, 0.5f, 0f);
+                case PDRoomType.Boss: return new Color(0.5f, 0f, 0.5f); 
                 default: return Color.white;
             }
         }

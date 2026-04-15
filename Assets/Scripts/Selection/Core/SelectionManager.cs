@@ -121,7 +121,7 @@ namespace Selection.Core
             if (selectable == null) return;
 
             bool isEnemy = selectable.StatsProvider.Team == UnitTeam.Enemy;
-            if (!isEnemy) return; // Aliados solo entran vía UpdateAlliesFromParty
+            if (!isEnemy) return; 
 
             var targetList = selectedEnemies;
             int currentLimit = maxEnemySelectionLimit;
@@ -186,8 +186,6 @@ namespace Selection.Core
 
         private void HandleSelectionInvalidated(ISelectable selectable)
         {
-            // Solo deseleccionamos si el on disable o invalidación ocurre pero no para los aliados (por si es disable temporal).
-            // Si el objeto de verdad se destruye, podríamos forzarlo, pero de momento respetamos la regla estricta.
             Deselect(selectable, force: selectable.StatsProvider != null && selectable.StatsProvider.Team != UnitTeam.Enemy ? false : true);
         }
 
