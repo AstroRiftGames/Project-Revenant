@@ -51,7 +51,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public float CurrentAbilityCooldown => 10f; //TODO: This should come from UnitData when ability system is implemented
     public float MaxAbilityCooldown => 10; //TODO: This should come from UnitData when ability system is implemented
     public Sprite AbilityIcon => null;  //TODO: This should come from UnitData when ability system is implemented
-    public Sprite CharacterSprite => _data.sprite;
+    public Sprite CharacterSprite => _data != null ? _data.sprite : null;
     public bool IsSelected { get; private set; }
     public GameObject SelectionGameObject => gameObject;
     public ICharacterStatsProvider StatsProvider => this;

@@ -20,7 +20,7 @@ MonoBehaviour:
   combatStyle: 1
   targetingMode: 1
   faction: 0
-  sprite: {fileID: -5357433189053572707, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
+  sprite: {fileID: 21300000, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
   tileSize: 0
   softCurrencyRewardOnSoulAbsorb: 5
   stats:

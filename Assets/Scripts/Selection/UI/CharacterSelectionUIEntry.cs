@@ -107,7 +107,7 @@ namespace Selection.UI
 
             if (characterPortraitImage != null)
             {
-                if (!isEnemy && currentStats.CharacterSprite != null)
+                if (currentStats.CharacterSprite != null)
                 {
                     characterPortraitImage.sprite = currentStats.CharacterSprite;
                     characterPortraitImage.enabled = true;

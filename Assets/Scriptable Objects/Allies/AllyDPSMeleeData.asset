@@ -20,12 +20,13 @@ MonoBehaviour:
   combatStyle: 1
   targetingMode: 1
   faction: 1
-  sprite: {fileID: 8389951438164852833, guid: a2be312c074657642affb862ad52d52d, type: 3}
+  sprite: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
+  softCurrencyRewardOnSoulAbsorb: 1
   stats:
     maxHealth: 14
     attackDamage: 3
-    attackInterval: 0.65
+    attackCooldown: 0.75
     attackRangeInCells: 1
     preferredDistanceInCells: 1
     accuracy: 0.85
