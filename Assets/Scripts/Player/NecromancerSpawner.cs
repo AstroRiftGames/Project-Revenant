@@ -21,14 +21,73 @@ public class NecromancerSpawner : MonoBehaviour
     private NecromancerRoomTransitioner _roomTransitioner;
     private PrefabDungeonGenerator _dungeonGenerator;
 
+    private bool _isFirstLaunch = true;
+
     private void Awake()
     {
         EnsurePartySystems();
     }
 
+    private void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        PrefabDungeonGenerator.OnFloorGenerated += HandleFloorGenerated;
+    }
+
+    private void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        PrefabDungeonGenerator.OnFloorGenerated -= HandleFloorGenerated;
+    }
+
     private void Start()
     {
-        Spawn();
+        if (_isFirstLaunch)
+        {
+            _isFirstLaunch = false;
+            // First time play mode is pressed, manually trigger setup 
+            // since SceneLoaded already passed before this component awakened.
+            InitializeScene();
+        }
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (!_isFirstLaunch)
+        {
+            InitializeScene();
+        }
+    }
+
+    private void InitializeScene()
+    {
+        _floorManager = FindFirstObjectByType<FloorManager>();
+        _dungeonGenerator = FindFirstObjectByType<PrefabDungeonGenerator>();
+        EnsurePartySystems();
+
+        if (_dungeonGenerator != null)
+        {
+            if (_dungeonGenerator.CurrentFloorData != null)
+            {
+                Spawn(); // Ya se generó por Start() antes de nosotros
+            }
+            // Si es null, esperamos a que el evento OnFloorGenerated avise que terminó.
+        }
+        else
+        {
+            // Sin generador estricto (Modo SafeZone).
+            Spawn();
+        }
+    }
+
+    private void HandleFloorGenerated(PDFloorData floorData)
+    {
+        // Solo spawneamos al jugador a causa de la generación del piso SI NO EXISTE un jugador todavía.
+        // Es decir, al iniciar o recargar escena entera. NO al pasar de piso en la misma escena.
+        if (FindFirstObjectByType<Necromancer>() == null)
+        {
+            Spawn();
+        }
     }
 
     private void Spawn()
@@ -143,31 +202,26 @@ public class NecromancerSpawner : MonoBehaviour
             return false;
         }
 
-        if (_floorManager == null)
+        if (_floorManager != null && _floorManager.CurrentRoom != null)
         {
-            Debug.LogWarning("[NecromancerSpawner] No hay FloorManager asignado.", this);
-            return false;
+            _floorManager.CurrentRoom.TryGetComponent(out roomContext);
+        }
+        else
+        {
+            // Modo SafeZone: Si no hay generador procedural, tomamos la primera sala estática que exista en el mapa.
+            roomContext = FindFirstObjectByType<RoomContext>();
         }
 
-        GameObject startRoom = _floorManager.CurrentRoom;
-        if (startRoom == null)
+        if (roomContext == null)
         {
-            Debug.LogWarning("[NecromancerSpawner] FloorManager no tiene sala inicial. " +
-                             "Asegurate de que PrefabDungeonGenerator se ejecute antes (orden 0).", this);
-            return false;
-        }
-
-        if (!startRoom.TryGetComponent(out roomContext))
-        {
-            Debug.LogWarning($"[NecromancerSpawner] La sala inicial '{startRoom.name}' no tiene RoomContext.", this);
+            Debug.LogWarning("[NecromancerSpawner] No se encontro ni una sala procedural ni un RoomContext estático en la escena.", this);
             return false;
         }
 
         grid = roomContext.BattleGrid;
         if (grid == null)
         {
-            Debug.LogWarning("[NecromancerSpawner] RoomContext no tiene BattleGrid resuelto. " +
-                             "Asegurate de que la sala tenga tilemaps configurados.", this);
+            Debug.LogWarning("[NecromancerSpawner] RoomContext no tiene BattleGrid resuelto. Asegurate de que la sala tenga tilemaps configurados.", this);
             return false;
         }
 

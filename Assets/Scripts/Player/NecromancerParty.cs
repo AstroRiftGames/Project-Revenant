@@ -49,10 +49,20 @@ public class NecromancerParty : MonoBehaviour
     public int SlotsUsed => _members.Count;
     public IReadOnlyList<PartyMemberData> Members => _members;
 
+    public static NecromancerParty Instance { get; private set; }
+
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
-        SeedStartingPartyIfNeeded();
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            SeedStartingPartyIfNeeded();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void Start()
