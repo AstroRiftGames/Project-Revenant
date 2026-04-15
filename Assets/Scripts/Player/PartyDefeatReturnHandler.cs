@@ -1,16 +1,11 @@
 using System.Collections;
-using PrefabDungeonGeneration;
+using Core.Systems;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class PartyDefeatReturnHandler : MonoBehaviour
 {
     [SerializeField] private PartyDefeatDetector _detector;
-    [SerializeField] private FloorManager _floorManager;
-    [SerializeField] private RoomPartySpawner _partySpawner;
-    [SerializeField] private NecromancerRoomTransitioner _roomTransitioner;
-    [SerializeField] private PrefabDungeonGenerator _dungeonGenerator;
-
     private Coroutine _pendingReturnRoutine;
     private bool _isSubscribed;
 
@@ -35,21 +30,10 @@ public class PartyDefeatReturnHandler : MonoBehaviour
         Unsubscribe();
     }
 
-    public void Configure(
-        PartyDefeatDetector detector,
-        FloorManager floorManager,
-        RoomPartySpawner partySpawner,
-        NecromancerRoomTransitioner roomTransitioner,
-        PrefabDungeonGenerator dungeonGenerator)
+    public void Configure(PartyDefeatDetector detector)
     {
         Unsubscribe();
-
         _detector = detector;
-        _floorManager = floorManager;
-        _partySpawner = partySpawner;
-        _roomTransitioner = roomTransitioner;
-        _dungeonGenerator = dungeonGenerator;
-
         RefreshSubscription();
     }
 
@@ -58,31 +42,35 @@ public class PartyDefeatReturnHandler : MonoBehaviour
         if (_pendingReturnRoutine != null)
             return;
 
-        _pendingReturnRoutine = StartCoroutine(ReturnToStartRoomNextFrame());
+        _pendingReturnRoutine = StartCoroutine(ReturnToSafeZoneNextFrame());
     }
 
-    private IEnumerator ReturnToStartRoomNextFrame()
+    private IEnumerator ReturnToSafeZoneNextFrame()
     {
         yield return null;
-
         _pendingReturnRoutine = null;
 
-        if (_floorManager == null)
+        // Limpiar inventario solo al morir (no al cruzar portales libremente)
+        if (Inventory.Core.InventoryManager.Instance != null)
         {
-            Debug.LogWarning("[NecromancerPartyDefeatReturnToStartResolver] Cannot return to the start room because FloorManager is missing.", this);
-            yield break;
+            Inventory.Core.InventoryManager.Instance.ClearInventory();
         }
 
-        if (_dungeonGenerator == null || _dungeonGenerator.LastGeneratedStartRoom == null)
+        // Limpiar equipo de la run y resetear unidades nativas
+        if (NecromancerParty.Instance != null)
         {
-            Debug.LogWarning("[NecromancerPartyDefeatReturnToStartResolver] Cannot return to the start room because the current floor start room is unavailable.", this);
-            yield break;
+            NecromancerParty.Instance.ResetToStartingParty();
         }
 
-        GameObject startRoom = _dungeonGenerator.LastGeneratedStartRoom;
-        _floorManager.EnterRoom(startRoom);
-        _roomTransitioner?.MoveNecromancerToRoom(startRoom);
-        _partySpawner?.DeployToRoom(startRoom);
+        // Devolver al jugador a la Safe Zone
+        if (GameSceneManager.Instance != null)
+        {
+            GameSceneManager.Instance.LoadSafeZone();
+        }
+        else
+        {
+            Debug.LogWarning("[PartyDefeatReturnHandler] GameSceneManager no encontrado al intentar volver a la Safe Zone.", this);
+        }
     }
 
     private void RefreshSubscription()

@@ -65,6 +65,12 @@ namespace Inventory.Core
             return true;
         }
 
+        public void ClearInventory()
+        {
+            _items.Clear();
+            Debug.Log("[InventoryManager] El inventario ha sido vaciado por completo.");
+        }
+
         public void DropItem(int index)
         {
             if (index < 0 || index >= _items.Count)

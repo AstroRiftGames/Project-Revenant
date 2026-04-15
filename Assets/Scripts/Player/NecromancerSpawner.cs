@@ -155,12 +155,7 @@ public class NecromancerSpawner : MonoBehaviour
 
         _dungeonGenerator = FindFirstObjectByType<PrefabDungeonGenerator>();
 
-        _partyDefeatResolver.Configure(
-            _partyDefeatDetector,
-            _floorManager,
-            _partySpawner,
-            _roomTransitioner,
-            _dungeonGenerator);
+        _partyDefeatResolver.Configure(_partyDefeatDetector);
     }
 
     private Vector3Int FindSpawnCell(RoomGrid grid, RoomContext roomContext)

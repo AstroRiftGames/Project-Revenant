@@ -178,6 +178,12 @@ public class NecromancerParty : MonoBehaviour
         OnPartyUpdated?.Invoke();
     }
 
+    public void ResetToStartingParty()
+    {
+        _members.Clear();
+        SeedStartingPartyIfNeeded();
+    }
+
     private PartyMemberData CreateMember(UnitData unitData, int formationIndex)
     {
         return CreateMember(
