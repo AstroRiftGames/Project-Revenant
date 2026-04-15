@@ -21,6 +21,8 @@ namespace ProjectRevenant.UI
         public float NodeSpacing = 50f;
         
         private Dictionary<int, MinimapRoomNodeUI> _roomNodes = new Dictionary<int, MinimapRoomNodeUI>();
+        private Dictionary<string, GameObject> _connections = new Dictionary<string, GameObject>();
+        private HashSet<string> _exploredRooms = new HashSet<string>();
         private Dictionary<int, Vector2Int> _logicalGridPos = new Dictionary<int, Vector2Int>();
         private FloorManager _floorManager;
         private Vector2 _centeringOffset;
@@ -262,6 +264,8 @@ namespace ProjectRevenant.UI
             
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             lineRT.localRotation = Quaternion.Euler(0, 0, angle);
+
+            _connections[$"{parentRoom.ID}_{childRoom.ID}"] = lineRT.gameObject;
         }
 
         private void HandleRoomEntered(RoomDoor door, GameObject nextRoom)
@@ -299,9 +303,28 @@ namespace ProjectRevenant.UI
                 if (int.TryParse(parts[parts.Length - 1], out parsedID)) { }
             }
 
+            if (parsedID != -1)
+            {
+                _exploredRooms.Add($"{_currentDisplayedFloor}_{parsedID}");
+            }
+
             foreach (var kvp in _roomNodes)
             {
-                kvp.Value.SetIsCurrentRoom(kvp.Key == parsedID);
+                int roomID = kvp.Key;
+                bool isExplored = _exploredRooms.Contains($"{_currentDisplayedFloor}_{roomID}");
+                kvp.Value.gameObject.SetActive(isExplored);
+                kvp.Value.SetIsCurrentRoom(roomID == parsedID);
+            }
+
+            foreach (var kvp in _connections)
+            {
+                string[] connParts = kvp.Key.Split('_');
+                if (connParts.Length == 2 && int.TryParse(connParts[0], out int pID) && int.TryParse(connParts[1], out int cID))
+                {
+                    bool pExplored = _exploredRooms.Contains($"{_currentDisplayedFloor}_{pID}");
+                    bool cExplored = _exploredRooms.Contains($"{_currentDisplayedFloor}_{cID}");
+                    kvp.Value.SetActive(pExplored && cExplored);
+                }
             }
         }
 
@@ -314,6 +337,7 @@ namespace ProjectRevenant.UI
                 Destroy(child.gameObject);
             }
             _roomNodes.Clear();
+            _connections.Clear();
             _logicalGridPos.Clear();
         }
     }
