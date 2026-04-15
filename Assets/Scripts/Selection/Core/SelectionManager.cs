@@ -13,20 +13,25 @@ namespace Selection.Core
             Ignore
         }
 
-        [SerializeField] private int maxSelectionLimit = 4;
+        [SerializeField] private int maxAllySelectionLimit = 4;
+        [SerializeField] private int maxEnemySelectionLimit = 2;
         [SerializeField] private SelectionLimitBehavior limitBehavior = SelectionLimitBehavior.ReplaceOldest;
 
-        private readonly List<ISelectable> selectedCharacters = new List<ISelectable>();
+        private readonly List<ISelectable> selectedAllies = new List<ISelectable>();
+        private readonly List<ISelectable> selectedEnemies = new List<ISelectable>();
 
-        public event Action<List<ISelectable>> OnSelectionChanged;
+        public event Action<List<ISelectable>, List<ISelectable>> OnSelectionChanged;
 
-        public IReadOnlyList<ISelectable> SelectedCharacters => selectedCharacters;
+        public IReadOnlyList<ISelectable> SelectedAllies => selectedAllies;
+        public IReadOnlyList<ISelectable> SelectedEnemies => selectedEnemies;
 
         public void ToggleSelection(ISelectable selectable)
         {
             if (selectable == null) return;
 
-            if (selectedCharacters.Contains(selectable))
+            bool isSelected = selectedAllies.Contains(selectable) || selectedEnemies.Contains(selectable);
+
+            if (isSelected)
             {
                 Deselect(selectable);
             }
@@ -38,9 +43,13 @@ namespace Selection.Core
 
         public void Select(ISelectable selectable)
         {
-            if (selectable == null || selectedCharacters.Contains(selectable)) return;
+            bool isEnemy = selectable.StatsProvider.Team == UnitTeam.Enemy;
+            var targetList = isEnemy ? selectedEnemies : selectedAllies;
+            int currentLimit = isEnemy ? maxEnemySelectionLimit : maxAllySelectionLimit;
 
-            if (selectedCharacters.Count >= maxSelectionLimit)
+            if (selectable == null || targetList.Contains(selectable)) return;
+
+            if (targetList.Count >= currentLimit)
             {
                 if (limitBehavior == SelectionLimitBehavior.Ignore)
                 {
@@ -48,12 +57,12 @@ namespace Selection.Core
                 }
                 else if (limitBehavior == SelectionLimitBehavior.ReplaceOldest)
                 {
-                    var oldest = selectedCharacters[0];
+                    var oldest = targetList[0];
                     Deselect(oldest);
                 }
             }
 
-            selectedCharacters.Add(selectable);
+            targetList.Add(selectable);
             selectable.OnSelectionInvalidated += HandleSelectionInvalidated;
             selectable.Select();
             NotifySelectionChanged();
@@ -61,9 +70,21 @@ namespace Selection.Core
 
         public void Deselect(ISelectable selectable)
         {
-            if (selectable == null || !selectedCharacters.Contains(selectable)) return;
+            if (selectable == null) return;
 
-            selectedCharacters.Remove(selectable);
+            if (selectedAllies.Contains(selectable))
+            {
+                selectedAllies.Remove(selectable);
+            }
+            else if (selectedEnemies.Contains(selectable))
+            {
+                selectedEnemies.Remove(selectable);
+            }
+            else
+            {
+                return;
+            }
+
             selectable.OnSelectionInvalidated -= HandleSelectionInvalidated;
             selectable.Deselect();
             NotifySelectionChanged();
@@ -71,15 +92,21 @@ namespace Selection.Core
 
         public void ClearSelection()
         {
-            if (selectedCharacters.Count == 0) return;
+            if (selectedAllies.Count == 0 && selectedEnemies.Count == 0) return;
 
-            foreach (var selectable in selectedCharacters)
+            foreach (var selectable in selectedAllies)
+            {
+                selectable.OnSelectionInvalidated -= HandleSelectionInvalidated;
+                selectable.Deselect();
+            }
+            foreach (var selectable in selectedEnemies)
             {
                 selectable.OnSelectionInvalidated -= HandleSelectionInvalidated;
                 selectable.Deselect();
             }
             
-            selectedCharacters.Clear();
+            selectedAllies.Clear();
+            selectedEnemies.Clear();
             NotifySelectionChanged();
         }
 
@@ -90,7 +117,7 @@ namespace Selection.Core
 
         private void NotifySelectionChanged()
         {
-            OnSelectionChanged?.Invoke(new List<ISelectable>(selectedCharacters));
+            OnSelectionChanged?.Invoke(new List<ISelectable>(selectedAllies), new List<ISelectable>(selectedEnemies));
         }
     }
 }

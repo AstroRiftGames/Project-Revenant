@@ -9,7 +9,8 @@ namespace Selection.UI
     {
         [Header("References")]
         [SerializeField] private SelectionManager selectionManager;
-        [SerializeField] private Transform uiContainer;
+        [SerializeField] private Transform allyUIContainer;
+        [SerializeField] private Transform enemyUIContainer;
         [SerializeField] private CharacterSelectionUIEntry uiEntryPrefab;
 
         private readonly List<CharacterSelectionUIEntry> activeEntries = new List<CharacterSelectionUIEntry>();
@@ -39,30 +40,38 @@ namespace Selection.UI
             }
         }
 
-        private void HandleSelectionChanged(List<ISelectable> selectedCharacters)
+        private void HandleSelectionChanged(List<ISelectable> selectedAllies, List<ISelectable> selectedEnemies)
         {
             ClearActiveEntries();
 
-            foreach (var character in selectedCharacters)
+            foreach (var ally in selectedAllies)
             {
-                CharacterSelectionUIEntry entry = GetEntryFromPool();
-                entry.UpdateUI(character.StatsProvider);
+                CharacterSelectionUIEntry entry = GetEntryFromPool(allyUIContainer);
+                entry.UpdateUI(ally.StatsProvider);
+                activeEntries.Add(entry);
+            }
+
+            foreach (var enemy in selectedEnemies)
+            {
+                CharacterSelectionUIEntry entry = GetEntryFromPool(enemyUIContainer);
+                entry.UpdateUI(enemy.StatsProvider);
                 activeEntries.Add(entry);
             }
         }
 
-        private CharacterSelectionUIEntry GetEntryFromPool()
+        private CharacterSelectionUIEntry GetEntryFromPool(Transform parentContainer)
         {
             CharacterSelectionUIEntry entry;
 
             if (entryPool.Count > 0)
             {
                 entry = entryPool.Dequeue();
+                entry.transform.SetParent(parentContainer, false);
                 entry.gameObject.SetActive(true);
             }
             else
             {
-                entry = Instantiate(uiEntryPrefab, uiContainer);
+                entry = Instantiate(uiEntryPrefab, parentContainer);
             }
 
             entry.transform.SetAsLastSibling();
