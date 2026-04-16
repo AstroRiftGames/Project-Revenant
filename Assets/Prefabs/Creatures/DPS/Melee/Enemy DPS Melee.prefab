@@ -361,6 +361,7 @@ GameObject:
   - component: {fileID: 5956005352428113798}
   - component: {fileID: 8668946692171490282}
   - component: {fileID: 8960436314190894927}
+  - component: {fileID: -5772438424695893070}
   m_Layer: 10
   m_Name: Enemy DPS Melee
   m_TagString: Untagged
@@ -407,7 +408,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: defc29a10a3033a49854e505f25e7cb0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -580,6 +581,20 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.09375}
   m_Radius: 0.25
+--- !u!114 &-5772438424695893070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8765862917985790579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f565189b4d2c2a41a809e6b6697fcfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _flashDuration: 0.08
+  _flashPropertyName: _FlashAmount
 --- !u!1 &9082988846214809680
 GameObject:
   m_ObjectHideFlags: 0
