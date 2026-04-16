@@ -6,12 +6,9 @@ using UnityEngine;
 public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
 {
     private RecruitableUnitState _recruitableState;
-    private bool _interactionEnabled;
 
-    public bool IsInteractionAvailable => _interactionEnabled &&
-                                          _recruitableState != null &&
+    public bool IsInteractionAvailable => _recruitableState != null &&
                                           _recruitableState.CanResolveRecruitableCorpse;
-    public bool IsInteractionEnabled => IsInteractionAvailable;
 
     public event Action<bool> OnInteractionAvailabilityChanged;
     public event Action<RecruitableCorpseResolutionOption> OnInteractionRequested;
@@ -35,13 +32,6 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
             _recruitableState.OnStateChanged -= HandleStateChanged;
 
         NotifyInteractionAvailabilityChanged(forceEvent: true, overrideAvailability: false);
-    }
-
-    public void SetInteractionEnabled(bool isEnabled)
-    {
-        bool previousAvailability = IsInteractionAvailable;
-        _interactionEnabled = isEnabled;
-        NotifyInteractionAvailabilityChanged(previousAvailability);
     }
 
     public void Interact()

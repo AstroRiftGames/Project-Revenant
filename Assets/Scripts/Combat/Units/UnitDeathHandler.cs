@@ -67,14 +67,13 @@ public class UnitDeathHandler : MonoBehaviour
         GetComponent<UnitMovement>()?.ClearCorpseOccupancy();
         RestoreSpriteColors();
         RestoreBehaviours();
-        _recruitableState?.SetState(state);
-        _recruitableInteraction?.SetInteractionEnabled(false);
+        ApplyRecruitableCorpseTransition(state);
     }
 
     private void ResolveDefaultDeath()
     {
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
-        _recruitableState?.SetState(UnitLifecycleState.Dead);
+        ApplyRecruitableCorpseTransition(UnitLifecycleState.Dead);
         gameObject.SetActive(false);
     }
 
@@ -84,8 +83,7 @@ public class UnitDeathHandler : MonoBehaviour
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         ApplyCorpseVisuals(_recruitableCorpseColor);
         DisableBehavioursForRecruitableDeath();
-        _recruitableState?.SetState(UnitLifecycleState.Recruitable);
-        _recruitableInteraction?.SetInteractionEnabled(true);
+        EnterRecruitableCorpseState();
     }
 
     public void FinalizeSoulAbsorbedCorpse()
@@ -94,8 +92,7 @@ public class UnitDeathHandler : MonoBehaviour
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         ApplyCorpseVisuals(_soulAbsorbedCorpseColor);
         DisableBehavioursForRecruitableDeath();
-        _recruitableState?.SetState(UnitLifecycleState.Dead);
-        _recruitableInteraction?.SetInteractionEnabled(false);
+        EnterResolvedCorpseState();
     }
 
     private void ApplyCorpseVisuals(Color color)
@@ -148,7 +145,21 @@ public class UnitDeathHandler : MonoBehaviour
         RecruitableCorpseHandler corpseHandler = GetComponent<RecruitableCorpseHandler>() ?? gameObject.AddComponent<RecruitableCorpseHandler>();
         recruitmentHandler.Configure(NecromancerPartyContext.Current);
         corpseHandler.Configure(NecromancerPartyContext.Current, SoulContext.Current);
-        _recruitableInteraction.SetInteractionEnabled(false);
+    }
+
+    private void EnterRecruitableCorpseState()
+    {
+        ApplyRecruitableCorpseTransition(UnitLifecycleState.Recruitable);
+    }
+
+    private void EnterResolvedCorpseState()
+    {
+        ApplyRecruitableCorpseTransition(UnitLifecycleState.Dead);
+    }
+
+    private void ApplyRecruitableCorpseTransition(UnitLifecycleState state)
+    {
+        _recruitableState?.SetState(state);
     }
 
     public void RestoreAliveState()
