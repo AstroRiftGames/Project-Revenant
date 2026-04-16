@@ -5,12 +5,13 @@ using UnityEngine;
 public class ChestState : MonoBehaviour
 {
     public bool IsOpened { get; private set; }
+    public bool CanOpen => !IsOpened;
 
     public event Action<bool> OnOpenedStateChanged;
 
     public bool TryOpen()
     {
-        if (IsOpened)
+        if (!CanOpen)
             return false;
 
         IsOpened = true;

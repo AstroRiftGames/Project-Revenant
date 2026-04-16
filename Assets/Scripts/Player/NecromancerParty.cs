@@ -22,6 +22,7 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public GameObject SelectionGameObject => null;
     public ICharacterStatsProvider StatsProvider => this;
     public event Action<ISelectable> OnSelectionInvalidated { add { } remove { } }
+    public event Action<ISelectable, bool> OnSelectionStateChanged { add { } remove { } }
     public void Select() { }
     public void Deselect() { }
 

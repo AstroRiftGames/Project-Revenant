@@ -3,33 +3,40 @@ using PrefabDungeonGeneration;
 
 public class NextFloorDoor : RoomDoor
 {
-    public override void Interact()
+    protected override void PerformInteraction()
+    {
+        PrepareNextFloorDestination();
+        base.PerformInteraction();
+    }
+
+    private void PrepareNextFloorDestination()
     {
         FloorManager floorManager = FindFirstObjectByType<FloorManager>();
         PrefabDungeonGenerator generator = FindFirstObjectByType<PrefabDungeonGenerator>();
-        
-        if (floorManager != null && generator != null)
-        {
-            this.roomA = floorManager.CurrentRoom;
+        if (floorManager == null || generator == null)
+            return;
 
-            if (this.roomB == null)
-            {
-                floorManager.RequestNextFloor();
+        roomA = floorManager.CurrentRoom;
 
-                this.roomB = generator.LastGeneratedStartRoom;
+        if (roomB != null)
+            return;
 
-                if (this.roomB != null)
-                {
-                    PreviousFloorDoor prevDoor = this.roomB.GetComponentInChildren<PreviousFloorDoor>(true);
-                    if (prevDoor != null)
-                    {
-                        prevDoor.roomA = this.roomB;
-                        prevDoor.roomB = this.roomA;
-                    }
-                }
-            }
-        }
+        floorManager.RequestNextFloor();
+        roomB = generator.LastGeneratedStartRoom;
 
-        base.Interact();
+        LinkPreviousFloorDoor();
+    }
+
+    private void LinkPreviousFloorDoor()
+    {
+        if (roomB == null)
+            return;
+
+        PreviousFloorDoor previousFloorDoor = roomB.GetComponentInChildren<PreviousFloorDoor>(true);
+        if (previousFloorDoor == null)
+            return;
+
+        previousFloorDoor.roomA = roomB;
+        previousFloorDoor.roomB = roomA;
     }
 }

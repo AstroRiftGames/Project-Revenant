@@ -5,7 +5,6 @@ using UnityEngine;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(ChestState))]
 public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOccupant, IRoomContextComponent
-    , IInteractionAvailabilitySource
 {
     private const int RequiredAdjacencyDistance = 1;
 
@@ -80,8 +79,12 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
             return;
 
         Debug.Log($"[ChestInteractionController] Interacting with chest '{name}'.", this);
+        OpenChest();
+    }
 
-        if (!_state.TryOpen())
+    private void OpenChest()
+    {
+        if (!TryOpenChest())
             return;
 
         if (_contentResolver == null)
@@ -90,12 +93,22 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
             return;
         }
 
-        _contentResolver.ResolveContent(new ChestContentSpawnContext(
+        _contentResolver.ResolveContent(CreateContentSpawnContext());
+    }
+
+    private bool TryOpenChest()
+    {
+        return _state != null && _state.TryOpen();
+    }
+
+    private ChestContentSpawnContext CreateContentSpawnContext()
+    {
+        return new ChestContentSpawnContext(
             _roomContext,
             _grid,
             _state,
             transform,
-            ResolveChestTopPosition()));
+            ResolveChestTopPosition());
     }
 
     private void HandleOpenedStateChanged(bool isOpened)
@@ -106,17 +119,17 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
 
     private bool CanInteract()
     {
-        if (_state == null || _state.IsOpened)
+        if (_state == null || !_state.CanOpen)
             return false;
 
-        return _isInteractionAvailable;
+        return IsInteractionAvailable;
     }
 
     private void RefreshInteractionAvailability(bool forceEvent)
     {
         bool shouldBeAvailable =
             _state != null &&
-            !_state.IsOpened &&
+            _state.CanOpen &&
             TryResolveNecromancer(out Necromancer necromancer) &&
             IsAdjacentToNecromancer(necromancer);
 

@@ -196,30 +196,36 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;
+    public event System.Action<ISelectable, bool> OnSelectionStateChanged;
 
     protected virtual void OnDisable()
     {
         if (IsSelected)
         {
+            ApplySelectionState(false);
             OnSelectionInvalidated?.Invoke(this);
         }
     }
 
     public void Select()
     {
-        IsSelected = true;
-        if (selectionIndicator != null)
-        {
-            selectionIndicator.SetActive(true);
-        }
+        ApplySelectionState(true);
     }
 
     public void Deselect()
     {
-        IsSelected = false;
+        ApplySelectionState(false);
+    }
+
+    private void ApplySelectionState(bool isSelected)
+    {
+        if (IsSelected == isSelected)
+            return;
+
+        IsSelected = isSelected;
         if (selectionIndicator != null)
-        {
-            selectionIndicator.SetActive(false);
-        }
+            selectionIndicator.SetActive(isSelected);
+
+        OnSelectionStateChanged?.Invoke(this, isSelected);
     }
 }

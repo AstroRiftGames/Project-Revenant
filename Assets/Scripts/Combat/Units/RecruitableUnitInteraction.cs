@@ -8,10 +8,12 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
     private RecruitableUnitState _recruitableState;
     private bool _interactionEnabled;
 
-    public bool IsInteractionEnabled => _interactionEnabled &&
-                                        _recruitableState != null &&
-                                        _recruitableState.CurrentState == UnitLifecycleState.Recruitable;
+    public bool IsInteractionAvailable => _interactionEnabled &&
+                                          _recruitableState != null &&
+                                          _recruitableState.CurrentState == UnitLifecycleState.Recruitable;
+    public bool IsInteractionEnabled => IsInteractionAvailable;
 
+    public event Action<bool> OnInteractionAvailabilityChanged;
     public event Action<RecruitableCorpseResolutionOption> OnInteractionRequested;
 
     private void Awake()
@@ -19,14 +21,32 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
         _recruitableState = GetComponent<RecruitableUnitState>();
     }
 
+    private void OnEnable()
+    {
+        if (_recruitableState != null)
+            _recruitableState.OnStateChanged += HandleStateChanged;
+
+        NotifyInteractionAvailabilityChanged(forceEvent: true);
+    }
+
+    private void OnDisable()
+    {
+        if (_recruitableState != null)
+            _recruitableState.OnStateChanged -= HandleStateChanged;
+
+        NotifyInteractionAvailabilityChanged(forceEvent: true, overrideAvailability: false);
+    }
+
     public void SetInteractionEnabled(bool isEnabled)
     {
+        bool previousAvailability = IsInteractionAvailable;
         _interactionEnabled = isEnabled;
+        NotifyInteractionAvailabilityChanged(previousAvailability);
     }
 
     public void Interact()
     {
-        if (!IsInteractionEnabled)
+        if (!IsInteractionAvailable)
             return;
 
         RecruitableCorpseResolutionOption option =
@@ -35,5 +55,27 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
                 : RecruitableCorpseResolutionOption.Recruit;
 
         OnInteractionRequested?.Invoke(option);
+    }
+
+    private void HandleStateChanged(UnitLifecycleState _)
+    {
+        NotifyInteractionAvailabilityChanged(forceEvent: false);
+    }
+
+    private void NotifyInteractionAvailabilityChanged(bool previousAvailability)
+    {
+        bool currentAvailability = IsInteractionAvailable;
+        if (previousAvailability == currentAvailability)
+            return;
+
+        OnInteractionAvailabilityChanged?.Invoke(currentAvailability);
+    }
+
+    private void NotifyInteractionAvailabilityChanged(bool forceEvent, bool? overrideAvailability = null)
+    {
+        if (!forceEvent)
+            return;
+
+        OnInteractionAvailabilityChanged?.Invoke(overrideAvailability ?? IsInteractionAvailable);
     }
 }

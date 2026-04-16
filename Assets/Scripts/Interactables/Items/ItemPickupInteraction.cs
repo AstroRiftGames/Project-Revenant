@@ -6,7 +6,7 @@ using Inventory.Core;
 namespace Interactables.Items
 {
     [DisallowMultipleComponent]
-    public class ItemPickupInteraction : MonoBehaviour, IInteractable, IInteractionAvailabilitySource
+    public class ItemPickupInteraction : MonoBehaviour, IInteractable
     {
         private const int RequiredAdjacencyDistance = 1;
 
@@ -53,21 +53,47 @@ namespace Interactables.Items
             if (!CanInteract())
                 return;
 
-            if (_itemData == null)
-            {
-                Debug.LogWarning($"[ItemPickupInteraction] Este item ({name}) no tiene ItemData asginado.", this);
-                return;
-            }
-
-            if (InventoryManager.Instance != null && InventoryManager.Instance.TryAddItem(_itemData))
-            {
-                Destroy(gameObject);
-            }
+            TryPickupItem();
         }
 
         private bool CanInteract()
         {
-             return _isInteractionAvailable;
+            return IsInteractionAvailable;
+        }
+
+        private void TryPickupItem()
+        {
+            if (!TryResolvePickupItem(out ItemData itemData))
+                return;
+
+            InventoryManager inventory = ResolveInventory();
+            if (inventory == null)
+                return;
+
+            if (!inventory.TryAddItem(itemData))
+                return;
+
+            FinalizePickup();
+        }
+
+        private bool TryResolvePickupItem(out ItemData itemData)
+        {
+            itemData = _itemData;
+            if (itemData != null)
+                return true;
+
+            Debug.LogWarning($"[ItemPickupInteraction] Este item ({name}) no tiene ItemData asignado.", this);
+            return false;
+        }
+
+        private InventoryManager ResolveInventory()
+        {
+            return InventoryManager.Instance;
+        }
+
+        private void FinalizePickup()
+        {
+            Destroy(gameObject);
         }
 
         private void RefreshInteractionAvailability(bool forceEvent)

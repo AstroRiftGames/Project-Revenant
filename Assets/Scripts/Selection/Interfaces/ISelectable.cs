@@ -9,6 +9,7 @@ namespace Selection.Interfaces
         ICharacterStatsProvider StatsProvider { get; }
 
         event System.Action<ISelectable> OnSelectionInvalidated;
+        event System.Action<ISelectable, bool> OnSelectionStateChanged;
 
         void Select();
         void Deselect();

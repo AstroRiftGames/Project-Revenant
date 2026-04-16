@@ -67,7 +67,7 @@ public class ChestInteractionPromptView : MonoBehaviour
 
         bool shouldShow = _interaction != null &&
                           _state != null &&
-                          !_state.IsOpened &&
+                          _state.CanOpen &&
                           _interaction.IsInteractionAvailable;
 
         if (_promptRoot.activeSelf != shouldShow)

@@ -1,6 +1,4 @@
-using UnityEngine;
-
-public interface IInteractable
+public interface IInteractable : IInteractionAvailabilitySource
 {
     void Interact();
 }

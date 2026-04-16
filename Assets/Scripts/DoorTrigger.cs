@@ -14,6 +14,6 @@ public class DoorTrigger : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        _roomDoor?.HandleTriggerEnter(other);
+        _roomDoor?.TryInteractFromTrigger(other);
     }
 }

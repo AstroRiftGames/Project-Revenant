@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Selection.Interfaces;
 
 [RequireComponent(typeof(MovementTileFeedbackController))]
 public class Necromancer : MonoBehaviour
@@ -8,6 +9,8 @@ public class Necromancer : MonoBehaviour
     [SerializeField] private float _moveSpeed = 5f;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
     [SerializeField] private Camera _inputCamera;
+    [SerializeField] private LayerMask _selectionBlockerLayer;
+    [SerializeField] private LayerMask _interactionBlockerLayer;
     [SerializeField] private bool _cancelSelectionOnRightClick = true;
     [SerializeField] private bool _cancelSelectionOnEscape = true;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
@@ -33,6 +36,15 @@ public class Necromancer : MonoBehaviour
 
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
+    }
+
+    private void OnValidate()
+    {
+        if (_selectionBlockerLayer.value == 0)
+            _selectionBlockerLayer = LayerMask.GetMask("Selectable");
+
+        if (_interactionBlockerLayer.value == 0)
+            _interactionBlockerLayer = LayerMask.GetMask("Interactable");
     }
 
     private void Start()
@@ -117,6 +129,9 @@ public class Necromancer : MonoBehaviour
         HandleCancelInput();
 
         if (!Input.GetMouseButtonDown(0))
+            return;
+
+        if (IsPointerOverSelectionTarget(mouseWorld))
             return;
 
         if (!isHoveredCellEnterable)
@@ -258,13 +273,45 @@ public class Necromancer : MonoBehaviour
     private void HandleCancelInput()
     {
         bool cancelRequested =
-            (_cancelSelectionOnRightClick && Input.GetMouseButtonDown(1)) ||
+            (_cancelSelectionOnRightClick && Input.GetMouseButtonDown(1) && !IsPointerOverInteractionTarget()) ||
             (_cancelSelectionOnEscape && Input.GetKeyDown(KeyCode.Escape));
 
         if (!cancelRequested)
             return;
 
         ResetMovementContext();
+    }
+
+    private bool IsPointerOverSelectionTarget(Vector3 mouseWorld)
+    {
+        return TryResolvePointerTarget(mouseWorld, _selectionBlockerLayer.value, out _, out ISelectable _);
+    }
+
+    private bool IsPointerOverInteractionTarget()
+    {
+        if (_mainCamera == null)
+            return false;
+
+        Vector3 mouseWorld = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mouseWorld.z = 0f;
+        return TryResolvePointerTarget(mouseWorld, _interactionBlockerLayer.value, out _, out IInteractable _);
+    }
+
+    private static bool TryResolvePointerTarget<TContract>(Vector3 worldPosition, int layerMask, out RaycastHit2D hit, out TContract contract)
+        where TContract : class
+    {
+        hit = default;
+        contract = null;
+
+        if (layerMask == 0)
+            return false;
+
+        hit = Physics2D.Raycast(worldPosition, Vector2.zero, Mathf.Infinity, layerMask);
+        if (hit.collider == null)
+            return false;
+
+        contract = hit.collider.GetComponentInParent<TContract>();
+        return contract != null;
     }
 
     private void StopMovement()

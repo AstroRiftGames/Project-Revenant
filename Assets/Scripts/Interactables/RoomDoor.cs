@@ -12,14 +12,17 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
     private bool _isOccupancyRegistered;
 
     public static event Action<RoomDoor> OnDoorInteracted;
+    public event Action<bool> OnInteractionAvailabilityChanged;
 
     public Vector3 OccupancyWorldPosition => transform.position;
     public bool OccupiesCell => gameObject.activeInHierarchy;
     public bool BlocksMovement => _blocksMovement;
+    public bool IsInteractionAvailable => isActiveAndEnabled;
 
     private void OnEnable()
     {
         TryRegisterOccupancy();
+        OnInteractionAvailabilityChanged?.Invoke(IsInteractionAvailable);
     }
 
     private void Start()
@@ -31,20 +34,39 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
     private void OnDisable()
     {
         ReleaseOccupancy();
+        OnInteractionAvailabilityChanged?.Invoke(false);
     }
 
     [ContextMenu("Interact")]
-    public virtual void Interact()
+    public void Interact()
+    {
+        if (!CanInteract())
+            return;
+
+        PerformInteraction();
+    }
+
+    public void TryInteractFromTrigger(Collider2D other)
+    {
+        if (!CanTriggerInteraction(other))
+            return;
+
+        Interact();
+    }
+
+    protected virtual bool CanInteract()
+    {
+        return IsInteractionAvailable;
+    }
+
+    protected virtual void PerformInteraction()
     {
         OnDoorInteracted?.Invoke(this);
     }
 
-    public void HandleTriggerEnter(Collider2D other)
+    protected virtual bool CanTriggerInteraction(Collider2D other)
     {
-        if (!other.CompareTag("Player"))
-            return;
-
-        Interact();
+        return other != null && other.CompareTag("Player");
     }
 
     private void TryRegisterOccupancy()

@@ -14,6 +14,7 @@ public class InteractableHighlightController : MonoBehaviour
 
     private readonly List<MonoBehaviour> _componentBuffer = new();
     private IInteractionAvailabilitySource _availabilitySource;
+    private IInteractable _interactable;
     private bool _isHovered;
 
     private void Reset()
@@ -62,8 +63,12 @@ public class InteractableHighlightController : MonoBehaviour
 
     private void OnValidate()
     {
-        if (_availabilitySourceComponent != null && _availabilitySourceComponent is not IInteractionAvailabilitySource)
+        if (_availabilitySourceComponent != null &&
+            _availabilitySourceComponent is not IInteractable &&
+            _availabilitySourceComponent is not IInteractionAvailabilitySource)
+        {
             _availabilitySourceComponent = null;
+        }
 
         if (!Application.isPlaying)
             EnsureColliders();
@@ -94,10 +99,12 @@ public class InteractableHighlightController : MonoBehaviour
     private void ResolveAvailabilitySource()
     {
         _availabilitySource = null;
+        _interactable = null;
 
         if (_availabilitySourceComponent != null)
         {
-            _availabilitySource = _availabilitySourceComponent as IInteractionAvailabilitySource;
+            _interactable = _availabilitySourceComponent as IInteractable;
+            _availabilitySource = _interactable ?? _availabilitySourceComponent as IInteractionAvailabilitySource;
             return;
         }
 
@@ -106,6 +113,14 @@ public class InteractableHighlightController : MonoBehaviour
 
         for (int i = 0; i < _componentBuffer.Count; i++)
         {
+            if (_componentBuffer[i] is IInteractable interactable)
+            {
+                _interactable = interactable;
+                _availabilitySource = interactable;
+                _availabilitySourceComponent = _componentBuffer[i];
+                return;
+            }
+
             if (_componentBuffer[i] is IInteractionAvailabilitySource availabilitySource)
             {
                 _availabilitySource = availabilitySource;
