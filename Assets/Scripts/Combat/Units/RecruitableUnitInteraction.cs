@@ -10,7 +10,7 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
 
     public bool IsInteractionAvailable => _interactionEnabled &&
                                           _recruitableState != null &&
-                                          _recruitableState.CurrentState == UnitLifecycleState.Recruitable;
+                                          _recruitableState.CanResolveRecruitableCorpse;
     public bool IsInteractionEnabled => IsInteractionAvailable;
 
     public event Action<bool> OnInteractionAvailabilityChanged;
@@ -49,12 +49,7 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
         if (!IsInteractionAvailable)
             return;
 
-        RecruitableCorpseResolutionOption option =
-            Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)
-                ? RecruitableCorpseResolutionOption.AbsorbSoul
-                : RecruitableCorpseResolutionOption.Recruit;
-
-        OnInteractionRequested?.Invoke(option);
+        RequestInteractionResolution(ResolveRequestedOption());
     }
 
     private void HandleStateChanged(UnitLifecycleState _)
@@ -77,5 +72,17 @@ public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
             return;
 
         OnInteractionAvailabilityChanged?.Invoke(overrideAvailability ?? IsInteractionAvailable);
+    }
+
+    private RecruitableCorpseResolutionOption ResolveRequestedOption()
+    {
+        return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)
+            ? RecruitableCorpseResolutionOption.AbsorbSoul
+            : RecruitableCorpseResolutionOption.Recruit;
+    }
+
+    private void RequestInteractionResolution(RecruitableCorpseResolutionOption option)
+    {
+        OnInteractionRequested?.Invoke(option);
     }
 }

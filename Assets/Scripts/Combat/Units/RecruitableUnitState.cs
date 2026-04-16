@@ -7,6 +7,7 @@ public class RecruitableUnitState : MonoBehaviour
     public UnitLifecycleState CurrentState { get; private set; } = UnitLifecycleState.Dead;
     public bool IsRecruitable => CurrentState == UnitLifecycleState.Recruitable;
     public bool IsDead => CurrentState == UnitLifecycleState.Dead;
+    public bool CanResolveRecruitableCorpse => IsRecruitable;
 
     public event Action<UnitLifecycleState> OnStateChanged;
     public event Action<bool> OnRecruitableStateChanged;

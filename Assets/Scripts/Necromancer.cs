@@ -1,22 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Selection.Interfaces;
 
 [RequireComponent(typeof(MovementTileFeedbackController))]
+[RequireComponent(typeof(NecromancerManualInputAdapter))]
 public class Necromancer : MonoBehaviour
 {
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
-    [SerializeField] private Camera _inputCamera;
-    [SerializeField] private LayerMask _selectionBlockerLayer;
-    [SerializeField] private LayerMask _interactionBlockerLayer;
-    [SerializeField] private bool _cancelSelectionOnRightClick = true;
-    [SerializeField] private bool _cancelSelectionOnEscape = true;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
-
-    private Camera _mainCamera;
     private readonly Queue<Vector3Int> _remainingPathCells = new();
     private Vector3Int _currentCell;
     private bool _hasCurrentCell;
@@ -32,19 +25,11 @@ public class Necromancer : MonoBehaviour
 
     private void Awake()
     {
-        _mainCamera = _inputCamera != null ? _inputCamera : Camera.main;
+        if (GetComponent<NecromancerManualInputAdapter>() == null)
+            gameObject.AddComponent<NecromancerManualInputAdapter>();
 
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
-    }
-
-    private void OnValidate()
-    {
-        if (_selectionBlockerLayer.value == 0)
-            _selectionBlockerLayer = LayerMask.GetMask("Selectable");
-
-        if (_interactionBlockerLayer.value == 0)
-            _interactionBlockerLayer = LayerMask.GetMask("Interactable");
     }
 
     private void Start()
@@ -59,7 +44,6 @@ public class Necromancer : MonoBehaviour
     private void Update()
     {
         HandleMovement();
-        HandleInput();
     }
 
     private void HandleMovement()
@@ -90,60 +74,6 @@ public class Necromancer : MonoBehaviour
 
         SetCurrentCell(_currentStepCell);
         AdvanceToNextStep();
-    }
-
-    private void HandleInput()
-    {
-        if (_grid == null)
-        {
-            ResetMovementContext();
-            return;
-        }
-
-        if (_mainCamera == null)
-            _mainCamera = _inputCamera != null ? _inputCamera : Camera.main;
-
-        if (_mainCamera == null)
-        {
-            _movementTileFeedback?.HideHover();
-            return;
-        }
-
-        Vector3 mouseWorld = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorld.z = 0f;
-
-        Vector3Int hoveredCell = _grid.WorldToCell(mouseWorld);
-        if (!_grid.HasCell(hoveredCell))
-        {
-            _hasHoveredCell = false;
-            _movementTileFeedback?.HideHover();
-            HandleCancelInput();
-            return;
-        }
-
-        _hoveredCell = hoveredCell;
-        _hasHoveredCell = true;
-        bool isHoveredCellEnterable = _grid.IsCellEnterable(_hoveredCell);
-        _movementTileFeedback?.ShowHover(_hoveredCell, isHoveredCellEnterable);
-
-        HandleCancelInput();
-
-        if (!Input.GetMouseButtonDown(0))
-            return;
-
-        if (IsPointerOverSelectionTarget(mouseWorld))
-            return;
-
-        if (!isHoveredCellEnterable)
-            return;
-
-        _clickedCell = _hoveredCell;
-        _hasClickedCell = true;
-        _clickedCellWasWalkable = true;
-        _movementTileFeedback?.SetSelection(_clickedCell);
-
-        Vector3Int currentCell = ResolveCurrentCell();
-        SetDestination(currentCell, _hoveredCell);
     }
 
     private void SetDestination(Vector3Int from, Vector3Int to)
@@ -270,48 +200,53 @@ public class Necromancer : MonoBehaviour
         ResetMovementContext();
     }
 
-    private void HandleCancelInput()
+    internal bool TryGetGrid(out RoomGrid grid)
     {
-        bool cancelRequested =
-            (_cancelSelectionOnRightClick && Input.GetMouseButtonDown(1) && !IsPointerOverInteractionTarget()) ||
-            (_cancelSelectionOnEscape && Input.GetKeyDown(KeyCode.Escape));
+        grid = _grid;
+        return grid != null;
+    }
 
-        if (!cancelRequested)
+    internal void HandleManualInputUnavailable()
+    {
+        if (_grid == null)
+            ResetMovementContext();
+    }
+
+    internal void HandleManualInputCameraUnavailable()
+    {
+        _movementTileFeedback?.HideHover();
+    }
+
+    internal void HandleManualPointerExitedGrid()
+    {
+        ClearHoverState();
+        _movementTileFeedback?.HideHover();
+    }
+
+    internal void UpdateManualHoveredCell(Vector3Int hoveredCell, bool isEnterable)
+    {
+        _hoveredCell = hoveredCell;
+        _hasHoveredCell = true;
+        _movementTileFeedback?.ShowHover(_hoveredCell, isEnterable);
+    }
+
+    internal void TrySetManualDestination(Vector3Int destinationCell, bool isEnterable)
+    {
+        if (!isEnterable)
             return;
 
+        _clickedCell = destinationCell;
+        _hasClickedCell = true;
+        _clickedCellWasWalkable = true;
+        _movementTileFeedback?.SetSelection(_clickedCell);
+
+        Vector3Int currentCell = ResolveCurrentCell();
+        SetDestination(currentCell, destinationCell);
+    }
+
+    internal void CancelManualMovement()
+    {
         ResetMovementContext();
-    }
-
-    private bool IsPointerOverSelectionTarget(Vector3 mouseWorld)
-    {
-        return TryResolvePointerTarget(mouseWorld, _selectionBlockerLayer.value, out _, out ISelectable _);
-    }
-
-    private bool IsPointerOverInteractionTarget()
-    {
-        if (_mainCamera == null)
-            return false;
-
-        Vector3 mouseWorld = _mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        mouseWorld.z = 0f;
-        return TryResolvePointerTarget(mouseWorld, _interactionBlockerLayer.value, out _, out IInteractable _);
-    }
-
-    private static bool TryResolvePointerTarget<TContract>(Vector3 worldPosition, int layerMask, out RaycastHit2D hit, out TContract contract)
-        where TContract : class
-    {
-        hit = default;
-        contract = null;
-
-        if (layerMask == 0)
-            return false;
-
-        hit = Physics2D.Raycast(worldPosition, Vector2.zero, Mathf.Infinity, layerMask);
-        if (hit.collider == null)
-            return false;
-
-        contract = hit.collider.GetComponentInParent<TContract>();
-        return contract != null;
     }
 
     private void StopMovement()

@@ -67,14 +67,10 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
     public bool TryResolve(RecruitableCorpseResolutionOption option)
     {
-        if (!CanResolveCorpse())
+        if (!CanResolveRequestedOption(option))
             return false;
 
-        bool resolved = option switch
-        {
-            RecruitableCorpseResolutionOption.AbsorbSoul => TryAbsorbSoul(),
-            _ => TryRecruit()
-        };
+        bool resolved = ResolveInteraction(option);
 
         if (resolved)
             _hasBeenResolved = true;
@@ -89,7 +85,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
     public bool TryRecruit()
     {
-        if (!CanResolveCorpse())
+        if (!CanResolveRequestedOption(RecruitableCorpseResolutionOption.Recruit))
             return false;
 
         return _recruitmentHandler != null && _recruitmentHandler.AttemptRecruitment();
@@ -97,7 +93,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
     public bool TryAbsorbSoul()
     {
-        if (!CanResolveCorpse())
+        if (!CanResolveRequestedOption(RecruitableCorpseResolutionOption.AbsorbSoul))
             return false;
 
         _soulContext ??= SoulContext.Current;
@@ -113,13 +109,33 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
         return true;
     }
 
+    private bool CanResolveRequestedOption(RecruitableCorpseResolutionOption option)
+    {
+        return CanResolveCorpse() && IsSupportedResolution(option);
+    }
+
     private bool CanResolveCorpse()
     {
         return _unit != null &&
                _state != null &&
                _deathHandler != null &&
                !_hasBeenResolved &&
-               _state.CurrentState == UnitLifecycleState.Recruitable;
+               _state.CanResolveRecruitableCorpse;
+    }
+
+    private static bool IsSupportedResolution(RecruitableCorpseResolutionOption option)
+    {
+        return option == RecruitableCorpseResolutionOption.Recruit ||
+               option == RecruitableCorpseResolutionOption.AbsorbSoul;
+    }
+
+    private bool ResolveInteraction(RecruitableCorpseResolutionOption option)
+    {
+        return option switch
+        {
+            RecruitableCorpseResolutionOption.AbsorbSoul => TryAbsorbSoul(),
+            _ => TryRecruit()
+        };
     }
 
     private int ResolveSoulReward()
