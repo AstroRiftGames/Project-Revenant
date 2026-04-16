@@ -282,6 +282,11 @@ public class NecromancerParty : MonoBehaviour
         return _members.Count;
     }
 
+    public void DismissMember(PartyMemberData member)
+    {
+        RemoveMember(member);
+    }
+
     private void RemoveMember(PartyMemberData member)
     {
         if (member == null)

@@ -71,6 +71,58 @@ namespace Inventory.Core
             Debug.Log("[InventoryManager] El inventario ha sido vaciado por completo.");
         }
 
+        public void RemoveItem(int index)
+        {
+            if (index < 0 || index >= _items.Count)
+                return;
+
+            _items.RemoveAt(index);
+        }
+
+        public void RemoveItems(List<ItemData> itemsToRemove)
+        {
+            if (itemsToRemove == null) return;
+            
+            foreach (ItemData item in itemsToRemove)
+            {
+                for (int i = 0; i < _items.Count; i++)
+                {
+                    if (_items[i] != null && _items[i].Item == item)
+                    {
+                        _items.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        public bool ConsumeItems(ItemData itemType, int amount)
+        {
+            if (amount <= 0) return true;
+            if (itemType == null) return false;
+
+            List<int> indicesToRemove = new List<int>();
+            for (int i = 0; i < _items.Count; i++)
+            {
+                if (_items[i] != null && _items[i].Item == itemType)
+                {
+                    indicesToRemove.Add(i);
+                    if (indicesToRemove.Count == amount)
+                        break;
+                }
+            }
+
+            if (indicesToRemove.Count < amount)
+                return false;
+
+            for (int i = indicesToRemove.Count - 1; i >= 0; i--)
+            {
+                _items.RemoveAt(indicesToRemove[i]);
+            }
+
+            return true;
+        }
+
         public void DropItem(int index)
         {
             if (index < 0 || index >= _items.Count)

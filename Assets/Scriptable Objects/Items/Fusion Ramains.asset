@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6b38cb4755b01544a702655434d1a42, type: 3}
+  m_Name: Fusion Ramains
+  m_EditorClassIdentifier: 
+  itemId: fusion_ramains
+  displayName: Fusion Remains
+  description: Remains of an unsuccesful fusion attempt.
+  icon: {fileID: 21300000, guid: c356d10b4a98a33448a9da4bb7bc4990, type: 3}
+  prefab: {fileID: 7175297050908875513, guid: 64cd4af7e8b86ce4fb2dfb70f3d8e420, type: 3}

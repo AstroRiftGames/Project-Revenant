@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ec94d5eaa0cc214aa439a2e4ba43a50, type: 3}
+  m_Name: MainCompatibilityMatrix
+  m_EditorClassIdentifier: 
+  _compatibilityMappings:
+  - Factions:
+      FactionA: 1
+      FactionB: 2
+    IsCompatible: 1
+    DominantFaction: 1
+  - Factions:
+      FactionA: 1
+      FactionB: 3
+    IsCompatible: 1
+    DominantFaction: 1
+  - Factions:
+      FactionA: 1
+      FactionB: 5
+    IsCompatible: 1
+    DominantFaction: 1
+  - Factions:
+      FactionA: 1
+      FactionB: 8
+    IsCompatible: 1
+    DominantFaction: 1
+  - Factions:
+      FactionA: 2
+      FactionB: 5
+    IsCompatible: 1
+    DominantFaction: 2
+  - Factions:
+      FactionA: 2
+      FactionB: 6
+    IsCompatible: 1
+    DominantFaction: 2
+  - Factions:
+      FactionA: 2
+      FactionB: 8
+    IsCompatible: 1
+    DominantFaction: 2
+  - Factions:
+      FactionA: 3
+      FactionB: 4
+    IsCompatible: 1
+    DominantFaction: 3
+  - Factions:
+      FactionA: 3
+      FactionB: 7
+    IsCompatible: 1
+    DominantFaction: 3
+  - Factions:
+      FactionA: 4
+      FactionB: 5
+    IsCompatible: 1
+    DominantFaction: 4
+  - Factions:
+      FactionA: 5
+      FactionB: 6
+    IsCompatible: 1
+    DominantFaction: 5
+  - Factions:
+      FactionA: 7
+      FactionB: 8
+    IsCompatible: 1
+    DominantFaction: 7

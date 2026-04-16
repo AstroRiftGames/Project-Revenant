@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ec94d5eaa0cc214aa439a2e4ba43a50, type: 3}
-  m_Name: CompatibilityMatrix
+  m_Script: {fileID: 11500000, guid: 69039f6678ab20b41aed0d07ec4ae70f, type: 3}
+  m_Name: MainFusionSettings
   m_EditorClassIdentifier: 
-  _compatibilityMappings: []
+  _compatibilityMatrix: {fileID: 11400000, guid: 0846518dfcb228644a02815eeb142e94, type: 2}

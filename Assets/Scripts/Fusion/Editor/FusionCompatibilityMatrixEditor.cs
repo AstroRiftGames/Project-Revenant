@@ -20,7 +20,7 @@ public class FusionCompatibilityMatrixEditor : Editor
         GUILayout.Label("Fusion Compatibility Matrix", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
-        Faction[] factions = (Faction[])System.Enum.GetValues(typeof(Faction));
+        UnitFaction[] factions = (UnitFaction[])System.Enum.GetValues(typeof(UnitFaction));
         
         EditorGUI.BeginChangeCheck();
 
@@ -43,17 +43,17 @@ public class FusionCompatibilityMatrixEditor : Editor
             {
                 if (j >= i)
                 {
-                    Faction factionInRow = factions[i];
-                    Faction factionInCol = factions[j];
+                    UnitFaction factionInRow = factions[i];
+                    UnitFaction factionInCol = factions[j];
                     
                     bool isCurrentlyCompatible = _target.IsCompatible(factionInRow, factionInCol);
-                    Faction currentDominant = _target.GetDominantFaction(factionInRow, factionInCol);
+                    UnitFaction currentDominant = _target.GetDominantFaction(factionInRow, factionInCol);
 
                     GUILayout.BeginVertical(GUILayout.Width(45));
                     
                     bool newCompatible = EditorGUILayout.Toggle(isCurrentlyCompatible, GUILayout.Width(20));
 
-                    Faction newDominant = currentDominant;
+                    UnitFaction newDominant = currentDominant;
                     if (newCompatible)
                     {
                         if (newDominant != factionInRow && newDominant != factionInCol)
@@ -102,7 +102,7 @@ public class FusionCompatibilityMatrixEditor : Editor
         DrawDefaultInspector();
     }
 
-    private void UpdateMappingData(Faction f1, Faction f2, bool isCompatible, Faction dominant)
+    private void UpdateMappingData(UnitFaction f1, UnitFaction f2, bool isCompatible, UnitFaction dominant)
     {
         SerializedProperty listProp = serializedObject.FindProperty("_compatibilityMappings");
         if (listProp == null) return;
@@ -114,8 +114,8 @@ public class FusionCompatibilityMatrixEditor : Editor
             SerializedProperty fAProp = factionsProp.FindPropertyRelative("FactionA");
             SerializedProperty fBProp = factionsProp.FindPropertyRelative("FactionB");
 
-            Faction mapFA = (Faction)fAProp.enumValueIndex;
-            Faction mapFB = (Faction)fBProp.enumValueIndex;
+            UnitFaction mapFA = (UnitFaction)fAProp.enumValueIndex;
+            UnitFaction mapFB = (UnitFaction)fBProp.enumValueIndex;
 
             if ((mapFA == f1 && mapFB == f2) || (mapFA == f2 && mapFB == f1))
             {
@@ -142,8 +142,9 @@ public class FusionCompatibilityMatrixEditor : Editor
             newElement.FindPropertyRelative("Factions").FindPropertyRelative("FactionA").enumValueIndex = (int)f1;
             newElement.FindPropertyRelative("Factions").FindPropertyRelative("FactionB").enumValueIndex = (int)f2;
             newElement.FindPropertyRelative("IsCompatible").boolValue = true;
-            newElement.FindPropertyRelative("DominantFaction").enumValueIndex = (int)((dominant == Faction.None) ? f1 : dominant);
+            newElement.FindPropertyRelative("DominantFaction").enumValueIndex = (int)((dominant == UnitFaction.None) ? f1 : dominant);
         }
     }
 }
 #endif
+

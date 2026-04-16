@@ -5,10 +5,10 @@ using UnityEngine;
 [Serializable]
 public struct FactionPair : IEquatable<FactionPair>
 {
-    public Faction FactionA;
-    public Faction FactionB;
+    public UnitFaction FactionA;
+    public UnitFaction FactionB;
 
-    public FactionPair(Faction factionA, Faction factionB)
+    public FactionPair(UnitFaction factionA, UnitFaction factionB)
     {
         FactionA = factionA;
         FactionB = factionB;
@@ -38,7 +38,7 @@ public struct CompatibilityMapping
 {
     public FactionPair Factions;
     public bool IsCompatible;
-    public Faction DominantFaction;
+    public UnitFaction DominantFaction;
 }
 
 [CreateAssetMenu(fileName = "NewFusionCompatibilityMatrix", menuName = "Fusion/Compatibility Matrix")]
@@ -46,7 +46,7 @@ public class FusionCompatibilityMatrix : ScriptableObject
 {
     [SerializeField] private List<CompatibilityMapping> _compatibilityMappings = new List<CompatibilityMapping>();
 
-    public bool IsCompatible(Faction factionA, Faction factionB)
+    public bool IsCompatible(UnitFaction factionA, UnitFaction factionB)
     {
         FactionPair pairToFind = new FactionPair(factionA, factionB);
 
@@ -61,7 +61,7 @@ public class FusionCompatibilityMatrix : ScriptableObject
         return false;
     }
 
-    public Faction GetDominantFaction(Faction factionA, Faction factionB)
+    public UnitFaction GetDominantFaction(UnitFaction factionA, UnitFaction factionB)
     {
         FactionPair pairToFind = new FactionPair(factionA, factionB);
 
@@ -73,6 +73,7 @@ public class FusionCompatibilityMatrix : ScriptableObject
             }
         }
 
-        return Faction.None;
+        return UnitFaction.None;
     }
 }
+
