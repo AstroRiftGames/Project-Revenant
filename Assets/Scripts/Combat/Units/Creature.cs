@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public enum UnitRole { Tank, DPS, Support }
-public enum UnitFaction { Goblin, Skeleton, Human, Animal, Golem }
+public enum UnitFaction { None, Human, Orc, Reptilian, Insectoid, Golems, Igneous, Aquatic, WildBeast }
 public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 
 [RequireComponent(typeof(LifeController))]

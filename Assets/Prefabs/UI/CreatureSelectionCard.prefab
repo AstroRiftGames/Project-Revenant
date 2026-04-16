@@ -1403,7 +1403,7 @@ GameObject:
   - component: {fileID: 9157332065711787482}
   - component: {fileID: 6394243287034408128}
   m_Layer: 5
-  m_Name: SelectionCard
+  m_Name: CreatureSelectionCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
