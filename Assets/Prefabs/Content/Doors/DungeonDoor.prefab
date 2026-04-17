@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 3993523016879032781}
   - component: {fileID: 7061420602406668156}
   - component: {fileID: -4446656868426159116}
-  - component: {fileID: 5596842570527821658}
   - component: {fileID: 8419169547313969949}
   - component: {fileID: 4838861279977092477}
+  - component: {fileID: 5322035032720740991}
   m_Layer: 7
   m_Name: DungeonDoor
   m_TagString: Untagged
@@ -179,22 +179,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b24dfa7776200204bbb5126c7b2a4152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5596842570527821658
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3334988549816102961}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2f44b874ae93604ba8c0688c5df260d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _door: {fileID: 0}
-  _promptRoot: {fileID: 7636003392184561964}
-  _promptText: {fileID: 8487695111229138651}
-  _promptMessage: Interact
 --- !u!114 &8419169547313969949
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,7 +195,7 @@ MonoBehaviour:
   - {fileID: 5911116683848051206}
   _autoCollectChildRenderers: 1
   _includeInactiveChildren: 1
-  _outlineMaterial: {fileID: 0}
+  _outlineMaterial: {fileID: 2100000, guid: 9ca759d24481836479c7f7ffdf7d1e84, type: 2}
   _outlineColor: {r: 1, g: 1, b: 1, a: 1}
   _outlineThickness: 2
   _highlightedOnEnable: 0
@@ -228,13 +212,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129bc10d23b94df694434028137ab135, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _availabilitySourceComponent: {fileID: 0}
+  _availabilitySourceComponent: {fileID: -4446656868426159116}
   _targetColliders:
   - {fileID: 3993523016879032781}
   _autoCollectChildColliders: 1
   _includeInactiveChildren: 1
   _worldCamera: {fileID: 0}
   _highlightView: {fileID: 8419169547313969949}
+--- !u!114 &5322035032720740991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3334988549816102961}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3889f6264cc59f54fb0f264623cd127a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _availabilitySourceComponent: {fileID: -4446656868426159116}
+  _promptRoot: {fileID: 5076054453787988710}
+  _promptText: {fileID: 7547038190990805126}
+  _promptMessage: Interact
 --- !u!1001 &1256755830554843253
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -337,12 +337,12 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &7636003392184561964 stripped
+--- !u!1 &5076054453787988710 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8487695111229138651 stripped
+--- !u!114 &7547038190990805126 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}

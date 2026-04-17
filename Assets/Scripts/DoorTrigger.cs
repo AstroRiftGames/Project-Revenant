@@ -3,14 +3,14 @@ using UnityEngine;
 public class DoorTrigger : MonoBehaviour
 {
     [SerializeField] private bool _allowTriggerInteraction;
-    [SerializeField] private RoomDoor _roomDoor;
+    [SerializeField] private MonoBehaviour _interactableComponent;
+
+    private IInteractable _interactable;
 
     private void Awake()
     {
-        if(_roomDoor == null)
-        {
-            _roomDoor = GetComponentInParent<RoomDoor>();
-        }
+        _interactable = _interactableComponent as IInteractable;
+        _interactable ??= GetComponentInParent<IInteractable>();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -18,6 +18,12 @@ public class DoorTrigger : MonoBehaviour
         if (!_allowTriggerInteraction)
             return;
 
-        _roomDoor?.TryInteractFromTrigger(other);
+        if (other == null || !other.CompareTag("Player"))
+            return;
+
+        if (_interactable == null || !_interactable.IsInteractionAvailable)
+            return;
+
+        _interactable.Interact();
     }
 }
