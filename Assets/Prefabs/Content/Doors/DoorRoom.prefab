@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1929809464545661687}
   - component: {fileID: 6684461410251977361}
   - component: {fileID: 7052276035356109148}
+  - component: {fileID: 8924506228143140551}
   m_Layer: 7
   m_Name: DoorRoom
   m_TagString: Untagged
@@ -68,13 +69,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129bc10d23b94df694434028137ab135, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _availabilitySourceComponent: {fileID: 0}
+  _availabilitySourceComponent: {fileID: 2262140206353092150}
   _targetColliders:
   - {fileID: 5240293404765053411}
   _autoCollectChildColliders: 1
   _includeInactiveChildren: 1
   _worldCamera: {fileID: 0}
   _highlightView: {fileID: 6684461410251977361}
+--- !u!114 &8924506228143140551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2962280369346952133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3889f6264cc59f54fb0f264623cd127a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _availabilitySourceComponent: {fileID: 2262140206353092150}
+  _promptRoot: {fileID: 6737962111432476390}
+  _promptText: {fileID: 1113884173328630214}
+  _promptMessage: Interact
 --- !u!1 &8515988892718533815
 GameObject:
   m_ObjectHideFlags: 0
@@ -87,7 +104,7 @@ GameObject:
   - component: {fileID: 5111013211030642314}
   - component: {fileID: 2909991887086863068}
   - component: {fileID: 5240293404765053411}
-  - component: {fileID: 9049216541087271842}
+  - component: {fileID: 2262140206353092150}
   m_Layer: 7
   m_Name: Door
   m_TagString: Untagged
@@ -227,8 +244,8 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 1
---- !u!114 &9049216541087271842
+  m_Radius: 1.25
+--- !u!114 &2262140206353092150
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -237,10 +254,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8515988892718533815}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b5128ea75a900b74eb4295f5c625c98a, type: 3}
+  m_Script: {fileID: 11500000, guid: 95a38041c98942c0ab52185ec3682e43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _roomDoor: {fileID: 0}
+  _structuralDoor: {fileID: 0}
+  _grid: {fileID: 0}
+  _blocksMovement: 1
 --- !u!1001 &5158147745985195678
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -351,3 +370,19 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 5158147745985195678}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6737962111432476390 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+  m_PrefabInstance: {fileID: 5158147745985195678}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1113884173328630214 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+  m_PrefabInstance: {fileID: 5158147745985195678}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -49,6 +49,7 @@ MonoBehaviour:
   roomB: {fileID: 0}
   _blocksMovement: 1
   _grid: {fileID: 0}
+  _debugCombatLockLogs: 1
 --- !u!1 &1261821990994168952
 GameObject:
   m_ObjectHideFlags: 0
@@ -98,6 +99,7 @@ MonoBehaviour:
   roomB: {fileID: 0}
   _blocksMovement: 1
   _grid: {fileID: 0}
+  _debugCombatLockLogs: 1
 --- !u!1 &1335042572350580095
 GameObject:
   m_ObjectHideFlags: 0
@@ -1625,6 +1627,7 @@ MonoBehaviour:
   roomB: {fileID: 0}
   _blocksMovement: 1
   _grid: {fileID: 0}
+  _debugCombatLockLogs: 1
 --- !u!1 &4347932947661017972
 GameObject:
   m_ObjectHideFlags: 0
@@ -1699,8 +1702,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37a428154abc97b43af7a0a3403be9b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _battleGrid: {fileID: 0}
+  _roomGrid: {fileID: 0}
   _contentGenerator: {fileID: 0}
+  _combatController: {fileID: 0}
+  _roomProfile: {fileID: 0}
   _walkableTilemap: {fileID: 0}
   _blockedTilemap: {fileID: 0}
 --- !u!1 &5201387784333633270
@@ -1997,6 +2002,7 @@ MonoBehaviour:
   roomB: {fileID: 0}
   _blocksMovement: 1
   _grid: {fileID: 0}
+  _debugCombatLockLogs: 1
 --- !u!1 &8652037412062293294
 GameObject:
   m_ObjectHideFlags: 0
@@ -2054,11 +2060,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.375
+      value: 0.503
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.375
+      value: -0.487
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2190,11 +2196,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.375
+      value: 0.487
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.125
+      value: 0.152
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2264,11 +2270,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.625
+      value: -0.769
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.25
+      value: -0.357
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2338,7 +2344,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.5
+      value: -0.649
       objectReference: {fileID: 0}
     - target: {fileID: 1929809464545661687, guid: cc1aadc20eba77747a6a8a9e94ed066e, type: 3}
       propertyPath: m_LocalPosition.y
