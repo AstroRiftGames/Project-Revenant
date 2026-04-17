@@ -22,12 +22,12 @@ MonoBehaviour:
       FactionA: 1
       FactionB: 3
     IsCompatible: 1
-    DominantFaction: 1
+    DominantFaction: 3
   - Factions:
       FactionA: 1
       FactionB: 5
     IsCompatible: 1
-    DominantFaction: 1
+    DominantFaction: 5
   - Factions:
       FactionA: 1
       FactionB: 8
@@ -37,7 +37,7 @@ MonoBehaviour:
       FactionA: 2
       FactionB: 5
     IsCompatible: 1
-    DominantFaction: 2
+    DominantFaction: 5
   - Factions:
       FactionA: 2
       FactionB: 6
@@ -52,7 +52,7 @@ MonoBehaviour:
       FactionA: 3
       FactionB: 4
     IsCompatible: 1
-    DominantFaction: 3
+    DominantFaction: 4
   - Factions:
       FactionA: 3
       FactionB: 7
@@ -67,9 +67,9 @@ MonoBehaviour:
       FactionA: 5
       FactionB: 6
     IsCompatible: 1
-    DominantFaction: 5
+    DominantFaction: 6
   - Factions:
       FactionA: 7
       FactionB: 8
     IsCompatible: 1
-    DominantFaction: 7
+    DominantFaction: 8
