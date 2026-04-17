@@ -210,11 +210,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4776528938805947016}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 454bd6d5d9ae9684a9468bdf6975745c, type: 3}
+  m_Script: {fileID: 11500000, guid: 3889f6264cc59f54fb0f264623cd127a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _interaction: {fileID: -2415340782592388579}
-  _state: {fileID: 1238944397740096825}
+  _availabilitySourceComponent: {fileID: -2415340782592388579}
   _promptRoot: {fileID: 2161984959598779179}
   _promptText: {fileID: 2260806183623335161}
   _promptMessage: Interact
