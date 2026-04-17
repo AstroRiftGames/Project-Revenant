@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MovementTileFeedbackController))]
-[RequireComponent(typeof(NecromancerManualInputAdapter))]
+[RequireComponent(typeof(NecromancerInputAdapter))]
 [RequireComponent(typeof(NecromancerCombatStartAdapter))]
 public class Necromancer : MonoBehaviour
 {
@@ -26,8 +26,8 @@ public class Necromancer : MonoBehaviour
 
     private void Awake()
     {
-        if (GetComponent<NecromancerManualInputAdapter>() == null)
-            gameObject.AddComponent<NecromancerManualInputAdapter>();
+        if (GetComponent<NecromancerInputAdapter>() == null)
+            gameObject.AddComponent<NecromancerInputAdapter>();
 
         if (GetComponent<NecromancerCombatStartAdapter>() == null)
             gameObject.AddComponent<NecromancerCombatStartAdapter>();

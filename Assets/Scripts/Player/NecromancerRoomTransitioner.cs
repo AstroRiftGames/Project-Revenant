@@ -36,7 +36,7 @@ public class NecromancerRoomTransitioner : MonoBehaviour
             return false;
         }
 
-        RoomGrid grid = roomContext.BattleGrid;
+        RoomGrid grid = roomContext.RoomGrid;
         if (grid == null)
         {
             Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext for '{roomObject.name}' does not have a BattleGrid.", this);

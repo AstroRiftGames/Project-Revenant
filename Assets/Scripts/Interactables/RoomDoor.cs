@@ -114,7 +114,7 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
         ResolveRoomDependencies();
         _grid = _roomContext != null
-            ? _roomContext.BattleGrid
+            ? _roomContext.RoomGrid
             : GetComponentInParent<RoomGrid>(includeInactive: true);
     }
 

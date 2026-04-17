@@ -57,7 +57,7 @@ public class GridCellBlocker : MonoBehaviour, IGridOccupant
 
         RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
         _grid = roomContext != null
-            ? roomContext.BattleGrid
+            ? roomContext.RoomGrid
             : GetComponentInParent<RoomGrid>(includeInactive: true);
     }
 }

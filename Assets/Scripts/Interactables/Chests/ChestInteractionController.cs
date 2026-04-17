@@ -65,7 +65,7 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
     public void IntegrateWithRoom(RoomContext roomContext)
     {
         _roomContext = roomContext;
-        _grid = roomContext != null ? roomContext.BattleGrid : _grid;
+        _grid = roomContext != null ? roomContext.RoomGrid : _grid;
         _necromancer = null;
 
         TryRegisterOccupancy();
@@ -127,11 +127,12 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
 
     private void RefreshInteractionAvailability(bool forceEvent)
     {
+        _necromancer = GridInteractionAvailability.ResolveNecromancer(_necromancer);
+
         bool shouldBeAvailable =
             _state != null &&
             _state.CanOpen &&
-            TryResolveNecromancer(out Necromancer necromancer) &&
-            IsAdjacentToNecromancer(necromancer);
+            GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, transform.position);
 
         SetInteractionAvailability(shouldBeAvailable, forceEvent);
     }
@@ -143,32 +144,6 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
 
         _isInteractionAvailable = isAvailable;
         OnInteractionAvailabilityChanged?.Invoke(_isInteractionAvailable);
-    }
-
-    private bool TryResolveNecromancer(out Necromancer necromancer)
-    {
-        if (_necromancer != null && _necromancer.isActiveAndEnabled)
-        {
-            necromancer = _necromancer;
-            return true;
-        }
-
-        _necromancer = FindFirstObjectByType<Necromancer>();
-        necromancer = _necromancer;
-        return necromancer != null && necromancer.isActiveAndEnabled;
-    }
-
-    private bool IsAdjacentToNecromancer(Necromancer necromancer)
-    {
-        if (_grid == null || necromancer == null)
-            return false;
-
-        Vector3Int chestCell = _grid.WorldToCell(transform.position);
-        Vector3Int necromancerCell = _grid.WorldToCell(necromancer.transform.position);
-        if (!_grid.HasCell(necromancerCell))
-            return false;
-
-        return GridNavigationUtility.GetCellDistance(chestCell, necromancerCell) == RequiredAdjacencyDistance;
     }
 
     private Vector3 ResolveChestTopPosition()

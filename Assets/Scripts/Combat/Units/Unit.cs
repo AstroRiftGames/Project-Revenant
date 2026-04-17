@@ -119,7 +119,7 @@ public class Unit : Creature
     public void SnapToGrid()
     {
         RoomGrid grid = _roomContext != null
-            ? _roomContext.BattleGrid
+            ? _roomContext.RoomGrid
             : GetComponentInParent<RoomGrid>(includeInactive: true);
 
         if (grid == null)

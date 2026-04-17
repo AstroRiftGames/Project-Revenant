@@ -63,7 +63,7 @@ public class RoomPartySpawner : MonoBehaviour
             if (spawnIndex >= spawnCells.Count)
                 break;
 
-            Vector3 spawnPosition = roomContext.BattleGrid.CellToWorld(spawnCells[spawnIndex]);
+            Vector3 spawnPosition = roomContext.RoomGrid.CellToWorld(spawnCells[spawnIndex]);
             GameObject instance = Instantiate(member.UnitDefinition.unitPrefab, spawnPosition, Quaternion.identity, roomContext.transform);
 
             if (!instance.TryGetComponent(out Unit unit))

@@ -113,7 +113,7 @@ namespace PrefabDungeonGeneration
                 return;
             }
 
-            RoomGrid grid = roomContext.BattleGrid;
+            RoomGrid grid = roomContext.RoomGrid;
             if (grid == null)
             {
                 return;
@@ -243,7 +243,7 @@ namespace PrefabDungeonGeneration
         private void OnDrawGizmosSelected()
         {
             RoomContext roomContext = GetComponent<RoomContext>();
-            RoomGrid grid = roomContext != null ? roomContext.BattleGrid : null;
+            RoomGrid grid = roomContext != null ? roomContext.RoomGrid : null;
             if (roomContext == null || grid == null)
                 return;
 

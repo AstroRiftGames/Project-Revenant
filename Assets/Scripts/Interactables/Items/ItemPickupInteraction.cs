@@ -8,8 +8,6 @@ namespace Interactables.Items
     [DisallowMultipleComponent]
     public class ItemPickupInteraction : MonoBehaviour, IInteractable
     {
-        private const int RequiredAdjacencyDistance = 1;
-
         [SerializeField] private ItemData _itemData;
         private RoomGrid _grid;
         private Necromancer _necromancer;
@@ -25,15 +23,7 @@ namespace Interactables.Items
 
         private void Start()
         {
-            if (_grid == null)
-            {
-                var roomContext = GetComponentInParent<RoomContext>();
-                if (roomContext != null)
-                    _grid = roomContext.BattleGrid;
-                else
-                    _grid = FindFirstObjectByType<RoomGrid>();
-            }
-
+            ResolveGrid();
             RefreshInteractionAvailability(forceEvent: true);
         }
 
@@ -98,11 +88,25 @@ namespace Interactables.Items
 
         private void RefreshInteractionAvailability(bool forceEvent)
         {
-            bool shouldBeAvailable =
-                TryResolveNecromancer(out Necromancer necromancer) &&
-                IsAdjacentToNecromancer(necromancer);
+            _necromancer = GridInteractionAvailability.ResolveNecromancer(_necromancer);
+            bool shouldBeAvailable = GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, transform.position);
 
             SetInteractionAvailability(shouldBeAvailable, forceEvent);
+        }
+
+        private void ResolveGrid()
+        {
+            if (_grid != null)
+                return;
+
+            RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
+            if (roomContext != null)
+            {
+                _grid = roomContext.RoomGrid;
+                return;
+            }
+
+            _grid = GetComponentInParent<RoomGrid>(includeInactive: true);
         }
 
         private void SetInteractionAvailability(bool isAvailable, bool forceEvent)
@@ -114,31 +118,5 @@ namespace Interactables.Items
             OnInteractionAvailabilityChanged?.Invoke(_isInteractionAvailable);
         }
 
-        private bool TryResolveNecromancer(out Necromancer necromancer)
-        {
-            if (_necromancer != null && _necromancer.isActiveAndEnabled)
-            {
-                necromancer = _necromancer;
-                return true;
-            }
-
-            _necromancer = FindFirstObjectByType<Necromancer>();
-            necromancer = _necromancer;
-            return necromancer != null && necromancer.isActiveAndEnabled;
-        }
-
-        private bool IsAdjacentToNecromancer(Necromancer necromancer)
-        {
-            if (_grid == null || necromancer == null)
-                return false;
-
-            Vector3Int itemCell = _grid.WorldToCell(transform.position);
-            Vector3Int necromancerCell = _grid.WorldToCell(necromancer.transform.position);
-            
-            if (!_grid.HasCell(necromancerCell))
-                return false;
-
-            return GridNavigationUtility.GetCellDistance(itemCell, necromancerCell) <= RequiredAdjacencyDistance;
-        }
     }
 }

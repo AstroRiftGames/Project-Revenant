@@ -25,7 +25,7 @@ public class MovementTileFeedbackController : MonoBehaviour, IRoomContextUnitCom
 
     public void IntegrateWithRoom(RoomContext roomContext)
     {
-        SetGrid(roomContext != null ? roomContext.BattleGrid : null);
+        SetGrid(roomContext != null ? roomContext.RoomGrid : null);
     }
 
     public void ShowHover(Vector3Int cell, bool isValidDestination)

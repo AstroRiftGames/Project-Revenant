@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 public class RoomContext : MonoBehaviour
 {
     [Header("Grid")]
-    [SerializeField] private RoomGrid _battleGrid;
+    [SerializeField] private RoomGrid _roomGrid;
     [SerializeField] private RoomContentGenerator _contentGenerator;
     [SerializeField] private CombatRoomController _combatController;
     [SerializeField] private RoomPrefabProfile _roomProfile;
@@ -19,7 +19,7 @@ public class RoomContext : MonoBehaviour
     private readonly List<MonoBehaviour> _roomComponents = new();
     private bool _hasGeneratedContent;
 
-    public RoomGrid BattleGrid => _battleGrid;
+    public RoomGrid RoomGrid => _roomGrid;
     public CombatRoomController CombatController => _combatController;
     public bool IsCombatRoom => ResolveIsCombatRoom();
     public IReadOnlyList<Unit> Units => _units;
@@ -62,7 +62,7 @@ public class RoomContext : MonoBehaviour
         ResolveDependencies();
 
         var result = new List<Vector3Int>();
-        if (_battleGrid == null || _walkableTilemap == null)
+        if (_roomGrid == null || _walkableTilemap == null)
             return result;
 
         BoundsInt bounds = _walkableTilemap.cellBounds;
@@ -96,7 +96,7 @@ public class RoomContext : MonoBehaviour
                 if (!_walkableTilemap.HasTile(cell))
                     continue;
 
-                if (!_battleGrid.IsCellWalkable(cell))
+                if (!_roomGrid.IsCellWalkable(cell))
                     continue;
 
                 result.Add(cell);
@@ -117,11 +117,11 @@ public class RoomContext : MonoBehaviour
 
     private void ResolveGrid()
     {
-        if (_battleGrid != null)
+        if (_roomGrid != null)
             return;
 
-        _battleGrid = GetComponentInChildren<RoomGrid>(includeInactive: true);
-        if (_battleGrid == null)
+        _roomGrid = GetComponentInChildren<RoomGrid>(includeInactive: true);
+        if (_roomGrid == null)
         {
             Debug.LogWarning(
                 $"[RoomContext] '{name}': no se encontro ningun BattleGrid dentro de la sala.",
@@ -214,7 +214,7 @@ public class RoomContext : MonoBehaviour
 
     private void ConfigureGrid()
     {
-        if (_battleGrid == null)
+        if (_roomGrid == null)
             return;
 
         if (_walkableTilemap == null)
@@ -225,7 +225,7 @@ public class RoomContext : MonoBehaviour
             return;
         }
 
-        _battleGrid.Configure(_walkableTilemap, _blockedTilemap);
+        _roomGrid.Configure(_walkableTilemap, _blockedTilemap);
     }
 
     private void GenerateContentIfNeeded()
@@ -233,7 +233,7 @@ public class RoomContext : MonoBehaviour
         if (_hasGeneratedContent || _contentGenerator == null)
             return;
 
-        if (_battleGrid == null)
+        if (_roomGrid == null)
         {
             Debug.LogWarning(
                 $"[RoomContext] '{name}': no puede generar contenido porque BattleGrid es null.",
@@ -269,7 +269,7 @@ public class RoomContext : MonoBehaviour
 
     private void InjectContextIntoUnits()
     {
-        if (_battleGrid == null)
+        if (_roomGrid == null)
         {
             Debug.LogWarning(
                 $"[RoomContext] '{name}': InjectContextIntoUnits abortado porque _battleGrid es null. " +

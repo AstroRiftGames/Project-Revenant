@@ -70,7 +70,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public void IntegrateWithRoom(RoomContext roomContext)
     {
-        SetGrid(roomContext != null ? roomContext.BattleGrid : null);
+        SetGrid(roomContext != null ? roomContext.RoomGrid : null);
     }
 
     public bool SetDestinationCell(Vector3Int destinationCell)

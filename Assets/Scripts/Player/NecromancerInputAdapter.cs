@@ -1,9 +1,10 @@
 using UnityEngine;
 using Selection.Interfaces;
+using Selection.Core;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Necromancer))]
-public class NecromancerManualInputAdapter : MonoBehaviour
+public class NecromancerInputAdapter : MonoBehaviour
 {
     private readonly struct PointerContractContext
     {
@@ -125,7 +126,11 @@ public class NecromancerManualInputAdapter : MonoBehaviour
     private PointerContractContext ResolvePointerContractContext(Vector3 mouseWorld)
     {
         bool isOverSelectable = TryResolvePointerTarget(mouseWorld, _selectionBlockerLayer.value, out ISelectable _);
-        bool isOverInteractable = TryResolvePointerTarget(mouseWorld, _interactionBlockerLayer.value, out IInteractable _);
+        bool isOverInteractable = PointerInteractableResolver.TryResolveFromWorldPoint(
+            mouseWorld,
+            _interactionBlockerLayer.value,
+            out RaycastHit2D _,
+            out IInteractable _);
         return new PointerContractContext(isOverSelectable, isOverInteractable);
     }
 

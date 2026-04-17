@@ -5,9 +5,9 @@ using Core.Systems;
 namespace Interactables.Portals
 {
     [DisallowMultipleComponent]
-    public class ReturnToSafeZoneInteraction : MonoBehaviour, IInteractable, IInteractionAvailabilitySource
+    public class ReturnToSafeZoneInteraction : MonoBehaviour, IInteractable
     {
-        private const int RequiredAdjacencyDistance = 1;
+        private const float FallbackWorldDistance = 2f;
 
         private RoomGrid _grid;
         private Necromancer _necromancer;
@@ -23,15 +23,7 @@ namespace Interactables.Portals
 
         private void Start()
         {
-            if (_grid == null)
-            {
-                var roomContext = GetComponentInParent<RoomContext>();
-                if (roomContext != null)
-                    _grid = roomContext.BattleGrid;
-                else
-                    _grid = FindFirstObjectByType<RoomGrid>();
-            }
-
+            ResolveGrid();
             RefreshInteractionAvailability(forceEvent: true);
         }
 
@@ -58,16 +50,48 @@ namespace Interactables.Portals
 
         private bool CanInteract()
         {
-             return _isInteractionAvailable;
+            return _isInteractionAvailable;
         }
 
         private void RefreshInteractionAvailability(bool forceEvent)
         {
-            bool shouldBeAvailable =
-                TryResolveNecromancer(out Necromancer necromancer) &&
-                IsAdjacentToNecromancer(necromancer);
+            _necromancer = GridInteractionAvailability.ResolveNecromancer(_necromancer);
+            bool shouldBeAvailable = IsAdjacentToNecromancer();
 
             SetInteractionAvailability(shouldBeAvailable, forceEvent);
+        }
+
+        private void ResolveGrid()
+        {
+            if (_grid != null)
+                return;
+
+            RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
+            if (roomContext != null)
+            {
+                _grid = roomContext.RoomGrid;
+                return;
+            }
+
+            _grid = GetComponentInParent<RoomGrid>(includeInactive: true);
+            if (_grid == null)
+                _grid = FindFirstObjectByType<RoomGrid>();
+        }
+
+        private bool IsAdjacentToNecromancer()
+        {
+            if (_necromancer == null || !_necromancer.isActiveAndEnabled)
+                return false;
+
+            if (_grid != null && _necromancer.TryGetGrid(out RoomGrid necromancerGrid) && ReferenceEquals(necromancerGrid, _grid))
+            {
+                Vector3Int portalCell = _grid.WorldToCell(transform.position);
+                Vector3Int necromancerCell = _grid.WorldToCell(_necromancer.transform.position);
+                if (_grid.HasCell(necromancerCell))
+                    return GridNavigationUtility.GetCellDistance(portalCell, necromancerCell) == 1;
+            }
+
+            return Vector3.Distance(transform.position, _necromancer.transform.position) <= FallbackWorldDistance;
         }
 
         private void SetInteractionAvailability(bool isAvailable, bool forceEvent)
@@ -77,42 +101,6 @@ namespace Interactables.Portals
 
             _isInteractionAvailable = isAvailable;
             OnInteractionAvailabilityChanged?.Invoke(_isInteractionAvailable);
-        }
-
-        private bool TryResolveNecromancer(out Necromancer necromancer)
-        {
-            if (_necromancer != null && _necromancer.isActiveAndEnabled)
-            {
-                necromancer = _necromancer;
-                return true;
-            }
-
-            _necromancer = FindFirstObjectByType<Necromancer>();
-            necromancer = _necromancer;
-            return necromancer != null && necromancer.isActiveAndEnabled;
-        }
-
-        private bool IsAdjacentToNecromancer(Necromancer necromancer)
-        {
-            if (necromancer == null)
-                return false;
-
-            // Fallback físico infalible: Si está a 2 metros o menos de distancia del centro, permitir.
-            if (Vector3.Distance(transform.position, necromancer.transform.position) <= 2f)
-            {
-                return true;
-            }
-
-            if (_grid == null)
-                return false;
-
-            Vector3Int portalCell = _grid.WorldToCell(transform.position);
-            Vector3Int necromancerCell = _grid.WorldToCell(necromancer.transform.position);
-            
-            if (!_grid.HasCell(necromancerCell))
-                return false;
-
-            return GridNavigationUtility.GetCellDistance(portalCell, necromancerCell) <= RequiredAdjacencyDistance;
         }
     }
 }

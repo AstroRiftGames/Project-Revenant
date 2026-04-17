@@ -62,26 +62,24 @@ namespace Selection.Core
                 return;
             }
 
-            Vector2 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            int fallbackInteractableMask = LayerMask.GetMask("Interactable");
-            int interactionMask = interactableLayer.value != 0
-                ? interactableLayer.value | selectableLayer.value
-                : selectableLayer.value | fallbackInteractableMask;
-
             if (debugInteractionFlow)
             {
                 Debug.Log(
-                    $"[SelectionInputHandler] Right-click interaction at {mousePosition}. " +
-                    $"interactableLayer={interactableLayer.value}, selectableLayer={selectableLayer.value}, effectiveMask={interactionMask}",
+                    $"[SelectionInputHandler] Right-click interaction at {Input.mousePosition}. " +
+                    $"interactableLayer={interactableLayer.value}, selectableLayer={selectableLayer.value}",
                     this);
             }
 
-            RaycastHit2D hit = Physics2D.Raycast(mousePosition, Vector2.zero, Mathf.Infinity, interactionMask);
-
-            if (hit.collider == null)
+            if (!PointerInteractableResolver.TryResolveFromScreenPoint(
+                    mainCamera,
+                    Input.mousePosition,
+                    interactableLayer,
+                    selectableLayer,
+                    out RaycastHit2D hit,
+                    out IInteractable interactable))
             {
                 if (debugInteractionFlow)
-                    Debug.Log("[SelectionInputHandler] Interaction raycast hit nothing.", this);
+                    Debug.Log("[SelectionInputHandler] Interaction raycast hit nothing interactable.", this);
 
                 return;
             }
@@ -93,17 +91,26 @@ namespace Selection.Core
                     hit.collider);
             }
 
-            IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
+            if (!interactable.IsInteractionAvailable)
+            {
+                if (debugInteractionFlow)
+                {
+                    Debug.Log(
+                        $"[SelectionInputHandler] Interactable '{((Component)interactable).name}' is not available. Interaction aborted.",
+                        hit.collider);
+                }
+
+                return;
+            }
+
             if (debugInteractionFlow)
             {
                 Debug.Log(
-                    interactable != null
-                        ? $"[SelectionInputHandler] Resolved interactable '{((Component)interactable).name}'. Invoking Interact()."
-                        : "[SelectionInputHandler] Hit collider does not resolve to any IInteractable in parents.",
+                    $"[SelectionInputHandler] Resolved interactable '{((Component)interactable).name}'. Invoking Interact().",
                     hit.collider);
             }
 
-            interactable?.Interact();
+            interactable.Interact();
         }
     }
 }

@@ -213,7 +213,7 @@ public class NecromancerSpawner : MonoBehaviour
             return false;
         }
 
-        grid = roomContext.BattleGrid;
+        grid = roomContext.RoomGrid;
         if (grid == null)
         {
             Debug.LogWarning("[NecromancerSpawner] RoomContext no tiene BattleGrid resuelto. Asegurate de que la sala tenga tilemaps configurados.", this);
