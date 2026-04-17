@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1929809464545661687}
-  - component: {fileID: 2370010353762557416}
   - component: {fileID: 6684461410251977361}
   - component: {fileID: 7052276035356109148}
   m_Layer: 7
@@ -36,23 +35,6 @@ Transform:
   - {fileID: 8783211612127363414}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2370010353762557416
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2962280369346952133}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2f44b874ae93604ba8c0688c5df260d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _door: {fileID: 0}
-  _cursorResolver: {fileID: 0}
-  _promptRoot: {fileID: 4547791677823387591}
-  _promptText: {fileID: 2535475414891188272}
-  _promptMessage: Interact
 --- !u!114 &6684461410251977361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,9 +68,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129bc10d23b94df694434028137ab135, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _interactableComponent: {fileID: 0}
   _availabilitySourceComponent: {fileID: 0}
-  _cursorResolver: {fileID: 0}
+  _targetColliders:
+  - {fileID: 5240293404765053411}
+  _autoCollectChildColliders: 1
+  _includeInactiveChildren: 1
+  _worldCamera: {fileID: 0}
   _highlightView: {fileID: 6684461410251977361}
 --- !u!1 &8515988892718533815
 GameObject:
@@ -361,22 +346,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
---- !u!114 &2535475414891188272 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
-  m_PrefabInstance: {fileID: 5158147745985195678}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!1 &4547791677823387591 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
-  m_PrefabInstance: {fileID: 5158147745985195678}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &8783211612127363414 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}

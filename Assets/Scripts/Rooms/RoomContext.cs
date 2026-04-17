@@ -8,6 +8,8 @@ public class RoomContext : MonoBehaviour
     [Header("Grid")]
     [SerializeField] private RoomGrid _battleGrid;
     [SerializeField] private RoomContentGenerator _contentGenerator;
+    [SerializeField] private CombatRoomController _combatController;
+    [SerializeField] private RoomPrefabProfile _roomProfile;
 
     [Header("Local tilemaps")]
     [SerializeField] private Tilemap _walkableTilemap;
@@ -18,6 +20,8 @@ public class RoomContext : MonoBehaviour
     private bool _hasGeneratedContent;
 
     public RoomGrid BattleGrid => _battleGrid;
+    public CombatRoomController CombatController => _combatController;
+    public bool IsCombatRoom => ResolveIsCombatRoom();
     public IReadOnlyList<Unit> Units => _units;
 
     private void Awake()
@@ -107,6 +111,8 @@ public class RoomContext : MonoBehaviour
         ResolveGrid();
         ResolveTilemaps();
         ResolveContentGenerator();
+        ResolveRoomProfile();
+        ResolveCombatController();
     }
 
     private void ResolveGrid()
@@ -175,6 +181,35 @@ public class RoomContext : MonoBehaviour
             return;
 
         _contentGenerator = GetComponentInChildren<RoomContentGenerator>(includeInactive: true);
+    }
+
+    private void ResolveRoomProfile()
+    {
+        if (_roomProfile != null)
+            return;
+
+        _roomProfile = GetComponent<RoomPrefabProfile>() ?? GetComponentInParent<RoomPrefabProfile>(includeInactive: true);
+    }
+
+    private void ResolveCombatController()
+    {
+        if (_combatController != null)
+            return;
+
+        _combatController = GetComponent<CombatRoomController>();
+
+        if (_combatController == null)
+            _combatController = GetComponentInChildren<CombatRoomController>(includeInactive: true);
+
+        if (_combatController == null)
+            _combatController = GetComponentInParent<CombatRoomController>(includeInactive: true);
+
+        if (_combatController == null && IsCombatRoom)
+        {
+            Debug.LogWarning(
+                $"[RoomContext] '{name}': combat room without {nameof(CombatRoomController)}. Units in this room will be blocked.",
+                this);
+        }
     }
 
     private void ConfigureGrid()
@@ -255,5 +290,15 @@ public class RoomContext : MonoBehaviour
     private void IntegrateUnit(Unit unit)
     {
         unit.IntegrateIntoRoom(this);
+    }
+
+    private bool ResolveIsCombatRoom()
+    {
+        if (_roomProfile == null)
+            return false;
+
+        return _roomProfile.RoomType == PDRoomType.Combat ||
+               _roomProfile.RoomType == PDRoomType.MiniBoss ||
+               _roomProfile.RoomType == PDRoomType.Boss;
     }
 }
