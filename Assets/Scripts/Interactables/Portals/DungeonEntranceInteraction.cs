@@ -7,9 +7,9 @@ namespace Interactables.Portals
     [DisallowMultipleComponent]
     public class DungeonEntranceInteraction : MonoBehaviour, IInteractable
     {
-        private const float FallbackWorldDistance = 2f;
+        [SerializeField] private RoomGrid _grid;
 
-        private RoomGrid _grid;
+        private RoomContext _roomContext;
         private Necromancer _necromancer;
         private bool _isInteractionAvailable;
 
@@ -23,7 +23,7 @@ namespace Interactables.Portals
 
         private void Start()
         {
-            ResolveGrid();
+            ResolveDependencies();
             RefreshInteractionAvailability(forceEvent: true);
         }
 
@@ -55,43 +55,24 @@ namespace Interactables.Portals
 
         private void RefreshInteractionAvailability(bool forceEvent)
         {
+            ResolveDependencies();
             _necromancer = GridInteractionAvailability.ResolveNecromancer(_necromancer);
-            bool shouldBeAvailable = IsAdjacentToNecromancer();
+            bool shouldBeAvailable =
+                isActiveAndEnabled &&
+                GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, transform.position);
 
             SetInteractionAvailability(shouldBeAvailable, forceEvent);
         }
 
-        private void ResolveGrid()
+        private void ResolveDependencies()
         {
             if (_grid != null)
                 return;
 
-            RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
-            if (roomContext != null)
-            {
-                _grid = roomContext.RoomGrid;
-                return;
-            }
-
-            _grid = GetComponentInParent<RoomGrid>(includeInactive: true);
-            if (_grid == null)
-                _grid = FindFirstObjectByType<RoomGrid>();
-        }
-
-        private bool IsAdjacentToNecromancer()
-        {
-            if (_necromancer == null || !_necromancer.isActiveAndEnabled)
-                return false;
-
-            if (_grid != null && _necromancer.TryGetGrid(out RoomGrid necromancerGrid) && ReferenceEquals(necromancerGrid, _grid))
-            {
-                Vector3Int portalCell = _grid.WorldToCell(transform.position);
-                Vector3Int necromancerCell = _grid.WorldToCell(_necromancer.transform.position);
-                if (_grid.HasCell(necromancerCell))
-                    return GridNavigationUtility.GetCellDistance(portalCell, necromancerCell) == 1;
-            }
-
-            return Vector3.Distance(transform.position, _necromancer.transform.position) <= FallbackWorldDistance;
+            _roomContext ??= GetComponentInParent<RoomContext>(includeInactive: true);
+            _grid = _roomContext != null
+                ? _roomContext.RoomGrid
+                : GetComponentInParent<RoomGrid>(includeInactive: true);
         }
 
         private void SetInteractionAvailability(bool isAvailable, bool forceEvent)
