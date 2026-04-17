@@ -32,7 +32,7 @@ public class UnitBrain : MonoBehaviour
             return;
 
         int preferredDistance = _unit.GetPreferredDistance(_action);
-        Unit spacingThreat = _unit.GetSpacingThreat(_currentTarget);
+        Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
 
         if (TryMaintainSpacing(spacingThreat, preferredDistance))
             return;

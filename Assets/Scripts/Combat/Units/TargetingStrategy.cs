@@ -16,6 +16,20 @@ public class TargetingStrategy : MonoBehaviour
         };
     }
 
+    public Unit GetSpacingThreat(Unit self, Unit currentTarget)
+    {
+        if (self == null || !self.WantsToHoldSpacing)
+            return null;
+
+        if (self.Role == UnitRole.Support)
+            return GetNearestVisibleHostile(self);
+
+        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
+            return currentTarget;
+
+        return GetNearestVisibleHostile(self);
+    }
+
     private Unit SelectDynamicTarget(Unit self, Unit currentTarget)
     {
         List<Unit> aggressors = self.GetAliveAggressors();
@@ -35,7 +49,7 @@ public class TargetingStrategy : MonoBehaviour
         if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
             return currentTarget;
 
-        return GetClosestUnitByLowestHealth(self, self.GetHostileUnitsInScene());
+        return GetNearestVisibleHostile(self);
     }
 
     private Unit SelectRolePriorityTarget(Unit self, Unit currentTarget)
@@ -101,6 +115,40 @@ public class TargetingStrategy : MonoBehaviour
         }
 
         return closest;
+    }
+
+    private static Unit GetNearestVisibleHostile(Unit self)
+    {
+        if (self == null)
+            return null;
+
+        List<Unit> hostiles = self.GetHostileUnitsInScene();
+        if (hostiles == null || hostiles.Count == 0)
+            return null;
+
+        Unit nearest = null;
+        float bestSqrDistance = float.MaxValue;
+        int bestHealth = int.MaxValue;
+
+        for (int i = 0; i < hostiles.Count; i++)
+        {
+            Unit candidate = hostiles[i];
+            if (candidate == null || !candidate.IsAlive)
+                continue;
+
+            float sqrDistance = (candidate.Position - self.Position).sqrMagnitude;
+            if (sqrDistance > bestSqrDistance)
+                continue;
+
+            if (Mathf.Approximately(sqrDistance, bestSqrDistance) && candidate.CurrentHealth >= bestHealth)
+                continue;
+
+            nearest = candidate;
+            bestSqrDistance = sqrDistance;
+            bestHealth = candidate.CurrentHealth;
+        }
+
+        return nearest;
     }
 
     private static Unit GetClosestUnitByLowestHealth(Unit self, List<Unit> units)

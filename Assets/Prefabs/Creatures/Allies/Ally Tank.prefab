@@ -100,6 +100,10 @@ PrefabInstance:
       propertyPath: _unitData
       value: 
       objectReference: {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
+    - target: {fileID: 7128229230241535306, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
       value: Ally Tank
