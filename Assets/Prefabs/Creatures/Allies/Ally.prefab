@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 1261052233439695477}
   - component: {fileID: 2591124034128996790}
   - component: {fileID: 1665575066370321555}
+  - component: {fileID: 3049668297052015301}
   m_Layer: 8
   m_Name: Ally
   m_TagString: Untagged
@@ -340,3 +341,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _flashDuration: 0.08
   _flashPropertyName: _FlashAmount
+--- !u!114 &3049668297052015301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8823206920075786061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a63b01716d03bf4eb8cdb8c4f2e91c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _hitParticlesPrefab: {fileID: 941638936021047997, guid: a20cee9aecd64684fbf4b4037d3d1b19, type: 3}
+  _spawnPoint: {fileID: 0}
+  _isometricOffset: {x: 0, y: 0.5, z: -0.1}
+  _useDamageAsIntensity: 0
+  _baseParticleCount: 5
+  _damageMultiplier: 0.5
