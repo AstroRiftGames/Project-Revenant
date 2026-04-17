@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class NecromancerRoomTransitioner : MonoBehaviour
+public static class RoomTransitionPlacementUtility
 {
     private static readonly Vector3Int[] CardinalDirections =
     {
@@ -10,76 +10,24 @@ public class NecromancerRoomTransitioner : MonoBehaviour
         Vector3Int.down
     };
 
-    private Necromancer _necromancer;
-
-    private void OnEnable()
-    {
-        FloorManager.OnRoomEntered += HandleRoomEntered;
-    }
-
-    private void OnDisable()
-    {
-        FloorManager.OnRoomEntered -= HandleRoomEntered;
-    }
-
-    private void HandleRoomEntered(RoomDoor door, GameObject newRoom)
-    {
-        MoveNecromancerToRoom(door, newRoom);
-    }
-
-    public bool MoveNecromancerToRoom(GameObject roomObject)
-    {
-        return MoveNecromancerToRoom(null, roomObject);
-    }
-
-    public bool MoveNecromancerToRoom(RoomDoor enteredDoor, GameObject roomObject)
-    {
-        if (_necromancer == null)
-            _necromancer = FindAnyObjectByType<Necromancer>();
-
-        if (_necromancer == null)
-        {
-            Debug.LogWarning("[NecromancerRoomTransitioner] No necromancer was found in the scene.", this);
-            return false;
-        }
-
-        if (roomObject == null || !roomObject.TryGetComponent(out RoomContext roomContext))
-        {
-            Debug.LogWarning($"[NecromancerRoomTransitioner] '{roomObject?.name ?? "NULL"}' does not have a RoomContext.", this);
-            return false;
-        }
-
-        RoomGrid grid = roomContext.RoomGrid;
-        if (grid == null)
-        {
-            Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext for '{roomObject.name}' does not have a BattleGrid.", this);
-            return false;
-        }
-
-        _necromancer.SetGrid(grid);
-
-        Vector3Int spawnCell = ResolveArrivalCell(grid, roomContext, enteredDoor);
-        _necromancer.Teleport(grid.CellToWorld(spawnCell));
-        return true;
-    }
-
-    private Vector3Int ResolveArrivalCell(RoomGrid grid, RoomContext roomContext, RoomDoor enteredDoor)
+    public static Vector3Int ResolveArrivalCell(RoomGrid grid, RoomContext roomContext, RoomDoor enteredDoor, out Vector3Int inwardDirection)
     {
         Vector3Int roomCenterCell = grid.WorldToCell(roomContext.transform.position);
+        inwardDirection = GetBestInwardDirection(roomCenterCell, roomCenterCell);
 
         if (!TryResolveArrivalDoorWorldPosition(roomContext.gameObject, enteredDoor, out Vector3 doorWorldPosition))
             return grid.FindClosestWalkableCell(roomCenterCell, roomCenterCell);
 
         Vector3Int doorCell = grid.WorldToCell(doorWorldPosition);
-        Vector3Int bestDirection = GetBestInwardDirection(doorCell, roomCenterCell);
+        inwardDirection = GetBestInwardDirection(doorCell, roomCenterCell);
 
-        if (TryGetEnterableAdjacentCell(grid, doorCell, bestDirection, roomCenterCell, out Vector3Int adjacentCell))
+        if (TryGetEnterableAdjacentCell(grid, doorCell, inwardDirection, roomCenterCell, out Vector3Int adjacentCell))
             return adjacentCell;
 
         return grid.FindClosestWalkableCell(doorCell, roomCenterCell);
     }
 
-    private static bool TryResolveArrivalDoorWorldPosition(GameObject roomObject, RoomDoor enteredDoor, out Vector3 doorWorldPosition)
+    public static bool TryResolveArrivalDoorWorldPosition(GameObject roomObject, RoomDoor enteredDoor, out Vector3 doorWorldPosition)
     {
         doorWorldPosition = roomObject.transform.position;
 
@@ -112,11 +60,11 @@ public class NecromancerRoomTransitioner : MonoBehaviour
         return false;
     }
 
-    private static Vector3Int GetBestInwardDirection(Vector3Int doorCell, Vector3Int roomCenterCell)
+    public static Vector3Int GetBestInwardDirection(Vector3Int anchorCell, Vector3Int roomCenterCell)
     {
-        Vector3 toCenter = (Vector3)(roomCenterCell - doorCell);
+        Vector3 toCenter = (Vector3)(roomCenterCell - anchorCell);
         if (toCenter.sqrMagnitude <= Mathf.Epsilon)
-            return Vector3Int.zero;
+            return Vector3Int.up;
 
         int bestIndex = 0;
         float bestScore = float.NegativeInfinity;
@@ -180,5 +128,61 @@ public class NecromancerRoomTransitioner : MonoBehaviour
         }
 
         return -1;
+    }
+}
+
+public class NecromancerRoomTransitioner : MonoBehaviour
+{
+    private Necromancer _necromancer;
+
+    private void OnEnable()
+    {
+        FloorManager.OnRoomEntered += HandleRoomEntered;
+    }
+
+    private void OnDisable()
+    {
+        FloorManager.OnRoomEntered -= HandleRoomEntered;
+    }
+
+    private void HandleRoomEntered(RoomDoor door, GameObject newRoom)
+    {
+        MoveNecromancerToRoom(door, newRoom);
+    }
+
+    public bool MoveNecromancerToRoom(GameObject roomObject)
+    {
+        return MoveNecromancerToRoom(null, roomObject);
+    }
+
+    public bool MoveNecromancerToRoom(RoomDoor enteredDoor, GameObject roomObject)
+    {
+        if (_necromancer == null)
+            _necromancer = FindAnyObjectByType<Necromancer>();
+
+        if (_necromancer == null)
+        {
+            Debug.LogWarning("[NecromancerRoomTransitioner] No necromancer was found in the scene.", this);
+            return false;
+        }
+
+        if (roomObject == null || !roomObject.TryGetComponent(out RoomContext roomContext))
+        {
+            Debug.LogWarning($"[NecromancerRoomTransitioner] '{roomObject?.name ?? "NULL"}' does not have a RoomContext.", this);
+            return false;
+        }
+
+        RoomGrid grid = roomContext.RoomGrid;
+        if (grid == null)
+        {
+            Debug.LogWarning($"[NecromancerRoomTransitioner] RoomContext for '{roomObject.name}' does not have a BattleGrid.", this);
+            return false;
+        }
+
+        _necromancer.SetGrid(grid);
+
+        Vector3Int spawnCell = RoomTransitionPlacementUtility.ResolveArrivalCell(grid, roomContext, enteredDoor, out _);
+        _necromancer.Teleport(grid.CellToWorld(spawnCell));
+        return true;
     }
 }
