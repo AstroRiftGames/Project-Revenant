@@ -9,7 +9,12 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     [SerializeField] private bool _blocksMovement = true;
     [SerializeField] private RoomGrid _grid;
+    [SerializeField] private bool _debugCombatLockLogs = true;
+
+    private RoomContext _roomContext;
+    private CombatRoomController _combatRoomController;
     private bool _isOccupancyRegistered;
+    private bool _hasLoggedCombatLock;
 
     public static event Action<RoomDoor> OnDoorInteracted;
     public event Action<bool> OnInteractionAvailabilityChanged;
@@ -17,16 +22,18 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
     public Vector3 OccupancyWorldPosition => transform.position;
     public bool OccupiesCell => gameObject.activeInHierarchy;
     public bool BlocksMovement => _blocksMovement;
-    public bool IsInteractionAvailable => isActiveAndEnabled;
+    public bool IsInteractionAvailable => isActiveAndEnabled && !IsLockedByActiveCombat();
 
     private void OnEnable()
     {
+        ResolveRoomDependencies();
         TryRegisterOccupancy();
         OnInteractionAvailabilityChanged?.Invoke(IsInteractionAvailable);
     }
 
     private void Start()
     {
+        ResolveRoomDependencies();
         // Fallback
         TryRegisterOccupancy();
     }
@@ -56,7 +63,16 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
 
     protected virtual bool CanInteract()
     {
-        return IsInteractionAvailable;
+        if (!IsInteractionAvailable)
+        {
+            if (isActiveAndEnabled && IsLockedByActiveCombat())
+                LogCombatLock();
+
+            return false;
+        }
+
+        _hasLoggedCombatLock = false;
+        return true;
     }
 
     protected virtual void PerformInteraction()
@@ -96,9 +112,33 @@ public class RoomDoor : MonoBehaviour, IInteractable, IGridOccupant
         if (_grid != null)
             return;
 
-        RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
-        _grid = roomContext != null
-            ? roomContext.BattleGrid
+        ResolveRoomDependencies();
+        _grid = _roomContext != null
+            ? _roomContext.BattleGrid
             : GetComponentInParent<RoomGrid>(includeInactive: true);
+    }
+
+    private void ResolveRoomDependencies()
+    {
+        _roomContext ??= GetComponentInParent<RoomContext>(includeInactive: true);
+        _combatRoomController ??= _roomContext != null ? _roomContext.CombatController : null;
+    }
+
+    private bool IsLockedByActiveCombat()
+    {
+        ResolveRoomDependencies();
+
+        return _combatRoomController != null &&
+               _combatRoomController.IsCombatRoom &&
+               _combatRoomController.State == CombatRoomState.CombatActive;
+    }
+
+    private void LogCombatLock()
+    {
+        if (!_debugCombatLockLogs || _hasLoggedCombatLock)
+            return;
+
+        _hasLoggedCombatLock = true;
+        Debug.Log($"[RoomDoor] '{name}' locked during combat in room '{_roomContext?.name ?? "Unknown"}'.", this);
     }
 }
