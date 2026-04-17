@@ -3,6 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(MovementTileFeedbackController))]
 [RequireComponent(typeof(NecromancerManualInputAdapter))]
+[RequireComponent(typeof(NecromancerCombatStartAdapter))]
 public class Necromancer : MonoBehaviour
 {
     [SerializeField] private RoomGrid _grid;
@@ -27,6 +28,9 @@ public class Necromancer : MonoBehaviour
     {
         if (GetComponent<NecromancerManualInputAdapter>() == null)
             gameObject.AddComponent<NecromancerManualInputAdapter>();
+
+        if (GetComponent<NecromancerCombatStartAdapter>() == null)
+            gameObject.AddComponent<NecromancerCombatStartAdapter>();
 
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();

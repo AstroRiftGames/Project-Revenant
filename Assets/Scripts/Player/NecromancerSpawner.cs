@@ -143,7 +143,7 @@ public class NecromancerSpawner : MonoBehaviour
         if (_partyDefeatDetector == null)
             _partyDefeatDetector = gameObject.AddComponent<PartyDefeatDetector>();
 
-        _partyDefeatDetector.Configure(_party);
+        _partyDefeatDetector.Configure(_party, _floorManager);
 
         _partyDefeatResolver = GetComponent<PartyDefeatReturnHandler>();
         if (_partyDefeatResolver == null)
