@@ -99,15 +99,17 @@ public class FusionController : MonoBehaviour
         }
 
         FusionEntity entityA = new FusionEntity(
-            memberA.PartyMemberId, 
-            memberA.RuntimeFaction, 
-            ConvertUnitStatsToStatBlock(memberA.CoreStats), 
+            memberA.PartyMemberId,
+            memberA.RuntimeFaction,
+            memberA.Role,
+            ConvertUnitStatsToStatBlock(memberA.CoreStats),
             memberA.CharacterSprite);
-            
+
         FusionEntity entityB = new FusionEntity(
-            memberB.PartyMemberId, 
-            memberB.RuntimeFaction, 
-            ConvertUnitStatsToStatBlock(memberB.CoreStats), 
+            memberB.PartyMemberId,
+            memberB.RuntimeFaction,
+            memberB.Role,
+            ConvertUnitStatsToStatBlock(memberB.CoreStats),
             memberB.CharacterSprite);
 
         FusionResult result = _fusionService.Fuse(entityA, entityB, _requiredStones);
@@ -123,6 +125,7 @@ public class FusionController : MonoBehaviour
             newUnitData.sprite = result.ResultCreature.Visual;
             newUnitData.team = UnitTeam.NecromancerAlly;
             newUnitData.faction = result.ResultCreature.UnitFaction;
+            newUnitData.role = result.ResultCreature.Role;
             newUnitData.unitPrefab = _neutralCreaturePrefab;
 
             UnitData dominantParentData = memberA.RuntimeFaction == result.ResultCreature.UnitFaction ? memberA.UnitDefinition : memberB.UnitDefinition;

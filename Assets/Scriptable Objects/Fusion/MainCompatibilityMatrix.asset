@@ -16,60 +16,84 @@ MonoBehaviour:
   - Factions:
       FactionA: 1
       FactionB: 2
+    RoleOfFactionA: 1
+    RoleOfFactionB: 1
     IsCompatible: 1
     DominantFaction: 1
   - Factions:
       FactionA: 1
       FactionB: 3
+    RoleOfFactionA: 2
+    RoleOfFactionB: 2
     IsCompatible: 1
     DominantFaction: 3
   - Factions:
       FactionA: 1
       FactionB: 5
+    RoleOfFactionA: 2
+    RoleOfFactionB: 0
     IsCompatible: 1
     DominantFaction: 5
   - Factions:
       FactionA: 1
       FactionB: 8
+    RoleOfFactionA: 2
+    RoleOfFactionB: 1
     IsCompatible: 1
     DominantFaction: 1
   - Factions:
       FactionA: 2
       FactionB: 5
+    RoleOfFactionA: 2
+    RoleOfFactionB: 2
     IsCompatible: 1
     DominantFaction: 5
   - Factions:
       FactionA: 2
       FactionB: 6
+    RoleOfFactionA: 1
+    RoleOfFactionB: 2
     IsCompatible: 1
     DominantFaction: 2
   - Factions:
       FactionA: 2
       FactionB: 8
+    RoleOfFactionA: 2
+    RoleOfFactionB: 1
     IsCompatible: 1
     DominantFaction: 2
   - Factions:
       FactionA: 3
       FactionB: 4
+    RoleOfFactionA: 2
+    RoleOfFactionB: 1
     IsCompatible: 1
     DominantFaction: 4
   - Factions:
       FactionA: 3
       FactionB: 7
+    RoleOfFactionA: 1
+    RoleOfFactionB: 2
     IsCompatible: 1
     DominantFaction: 3
   - Factions:
       FactionA: 4
       FactionB: 5
+    RoleOfFactionA: 1
+    RoleOfFactionB: 0
     IsCompatible: 1
     DominantFaction: 4
   - Factions:
       FactionA: 5
       FactionB: 6
+    RoleOfFactionA: 0
+    RoleOfFactionB: 1
     IsCompatible: 1
     DominantFaction: 6
   - Factions:
       FactionA: 7
       FactionB: 8
+    RoleOfFactionA: 2
+    RoleOfFactionB: 0
     IsCompatible: 1
     DominantFaction: 8

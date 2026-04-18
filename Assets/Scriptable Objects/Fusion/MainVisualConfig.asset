@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MainVisualConfig
   m_EditorClassIdentifier: 
   CombinationOverrides:
-  - _dominantFaction: 1
-    _secondaryFaction: 2
+  - _dominantFaction: 2
+    _secondaryFaction: 6
     _creatureSprite: {fileID: 5497369311495656864, guid: b1069bb1ac8e1e0449b72ae0271fdc50, type: 3}
   DominantFallbacks: []
