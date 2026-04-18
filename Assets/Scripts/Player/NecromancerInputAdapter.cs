@@ -71,6 +71,13 @@ public class NecromancerInputAdapter : MonoBehaviour
         if (_necromancer == null)
             return;
 
+        if (IsManualMovementBlockedByEncounterState())
+        {
+            _necromancer.HandleManualPointerExitedGrid();
+            TryHandleCancelInput(new PointerContractContext(false, false));
+            return;
+        }
+
         if (!_necromancer.TryGetGrid(out RoomGrid grid))
         {
             _necromancer.HandleManualInputUnavailable();
@@ -146,6 +153,16 @@ public class NecromancerInputAdapter : MonoBehaviour
             isInsideGrid,
             isOverNavigableSurface,
             contractContext);
+    }
+
+    private bool IsManualMovementBlockedByEncounterState()
+    {
+        if (_necromancer == null || !_necromancer.TryGetGrid(out RoomGrid grid) || grid == null)
+            return false;
+
+        RoomContext roomContext = grid.GetComponentInParent<RoomContext>(includeInactive: true);
+        CombatRoomController combatController = roomContext != null ? roomContext.CombatController : null;
+        return combatController != null && combatController.IsCombatRoom && !combatController.IsResolved;
     }
 
     private static bool TryResolvePointerTarget<TContract>(Vector3 worldPosition, int layerMask, out TContract contract)

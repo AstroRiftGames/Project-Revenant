@@ -7,8 +7,7 @@ public interface IRoomContextUnitComponent
 }
 
 [RequireComponent(typeof(LifeController))]
-public class Unit : Creature
-    , IGridOccupant
+public class Unit : Creature, IGridOccupant
 {
     [SerializeField] private UnitData _unitData;
     [SerializeField] private MonoBehaviour _actionSource;

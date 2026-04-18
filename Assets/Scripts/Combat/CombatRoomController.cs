@@ -5,8 +5,8 @@ using UnityEngine;
 
 public enum CombatRoomState
 {
-    PendingStart,
-    CombatActive,
+    Deployment,
+    Combat,
     Resolved
 }
 
@@ -23,9 +23,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 {
     [SerializeField] private RoomContext _roomContext;
     [SerializeField] private RoomPrefabProfile _roomProfile;
-    [SerializeField] private CombatRoomState _state = CombatRoomState.PendingStart;
+    [SerializeField] private CombatRoomState _state = CombatRoomState.Deployment;
     [SerializeField] private CombatRoomOutcome _outcome = CombatRoomOutcome.None;
     [SerializeField] private int _enemyFormationEdgePadding = 1;
+    [SerializeField] private int _deploymentMinForwardDistance = 1;
+    [SerializeField] private int _deploymentFallbackMaxForwardDistance = 3;
     [SerializeField] private bool _debugLogs = true;
 
     public RoomContext RoomContext => _roomContext;
@@ -33,10 +35,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
     public CombatRoomState State => _state;
     public CombatRoomOutcome Outcome => _outcome;
     public bool IsCombatRoom => ResolveIsCombatRoom();
-    public bool IsPendingStart => _state == CombatRoomState.PendingStart;
-    public bool IsCombatActive => _state == CombatRoomState.CombatActive;
+    public bool IsDeploymentActive => _state == CombatRoomState.Deployment;
+    public bool IsCombatActive => _state == CombatRoomState.Combat;
     public bool IsResolved => _state == CombatRoomState.Resolved;
-    public bool CanUnitsAct => !IsCombatRoom || _state == CombatRoomState.CombatActive;
+    public bool CanUnitsAct => !IsCombatRoom || _state == CombatRoomState.Combat;
+    public bool CanDeployUnits => IsCombatRoom && _state == CombatRoomState.Deployment;
 
     public event Action<CombatRoomController> CombatStarted;
     public event Action<CombatRoomController, CombatRoomOutcome> CombatResolved;
@@ -69,11 +72,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     public bool TryStartCombat()
     {
-        if (!IsCombatRoom || !IsPendingStart)
+        if (!IsCombatRoom || !IsDeploymentActive)
             return false;
 
         _outcome = CombatRoomOutcome.None;
-        SetState(CombatRoomState.CombatActive);
+        SetState(CombatRoomState.Combat);
         EvaluateEncounterOutcome();
         CombatStarted?.Invoke(this);
         return true;
@@ -97,8 +100,44 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             return false;
 
         _outcome = CombatRoomOutcome.None;
-        SetState(CombatRoomState.PendingStart);
+        SetState(CombatRoomState.Deployment);
         return true;
+    }
+
+    public bool TryMoveDeployedAlly(Unit unit, Vector3Int destinationCell)
+    {
+        if (!CanDeployUnits || unit == null || _roomContext == null)
+            return false;
+
+        if (!ReferenceEquals(unit.RoomContext, _roomContext) || unit.Team != UnitTeam.NecromancerAlly)
+            return false;
+
+        RoomGrid grid = _roomContext.RoomGrid;
+        if (grid == null || !IsDeploymentCellValid(unit, destinationCell))
+            return false;
+
+        UnitMovement movement = unit.GetComponent<UnitMovement>();
+        return movement != null && movement.SetDestinationCell(destinationCell);
+    }
+
+    public bool IsDeploymentCellValid(Unit unit, Vector3Int cell)
+    {
+        if (!CanDeployUnits || unit == null || _roomContext == null)
+            return false;
+
+        RoomGrid grid = _roomContext.RoomGrid;
+        if (grid == null || !grid.HasCell(cell) || !grid.IsCellEnterable(cell, unit))
+            return false;
+
+        if (!TryResolveDeploymentFrame(grid, out Vector3Int anchorCell, out Vector3Int forwardDirection))
+            return false;
+
+        int forwardDistance = Mathf.RoundToInt(Vector3.Dot((Vector3)(cell - anchorCell), (Vector3)forwardDirection));
+        if (forwardDistance < Mathf.Max(0, _deploymentMinForwardDistance))
+            return false;
+
+        int maxForwardDistance = ResolveDeploymentMaxForwardDistance(anchorCell, forwardDirection);
+        return forwardDistance <= maxForwardDistance;
     }
 
     private void ResolveReferences()
@@ -302,6 +341,44 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         return _roomProfile.RoomType == PDRoomType.Combat ||
                _roomProfile.RoomType == PDRoomType.MiniBoss ||
                _roomProfile.RoomType == PDRoomType.Boss;
+    }
+
+    private bool TryResolveDeploymentFrame(RoomGrid grid, out Vector3Int anchorCell, out Vector3Int forwardDirection)
+    {
+        anchorCell = Vector3Int.zero;
+        forwardDirection = Vector3Int.up;
+
+        if (grid == null || _roomContext == null)
+            return false;
+
+        Vector3Int roomCenterCell = grid.WorldToCell(_roomContext.transform.position);
+        Necromancer necromancer = FindAnyObjectByType<Necromancer>();
+        if (necromancer == null || !necromancer.TryGetGrid(out RoomGrid necromancerGrid) || !ReferenceEquals(necromancerGrid, grid))
+            return false;
+
+        anchorCell = grid.WorldToCell(necromancer.transform.position);
+        if (!grid.HasCell(anchorCell))
+            return false;
+
+        forwardDirection = RoomTransitionPlacementUtility.GetBestInwardDirection(anchorCell, roomCenterCell);
+        return true;
+    }
+
+    private int ResolveDeploymentMaxForwardDistance(Vector3Int anchorCell, Vector3Int forwardDirection)
+    {
+        List<Vector3Int> candidateCells = _roomContext.GetAvailableSpawnCells();
+        int furthestForwardDistance = 0;
+
+        for (int i = 0; i < candidateCells.Count; i++)
+        {
+            Vector3Int candidateCell = candidateCells[i];
+            int forwardDistance = Mathf.RoundToInt(Vector3.Dot((Vector3)(candidateCell - anchorCell), (Vector3)forwardDirection));
+            if (forwardDistance > furthestForwardDistance)
+                furthestForwardDistance = forwardDistance;
+        }
+
+        int halfDepth = Mathf.FloorToInt(furthestForwardDistance * 0.5f);
+        return Mathf.Max(_deploymentFallbackMaxForwardDistance, halfDepth, _deploymentMinForwardDistance);
     }
 
     private void SetState(CombatRoomState nextState)

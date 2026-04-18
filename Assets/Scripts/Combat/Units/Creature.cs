@@ -44,10 +44,14 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     protected LifeController _lifeController { get; private set; }
     private RecruitableUnitState _recruitableState;
     private UnitAffiliationState _affiliationState;
+    private SpriteRenderer[] _selectionTintRenderers;
+    private Color[] _selectionTintBaseColors;
 
 
     [Header("Selection Visuals")]
     [SerializeField] private GameObject selectionIndicator;
+    [SerializeField] private bool _tintSpritesOnSelection = true;
+    [SerializeField] private Color _selectionTintColor = new(0.2f, 1f, 1f, 1f);
     public float CurrentAbilityCooldown => 10f; //TODO: This should come from UnitData when ability system is implemented
     public float MaxAbilityCooldown => 10; //TODO: This should come from UnitData when ability system is implemented
     public Sprite AbilityIcon => null;  //TODO: This should come from UnitData when ability system is implemented
@@ -63,6 +67,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
+        CacheSelectionTintRenderers();
         ValidateRequiredComponents();
     }
 
@@ -226,6 +231,48 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (selectionIndicator != null)
             selectionIndicator.SetActive(isSelected);
 
+        ApplySelectionTint(isSelected);
+
         OnSelectionStateChanged?.Invoke(this, isSelected);
+    }
+
+    private void CacheSelectionTintRenderers()
+    {
+        _selectionTintRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
+        _selectionTintBaseColors = new Color[_selectionTintRenderers.Length];
+
+        for (int i = 0; i < _selectionTintRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = _selectionTintRenderers[i];
+            _selectionTintBaseColors[i] = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        }
+    }
+
+    private void ApplySelectionTint(bool isSelected)
+    {
+        if (!_tintSpritesOnSelection)
+            return;
+
+        if (_selectionTintRenderers == null || _selectionTintBaseColors == null || _selectionTintRenderers.Length != _selectionTintBaseColors.Length)
+            CacheSelectionTintRenderers();
+
+        for (int i = 0; i < _selectionTintRenderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = _selectionTintRenderers[i];
+            if (spriteRenderer == null)
+                continue;
+
+            Color baseColor = _selectionTintBaseColors[i];
+            if (isSelected)
+            {
+                Color tintedColor = _selectionTintColor;
+                tintedColor.a = baseColor.a;
+                spriteRenderer.color = tintedColor;
+            }
+            else
+            {
+                spriteRenderer.color = baseColor;
+            }
+        }
     }
 }

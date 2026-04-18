@@ -36,6 +36,6 @@ public class RoomDoor : MonoBehaviour
 
         return _combatRoomController != null &&
                _combatRoomController.IsCombatRoom &&
-               _combatRoomController.State == CombatRoomState.CombatActive;
+               !_combatRoomController.IsResolved;
     }
 }

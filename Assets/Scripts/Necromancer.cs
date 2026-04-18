@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(MovementTileFeedbackController))]
 [RequireComponent(typeof(NecromancerInputAdapter))]
 [RequireComponent(typeof(NecromancerCombatStartAdapter))]
+[RequireComponent(typeof(NecromancerDeploymentAdapter))]
 public class Necromancer : MonoBehaviour
 {
     [SerializeField] private RoomGrid _grid;
@@ -31,6 +32,9 @@ public class Necromancer : MonoBehaviour
 
         if (GetComponent<NecromancerCombatStartAdapter>() == null)
             gameObject.AddComponent<NecromancerCombatStartAdapter>();
+
+        if (GetComponent<NecromancerDeploymentAdapter>() == null)
+            gameObject.AddComponent<NecromancerDeploymentAdapter>();
 
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();

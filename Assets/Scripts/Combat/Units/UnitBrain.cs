@@ -13,7 +13,7 @@ public class UnitBrain : MonoBehaviour
     private IAction _action;
     private Unit _currentTarget;
     private bool _hasLoggedMissingControllerBlock;
-    private bool _hasLoggedPendingStartBlock;
+    private bool _hasLoggedDeploymentBlock;
     private bool _hasLoggedResolvedBlock;
 
     private void Awake()
@@ -79,10 +79,10 @@ public class UnitBrain : MonoBehaviour
             return true;
         }
 
-        if (combatRoomController.State == CombatRoomState.PendingStart)
+        if (combatRoomController.State == CombatRoomState.Deployment)
         {
             LogEncounterGate(
-                ref _hasLoggedPendingStartBlock,
+                ref _hasLoggedDeploymentBlock,
                 $"[UnitBrain] '{name}' blocked in room '{roomContext.name}'. Combat state: {combatRoomController.State}.");
             return false;
         }
@@ -121,7 +121,7 @@ public class UnitBrain : MonoBehaviour
     private void ResetEncounterGateLogs()
     {
         _hasLoggedMissingControllerBlock = false;
-        _hasLoggedPendingStartBlock = false;
+        _hasLoggedDeploymentBlock = false;
         _hasLoggedResolvedBlock = false;
     }
 }
