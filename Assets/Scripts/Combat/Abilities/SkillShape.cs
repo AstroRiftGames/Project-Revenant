@@ -4,5 +4,6 @@ public enum SkillShape
     Splash,
     Area,
     PiercingLine,
-    Line
+    Line,
+    MultiTarget
 }
