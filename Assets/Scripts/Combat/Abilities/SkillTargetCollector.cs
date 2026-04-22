@@ -19,6 +19,7 @@ public static class SkillTargetCollector
             SkillShape.SingleTarget => TryCollectSingleTarget(context, results, debugLog),
             SkillShape.Splash => TryCollectSplashTargets(context, results, debugLog),
             SkillShape.Area => TryCollectAreaTargets(context, results, debugLog),
+            SkillShape.PiercingLine => TryCollectPiercingLineTargets(context, results, debugLog),
             _ => false
         };
     }
@@ -44,6 +45,94 @@ public static class SkillTargetCollector
     private static bool TryCollectAreaTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
     {
         return TryCollectTargetsInRadius(context, results, debugLog, includePrimaryTargetFirst: false, "area");
+    }
+
+    private static bool TryCollectPiercingLineTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        Unit caster = context != null ? context.Caster : null;
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        SkillData skill = context != null ? context.Skill : null;
+        if (caster == null || primaryTarget == null || skill == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        int lineLengthInCells = skill.LineLengthInCells;
+        if (lineLengthInCells <= 0)
+            return false;
+
+        RoomContext roomContext = caster.RoomContext;
+        IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
+        if (roomUnits == null)
+            return false;
+
+        Vector3 lineOrigin = caster.Position;
+        Vector3 lineDirection = primaryTarget.Position - lineOrigin;
+        lineDirection.z = 0f;
+
+        if (lineDirection.sqrMagnitude <= Mathf.Epsilon)
+            return false;
+
+        lineDirection.Normalize();
+
+        float lineLengthWorld = ResolveLineLengthWorld(context, lineLengthInCells);
+        float lineTolerance = ResolveLineTolerance(context);
+        int skippedInvalid = 0;
+        int skippedBehindCaster = 0;
+        int skippedPastLength = 0;
+        int skippedOffLine = 0;
+
+        var projections = new List<TargetProjection>(roomUnits.Count);
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!IsValidImpactTarget(context, candidate))
+            {
+                skippedInvalid++;
+                continue;
+            }
+
+            if (!TryResolveLineProjection(lineOrigin, lineDirection, candidate.Position, out float projection, out float distanceToLine))
+            {
+                skippedOffLine++;
+                continue;
+            }
+
+            if (projection < 0f)
+            {
+                skippedBehindCaster++;
+                continue;
+            }
+
+            if (projection > lineLengthWorld)
+            {
+                skippedPastLength++;
+                continue;
+            }
+
+            if (distanceToLine > lineTolerance)
+            {
+                skippedOffLine++;
+                continue;
+            }
+
+            projections.Add(new TargetProjection(candidate, projection));
+        }
+
+        projections.Sort(static (left, right) => left.Projection.CompareTo(right.Projection));
+
+        for (int i = 0; i < projections.Count; i++)
+            TryAddUniqueTarget(results, projections[i].Target);
+
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved piercing line. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Origin: {FormatWorldPosition(lineOrigin)}. " +
+            $"Direction: {FormatWorldDirection(lineDirection)}. Length: {lineLengthInCells} cells ({lineLengthWorld:F2} world). " +
+            $"Tolerance: {lineTolerance:F2}. Impacted ({results.Count}): {FormatUnits(results)}. " +
+            $"Ordered projections: {FormatProjectedUnits(projections)}. " +
+            $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped behind caster: {skippedBehindCaster}. " +
+            $"Skipped past length: {skippedPastLength}. Skipped off line: {skippedOffLine}.");
+
+        return results.Count > 0;
     }
 
     private static bool TryCollectTargetsInRadius(
@@ -168,6 +257,52 @@ public static class SkillTargetCollector
         return grid.WorldToCell(unit.Position);
     }
 
+    private static bool TryResolveLineProjection(
+        Vector3 lineOrigin,
+        Vector3 lineDirection,
+        Vector3 point,
+        out float projection,
+        out float distanceToLine)
+    {
+        Vector3 offset = point - lineOrigin;
+        offset.z = 0f;
+
+        float lineDirectionMagnitude = lineDirection.magnitude;
+        if (lineDirectionMagnitude <= Mathf.Epsilon)
+        {
+            projection = 0f;
+            distanceToLine = float.MaxValue;
+            return false;
+        }
+
+        projection = Vector3.Dot(offset, lineDirection);
+        Vector3 closestPoint = lineOrigin + lineDirection * projection;
+        distanceToLine = Vector3.Distance(
+            new Vector3(point.x, point.y, 0f),
+            new Vector3(closestPoint.x, closestPoint.y, 0f));
+        return true;
+    }
+
+    private static float ResolveLineLengthWorld(SkillCastContext context, int lineLengthInCells)
+    {
+        if (context == null || context.Caster == null || context.Caster.RoomContext == null || context.Caster.RoomContext.RoomGrid == null)
+            return Mathf.Max(0f, lineLengthInCells);
+
+        Vector2 cellWorldSize = context.Caster.RoomContext.RoomGrid.CellWorldSize;
+        float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
+        return Mathf.Max(0f, lineLengthInCells) * Mathf.Max(0.01f, cellStep);
+    }
+
+    private static float ResolveLineTolerance(SkillCastContext context)
+    {
+        if (context == null || context.Caster == null || context.Caster.RoomContext == null || context.Caster.RoomContext.RoomGrid == null)
+            return 0.5f;
+
+        Vector2 cellWorldSize = context.Caster.RoomContext.RoomGrid.CellWorldSize;
+        float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
+        return Mathf.Max(0.1f, cellStep * 0.35f);
+    }
+
     private static void TryAddUniqueTarget(List<Unit> results, Unit candidate)
     {
         if (results == null || candidate == null || results.Contains(candidate))
@@ -200,5 +335,34 @@ public static class SkillTargetCollector
     private static string FormatWorldPosition(Vector3 position)
     {
         return $"({position.x:F2}, {position.y:F2}, {position.z:F2})";
+    }
+
+    private static string FormatWorldDirection(Vector3 direction)
+    {
+        return $"({direction.x:F2}, {direction.y:F2}, {direction.z:F2})";
+    }
+
+    private static string FormatProjectedUnits(List<TargetProjection> projections)
+    {
+        if (projections == null || projections.Count == 0)
+            return "[None]";
+
+        string[] labels = new string[projections.Count];
+        for (int i = 0; i < projections.Count; i++)
+            labels[i] = $"{FormatUnit(projections[i].Target)}@{projections[i].Projection:F2}";
+
+        return string.Join(", ", labels);
+    }
+
+    private readonly struct TargetProjection
+    {
+        public TargetProjection(Unit target, float projection)
+        {
+            Target = target;
+            Projection = projection;
+        }
+
+        public Unit Target { get; }
+        public float Projection { get; }
     }
 }

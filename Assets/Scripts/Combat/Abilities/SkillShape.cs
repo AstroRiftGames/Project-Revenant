@@ -2,5 +2,6 @@ public enum SkillShape
 {
     SingleTarget,
     Splash,
-    Area
+    Area,
+    PiercingLine
 }

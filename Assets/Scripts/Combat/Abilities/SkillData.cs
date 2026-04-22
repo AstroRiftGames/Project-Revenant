@@ -9,6 +9,7 @@ public class SkillData : ScriptableObject
     [SerializeField] private float _cooldown = 5f;
     [SerializeField] private int _rangeInCells = 1;
     [SerializeField] private int _splashRadiusInCells = 1;
+    [SerializeField] private int _lineLengthInCells = 1;
     [SerializeField] private SkillTargetMode _targetMode = SkillTargetMode.CurrentTarget;
     [SerializeField] private SkillShape _shape = SkillShape.SingleTarget;
     [SerializeField] private SkillRequirements _requirements = new();
@@ -21,6 +22,7 @@ public class SkillData : ScriptableObject
     public int RangeInCells => Mathf.Max(0, _rangeInCells);
     public int SplashRadiusInCells => Mathf.Max(0, _splashRadiusInCells);
     public int ImpactRadiusInCells => SplashRadiusInCells;
+    public int LineLengthInCells => Mathf.Max(0, _lineLengthInCells);
     public SkillTargetMode TargetMode => _targetMode;
     public SkillShape Shape => _shape;
     public SkillRequirements Requirements => _requirements;
