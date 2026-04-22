@@ -20,6 +20,7 @@ public static class SkillTargetCollector
             SkillShape.Splash => TryCollectSplashTargets(context, results, debugLog),
             SkillShape.Area => TryCollectAreaTargets(context, results, debugLog),
             SkillShape.PiercingLine => TryCollectPiercingLineTargets(context, results, debugLog),
+            SkillShape.Line => TryCollectLineTargets(context, results, debugLog),
             _ => false
         };
     }
@@ -49,88 +50,40 @@ public static class SkillTargetCollector
 
     private static bool TryCollectPiercingLineTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
     {
-        Unit caster = context != null ? context.Caster : null;
-        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        SkillData skill = context != null ? context.Skill : null;
-        if (caster == null || primaryTarget == null || skill == null || !IsValidImpactTarget(context, primaryTarget))
+        if (!TryBuildLineResolution(context, out LineResolution resolution))
             return false;
 
-        int lineLengthInCells = skill.LineLengthInCells;
-        if (lineLengthInCells <= 0)
-            return false;
-
-        RoomContext roomContext = caster.RoomContext;
-        IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
-        if (roomUnits == null)
-            return false;
-
-        Vector3 lineOrigin = caster.Position;
-        Vector3 lineDirection = primaryTarget.Position - lineOrigin;
-        lineDirection.z = 0f;
-
-        if (lineDirection.sqrMagnitude <= Mathf.Epsilon)
-            return false;
-
-        lineDirection.Normalize();
-
-        float lineLengthWorld = ResolveLineLengthWorld(context, lineLengthInCells);
-        float lineTolerance = ResolveLineTolerance(context);
-        int skippedInvalid = 0;
-        int skippedBehindCaster = 0;
-        int skippedPastLength = 0;
-        int skippedOffLine = 0;
-
-        var projections = new List<TargetProjection>(roomUnits.Count);
-
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-            if (!IsValidImpactTarget(context, candidate))
-            {
-                skippedInvalid++;
-                continue;
-            }
-
-            if (!TryResolveLineProjection(lineOrigin, lineDirection, candidate.Position, out float projection, out float distanceToLine))
-            {
-                skippedOffLine++;
-                continue;
-            }
-
-            if (projection < 0f)
-            {
-                skippedBehindCaster++;
-                continue;
-            }
-
-            if (projection > lineLengthWorld)
-            {
-                skippedPastLength++;
-                continue;
-            }
-
-            if (distanceToLine > lineTolerance)
-            {
-                skippedOffLine++;
-                continue;
-            }
-
-            projections.Add(new TargetProjection(candidate, projection));
-        }
-
-        projections.Sort(static (left, right) => left.Projection.CompareTo(right.Projection));
-
-        for (int i = 0; i < projections.Count; i++)
-            TryAddUniqueTarget(results, projections[i].Target);
+        for (int i = 0; i < resolution.Projections.Count; i++)
+            TryAddUniqueTarget(results, resolution.Projections[i].Target);
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved piercing line. " +
-            $"Primary: {FormatUnit(primaryTarget)}. Origin: {FormatWorldPosition(lineOrigin)}. " +
-            $"Direction: {FormatWorldDirection(lineDirection)}. Length: {lineLengthInCells} cells ({lineLengthWorld:F2} world). " +
-            $"Tolerance: {lineTolerance:F2}. Impacted ({results.Count}): {FormatUnits(results)}. " +
-            $"Ordered projections: {FormatProjectedUnits(projections)}. " +
-            $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped behind caster: {skippedBehindCaster}. " +
-            $"Skipped past length: {skippedPastLength}. Skipped off line: {skippedOffLine}.");
+            $"[SkillTargetCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved piercing line. " +
+            $"Primary: {FormatUnit(resolution.PrimaryTarget)}. Origin: {FormatWorldPosition(resolution.LineOrigin)}. " +
+            $"Direction: {FormatWorldDirection(resolution.LineDirection)}. Length: {resolution.LineLengthInCells} cells ({resolution.LineLengthWorld:F2} world). " +
+            $"Tolerance: {resolution.LineTolerance:F2}. Impacted ({results.Count}): {FormatUnits(results)}. " +
+            $"Ordered projections: {FormatProjectedUnits(resolution.Projections)}. " +
+            $"Skipped invalid/allied/dead: {resolution.SkippedInvalid}. Skipped behind caster: {resolution.SkippedBehindCaster}. " +
+            $"Skipped past length: {resolution.SkippedPastLength}. Skipped off line: {resolution.SkippedOffLine}.");
+
+        return results.Count > 0;
+    }
+
+    private static bool TryCollectLineTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        if (!TryBuildLineResolution(context, out LineResolution resolution))
+            return false;
+
+        if (resolution.Projections.Count > 0)
+            TryAddUniqueTarget(results, resolution.Projections[0].Target);
+
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved line. " +
+            $"Primary: {FormatUnit(resolution.PrimaryTarget)}. Origin: {FormatWorldPosition(resolution.LineOrigin)}. " +
+            $"Direction: {FormatWorldDirection(resolution.LineDirection)}. Length: {resolution.LineLengthInCells} cells ({resolution.LineLengthWorld:F2} world). " +
+            $"Tolerance: {resolution.LineTolerance:F2}. First impact: {FormatUnit(results.Count > 0 ? results[0] : null)}. " +
+            $"Ordered projections: {FormatProjectedUnits(resolution.Projections)}. " +
+            $"Skipped invalid/allied/dead: {resolution.SkippedInvalid}. Skipped behind caster: {resolution.SkippedBehindCaster}. " +
+            $"Skipped past length: {resolution.SkippedPastLength}. Skipped off line: {resolution.SkippedOffLine}.");
 
         return results.Count > 0;
     }
@@ -303,6 +256,98 @@ public static class SkillTargetCollector
         return Mathf.Max(0.1f, cellStep * 0.35f);
     }
 
+    private static bool TryBuildLineResolution(SkillCastContext context, out LineResolution resolution)
+    {
+        resolution = default;
+
+        Unit caster = context != null ? context.Caster : null;
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        SkillData skill = context != null ? context.Skill : null;
+        if (caster == null || primaryTarget == null || skill == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        int lineLengthInCells = skill.LineLengthInCells;
+        if (lineLengthInCells <= 0)
+            return false;
+
+        RoomContext roomContext = caster.RoomContext;
+        IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
+        if (roomUnits == null)
+            return false;
+
+        Vector3 lineOrigin = caster.Position;
+        Vector3 lineDirection = primaryTarget.Position - lineOrigin;
+        lineDirection.z = 0f;
+
+        if (lineDirection.sqrMagnitude <= Mathf.Epsilon)
+            return false;
+
+        lineDirection.Normalize();
+
+        float lineLengthWorld = ResolveLineLengthWorld(context, lineLengthInCells);
+        float lineTolerance = ResolveLineTolerance(context);
+        int skippedInvalid = 0;
+        int skippedBehindCaster = 0;
+        int skippedPastLength = 0;
+        int skippedOffLine = 0;
+
+        var projections = new List<TargetProjection>(roomUnits.Count);
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!IsValidImpactTarget(context, candidate))
+            {
+                skippedInvalid++;
+                continue;
+            }
+
+            if (!TryResolveLineProjection(lineOrigin, lineDirection, candidate.Position, out float projection, out float distanceToLine))
+            {
+                skippedOffLine++;
+                continue;
+            }
+
+            if (projection < 0f)
+            {
+                skippedBehindCaster++;
+                continue;
+            }
+
+            if (projection > lineLengthWorld)
+            {
+                skippedPastLength++;
+                continue;
+            }
+
+            if (distanceToLine > lineTolerance)
+            {
+                skippedOffLine++;
+                continue;
+            }
+
+            projections.Add(new TargetProjection(candidate, projection));
+        }
+
+        projections.Sort(static (left, right) => left.Projection.CompareTo(right.Projection));
+
+        resolution = new LineResolution(
+            caster,
+            primaryTarget,
+            skill,
+            lineOrigin,
+            lineDirection,
+            lineLengthInCells,
+            lineLengthWorld,
+            lineTolerance,
+            skippedInvalid,
+            skippedBehindCaster,
+            skippedPastLength,
+            skippedOffLine,
+            projections);
+        return true;
+    }
+
     private static void TryAddUniqueTarget(List<Unit> results, Unit candidate)
     {
         if (results == null || candidate == null || results.Contains(candidate))
@@ -364,5 +409,52 @@ public static class SkillTargetCollector
 
         public Unit Target { get; }
         public float Projection { get; }
+    }
+
+    private readonly struct LineResolution
+    {
+        public LineResolution(
+            Unit caster,
+            Unit primaryTarget,
+            SkillData skill,
+            Vector3 lineOrigin,
+            Vector3 lineDirection,
+            int lineLengthInCells,
+            float lineLengthWorld,
+            float lineTolerance,
+            int skippedInvalid,
+            int skippedBehindCaster,
+            int skippedPastLength,
+            int skippedOffLine,
+            List<TargetProjection> projections)
+        {
+            Caster = caster;
+            PrimaryTarget = primaryTarget;
+            Skill = skill;
+            LineOrigin = lineOrigin;
+            LineDirection = lineDirection;
+            LineLengthInCells = lineLengthInCells;
+            LineLengthWorld = lineLengthWorld;
+            LineTolerance = lineTolerance;
+            SkippedInvalid = skippedInvalid;
+            SkippedBehindCaster = skippedBehindCaster;
+            SkippedPastLength = skippedPastLength;
+            SkippedOffLine = skippedOffLine;
+            Projections = projections;
+        }
+
+        public Unit Caster { get; }
+        public Unit PrimaryTarget { get; }
+        public SkillData Skill { get; }
+        public Vector3 LineOrigin { get; }
+        public Vector3 LineDirection { get; }
+        public int LineLengthInCells { get; }
+        public float LineLengthWorld { get; }
+        public float LineTolerance { get; }
+        public int SkippedInvalid { get; }
+        public int SkippedBehindCaster { get; }
+        public int SkippedPastLength { get; }
+        public int SkippedOffLine { get; }
+        public List<TargetProjection> Projections { get; }
     }
 }

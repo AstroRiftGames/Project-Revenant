@@ -18,6 +18,8 @@ GameObject:
   - component: {fileID: 8484302720107290866}
   - component: {fileID: 7080455202298873013}
   - component: {fileID: 486498612701009212}
+  - component: {fileID: 1184974837264015501}
+  - component: {fileID: 1184974837264015502}
   - component: {fileID: 7971504350758281878}
   - component: {fileID: 5526601745238543561}
   - component: {fileID: 453047599472417330}
@@ -204,6 +206,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 202c52e69049481b8fa6721cf6176698, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1184974837264015501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168480000053724679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a3f5a4b9f1d4d0e8c3a6b1d2e4f7091, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _overrideSkill: {fileID: 0}
+  _debugLogs: 0
+--- !u!114 &1184974837264015502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168480000053724679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b7f63bf6fb34d06b6554f2ddcb32748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _popupPrefab: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
+  _popupOffset: {x: 0, y: 0.85, z: 0}
+  _impactSkillColor: {r: 1, g: 0.72, b: 0.2, a: 1}
+  _selfSkillColor: {r: 0.35, g: 1, b: 0.55, a: 1}
+  _debugLogs: 0
 --- !u!58 &7971504350758281878
 CircleCollider2D:
   m_ObjectHideFlags: 0
