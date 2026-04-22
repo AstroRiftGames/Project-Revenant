@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -10,6 +11,8 @@ public class SkillCaster : MonoBehaviour
     private Unit _unit;
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
+
+    public event Action<SkillCastContext, Unit> SkillUsed;
 
     public SkillData Skill => ResolveSkill();
     public bool HasSkill => Skill != null;
@@ -80,6 +83,9 @@ public class SkillCaster : MonoBehaviour
         }
 
         _state.StartCooldown(skill.Cooldown);
+        int listenerCount = SkillUsed?.GetInvocationList().Length ?? 0;
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} emitting SkillUsed for '{skill.DisplayName}' with {listenerCount} listener(s).");
+        SkillUsed?.Invoke(context, resolvedTarget);
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {FormatUnitName(resolvedTarget)}.");
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} started cooldown for '{skill.DisplayName}': {skill.Cooldown:F2}s.");
         return true;
