@@ -1,4 +1,5 @@
 public enum SkillShape
 {
-    SingleTarget
+    SingleTarget,
+    Splash
 }

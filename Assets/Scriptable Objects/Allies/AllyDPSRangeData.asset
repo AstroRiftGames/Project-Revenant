@@ -23,7 +23,7 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
   softCurrencyRewardOnSoulAbsorb: 1
-  skill: {fileID: 11400000, guid: 2b8e86c25a4c4d21863c5ad6bc84f4ec, type: 2}
+  skill: {fileID: 11400000, guid: 15b9d98995244ec59c0ad550f149c5b4, type: 2}
   stats:
     maxHealth: 10
     attackDamage: 3

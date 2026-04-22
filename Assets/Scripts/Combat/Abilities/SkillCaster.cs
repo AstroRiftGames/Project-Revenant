@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -11,6 +12,7 @@ public class SkillCaster : MonoBehaviour
     private Unit _unit;
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
+    private readonly List<Unit> _impactedUnitsBuffer = new();
 
     public event Action<SkillCastContext, Unit> SkillUsed;
 
@@ -69,24 +71,28 @@ public class SkillCaster : MonoBehaviour
         }
 
         SkillCastContext context = new(_unit, skill, primaryTarget);
-        Unit resolvedTarget = ResolveShapedTarget(context);
-        if (resolvedTarget == null)
+        _impactedUnitsBuffer.Clear();
+        if (!SkillTargetCollector.TryCollectTargets(context, _impactedUnitsBuffer, LogDebug))
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' shape '{skill.Shape}' produced no target.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' shape '{skill.Shape}' produced no impacted targets.");
             return false;
         }
 
-        if (!ApplyEffects(skill, context, resolvedTarget))
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved primary target {FormatUnitName(primaryTarget)} " +
+            $"and {_impactedUnitsBuffer.Count} impacted unit(s): {FormatUnits(_impactedUnitsBuffer)}.");
+
+        if (!ApplyEffects(skill, context, _impactedUnitsBuffer))
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to {FormatUnitName(resolvedTarget)}.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
             return false;
         }
 
         _state.StartCooldown(skill.Cooldown);
         int listenerCount = SkillUsed?.GetInvocationList().Length ?? 0;
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} emitting SkillUsed for '{skill.DisplayName}' with {listenerCount} listener(s).");
-        SkillUsed?.Invoke(context, resolvedTarget);
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {FormatUnitName(resolvedTarget)}.");
+        SkillUsed?.Invoke(context, primaryTarget);
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_impactedUnitsBuffer.Count} impacted unit(s). Primary target: {FormatUnitName(primaryTarget)}.");
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} started cooldown for '{skill.DisplayName}': {skill.Cooldown:F2}s.");
         return true;
     }
@@ -159,21 +165,9 @@ public class SkillCaster : MonoBehaviour
         return skill != null && skill.Requirements != null && skill.Requirements.requiresTarget;
     }
 
-    private static Unit ResolveShapedTarget(SkillCastContext context)
+    private static bool ApplyEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
     {
-        if (context == null || context.Skill == null)
-            return null;
-
-        return context.Skill.Shape switch
-        {
-            SkillShape.SingleTarget => context.PrimaryTarget,
-            _ => null
-        };
-    }
-
-    private static bool ApplyEffects(SkillData skill, SkillCastContext context, Unit resolvedTarget)
-    {
-        if (skill == null || context == null || resolvedTarget == null)
+        if (skill == null || context == null || impactedUnits == null || impactedUnits.Count == 0)
             return false;
 
         SkillEffect[] effects = skill.Effects;
@@ -188,7 +182,14 @@ public class SkillCaster : MonoBehaviour
             if (effect == null)
                 continue;
 
-            anyApplied |= effect.Apply(context, resolvedTarget);
+            for (int targetIndex = 0; targetIndex < impactedUnits.Count; targetIndex++)
+            {
+                Unit impactedUnit = impactedUnits[targetIndex];
+                if (impactedUnit == null)
+                    continue;
+
+                anyApplied |= effect.Apply(context, impactedUnit);
+            }
         }
 
         return anyApplied;
@@ -228,5 +229,17 @@ public class SkillCaster : MonoBehaviour
 
         string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
         return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+    }
+
+    private static string FormatUnits(List<Unit> units)
+    {
+        if (units == null || units.Count == 0)
+            return "[None]";
+
+        string[] labels = new string[units.Count];
+        for (int i = 0; i < units.Count; i++)
+            labels[i] = FormatUnitName(units[i]);
+
+        return string.Join(", ", labels);
     }
 }

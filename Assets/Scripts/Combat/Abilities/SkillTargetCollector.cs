@@ -1,0 +1,169 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public static class SkillTargetCollector
+{
+    public static bool TryCollectTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog = null)
+    {
+        if (results == null)
+            return false;
+
+        results.Clear();
+
+        if (context == null || context.Skill == null || context.Caster == null)
+            return false;
+
+        return context.Skill.Shape switch
+        {
+            SkillShape.SingleTarget => TryCollectSingleTarget(context, results, debugLog),
+            SkillShape.Splash => TryCollectSplashTargets(context, results, debugLog),
+            _ => false
+        };
+    }
+
+    private static bool TryCollectSingleTarget(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        results.Add(primaryTarget);
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved primary target " +
+            $"{FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
+        return true;
+    }
+
+    private static bool TryCollectSplashTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        results.Add(primaryTarget);
+        int skippedDuplicatePrimary = 0;
+        int skippedInvalid = 0;
+        int skippedOutOfRadius = 0;
+
+        Unit caster = context.Caster;
+        RoomContext roomContext = caster != null ? caster.RoomContext : null;
+        IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
+        if (roomUnits == null)
+        {
+            debugLog?.Invoke(
+                $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved splash with only " +
+                $"primary target {FormatUnit(primaryTarget)} because no room unit list was available.");
+            return results.Count > 0;
+        }
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (ReferenceEquals(candidate, primaryTarget))
+            {
+                skippedDuplicatePrimary++;
+                continue;
+            }
+
+            if (!IsValidImpactTarget(context, candidate))
+            {
+                skippedInvalid++;
+                continue;
+            }
+
+            if (!IsWithinSplashRadius(context, primaryTarget, candidate))
+            {
+                skippedOutOfRadius++;
+                continue;
+            }
+
+            results.Add(candidate);
+        }
+
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved splash. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Radius: {context.Skill.SplashRadiusInCells}. " +
+            $"Impacted ({results.Count}): {FormatUnits(results)}. " +
+            $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
+            $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped out of radius: {skippedOutOfRadius}.");
+
+        return results.Count > 0;
+    }
+
+    private static bool IsValidImpactTarget(SkillCastContext context, Unit candidate)
+    {
+        if (context == null || candidate == null)
+            return false;
+
+        Unit caster = context.Caster;
+        if (caster == null)
+            return false;
+
+        if (!candidate.gameObject.activeInHierarchy || !candidate.IsAlive)
+            return false;
+
+        if (!ReferenceEquals(candidate.RoomContext, caster.RoomContext))
+            return false;
+
+        SkillRequirements requirements = context.Skill != null ? context.Skill.Requirements : null;
+        return requirements == null || requirements.AreMet(caster, candidate);
+    }
+
+    private static bool IsWithinSplashRadius(SkillCastContext context, Unit primaryTarget, Unit candidate)
+    {
+        if (context == null || primaryTarget == null || candidate == null)
+            return false;
+
+        int radiusInCells = context.Skill != null ? context.Skill.SplashRadiusInCells : 0;
+        if (radiusInCells <= 0)
+            return false;
+
+        RoomGrid grid = context.Caster != null && context.Caster.RoomContext != null
+            ? context.Caster.RoomContext.RoomGrid
+            : null;
+
+        if (grid == null)
+        {
+            float distance = Vector3.Distance(primaryTarget.Position, candidate.Position);
+            return distance <= radiusInCells;
+        }
+
+        Vector3Int primaryCell = ResolveUnitCell(grid, primaryTarget);
+        Vector3Int candidateCell = ResolveUnitCell(grid, candidate);
+        return GridNavigationUtility.IsWithinCellRange(primaryCell, candidateCell, radiusInCells);
+    }
+
+    private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
+    {
+        if (grid == null || unit == null)
+            return Vector3Int.zero;
+
+        UnitMovement movement = unit.GetComponent<UnitMovement>();
+        if (movement != null && movement.TryGetLogicalCell(out Vector3Int cell))
+            return cell;
+
+        return grid.WorldToCell(unit.Position);
+    }
+
+    private static string FormatUnits(List<Unit> units)
+    {
+        if (units == null || units.Count == 0)
+            return "[None]";
+
+        string[] labels = new string[units.Count];
+        for (int i = 0; i < units.Count; i++)
+            labels[i] = FormatUnit(units[i]);
+
+        return string.Join(", ", labels);
+    }
+
+    private static string FormatUnit(Unit unit)
+    {
+        if (unit == null)
+            return "[None]";
+
+        string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
+        return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+    }
+}
