@@ -122,6 +122,7 @@ public class FusionController : MonoBehaviour
             UnitData newUnitData = ScriptableObject.CreateInstance<UnitData>();
             newUnitData.unitId = result.ResultCreature.Id;
             newUnitData.displayName = $"Fused {result.ResultCreature.UnitFaction}";
+            newUnitData.isFusion = true;
             newUnitData.sprite = result.ResultCreature.Visual;
             newUnitData.team = UnitTeam.NecromancerAlly;
             newUnitData.faction = result.ResultCreature.UnitFaction;
