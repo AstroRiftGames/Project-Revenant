@@ -21,6 +21,7 @@ public static class SkillTargetCollector
             SkillShape.Area => TryCollectAreaTargets(context, results, debugLog),
             SkillShape.PiercingLine => TryCollectPiercingLineTargets(context, results, debugLog),
             SkillShape.Line => TryCollectLineTargets(context, results, debugLog),
+            SkillShape.MultiTarget => TryCollectMultiTarget(context, results, debugLog),
             _ => false
         };
     }
@@ -84,6 +85,86 @@ public static class SkillTargetCollector
             $"Ordered projections: {FormatProjectedUnits(resolution.Projections)}. " +
             $"Skipped invalid/allied/dead: {resolution.SkippedInvalid}. Skipped behind caster: {resolution.SkippedBehindCaster}. " +
             $"Skipped past length: {resolution.SkippedPastLength}. Skipped off line: {resolution.SkippedOffLine}.");
+
+        return results.Count > 0;
+    }
+
+    private static bool TryCollectMultiTarget(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        results.Add(primaryTarget);
+
+        Unit caster = context.Caster;
+        SkillData skill = context.Skill;
+        RoomContext roomContext = caster != null ? caster.RoomContext : null;
+        IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
+        int maxTargets = skill != null ? skill.MaxTargets : 1;
+        int skippedDuplicatePrimary = 0;
+        int skippedInvalid = 0;
+        int skippedOutOfRadius = 0;
+        int skippedOverLimit = 0;
+
+        if (roomUnits != null && maxTargets > 1)
+        {
+            var candidates = new List<DistanceCandidate>(roomUnits.Count);
+
+            for (int i = 0; i < roomUnits.Count; i++)
+            {
+                Unit candidate = roomUnits[i];
+                if (ReferenceEquals(candidate, primaryTarget))
+                {
+                    skippedDuplicatePrimary++;
+                    continue;
+                }
+
+                if (!IsValidImpactTarget(context, candidate))
+                {
+                    skippedInvalid++;
+                    continue;
+                }
+
+                if (!IsWithinImpactRadius(context, primaryTarget, candidate))
+                {
+                    skippedOutOfRadius++;
+                    continue;
+                }
+
+                candidates.Add(new DistanceCandidate(candidate, ResolveDistanceFromPrimary(context, primaryTarget, candidate)));
+            }
+
+            candidates.Sort(static (left, right) =>
+            {
+                int distanceComparison = left.Distance.CompareTo(right.Distance);
+                if (distanceComparison != 0)
+                    return distanceComparison;
+
+                return left.Target.GetInstanceID().CompareTo(right.Target.GetInstanceID());
+            });
+
+            int remainingSlots = Mathf.Max(0, maxTargets - 1);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                if (i < remainingSlots)
+                {
+                    TryAddUniqueTarget(results, candidates[i].Target);
+                    continue;
+                }
+
+                skippedOverLimit++;
+            }
+        }
+
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved multi target. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(primaryTarget.Position)}. " +
+            $"Radius: {skill.ImpactRadiusInCells}. Max targets: {maxTargets}. " +
+            $"Impacted ({results.Count}): {FormatUnits(results)}. " +
+            $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
+            $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped out of radius: {skippedOutOfRadius}. " +
+            $"Skipped over limit: {skippedOverLimit}.");
 
         return results.Count > 0;
     }
@@ -254,6 +335,23 @@ public static class SkillTargetCollector
         Vector2 cellWorldSize = context.Caster.RoomContext.RoomGrid.CellWorldSize;
         float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
         return Mathf.Max(0.1f, cellStep * 0.35f);
+    }
+
+    private static float ResolveDistanceFromPrimary(SkillCastContext context, Unit primaryTarget, Unit candidate)
+    {
+        if (context == null || primaryTarget == null || candidate == null)
+            return float.MaxValue;
+
+        RoomGrid grid = context.Caster != null && context.Caster.RoomContext != null
+            ? context.Caster.RoomContext.RoomGrid
+            : null;
+
+        if (grid == null)
+            return Vector3.Distance(primaryTarget.Position, candidate.Position);
+
+        Vector3Int primaryCell = ResolveUnitCell(grid, primaryTarget);
+        Vector3Int candidateCell = ResolveUnitCell(grid, candidate);
+        return GridNavigationUtility.GetCellDistance(primaryCell, candidateCell);
     }
 
     private static bool TryBuildLineResolution(SkillCastContext context, out LineResolution resolution)
@@ -456,5 +554,17 @@ public static class SkillTargetCollector
         public int SkippedPastLength { get; }
         public int SkippedOffLine { get; }
         public List<TargetProjection> Projections { get; }
+    }
+
+    private readonly struct DistanceCandidate
+    {
+        public DistanceCandidate(Unit target, float distance)
+        {
+            Target = target;
+            Distance = distance;
+        }
+
+        public Unit Target { get; }
+        public float Distance { get; }
     }
 }
