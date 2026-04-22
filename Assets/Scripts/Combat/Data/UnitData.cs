@@ -39,6 +39,7 @@ public class UnitData : ScriptableObject
 {
     public string unitId;
     public string displayName;
+    public bool isFusion;
     public GameObject unitPrefab;
     public UnitTeam team;
     public UnitRole role;

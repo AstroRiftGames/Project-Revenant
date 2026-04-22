@@ -143,6 +143,7 @@ public class FusionUIManager : MonoBehaviour
         foreach (var member in NecromancerParty.Instance.Members)
         {
             if (member == null || !member.IsAlive) continue;
+            if (member.UnitDefinition != null && member.UnitDefinition.isFusion) continue;
 
             bool isLocked = false;
             if (_selectingSlot == 1 && member == _memberB) isLocked = true;
@@ -177,7 +178,11 @@ public class FusionUIManager : MonoBehaviour
         if (result.IsSuccess)
         {
             if (_resultTitleText != null) _resultTitleText.text = "FUSION SUCCESFUL";
-            if (_resultDescText != null) _resultDescText.text = string.Empty;
+            if (_resultDescText != null) 
+            {
+                _resultDescText.text = string.Empty;
+                _resultDescText.gameObject.SetActive(false);
+            }
             if (_resultCard != null)
             {
                 _resultCard.gameObject.SetActive(true);
@@ -187,7 +192,11 @@ public class FusionUIManager : MonoBehaviour
         else
         {
             if (_resultTitleText != null) _resultTitleText.text = "FUSION FAILED";
-            if (_resultDescText != null) _resultDescText.text = $"{result.RemainsAmount} Fusion Remains obtained.";
+            if (_resultDescText != null)
+            {
+                _resultDescText.text = $"{result.RemainsAmount} Fusion Remains obtained.";
+                _resultDescText.gameObject.SetActive(true);
+            }
             if (_resultCard != null) _resultCard.gameObject.SetActive(false);
         }
 

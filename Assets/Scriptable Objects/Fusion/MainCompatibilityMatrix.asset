@@ -30,7 +30,7 @@ MonoBehaviour:
   - Factions:
       FactionA: 1
       FactionB: 5
-    RoleOfFactionA: 2
+    RoleOfFactionA: 0
     RoleOfFactionB: 0
     IsCompatible: 1
     DominantFaction: 5
