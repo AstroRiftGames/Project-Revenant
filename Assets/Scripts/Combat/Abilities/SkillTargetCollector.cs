@@ -18,6 +18,7 @@ public static class SkillTargetCollector
         {
             SkillShape.SingleTarget => TryCollectSingleTarget(context, results, debugLog),
             SkillShape.Splash => TryCollectSplashTargets(context, results, debugLog),
+            SkillShape.Area => TryCollectAreaTargets(context, results, debugLog),
             _ => false
         };
     }
@@ -37,11 +38,28 @@ public static class SkillTargetCollector
 
     private static bool TryCollectSplashTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
     {
+        return TryCollectTargetsInRadius(context, results, debugLog, includePrimaryTargetFirst: true, "splash");
+    }
+
+    private static bool TryCollectAreaTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        return TryCollectTargetsInRadius(context, results, debugLog, includePrimaryTargetFirst: false, "area");
+    }
+
+    private static bool TryCollectTargetsInRadius(
+        SkillCastContext context,
+        List<Unit> results,
+        Action<string> debugLog,
+        bool includePrimaryTargetFirst,
+        string shapeName)
+    {
         Unit primaryTarget = context != null ? context.PrimaryTarget : null;
         if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
             return false;
 
-        results.Add(primaryTarget);
+        if (includePrimaryTargetFirst)
+            results.Add(primaryTarget);
+
         int skippedDuplicatePrimary = 0;
         int skippedInvalid = 0;
         int skippedOutOfRadius = 0;
@@ -51,8 +69,11 @@ public static class SkillTargetCollector
         IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
         if (roomUnits == null)
         {
+            if (!includePrimaryTargetFirst)
+                results.Add(primaryTarget);
+
             debugLog?.Invoke(
-                $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved splash with only " +
+                $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved {shapeName} with only " +
                 $"primary target {FormatUnit(primaryTarget)} because no room unit list was available.");
             return results.Count > 0;
         }
@@ -60,7 +81,7 @@ public static class SkillTargetCollector
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (ReferenceEquals(candidate, primaryTarget))
+            if (includePrimaryTargetFirst && ReferenceEquals(candidate, primaryTarget))
             {
                 skippedDuplicatePrimary++;
                 continue;
@@ -72,18 +93,19 @@ public static class SkillTargetCollector
                 continue;
             }
 
-            if (!IsWithinSplashRadius(context, primaryTarget, candidate))
+            if (!IsWithinImpactRadius(context, primaryTarget, candidate))
             {
                 skippedOutOfRadius++;
                 continue;
             }
 
-            results.Add(candidate);
+            TryAddUniqueTarget(results, candidate);
         }
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved splash. " +
-            $"Primary: {FormatUnit(primaryTarget)}. Radius: {context.Skill.SplashRadiusInCells}. " +
+            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved {shapeName}. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(primaryTarget.Position)}. " +
+            $"Radius: {context.Skill.ImpactRadiusInCells}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
             $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
             $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped out of radius: {skippedOutOfRadius}.");
@@ -110,12 +132,12 @@ public static class SkillTargetCollector
         return requirements == null || requirements.AreMet(caster, candidate);
     }
 
-    private static bool IsWithinSplashRadius(SkillCastContext context, Unit primaryTarget, Unit candidate)
+    private static bool IsWithinImpactRadius(SkillCastContext context, Unit primaryTarget, Unit candidate)
     {
         if (context == null || primaryTarget == null || candidate == null)
             return false;
 
-        int radiusInCells = context.Skill != null ? context.Skill.SplashRadiusInCells : 0;
+        int radiusInCells = context.Skill != null ? context.Skill.ImpactRadiusInCells : 0;
         if (radiusInCells <= 0)
             return false;
 
@@ -146,6 +168,14 @@ public static class SkillTargetCollector
         return grid.WorldToCell(unit.Position);
     }
 
+    private static void TryAddUniqueTarget(List<Unit> results, Unit candidate)
+    {
+        if (results == null || candidate == null || results.Contains(candidate))
+            return;
+
+        results.Add(candidate);
+    }
+
     private static string FormatUnits(List<Unit> units)
     {
         if (units == null || units.Count == 0)
@@ -165,5 +195,10 @@ public static class SkillTargetCollector
 
         string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
         return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+    }
+
+    private static string FormatWorldPosition(Vector3 position)
+    {
+        return $"({position.x:F2}, {position.y:F2}, {position.z:F2})";
     }
 }

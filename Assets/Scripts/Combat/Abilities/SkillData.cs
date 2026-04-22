@@ -20,6 +20,7 @@ public class SkillData : ScriptableObject
     public float Cooldown => Mathf.Max(0f, _cooldown);
     public int RangeInCells => Mathf.Max(0, _rangeInCells);
     public int SplashRadiusInCells => Mathf.Max(0, _splashRadiusInCells);
+    public int ImpactRadiusInCells => SplashRadiusInCells;
     public SkillTargetMode TargetMode => _targetMode;
     public SkillShape Shape => _shape;
     public SkillRequirements Requirements => _requirements;
