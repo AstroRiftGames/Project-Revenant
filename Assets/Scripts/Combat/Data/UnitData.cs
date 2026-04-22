@@ -48,5 +48,6 @@ public class UnitData : ScriptableObject
     public Sprite sprite;
     public int tileSize;
     public int softCurrencyRewardOnSoulAbsorb = 1;
+    public SkillData skill;
     public UnitStatsData stats = new();
 }

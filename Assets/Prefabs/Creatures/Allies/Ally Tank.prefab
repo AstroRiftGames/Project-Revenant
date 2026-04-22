@@ -104,6 +104,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7573318591452864001, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
+      propertyPath: _debugLogs
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8823206920075786061, guid: e849b9c54d164c543b3c49d143d75296, type: 3}
       propertyPath: m_Name
       value: Ally Tank

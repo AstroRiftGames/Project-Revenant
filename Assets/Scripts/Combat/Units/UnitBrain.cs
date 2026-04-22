@@ -6,10 +6,12 @@ using UnityEngine;
 public class UnitBrain : MonoBehaviour
 {
     [SerializeField] private bool _debugEncounter = true;
+    [SerializeField] private bool _debugSkillFlow;
 
     private Unit _unit;
     private UnitMovement _movement;
     private TargetingStrategy _targeting;
+    private SkillCaster _skillCaster;
     private IAction _action;
     private Unit _currentTarget;
     private bool _hasLoggedMissingControllerBlock;
@@ -21,6 +23,7 @@ public class UnitBrain : MonoBehaviour
         _unit = GetComponent<Unit>();
         _movement = GetComponent<UnitMovement>();
         _targeting = GetComponent<TargetingStrategy>();
+        _skillCaster = GetComponent<SkillCaster>();
         _action = _unit != null ? _unit.Action : null;
     }
 
@@ -36,13 +39,13 @@ public class UnitBrain : MonoBehaviour
             return;
 
         _currentTarget = _targeting.SelectTarget(_unit, _currentTarget);
-        if (_currentTarget == null)
-            return;
-
         int preferredDistance = _unit.GetPreferredDistance(_action);
         Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
 
         if (TryMaintainSpacing(spacingThreat, preferredDistance))
+            return;
+
+        if (_currentTarget == null)
             return;
 
         if (!_action.IsInRange(_unit, _currentTarget))
@@ -51,8 +54,17 @@ public class UnitBrain : MonoBehaviour
             return;
         }
 
-        if (_action.CanExecute(_unit, _currentTarget))
-            _action.Execute(_unit, _currentTarget);
+        if (!_action.CanExecute(_unit, _currentTarget))
+            return;
+
+        if (_skillCaster != null && _skillCaster.TryUse(_currentTarget))
+        {
+            LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
+            return;
+        }
+
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_currentTarget)}.");
+        _action.Execute(_unit, _currentTarget);
     }
 
     private bool CanActInCurrentEncounter()
@@ -123,5 +135,29 @@ public class UnitBrain : MonoBehaviour
         _hasLoggedMissingControllerBlock = false;
         _hasLoggedDeploymentBlock = false;
         _hasLoggedResolvedBlock = false;
+    }
+
+    private void LogSkillFlow(string message)
+    {
+        if (_debugSkillFlow)
+            Debug.Log(message, this);
+    }
+
+    private string FormatDebugIdentity()
+    {
+        if (_unit == null)
+            return $"[{name}#{GetInstanceID()}|NoUnit]";
+
+        string unitId = !string.IsNullOrWhiteSpace(_unit.Id) ? _unit.Id : "NoUnitId";
+        return $"[{_unit.name}#{_unit.GetInstanceID()}|{unitId}]";
+    }
+
+    private static string FormatUnitIdentity(Unit unit)
+    {
+        if (unit == null)
+            return "[None]";
+
+        string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
+        return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
     }
 }

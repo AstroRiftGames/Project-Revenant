@@ -44,6 +44,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     protected LifeController _lifeController { get; private set; }
     private RecruitableUnitState _recruitableState;
     private UnitAffiliationState _affiliationState;
+    private SkillCaster _skillCaster;
     private SpriteRenderer[] _selectionTintRenderers;
     private Color[] _selectionTintBaseColors;
 
@@ -52,9 +53,9 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     [SerializeField] private GameObject selectionIndicator;
     [SerializeField] private bool _tintSpritesOnSelection = true;
     [SerializeField] private Color _selectionTintColor = new(0.2f, 1f, 1f, 1f);
-    public float CurrentAbilityCooldown => 10f; //TODO: This should come from UnitData when ability system is implemented
-    public float MaxAbilityCooldown => 10; //TODO: This should come from UnitData when ability system is implemented
-    public Sprite AbilityIcon => null;  //TODO: This should come from UnitData when ability system is implemented
+    public float CurrentAbilityCooldown => _skillCaster != null ? _skillCaster.CurrentCooldown : 0f;
+    public float MaxAbilityCooldown => _skillCaster != null ? _skillCaster.MaxCooldown : 0f;
+    public Sprite AbilityIcon => _skillCaster != null ? _skillCaster.Icon : null;
     public Sprite CharacterSprite => _data != null ? _data.sprite : null;
     public bool IsSelected { get; private set; }
     public GameObject SelectionGameObject => gameObject;
@@ -67,6 +68,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
+        _skillCaster = GetComponent<SkillCaster>();
         CacheSelectionTintRenderers();
         ValidateRequiredComponents();
     }
