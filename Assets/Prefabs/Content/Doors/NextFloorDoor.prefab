@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8766580927383969502
+--- !u!1 &3890730912792969200
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,45 +8,40 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7296702845893896971}
-  - component: {fileID: 8252801278466405275}
-  - component: {fileID: 766780661494466540}
-  - component: {fileID: 5929200029135032648}
-  - component: {fileID: 4635420610413773784}
-  - component: {fileID: 2419164565042474516}
-  - component: {fileID: 5106080770047548819}
-  - component: {fileID: 6699449505796052462}
-  - component: {fileID: 1842994846120837584}
+  - component: {fileID: 6882027486419825196}
+  - component: {fileID: 1008924297216019714}
+  - component: {fileID: 6160563127015438679}
+  - component: {fileID: 3407153825531053804}
+  - component: {fileID: 3354782909801588051}
   m_Layer: 7
-  m_Name: NextFloorDoor
+  m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7296702845893896971
+--- !u!4 &6882027486419825196
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8766580927383969502}
+  m_GameObject: {fileID: 3890730912792969200}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3, y: -1.375, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 2591776636801084545}
-  m_Father: {fileID: 0}
+  m_Children: []
+  m_Father: {fileID: 7296702845893896971}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &8252801278466405275
+--- !u!212 &1008924297216019714
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8766580927383969502}
+  m_GameObject: {fileID: 3890730912792969200}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -81,9 +76,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: -1184524795
-  m_SortingLayer: 5
-  m_SortingOrder: 0
+  m_SortingLayerID: 2124394983
+  m_SortingLayer: 2
+  m_SortingOrder: 1
   m_Sprite: {fileID: 4433799791411061636, guid: 07b07b9d36eeaab4bb6c1bb51f7f9f25, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -95,13 +90,13 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &766780661494466540
+--- !u!61 &6160563127015438679
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8766580927383969502}
+  m_GameObject: {fileID: 3890730912792969200}
   m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
@@ -141,14 +136,14 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2, y: 2}
   m_EdgeRadius: 0
---- !u!50 &5929200029135032648
+--- !u!50 &3407153825531053804
 Rigidbody2D:
   serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8766580927383969502}
+  m_GameObject: {fileID: 3890730912792969200}
   m_BodyType: 0
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
@@ -168,6 +163,58 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &3354782909801588051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3890730912792969200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95a38041c98942c0ab52185ec3682e43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _structuralDoor: {fileID: 0}
+  _grid: {fileID: 0}
+  _blocksMovement: 1
+--- !u!1 &8766580927383969502
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7296702845893896971}
+  - component: {fileID: 4635420610413773784}
+  - component: {fileID: 5106080770047548819}
+  - component: {fileID: 6699449505796052462}
+  - component: {fileID: 1842994846120837584}
+  m_Layer: 7
+  m_Name: NextFloorDoor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7296702845893896971
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8766580927383969502}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3, y: -1.375, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 6882027486419825196}
+  - {fileID: 2591776636801084545}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4635420610413773784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,21 +229,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
---- !u!114 &2419164565042474516
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8766580927383969502}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95a38041c98942c0ab52185ec3682e43, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _structuralDoor: {fileID: 4635420610413773784}
-  _grid: {fileID: 0}
-  _blocksMovement: 1
 --- !u!114 &5106080770047548819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -210,7 +242,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _targetRenderers:
-  - {fileID: 8252801278466405275}
+  - {fileID: 1008924297216019714}
   _autoCollectChildRenderers: 1
   _includeInactiveChildren: 1
   _outlineMaterial: {fileID: 2100000, guid: 9ca759d24481836479c7f7ffdf7d1e84, type: 2}
@@ -230,9 +262,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129bc10d23b94df694434028137ab135, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _availabilitySourceComponent: {fileID: 2419164565042474516}
+  _availabilitySourceComponent: {fileID: 0}
   _targetColliders:
-  - {fileID: 766780661494466540}
+  - {fileID: 6160563127015438679}
   _autoCollectChildColliders: 1
   _includeInactiveChildren: 1
   _worldCamera: {fileID: 0}
@@ -249,7 +281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3889f6264cc59f54fb0f264623cd127a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _availabilitySourceComponent: {fileID: 2419164565042474516}
+  _availabilitySourceComponent: {fileID: 0}
   _promptRoot: {fileID: 7282016161577527824}
   _promptText: {fileID: 8735921177371622887}
   _promptMessage: Interact
