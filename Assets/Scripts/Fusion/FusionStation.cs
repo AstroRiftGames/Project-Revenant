@@ -1,29 +1,10 @@
 using System;
 using UnityEngine;
 
-public class FusionStation : MonoBehaviour, IInteractable
+public class FusionStation : BaseStation
 {
-    public event Action OnInteraction;
-    public event Action<bool> OnInteractionAvailabilityChanged;
-
-    public bool IsInteractionAvailable => isActiveAndEnabled;
-
-    private void OnEnable()
-    {
-        OnInteractionAvailabilityChanged?.Invoke(IsInteractionAvailable);
-    }
-
-    private void OnDisable()
-    {
-        OnInteractionAvailabilityChanged?.Invoke(false);
-    }
-
-    public void Interact()
-    {
-        if (!IsInteractionAvailable)
-            return;
-
-        OnInteraction?.Invoke();
-    }
+    // La lógica de IInteractable (OnEnable, OnDisable, Interact) ahora está en BaseStation.
+    // El FusionController ya escucha el evento OnInteraction, por lo que no hace falta más código aquí.
+    // Podrías usar OnInteract() si necesitaras lógica extra antes de disparar el evento.
 }
 

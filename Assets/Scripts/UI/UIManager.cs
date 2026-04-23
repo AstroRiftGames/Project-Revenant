@@ -7,7 +7,10 @@ public enum UIType
     Minimap,
     LOG,
     Currency,
-    ProgressBar
+    ProgressBar,
+    Fusion,
+    Altar,
+    Shop
 }
 
 public class UIManager : MonoBehaviour
