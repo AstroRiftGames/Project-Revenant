@@ -5,5 +5,6 @@ public enum SkillShape
     Area,
     PiercingLine,
     Line,
-    MultiTarget
+    MultiTarget,
+    SpawnMinions
 }

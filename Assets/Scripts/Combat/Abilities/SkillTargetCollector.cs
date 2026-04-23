@@ -22,6 +22,7 @@ public static class SkillTargetCollector
             SkillShape.PiercingLine => TryCollectPiercingLineTargets(context, results, debugLog),
             SkillShape.Line => TryCollectLineTargets(context, results, debugLog),
             SkillShape.MultiTarget => TryCollectMultiTarget(context, results, debugLog),
+            SkillShape.SpawnMinions => TryCollectSpawnMinionAnchor(context, results, debugLog),
             _ => false
         };
     }
@@ -167,6 +168,19 @@ public static class SkillTargetCollector
             $"Skipped over limit: {skippedOverLimit}.");
 
         return results.Count > 0;
+    }
+
+    private static bool TryCollectSpawnMinionAnchor(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    {
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
+        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        results.Add(primaryTarget);
+        debugLog?.Invoke(
+            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved summon anchor. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
+        return true;
     }
 
     private static bool TryCollectTargetsInRadius(
