@@ -50,6 +50,10 @@ public class SummonUnitSkillEffect : SkillEffect
             return false;
         }
 
+        CombatSummonedUnitRuntimeMarker runtimeMarker = instance.GetComponent<CombatSummonedUnitRuntimeMarker>();
+        if (runtimeMarker == null)
+            runtimeMarker = instance.AddComponent<CombatSummonedUnitRuntimeMarker>();
+
         summonedUnit.SetAffiliation(context.Caster.Team, context.Caster.Faction);
 
         if (instance.TryGetComponent(out UnitMovement movement))
@@ -106,4 +110,8 @@ public class SummonUnitSkillEffect : SkillEffect
     {
         return $"({cell.x}, {cell.y}, {cell.z})";
     }
+}
+
+public sealed class CombatSummonedUnitRuntimeMarker : MonoBehaviour
+{
 }

@@ -89,6 +89,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
         _outcome = outcome;
         SetState(CombatRoomState.Resolved);
+        CleanupResolvedCombatRuntime();
         LogDebug($"[{nameof(CombatRoomController)}] Room '{name}' resolved with outcome: {_outcome}.");
         CombatResolved?.Invoke(this, _outcome);
         return true;
@@ -388,6 +389,45 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
         _state = nextState;
         StateChanged?.Invoke(this, _state);
+    }
+
+    private void CleanupResolvedCombatRuntime()
+    {
+        if (_outcome != CombatRoomOutcome.PlayerVictory || _roomContext == null)
+            return;
+
+        CleanupSummonedMinionRuntime();
+        CleanupRoomProjectileRuntime();
+    }
+
+    private void CleanupSummonedMinionRuntime()
+    {
+        CombatSummonedUnitRuntimeMarker[] summonedUnits =
+            _roomContext.GetComponentsInChildren<CombatSummonedUnitRuntimeMarker>(includeInactive: true);
+
+        for (int i = 0; i < summonedUnits.Length; i++)
+        {
+            CombatSummonedUnitRuntimeMarker summonedUnit = summonedUnits[i];
+            if (summonedUnit == null)
+                continue;
+
+            Destroy(summonedUnit.gameObject);
+        }
+    }
+
+    private void CleanupRoomProjectileRuntime()
+    {
+        CombatProjectileVisual[] roomProjectiles =
+            _roomContext.GetComponentsInChildren<CombatProjectileVisual>(includeInactive: true);
+
+        for (int i = 0; i < roomProjectiles.Length; i++)
+        {
+            CombatProjectileVisual projectile = roomProjectiles[i];
+            if (projectile == null)
+                continue;
+
+            Destroy(projectile.gameObject);
+        }
     }
 
     private void LogDebug(string message)
