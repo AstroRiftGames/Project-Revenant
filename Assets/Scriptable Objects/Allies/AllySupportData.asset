@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: AllySupport
   displayName: Support
+  isFusion: 0
   unitPrefab: {fileID: 752399050272230644, guid: 0431511c4e63224409b66ffe98bb0e28, type: 3}
   team: 1
   role: 2
@@ -25,12 +26,13 @@ MonoBehaviour:
   softCurrencyRewardOnSoulAbsorb: 1
   skill: {fileID: 11400000, guid: 73782d1858214b45b0e320b04ce8a79c, type: 2}
   stats:
-    maxHealth: 9
+    maxHealth: 45
     attackDamage: 2
     attackCooldown: 0.75
     attackRangeInCells: 3
     preferredDistanceInCells: 3
     accuracy: 0.9
     evasion: 0.15
+    defense: 0
     moveSpeed: 1
     visionRange: 5

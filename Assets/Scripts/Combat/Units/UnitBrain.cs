@@ -17,6 +17,7 @@ public class UnitBrain : MonoBehaviour
     private bool _hasLoggedMissingControllerBlock;
     private bool _hasLoggedDeploymentBlock;
     private bool _hasLoggedResolvedBlock;
+    private bool _hasLoggedStatusBlock;
 
     private void Awake()
     {
@@ -87,6 +88,17 @@ public class UnitBrain : MonoBehaviour
 
         if (combatRoomController.CanUnitsAct)
         {
+            if (_unit.StatusEffects != null && !_unit.StatusEffects.CanAct)
+            {
+                if (_unit.StatusEffects.RestrictsMovement)
+                    _movement.InterruptMovement();
+
+                LogEncounterGate(
+                    ref _hasLoggedStatusBlock,
+                    $"[UnitBrain] '{name}' blocked by active status effect.");
+                return false;
+            }
+
             ResetEncounterGateLogs();
             return true;
         }
@@ -135,6 +147,7 @@ public class UnitBrain : MonoBehaviour
         _hasLoggedMissingControllerBlock = false;
         _hasLoggedDeploymentBlock = false;
         _hasLoggedResolvedBlock = false;
+        _hasLoggedStatusBlock = false;
     }
 
     private void LogSkillFlow(string message)

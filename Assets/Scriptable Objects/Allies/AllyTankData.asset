@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: TankData
   displayName: Tank
+  isFusion: 0
   unitPrefab: {fileID: 6509095685755233290, guid: c898f9f988bd2c44eb8846f85d853d9b, type: 3}
   team: 1
   role: 0
@@ -25,12 +26,13 @@ MonoBehaviour:
   softCurrencyRewardOnSoulAbsorb: 1
   skill: {fileID: 11400000, guid: 8536450d45044569bca0a92c5e79553d, type: 2}
   stats:
-    maxHealth: 20
+    maxHealth: 100
     attackDamage: 2
     attackCooldown: 0.75
     attackRangeInCells: 1
     preferredDistanceInCells: 1
     accuracy: 0.7
     evasion: 0.2
+    defense: 0
     moveSpeed: 1
     visionRange: 8

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: EnemyDpsRanged1
   displayName: Enemy DPS Ranged
+  isFusion: 0
   unitPrefab: {fileID: 1093855413220510189, guid: 2fc8f7d06accedf4783233aec074bb54, type: 3}
   team: 0
   role: 1
@@ -25,12 +26,13 @@ MonoBehaviour:
   softCurrencyRewardOnSoulAbsorb: 3
   skill: {fileID: 11400000, guid: dcae80f7bc254b8fa09b1846e7c51fdc, type: 2}
   stats:
-    maxHealth: 9
+    maxHealth: 45
     attackDamage: 3
     attackCooldown: 0.75
     attackRangeInCells: 8
     preferredDistanceInCells: 5
     accuracy: 0.7
     evasion: 0.2
+    defense: 0
     moveSpeed: 1.1
     visionRange: 8

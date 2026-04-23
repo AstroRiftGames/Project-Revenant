@@ -11,6 +11,7 @@ public class UnitStatsData
     public int preferredDistanceInCells = 1;
     [Range(0f, 1f)] public float accuracy = 0.85f;
     [Range(0f, 1f)] public float evasion = 0.1f;
+    public int defense = 0;
     public float moveSpeed = 2.5f;
     public float visionRange = 5f;
 }

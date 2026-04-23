@@ -14,20 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: Necromancer
   displayName: Necromancer
+  isFusion: 0
   unitPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
   team: 0
   role: 0
   combatStyle: 0
+  targetingMode: 0
   faction: 0
-  sprite: {fileID: 8124706622758157903, guid: 673af43bb818ab24cb26cdf7e9f79ec6, type: 3}
+  sprite: {fileID: 21300000, guid: 673af43bb818ab24cb26cdf7e9f79ec6, type: 3}
   tileSize: 0
+  softCurrencyRewardOnSoulAbsorb: 1
+  skill: {fileID: 0}
   stats:
     maxHealth: 10
     attackDamage: 1
-    attackInterval: 0.75
+    attackCooldown: 0.75
     attackRangeInCells: 1
     preferredDistanceInCells: 1
     accuracy: 0.85
     evasion: 0.1
+    defense: 0
     moveSpeed: 2.5
     visionRange: 5

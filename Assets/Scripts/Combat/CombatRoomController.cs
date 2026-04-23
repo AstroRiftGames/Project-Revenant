@@ -393,11 +393,29 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     private void CleanupResolvedCombatRuntime()
     {
-        if (_outcome != CombatRoomOutcome.PlayerVictory || _roomContext == null)
+        if (_roomContext == null)
+            return;
+
+        CleanupRoomStatusEffects();
+
+        if (_outcome != CombatRoomOutcome.PlayerVictory)
             return;
 
         CleanupSummonedMinionRuntime();
         CleanupRoomProjectileRuntime();
+    }
+
+    private void CleanupRoomStatusEffects()
+    {
+        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit unit = roomUnits[i];
+            if (unit == null || unit.StatusEffects == null)
+                continue;
+
+            unit.StatusEffects.ClearCombatEffects();
+        }
     }
 
     private void CleanupSummonedMinionRuntime()

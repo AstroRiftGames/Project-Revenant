@@ -15,6 +15,7 @@ public class SkillData : ScriptableObject
     [SerializeField] private SkillShape _shape = SkillShape.SingleTarget;
     [SerializeField] private SkillRequirements _requirements = new();
     [SerializeField] private SkillEffect[] _effects;
+    [SerializeField] private AppliedStatusEffectSpec[] _appliedStatusEffects;
 
     public string SkillId => _skillId;
     public string DisplayName => _displayName;
@@ -29,4 +30,5 @@ public class SkillData : ScriptableObject
     public SkillShape Shape => _shape;
     public SkillRequirements Requirements => _requirements;
     public SkillEffect[] Effects => _effects;
+    public AppliedStatusEffectSpec[] AppliedStatusEffects => _appliedStatusEffects;
 }

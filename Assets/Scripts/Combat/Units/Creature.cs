@@ -11,6 +11,7 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(LifeController))]
 [RequireComponent(typeof(RecruitableUnitState))]
 [RequireComponent(typeof(UnitAffiliationState))]
+[RequireComponent(typeof(StatusEffectController))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public static event Action<Creature> OnCreatureEnabled;
@@ -32,19 +33,22 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public int MaxHealth => _lifeController != null ? _lifeController.MaxHealth : 0;
     public bool IsAlive => _lifeController == null || _lifeController.IsAlive;
     public int BaseMaxHealth => _data != null && _data.stats != null ? _data.stats.maxHealth : 0;
-    public float MoveSpeed => _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f;
-    public int AttackRangeInCells => _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0;
+    public float MoveSpeed => ResolveFinalFloatStat(CombatStatType.MoveSpeed, _data != null && _data.stats != null ? _data.stats.moveSpeed : 0f);
+    public int AttackRangeInCells => ResolveFinalIntStat(CombatStatType.Range, _data != null && _data.stats != null ? _data.stats.attackRangeInCells : 0);
     public int PreferredDistanceInCells => _data != null && _data.stats != null ? _data.stats.preferredDistanceInCells : 0;
-    public int AttackDamage => _data != null && _data.stats != null ? _data.stats.attackDamage : 0;
+    public int AttackDamage => ResolveFinalIntStat(CombatStatType.Damage, _data != null && _data.stats != null ? _data.stats.attackDamage : 0);
     public float AttackCooldown => _data != null && _data.stats != null ? _data.stats.attackCooldown : 0f;
-    public float Accuracy => _data != null && _data.stats != null ? _data.stats.accuracy : 0f;
+    public float Accuracy => ResolveFinalFloatStat(CombatStatType.Accuracy, _data != null && _data.stats != null ? _data.stats.accuracy : 0f);
     public float Evasion => _data != null && _data.stats != null ? _data.stats.evasion : 0f;
+    public int Defense => ResolveFinalIntStat(CombatStatType.Defense, _data != null && _data.stats != null ? _data.stats.defense : 0);
+    public StatusEffectController StatusEffects => _statusEffectController;
 
     protected UnitData _data;
     protected LifeController _lifeController { get; private set; }
     private RecruitableUnitState _recruitableState;
     private UnitAffiliationState _affiliationState;
     private SkillCaster _skillCaster;
+    private StatusEffectController _statusEffectController;
     private SpriteRenderer[] _selectionTintRenderers;
     private Color[] _selectionTintBaseColors;
 
@@ -69,6 +73,15 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
         _skillCaster = GetComponent<SkillCaster>();
+        _statusEffectController = GetComponent<StatusEffectController>();
+        if (_statusEffectController == null)
+        {
+            Debug.LogWarning(
+                $"[{nameof(Creature)}] '{name}' was missing {nameof(StatusEffectController)} at runtime and it was auto-added. " +
+                "Update the prefab setup to include it explicitly.",
+                this);
+            _statusEffectController = gameObject.AddComponent<StatusEffectController>();
+        }
         CacheSelectionTintRenderers();
         ValidateRequiredComponents();
     }
@@ -167,7 +180,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        _lifeController?.TakeDamage(amount, source);
+        _lifeController?.TakeDamage(ResolveIncomingDamage(amount, source), source);
     }
 
     public void Heal(int amount, IUnit source = null)
@@ -198,8 +211,32 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     private void ValidateRequiredComponents()
     {
-        if (_lifeController == null || _recruitableState == null || _affiliationState == null)
+        if (_lifeController == null || _recruitableState == null || _affiliationState == null || _statusEffectController == null)
             throw new InvalidOperationException($"[{nameof(Creature)}] Missing required runtime components on '{name}'.");
+    }
+
+    private float ResolveFinalFloatStat(CombatStatType statType, float baseValue)
+    {
+        if (_statusEffectController == null)
+            return baseValue;
+
+        float additiveModifier = _statusEffectController.GetModifierTotal(statType, StatusModifierOperation.Additive);
+        float multiplierModifier = _statusEffectController.GetModifierTotal(statType, StatusModifierOperation.Multiplier);
+        return Mathf.Max(0f, (baseValue + additiveModifier) * (1f + multiplierModifier));
+    }
+
+    private int ResolveFinalIntStat(CombatStatType statType, int baseValue)
+    {
+        return Mathf.RoundToInt(ResolveFinalFloatStat(statType, baseValue));
+    }
+
+    private int ResolveIncomingDamage(int rawDamage, IUnit source)
+    {
+        if (rawDamage <= 0)
+            return 0;
+
+        int mitigatedDamage = rawDamage - Defense;
+        return Mathf.Max(0, mitigatedDamage);
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;

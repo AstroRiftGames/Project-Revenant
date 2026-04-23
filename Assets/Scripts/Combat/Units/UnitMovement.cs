@@ -162,6 +162,15 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         InvalidatePathCache();
     }
 
+    public void InterruptMovement()
+    {
+        InvalidatePathCache();
+        ResetVisualStep();
+
+        if (_grid != null && _hasCurrentCell)
+            transform.position = _grid.CellToWorld(_currentCell);
+    }
+
     private void SnapToCurrentCell()
     {
         if (_grid == null)

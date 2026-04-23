@@ -170,6 +170,14 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || context == null || impactedUnits == null || impactedUnits.Count == 0)
             return false;
 
+        bool anyApplied = false;
+        anyApplied |= ApplySkillEffects(skill, context, impactedUnits);
+        anyApplied |= ApplyStatusEffects(skill, context, impactedUnits);
+        return anyApplied;
+    }
+
+    private static bool ApplySkillEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
+    {
         SkillEffect[] effects = skill.Effects;
         if (effects == null || effects.Length == 0)
             return false;
@@ -189,6 +197,34 @@ public class SkillCaster : MonoBehaviour
                     continue;
 
                 anyApplied |= effect.Apply(context, impactedUnit);
+            }
+        }
+
+        return anyApplied;
+    }
+
+    private static bool ApplyStatusEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
+    {
+        AppliedStatusEffectSpec[] statusEffects = skill.AppliedStatusEffects;
+        if (statusEffects == null || statusEffects.Length == 0)
+            return false;
+
+        bool anyApplied = false;
+
+        for (int i = 0; i < statusEffects.Length; i++)
+        {
+            StatusEffectDefinition definition = statusEffects[i].Definition;
+            if (definition == null)
+                continue;
+
+            for (int targetIndex = 0; targetIndex < impactedUnits.Count; targetIndex++)
+            {
+                Unit impactedUnit = impactedUnits[targetIndex];
+                if (impactedUnit == null || impactedUnit.StatusEffects == null)
+                    continue;
+
+                StatusEffectApplication application = new(impactedUnit, context.Caster, context.Skill, definition);
+                anyApplied |= impactedUnit.StatusEffects.TryApply(application);
             }
         }
 

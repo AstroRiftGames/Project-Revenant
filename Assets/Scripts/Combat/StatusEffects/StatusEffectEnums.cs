@@ -1,0 +1,46 @@
+public enum StatusEffectType
+{
+    Stun,
+    HealOverTime,
+    DamageOverTime,
+    StatModifier
+}
+
+public enum StatusEffectDurationMode
+{
+    Timed,
+    PermanentUntilDeath
+}
+
+public enum CombatStatType
+{
+    MoveSpeed,
+    Damage,
+    Range,
+    Accuracy,
+    Defense
+}
+
+public enum EffectStackingMode
+{
+    RefreshDuration,
+    AddStack,
+    IndependentInstance,
+    ReplaceByStronger,
+    IgnoreIfSameSource
+}
+
+public enum StatusModifierOperation
+{
+    Additive,
+    Multiplier
+}
+
+public enum StatusEffectRemovalReason
+{
+    Expired,
+    OwnerDeath,
+    Explicit,
+    EncounterResolved,
+    Replaced
+}
