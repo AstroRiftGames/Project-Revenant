@@ -83,7 +83,7 @@ SpriteRenderer:
   m_SortingLayerID: -1184524795
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: f38ae8acc6911864c9288e145fff6cf4, type: 3}
+  m_Sprite: {fileID: -5923962631080320201, guid: a1b5d73f83637ca42b50ed0ef40599c4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -132,13 +132,13 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 2, y: 2}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 2, y: 2}
   m_EdgeRadius: 0
 --- !u!50 &7061420602406668156
 Rigidbody2D:
@@ -179,6 +179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b24dfa7776200204bbb5126c7b2a4152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _grid: {fileID: 0}
 --- !u!114 &8419169547313969949
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,8 +233,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _availabilitySourceComponent: {fileID: -4446656868426159116}
-  _promptRoot: {fileID: 5076054453787988710}
-  _promptText: {fileID: 7547038190990805126}
+  _promptRoot: {fileID: 7636003392184561964}
+  _promptText: {fileID: 8487695111229138651}
   _promptMessage: Interact
 --- !u!1001 &1256755830554843253
 PrefabInstance:
@@ -309,7 +310,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.75
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -322,6 +323,10 @@ PrefabInstance:
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+      propertyPath: m_text
+      value: Interact
       objectReference: {fileID: 0}
     - target: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_Name
@@ -337,12 +342,12 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &5076054453787988710 stripped
+--- !u!1 &7636003392184561964 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7547038190990805126 stripped
+--- !u!114 &8487695111229138651 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 1256755830554843253}
