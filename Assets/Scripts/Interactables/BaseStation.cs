@@ -13,6 +13,10 @@ public abstract class BaseStation : MonoBehaviour, IInteractable
     [Tooltip("Si es verdadero, interactuar con la estación abrirá automáticamente la UI en UIManager.")]
     [SerializeField] protected bool openUIAutomatically = false;
 
+    public UIType StationUIType => stationUIType;
+    public bool OpenUIAutomatically => openUIAutomatically;
+
+    public static event Action<BaseStation, UIType> OnStationUIRequestedGlobal;
     public event Action OnInteraction;
     public event Action<bool> OnInteractionAvailabilityChanged;
 
@@ -33,16 +37,17 @@ public abstract class BaseStation : MonoBehaviour, IInteractable
         if (!IsInteractionAvailable)
             return;
 
-        // Disparar evento para los controladores que estén escuchando (como FusionController)
+        // Disparar evento local
         OnInteraction?.Invoke();
 
-        // Llamada para lógica específica de las clases hijas
+        // Lógica específica
         OnInteract();
 
-        // Integración directa con el UIManager si se desea
+        // Integración directa con el UIManager (y disparo global)
         if (openUIAutomatically && UIManager.Instance != null)
         {
             UIManager.Instance.ShowElement(stationUIType);
+            OnStationUIRequestedGlobal?.Invoke(this, stationUIType);
         }
     }
 

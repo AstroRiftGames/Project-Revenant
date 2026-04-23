@@ -3,9 +3,8 @@ using UnityEngine;
 using Inventory.Core;
 using Inventory.Data;
 
-public class FusionController : MonoBehaviour
+public class FusionController : StationController
 {
-    [SerializeField] private FusionStation _station;
     [SerializeField] private FusionSettings _settings;
     [SerializeField] private StatFusionConfig _statConfig;
     [SerializeField] private FusionVisualConfig _visualConfig;
@@ -16,34 +15,17 @@ public class FusionController : MonoBehaviour
     [SerializeField] private ItemData _fusionStoneItem;
     [SerializeField] private GameObject _neutralCreaturePrefab;
 
-    public event Action OnUIRequested;
     public event Action<FusionResult> OnFusionCompleted;
 
     private FusionService _fusionService;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         StatFusionService statService = new StatFusionService(_statConfig);
         FusionVisualResolver visualResolver = new FusionVisualResolver(_visualConfig);
         _fusionService = new FusionService(_settings, statService, visualResolver, _requiredStones, _remainsOnFailure);
-
-        if (_station != null)
-        {
-            _station.OnInteraction += HandleStationInteraction;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (_station != null)
-        {
-            _station.OnInteraction -= HandleStationInteraction;
-        }
-    }
-
-    private void HandleStationInteraction()
-    {
-        OnUIRequested?.Invoke();
     }
 
     private StatBlock ConvertUnitStatsToStatBlock(UnitStatsData data)
