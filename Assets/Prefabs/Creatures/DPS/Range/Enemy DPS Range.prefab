@@ -365,6 +365,9 @@ GameObject:
   - component: {fileID: 6932735939397191940}
   - component: {fileID: 2606325232860006999}
   - component: {fileID: -3238317531322274560}
+  - component: {fileID: 7295106457473540624}
+  - component: {fileID: 4221315000206244709}
+  - component: {fileID: 1073728123223053427}
   m_Layer: 10
   m_Name: Enemy DPS Range
   m_TagString: Untagged
@@ -485,6 +488,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fd6ea948014d2841ae7242af956a715, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _debugEncounter: 1
+  _debugSkillFlow: 0
 --- !u!114 &4447924673430037714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -641,12 +646,72 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a63b01716d03bf4eb8cdb8c4f2e91c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _lifeController: {fileID: 0}
   _hitParticlesPrefab: {fileID: 941638936021047997, guid: a20cee9aecd64684fbf4b4037d3d1b19, type: 3}
   _spawnPoint: {fileID: 0}
-  _isometricOffset: {x: 0, y: 0.5, z: -0.1}
-  _useDamageAsIntensity: 0
-  _baseParticleCount: 5
-  _damageMultiplier: 0.5
+  offset: {x: 0, y: 0.5, z: -0.1}
+--- !u!114 &7295106457473540624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8765862917985790579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45e7049ce2096554a8902f9827ff90dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _debugLogs: 0
+--- !u!114 &4221315000206244709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8765862917985790579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7e2a2ab15ab8fc4691c63165e3ce809, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _popupPrefab: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
+  _popupOffset: {x: 0, y: 0.95, z: 0}
+  _stateColors:
+  - _state: 0
+    _color: {r: 1, g: 1, b: 1, a: 1}
+  - _state: 1
+    _color: {r: 0.35, g: 0.85, b: 1, a: 1}
+  - _state: 2
+    _color: {r: 0.35, g: 1, b: 0.55, a: 1}
+  - _state: 3
+    _color: {r: 0.95, g: 0.45, b: 0.78, a: 1}
+  - _state: 4
+    _color: {r: 1, g: 0.38, b: 0.38, a: 1}
+  - _state: 5
+    _color: {r: 0.62, g: 0.2, b: 0.9, a: 1}
+  - _state: 6
+    _color: {r: 1, g: 0.9, b: 0.25, a: 1}
+  - _state: 7
+    _color: {r: 0.239, g: 0.239, b: 0.239, a: 1}
+  - _state: 8
+    _color: {r: 0, g: 0, b: 0, a: 1}
+  _debugLogs: 1
+--- !u!114 &1073728123223053427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8765862917985790579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfdb3a204fb4547b2ce9912c670cde0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _popupPrefab: {fileID: 200002, guid: e8e84d44d0d340df922df6654d1d36aa, type: 3}
+  _worldOffset: {x: 0, y: 1.35, z: 0}
+  _debugLogs: 1
 --- !u!1 &9082988846214809680
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 699699883660558928, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
+      propertyPath: _popupPrefab
+      value: 
+      objectReference: {fileID: 200002, guid: e8e84d44d0d340df922df6654d1d36aa, type: 3}
     - target: {fileID: 1593829365114601328, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -68,6 +72,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5862452994291248602, guid: 759f3bd449d51084a8bdad3f9a22f379, type: 3}
+      propertyPath: _popupPrefab
+      value: 
+      objectReference: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

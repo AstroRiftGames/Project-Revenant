@@ -7,17 +7,12 @@ using UnityEngine;
 [RequireComponent(typeof(RecruitableUnitState))]
 public class UnitDeathHandler : MonoBehaviour
 {
-    [Header("Enemy Death Presentation")]
-    [SerializeField] private Color _recruitableCorpseColor = Color.black;
-    [SerializeField] private Color _soulAbsorbedCorpseColor = new Color(0.239f, 0.239f, 0.239f);
-    [SerializeField] private SpriteRenderer[] _spriteRenderers;
     [SerializeField] private Behaviour[] _behavioursToDisableForRecruitableDeath;
 
     private Unit _unit;
     private LifeController _lifeController;
     private RecruitableUnitState _recruitableState;
     private RecruitableUnitInteraction _recruitableInteraction;
-    private Color[] _initialSpriteColors = Array.Empty<Color>();
     private bool[] _initialBehaviourEnabledStates = Array.Empty<bool>();
     private bool _hasResolvedDeath;
 
@@ -31,9 +26,6 @@ public class UnitDeathHandler : MonoBehaviour
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _recruitableInteraction = GetComponent<RecruitableUnitInteraction>();
-
-        if (_spriteRenderers == null || _spriteRenderers.Length == 0)
-            _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
 
         if (_behavioursToDisableForRecruitableDeath == null || _behavioursToDisableForRecruitableDeath.Length == 0)
             _behavioursToDisableForRecruitableDeath = ResolveDefaultBehavioursToDisable();
@@ -65,7 +57,6 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _hasResolvedDeath = false;
         GetComponent<UnitMovement>()?.ClearCorpseOccupancy();
-        RestoreSpriteColors();
         RestoreBehaviours();
         ApplyRecruitableCorpseTransition(state);
     }
@@ -84,7 +75,6 @@ public class UnitDeathHandler : MonoBehaviour
         PrepareMovementForDeath();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         DisableBehavioursForRecruitableDeath();
-        ApplyCorpseVisuals(_recruitableCorpseColor);
         EnterRecruitableCorpseState();
     }
 
@@ -94,23 +84,7 @@ public class UnitDeathHandler : MonoBehaviour
         PrepareMovementForDeath();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         DisableBehavioursForRecruitableDeath();
-        ApplyCorpseVisuals(_soulAbsorbedCorpseColor);
         EnterResolvedCorpseState();
-    }
-
-    private void ApplyCorpseVisuals(Color color)
-    {
-        if (_spriteRenderers == null)
-            return;
-
-        for (int i = 0; i < _spriteRenderers.Length; i++)
-        {
-            SpriteRenderer spriteRenderer = _spriteRenderers[i];
-            if (spriteRenderer == null)
-                continue;
-
-            spriteRenderer.color = color;
-        }
     }
 
     private void DisableBehavioursForRecruitableDeath()
@@ -139,7 +113,6 @@ public class UnitDeathHandler : MonoBehaviour
             GetComponent<TargetingStrategy>(),
             GetComponent<UnitAction>(),
             GetComponent<StatusEffectController>(),
-            GetComponent<StatusEffectVisualFeedback>(),
             GetComponent<StatusEffectDebugPopupPresenter>()
         };
     }
@@ -190,16 +163,6 @@ public class UnitDeathHandler : MonoBehaviour
 
     private void CacheInitialState()
     {
-        if (_spriteRenderers != null)
-        {
-            _initialSpriteColors = new Color[_spriteRenderers.Length];
-            for (int i = 0; i < _spriteRenderers.Length; i++)
-            {
-                SpriteRenderer spriteRenderer = _spriteRenderers[i];
-                _initialSpriteColors[i] = spriteRenderer != null ? spriteRenderer.color : Color.white;
-            }
-        }
-
         if (_behavioursToDisableForRecruitableDeath != null)
         {
             _initialBehaviourEnabledStates = new bool[_behavioursToDisableForRecruitableDeath.Length];
@@ -208,22 +171,6 @@ public class UnitDeathHandler : MonoBehaviour
                 Behaviour behaviour = _behavioursToDisableForRecruitableDeath[i];
                 _initialBehaviourEnabledStates[i] = behaviour != null && behaviour.enabled;
             }
-        }
-    }
-
-    private void RestoreSpriteColors()
-    {
-        if (_spriteRenderers == null || _initialSpriteColors == null)
-            return;
-
-        int count = Mathf.Min(_spriteRenderers.Length, _initialSpriteColors.Length);
-        for (int i = 0; i < count; i++)
-        {
-            SpriteRenderer spriteRenderer = _spriteRenderers[i];
-            if (spriteRenderer == null)
-                continue;
-
-            spriteRenderer.color = _initialSpriteColors[i];
         }
     }
 

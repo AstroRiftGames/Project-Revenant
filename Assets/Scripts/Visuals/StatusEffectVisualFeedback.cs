@@ -4,21 +4,36 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(StatusEffectController))]
+[RequireComponent(typeof(LifeController))]
+[RequireComponent(typeof(RecruitableUnitState))]
 public class StatusEffectVisualFeedback : MonoBehaviour
 {
-    [Serializable]
-    private struct VisualStyleColorBinding
+    private enum UnitVisualState
     {
-        [SerializeField] private StatusVisualStyle _style;
+        Normal,
+        Buff,
+        HealOverTime,
+        Debuff,
+        DamageOverTime,
+        DamageOverTimePermanent,
+        Stun,
+        Dead,
+        Recruitable
+    }
+
+    [Serializable]
+    private struct VisualStateColorBinding
+    {
+        [SerializeField] private UnitVisualState _state;
         [SerializeField] private Color _color;
 
-        public VisualStyleColorBinding(StatusVisualStyle style, Color color)
+        public VisualStateColorBinding(UnitVisualState state, Color color)
         {
-            _style = style;
+            _state = state;
             _color = color;
         }
 
-        public StatusVisualStyle Style => _style;
+        public UnitVisualState State => _state;
         public Color Color => _color;
     }
 
@@ -26,47 +41,54 @@ public class StatusEffectVisualFeedback : MonoBehaviour
     [SerializeField] private SkillTextPopup _popupPrefab;
     [SerializeField] private Vector3 _popupOffset = new(0f, 0.95f, 0f);
 
-    [Header("Tint")]
-    [SerializeField] private float _tintBlend = 0.35f;
-    [SerializeField] private float _tintLerpSpeed = 10f;
-    [SerializeField] private VisualStyleColorBinding[] _styleColors =
+    [Header("Colors")]
+    [SerializeField] private VisualStateColorBinding[] _stateColors =
     {
-        new(StatusVisualStyle.Stun, new Color(1f, 0.9f, 0.25f, 1f)),
-        new(StatusVisualStyle.DamageOverTimePermanent, new Color(0.62f, 0.2f, 0.9f, 1f)),
-        new(StatusVisualStyle.DamageOverTime, new Color(1f, 0.38f, 0.38f, 1f)),
-        new(StatusVisualStyle.Debuff, new Color(0.95f, 0.45f, 0.78f, 1f)),
-        new(StatusVisualStyle.HealOverTime, new Color(0.35f, 1f, 0.55f, 1f)),
-        new(StatusVisualStyle.Buff, new Color(0.35f, 0.85f, 1f, 1f)),
+        new(UnitVisualState.Normal, Color.white),
+        new(UnitVisualState.Buff, new Color(0.35f, 0.85f, 1f, 1f)),
+        new(UnitVisualState.HealOverTime, new Color(0.35f, 1f, 0.55f, 1f)),
+        new(UnitVisualState.Debuff, new Color(0.95f, 0.45f, 0.78f, 1f)),
+        new(UnitVisualState.DamageOverTime, new Color(1f, 0.38f, 0.38f, 1f)),
+        new(UnitVisualState.DamageOverTimePermanent, new Color(0.62f, 0.2f, 0.9f, 1f)),
+        new(UnitVisualState.Stun, new Color(1f, 0.9f, 0.25f, 1f)),
+        new(UnitVisualState.Dead, new Color(0.239f, 0.239f, 0.239f, 1f)),
+        new(UnitVisualState.Recruitable, Color.black),
     };
 
     [Header("Debug")]
     [SerializeField] private bool _debugLogs;
 
     private StatusEffectController _statusEffectController;
+    private LifeController _lifeController;
+    private RecruitableUnitState _recruitableUnitState;
     private SpriteRenderer[] _spriteRenderers;
-    private Color[] _baseColors;
-    private Color _currentTintColor = Color.white;
-    private Color _targetTintColor = Color.white;
+    private UnitVisualState _currentVisualState = UnitVisualState.Normal;
+    private Color _currentResolvedColor = Color.white;
 
     private void Awake()
     {
-        _statusEffectController = GetComponent<StatusEffectController>();
-        CacheSpriteRenderers();
-        _currentTintColor = Color.white;
-        _targetTintColor = Color.white;
-        ApplyTintImmediately(_currentTintColor);
+        ResolveReferences();
+        RefreshRendererCache();
+        ForceRefreshVisualState();
     }
 
     private void OnEnable()
     {
-        if (_statusEffectController == null)
-            return;
+        ResolveReferences();
+        RefreshRendererCache();
 
-        _statusEffectController.EffectApplied += HandleEffectApplied;
-        _statusEffectController.EffectRefreshed += HandleEffectChanged;
-        _statusEffectController.EffectStackChanged += HandleEffectChanged;
-        _statusEffectController.EffectRemoved += HandleEffectRemoved;
-        RefreshVisualState();
+        if (_statusEffectController != null)
+        {
+            _statusEffectController.EffectApplied += HandleEffectApplied;
+            _statusEffectController.EffectRefreshed += HandleEffectChanged;
+            _statusEffectController.EffectStackChanged += HandleEffectChanged;
+            _statusEffectController.EffectRemoved += HandleEffectRemoved;
+        }
+
+        if (_recruitableUnitState != null)
+            _recruitableUnitState.OnStateChanged += HandleLifecycleStateChanged;
+
+        ForceRefreshVisualState();
     }
 
     private void OnDisable()
@@ -79,22 +101,15 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             _statusEffectController.EffectRemoved -= HandleEffectRemoved;
         }
 
-        RestoreBaseColors();
+        if (_recruitableUnitState != null)
+            _recruitableUnitState.OnStateChanged -= HandleLifecycleStateChanged;
+
+        ApplyResolvedColor(UnitVisualState.Normal, ResolveColor(UnitVisualState.Normal));
     }
 
     private void Update()
     {
-        if (_spriteRenderers == null || _spriteRenderers.Length == 0)
-            return;
-
-        if (_currentTintColor == _targetTintColor)
-            return;
-
-        _currentTintColor = Color.Lerp(_currentTintColor, _targetTintColor, 1f - Mathf.Exp(-_tintLerpSpeed * Time.deltaTime));
-        if (AreColorsClose(_currentTintColor, _targetTintColor))
-            _currentTintColor = _targetTintColor;
-
-        ApplyTintImmediately(_currentTintColor);
+        RefreshVisualState();
     }
 
     private void HandleEffectApplied(StatusEffectController controller, ActiveStatusEffect activeEffect)
@@ -102,7 +117,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         if (!ReferenceEquals(controller, _statusEffectController))
             return;
 
-        RefreshVisualState();
+        ForceRefreshVisualState();
         ShowPopup(activeEffect != null ? activeEffect.Definition?.ApplyPopupText : null, ResolveEffectColor(activeEffect));
     }
 
@@ -111,7 +126,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         if (!ReferenceEquals(controller, _statusEffectController))
             return;
 
-        RefreshVisualState();
+        ForceRefreshVisualState();
     }
 
     private void HandleEffectRemoved(StatusEffectController controller, ActiveStatusEffect activeEffect, StatusEffectRemovalReason removalReason)
@@ -127,24 +142,34 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             ShowPopup(activeEffect.Definition.ExpirePopupText, ResolveEffectColor(activeEffect));
         }
 
-        RefreshVisualState();
+        ForceRefreshVisualState();
     }
 
-    private void RefreshVisualState()
+    private void HandleLifecycleStateChanged(UnitLifecycleState state)
     {
-        StatusVisualStyle dominantStyle = ResolveDominantVisualStyle();
-        _targetTintColor = ResolveTintColor(dominantStyle);
-        LogDebug($"[StatusEffectVisualFeedback] '{name}' dominant style: {dominantStyle}.");
+        ForceRefreshVisualState();
     }
 
-    private StatusVisualStyle ResolveDominantVisualStyle()
+    private UnitVisualState ResolveCurrentVisualState()
+    {
+        if (_recruitableUnitState != null && _recruitableUnitState.IsRecruitable)
+            return UnitVisualState.Recruitable;
+
+        if (_lifeController != null && !_lifeController.IsAlive)
+            return UnitVisualState.Dead;
+
+        return ResolveStatusVisualState();
+    }
+
+    private UnitVisualState ResolveStatusVisualState()
     {
         if (_statusEffectController == null)
-            return StatusVisualStyle.None;
+            return UnitVisualState.Normal;
 
         IReadOnlyList<ActiveStatusEffect> activeEffects = _statusEffectController.ActiveEffects;
-        StatusVisualStyle bestStyle = StatusVisualStyle.None;
+        UnitVisualState bestState = UnitVisualState.Normal;
         int bestPriority = int.MinValue;
+        List<string> debugEntries = _debugLogs ? new List<string>(activeEffects.Count) : null;
 
         for (int i = 0; i < activeEffects.Count; i++)
         {
@@ -153,99 +178,148 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             if (definition == null)
                 continue;
 
-            StatusVisualStyle style = definition.VisualStyle;
-            int priority = ResolveVisualPriority(style);
+            StatusVisualStyle visualStyle = ResolveRepresentableVisualStyle(definition);
+            UnitVisualState candidateState = MapVisualStyleToState(visualStyle);
+            int priority = ResolveVisualPriority(candidateState);
+            debugEntries?.Add($"{definition.DisplayName}:{visualStyle}->{candidateState}");
             if (priority <= bestPriority)
                 continue;
 
             bestPriority = priority;
-            bestStyle = style;
+            bestState = candidateState;
         }
 
-        return bestStyle;
+        if (_debugLogs && debugEntries != null && debugEntries.Count > 0)
+            LogDebug($"[StatusEffectVisualFeedback] '{name}' active status visuals: {string.Join(", ", debugEntries)}. Winner={bestState}.");
+
+        return bestState;
     }
 
-    private int ResolveVisualPriority(StatusVisualStyle style)
+    private void ResolveReferences()
     {
-        return style switch
-        {
-            StatusVisualStyle.Stun => 600,
-            StatusVisualStyle.DamageOverTimePermanent => 500,
-            StatusVisualStyle.DamageOverTime => 400,
-            StatusVisualStyle.Debuff => 300,
-            StatusVisualStyle.HealOverTime => 200,
-            StatusVisualStyle.Buff => 100,
-            _ => 0
-        };
+        _statusEffectController ??= GetComponent<StatusEffectController>();
+        _lifeController ??= GetComponent<LifeController>();
+        _recruitableUnitState ??= GetComponent<RecruitableUnitState>();
     }
 
-    private Color ResolveTintColor(StatusVisualStyle style)
+    private void RefreshRendererCache()
     {
-        if (style == StatusVisualStyle.None)
-            return Color.white;
+        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
+        LogDebug(
+            $"[StatusEffectVisualFeedback] '{name}' refs: status={_statusEffectController != null}, life={_lifeController != null}, " +
+            $"recruitable={_recruitableUnitState != null}, renderers={(_spriteRenderers != null ? _spriteRenderers.Length : 0)}.");
+    }
 
-        if (_styleColors != null)
+    private void RefreshVisualState()
+    {
+        UnitVisualState resolvedState = ResolveCurrentVisualState();
+        Color resolvedColor = ResolveColor(resolvedState);
+
+        if (_currentVisualState == resolvedState && ColorsEqual(_currentResolvedColor, resolvedColor))
+            return;
+
+        ApplyResolvedColor(resolvedState, resolvedColor);
+    }
+
+    private void ForceRefreshVisualState()
+    {
+        ApplyResolvedColor(ResolveCurrentVisualState(), ResolveColor(ResolveCurrentVisualState()));
+    }
+
+    private void ApplyResolvedColor(UnitVisualState visualState, Color resolvedColor)
+    {
+        _currentVisualState = visualState;
+        _currentResolvedColor = resolvedColor;
+
+        if (_spriteRenderers == null)
+            return;
+
+        for (int i = 0; i < _spriteRenderers.Length; i++)
         {
-            for (int i = 0; i < _styleColors.Length; i++)
+            SpriteRenderer spriteRenderer = _spriteRenderers[i];
+            if (spriteRenderer == null)
+                continue;
+
+            Color color = resolvedColor;
+            color.a = spriteRenderer.color.a;
+            spriteRenderer.color = color;
+        }
+
+        LogDebug(
+            $"[StatusEffectVisualFeedback] '{name}' applied state={visualState} color=({resolvedColor.r:F2}, {resolvedColor.g:F2}, {resolvedColor.b:F2}, {resolvedColor.a:F2}).");
+    }
+
+    private Color ResolveColor(UnitVisualState state)
+    {
+        if (_stateColors != null)
+        {
+            for (int i = 0; i < _stateColors.Length; i++)
             {
-                if (_styleColors[i].Style == style)
-                    return _styleColors[i].Color;
+                if (_stateColors[i].State == state)
+                    return _stateColors[i].Color;
             }
         }
 
         return Color.white;
     }
 
-    private void CacheSpriteRenderers()
+    private static UnitVisualState MapVisualStyleToState(StatusVisualStyle style)
     {
-        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
-        _baseColors = new Color[_spriteRenderers.Length];
-
-        for (int i = 0; i < _spriteRenderers.Length; i++)
-            _baseColors[i] = _spriteRenderers[i] != null ? _spriteRenderers[i].color : Color.white;
+        return style switch
+        {
+            StatusVisualStyle.Stun => UnitVisualState.Stun,
+            StatusVisualStyle.DamageOverTimePermanent => UnitVisualState.DamageOverTimePermanent,
+            StatusVisualStyle.DamageOverTime => UnitVisualState.DamageOverTime,
+            StatusVisualStyle.Debuff => UnitVisualState.Debuff,
+            StatusVisualStyle.HealOverTime => UnitVisualState.HealOverTime,
+            StatusVisualStyle.Buff => UnitVisualState.Buff,
+            _ => UnitVisualState.Normal
+        };
     }
 
-    private void RestoreBaseColors()
+    private static StatusVisualStyle ResolveRepresentableVisualStyle(StatusEffectDefinition definition)
     {
-        if (_spriteRenderers == null || _baseColors == null)
-            return;
+        if (definition == null)
+            return StatusVisualStyle.None;
 
-        for (int i = 0; i < _spriteRenderers.Length; i++)
+        if (definition.VisualStyle != StatusVisualStyle.None)
+            return definition.VisualStyle;
+
+        return definition.EffectType switch
         {
-            SpriteRenderer spriteRenderer = _spriteRenderers[i];
-            if (spriteRenderer == null)
-                continue;
-
-            spriteRenderer.color = _baseColors[i];
-        }
+            StatusEffectType.Stun => StatusVisualStyle.Stun,
+            StatusEffectType.HealOverTime => StatusVisualStyle.HealOverTime,
+            StatusEffectType.DamageOverTime when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
+            StatusEffectType.DamageOverTime => StatusVisualStyle.DamageOverTime,
+            StatusEffectType.StatModifier when definition.StatModifier.Value < 0f => StatusVisualStyle.Debuff,
+            StatusEffectType.StatModifier when definition.StatModifier.Value > 0f => StatusVisualStyle.Buff,
+            _ => StatusVisualStyle.None
+        };
     }
 
-    private void ApplyTintImmediately(Color tintColor)
+    private static int ResolveVisualPriority(UnitVisualState state)
     {
-        if (_spriteRenderers == null || _baseColors == null)
-            return;
-
-        for (int i = 0; i < _spriteRenderers.Length; i++)
+        return state switch
         {
-            SpriteRenderer spriteRenderer = _spriteRenderers[i];
-            if (spriteRenderer == null)
-                continue;
-
-            Color baseColor = _baseColors[i];
-            Color blendedColor = Color.Lerp(baseColor, MultiplyColor(baseColor, tintColor), _tintBlend);
-            blendedColor.a = baseColor.a;
-            spriteRenderer.color = blendedColor;
-        }
+            UnitVisualState.Recruitable => 800,
+            UnitVisualState.Dead => 700,
+            UnitVisualState.Stun => 600,
+            UnitVisualState.DamageOverTimePermanent => 500,
+            UnitVisualState.DamageOverTime => 400,
+            UnitVisualState.Debuff => 300,
+            UnitVisualState.HealOverTime => 200,
+            UnitVisualState.Buff => 100,
+            _ => 0
+        };
     }
 
     private Color ResolveEffectColor(ActiveStatusEffect activeEffect)
     {
         StatusVisualStyle style = activeEffect != null && activeEffect.Definition != null
-            ? activeEffect.Definition.VisualStyle
+            ? ResolveRepresentableVisualStyle(activeEffect.Definition)
             : StatusVisualStyle.None;
 
-        Color resolvedColor = ResolveTintColor(style);
-        return resolvedColor == Color.white ? Color.white : resolvedColor;
+        return ResolveColor(MapVisualStyleToState(style));
     }
 
     private void ShowPopup(string message, Color color)
@@ -260,23 +334,18 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         popup.Initialize(message, color);
     }
 
-    private static Color MultiplyColor(Color a, Color b)
-    {
-        return new Color(a.r * b.r, a.g * b.g, a.b * b.b, a.a);
-    }
-
-    private static bool AreColorsClose(Color left, Color right)
-    {
-        const float epsilon = 0.005f;
-        return Mathf.Abs(left.r - right.r) <= epsilon &&
-               Mathf.Abs(left.g - right.g) <= epsilon &&
-               Mathf.Abs(left.b - right.b) <= epsilon &&
-               Mathf.Abs(left.a - right.a) <= epsilon;
-    }
-
     private void LogDebug(string message)
     {
         if (_debugLogs)
             Debug.Log(message, this);
+    }
+
+    private static bool ColorsEqual(Color left, Color right)
+    {
+        const float epsilon = 0.001f;
+        return Mathf.Abs(left.r - right.r) <= epsilon &&
+               Mathf.Abs(left.g - right.g) <= epsilon &&
+               Mathf.Abs(left.b - right.b) <= epsilon &&
+               Mathf.Abs(left.a - right.a) <= epsilon;
     }
 }
