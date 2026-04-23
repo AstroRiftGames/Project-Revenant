@@ -12,6 +12,7 @@ public class StatusEffectController : MonoBehaviour
     private Unit _unit;
     private LifeController _lifeController;
     private readonly List<ActiveStatusEffect> _activeEffects = new();
+    private bool _runtimeStoppedByDeath;
 
     public event Action<StatusEffectController, ActiveStatusEffect> EffectApplied;
     public event Action<StatusEffectController, ActiveStatusEffect> EffectRefreshed;
@@ -42,7 +43,7 @@ public class StatusEffectController : MonoBehaviour
 
     private void Update()
     {
-        if (_activeEffects.Count == 0)
+        if (_runtimeStoppedByDeath || _activeEffects.Count == 0)
             return;
 
         float now = Time.time;
@@ -55,7 +56,7 @@ public class StatusEffectController : MonoBehaviour
         if (application.TargetUnit == null || application.Definition == null)
             return false;
 
-        if (!ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive)
+        if (_runtimeStoppedByDeath || !isActiveAndEnabled || !ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive)
             return false;
 
         StatusEffectStackResolution resolution =
@@ -140,6 +141,21 @@ public class StatusEffectController : MonoBehaviour
         ClearAllEffects(StatusEffectRemovalReason.EncounterResolved);
     }
 
+    public void HandleOwnerDeath()
+    {
+        if (_runtimeStoppedByDeath)
+            return;
+
+        _runtimeStoppedByDeath = true;
+        ClearAllEffects(StatusEffectRemovalReason.OwnerDeath);
+        LogDebug($"[{nameof(StatusEffectController)}] '{name}' stopped runtime on owner death.");
+    }
+
+    public void RestoreLivingRuntimeState()
+    {
+        _runtimeStoppedByDeath = false;
+    }
+
     private bool AddNewEffect(StatusEffectApplication application, float now)
     {
         ActiveStatusEffect newEffect = new(application, now);
@@ -214,7 +230,7 @@ public class StatusEffectController : MonoBehaviour
         if (!ReferenceEquals(unit, _unit))
             return;
 
-        ClearAllEffects(StatusEffectRemovalReason.OwnerDeath);
+        HandleOwnerDeath();
     }
 
     private bool HasMovementRestriction()
@@ -230,5 +246,11 @@ public class StatusEffectController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void LogDebug(string message)
+    {
+        if (_debugLogs)
+            Debug.Log(message, this);
     }
 }

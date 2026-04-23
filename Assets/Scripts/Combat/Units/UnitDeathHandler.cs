@@ -72,6 +72,7 @@ public class UnitDeathHandler : MonoBehaviour
 
     private void ResolveDefaultDeath()
     {
+        PrepareMovementForDeath();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
         ApplyRecruitableCorpseTransition(UnitLifecycleState.Dead);
         gameObject.SetActive(false);
@@ -80,18 +81,20 @@ public class UnitDeathHandler : MonoBehaviour
     private void ResolveRecruitableEnemyDeath()
     {
         EnsureRecruitableComponents();
+        PrepareMovementForDeath();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
-        ApplyCorpseVisuals(_recruitableCorpseColor);
         DisableBehavioursForRecruitableDeath();
+        ApplyCorpseVisuals(_recruitableCorpseColor);
         EnterRecruitableCorpseState();
     }
 
     public void FinalizeSoulAbsorbedCorpse()
     {
         EnsureRecruitableComponents();
+        PrepareMovementForDeath();
         GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
-        ApplyCorpseVisuals(_soulAbsorbedCorpseColor);
         DisableBehavioursForRecruitableDeath();
+        ApplyCorpseVisuals(_soulAbsorbedCorpseColor);
         EnterResolvedCorpseState();
     }
 
@@ -134,8 +137,15 @@ public class UnitDeathHandler : MonoBehaviour
             GetComponent<UnitCombat>(),
             GetComponent<SkillCaster>(),
             GetComponent<TargetingStrategy>(),
-            GetComponent<UnitAction>()
+            GetComponent<UnitAction>(),
+            GetComponent<StatusEffectController>(),
+            GetComponent<StatusEffectVisualFeedback>()
         };
+    }
+
+    private void PrepareMovementForDeath()
+    {
+        GetComponent<UnitMovement>()?.InterruptMovement();
     }
 
     private void EnsureRecruitableComponents()

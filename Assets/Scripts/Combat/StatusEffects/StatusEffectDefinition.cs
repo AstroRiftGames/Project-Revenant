@@ -27,6 +27,11 @@ public class StatusEffectDefinition : ScriptableObject
     [SerializeField] private int _maxStacks = 1;
     [SerializeField] private float _strength = 1f;
     [SerializeField] private StatusEffectStatModifier _statModifier;
+    [Header("Visual Feedback")]
+    [SerializeField] private StatusVisualStyle _visualStyle = StatusVisualStyle.None;
+    [SerializeField] private string _applyPopupText;
+    [SerializeField] private bool _showExpirePopup;
+    [SerializeField] private string _expirePopupText;
 
     public string EffectId => _effectId;
     public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
@@ -39,6 +44,10 @@ public class StatusEffectDefinition : ScriptableObject
     public int MaxStacks => Mathf.Max(1, _maxStacks);
     public float Strength => Mathf.Max(0f, _strength);
     public StatusEffectStatModifier StatModifier => _statModifier;
+    public StatusVisualStyle VisualStyle => _visualStyle;
+    public string ApplyPopupText => _applyPopupText;
+    public bool ShowExpirePopup => _showExpirePopup;
+    public string ExpirePopupText => _expirePopupText;
 
     public bool HasTimedDuration => _durationMode == StatusEffectDurationMode.Timed;
     public bool HasPeriodicTicks =>

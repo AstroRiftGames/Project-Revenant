@@ -11,6 +11,8 @@ public class LifeController : MonoBehaviour, IDamageable
     private Unit _unit;
     private UnitDeathHandler _deathHandler;
     private RecruitableUnitState _recruitableState;
+    private StatusEffectController _statusEffectController;
+    private UnitMovement _unitMovement;
     private readonly List<Unit> _aggressors = new();
     private bool _hasResolvedDeath;
 
@@ -33,6 +35,8 @@ public class LifeController : MonoBehaviour, IDamageable
         _unit = GetComponent<Unit>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _deathHandler = GetComponent<UnitDeathHandler>() ?? gameObject.AddComponent<UnitDeathHandler>();
+        _statusEffectController = GetComponent<StatusEffectController>();
+        _unitMovement = GetComponent<UnitMovement>();
 
         if (_recruitableState == null)
             throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required {nameof(RecruitableUnitState)} on '{name}'.");
@@ -42,6 +46,7 @@ public class LifeController : MonoBehaviour, IDamageable
     {
         CurrentHealth = Mathf.Max(0, maxHealth);
         _hasResolvedDeath = false;
+        _statusEffectController?.RestoreLivingRuntimeState();
         _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
         NotifyHealthChanged();
     }
@@ -103,6 +108,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
         _hasResolvedDeath = true;
 
+        _unitMovement?.InterruptMovement();
+        _statusEffectController?.HandleOwnerDeath();
+
         if (_debugDamage && _unit != null)
             Debug.Log($"[LifeController] '{_unit.name}' has died by {(LastAttacker != null ? LastAttacker.name : "None")}.", this);
             
@@ -126,6 +134,7 @@ public class LifeController : MonoBehaviour, IDamageable
     public void Revive(int currentHealth)
     {
         _hasResolvedDeath = false;
+        _statusEffectController?.RestoreLivingRuntimeState();
         SetCurrentHealth(Mathf.Max(1, currentHealth));
         OnLifeUpdated?.Invoke(CurrentHealth);
     }

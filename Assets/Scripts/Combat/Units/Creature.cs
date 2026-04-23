@@ -12,6 +12,7 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(RecruitableUnitState))]
 [RequireComponent(typeof(UnitAffiliationState))]
 [RequireComponent(typeof(StatusEffectController))]
+[RequireComponent(typeof(StatusEffectVisualFeedback))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public static event Action<Creature> OnCreatureEnabled;
@@ -82,6 +83,16 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
                 this);
             _statusEffectController = gameObject.AddComponent<StatusEffectController>();
         }
+
+        if (GetComponent<StatusEffectVisualFeedback>() == null)
+        {
+            Debug.LogWarning(
+                $"[{nameof(Creature)}] '{name}' was missing {nameof(StatusEffectVisualFeedback)} at runtime and it was auto-added. " +
+                "Update the prefab setup to include it explicitly if this unit should show status feedback.",
+                this);
+            gameObject.AddComponent<StatusEffectVisualFeedback>();
+        }
+
         CacheSelectionTintRenderers();
         ValidateRequiredComponents();
     }

@@ -44,3 +44,14 @@ public enum StatusEffectRemovalReason
     EncounterResolved,
     Replaced
 }
+
+public enum StatusVisualStyle
+{
+    None,
+    Stun,
+    HealOverTime,
+    DamageOverTime,
+    DamageOverTimePermanent,
+    Buff,
+    Debuff
+}

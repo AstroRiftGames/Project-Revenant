@@ -17,6 +17,9 @@ MonoBehaviour:
   _icon: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
   _cooldown: 3
   _rangeInCells: 5
+  _splashRadiusInCells: 1
+  _lineLengthInCells: 1
+  _maxTargets: 1
   _targetMode: 0
   _shape: 0
   _requirements:
@@ -25,3 +28,5 @@ MonoBehaviour:
     mustTargetInjured: 0
   _effects:
   - {fileID: 11400000, guid: 8349c801ef624b019c831c79f52a130a, type: 2}
+  _appliedStatusEffects:
+  - _definition: {fileID: 11400000, guid: a14f4e6c9f8f42f6a5d3e0b1c6a7d101, type: 2}
