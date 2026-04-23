@@ -89,8 +89,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _availabilitySourceComponent: {fileID: 2262140206353092150}
-  _promptRoot: {fileID: 6737962111432476390}
-  _promptText: {fileID: 1113884173328630214}
+  _promptRoot: {fileID: 4547791677823387591}
+  _promptText: {fileID: 2535475414891188272}
   _promptMessage: Interact
 --- !u!1 &8515988892718533815
 GameObject:
@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 2909991887086863068}
   - component: {fileID: 5240293404765053411}
   - component: {fileID: 2262140206353092150}
+  - component: {fileID: 4704939973876235513}
   m_Layer: 7
   m_Name: Door
   m_TagString: Untagged
@@ -171,7 +172,7 @@ SpriteRenderer:
   m_SortingLayerID: -1184524795
   m_SortingLayer: 5
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 73c217f050873b14187c79fa5def47c0, type: 3}
+  m_Sprite: {fileID: -5923962631080320201, guid: a1b5d73f83637ca42b50ed0ef40599c4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -244,7 +245,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 1.25
+  m_Radius: 2.5
 --- !u!114 &2262140206353092150
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -260,6 +261,34 @@ MonoBehaviour:
   _structuralDoor: {fileID: 0}
   _grid: {fileID: 0}
   _blocksMovement: 1
+--- !u!114 &4704939973876235513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8515988892718533815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e0ef2d7792f31d4e8379a7f15572e1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _spriteRenderer: {fileID: 5111013211030642314}
+  _doorSpriteMappings:
+  - roomType: 0
+    doorSprite: {fileID: -5923962631080320201, guid: a1b5d73f83637ca42b50ed0ef40599c4, type: 3}
+  - roomType: 1
+    doorSprite: {fileID: -8370431391916455316, guid: 20293af0e9ba10f4eba34830712ef673, type: 3}
+  - roomType: 2
+    doorSprite: {fileID: 370235584071769676, guid: 857d8aab912a1e54aa09406b85bc9789, type: 3}
+  - roomType: 3
+    doorSprite: {fileID: -3702083442959117193, guid: 81fc50b2e5a1f2d4d893c27b528dc383, type: 3}
+  - roomType: 4
+    doorSprite: {fileID: -7882289908011697675, guid: dc93cfc36b5d2034590458c5149e4557, type: 3}
+  - roomType: 5
+    doorSprite: {fileID: -1705022922198783380, guid: 956edde9f96aaad4ba00eb381ee6b9d6, type: 3}
+  - roomType: 6
+    doorSprite: {fileID: 9148536561716015607, guid: 26ae17a0a239efa48a6be655da224c9b, type: 3}
 --- !u!1001 &5158147745985195678
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -338,7 +367,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.75
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -351,6 +380,10 @@ PrefabInstance:
     - target: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+      propertyPath: m_text
+      value: Interact
       objectReference: {fileID: 0}
     - target: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
       propertyPath: m_Name
@@ -365,17 +398,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
---- !u!224 &8783211612127363414 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
-  m_PrefabInstance: {fileID: 5158147745985195678}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &6737962111432476390 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
-  m_PrefabInstance: {fileID: 5158147745985195678}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1113884173328630214 stripped
+--- !u!114 &2535475414891188272 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7258322102942351022, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
   m_PrefabInstance: {fileID: 5158147745985195678}
@@ -386,3 +409,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &4547791677823387591 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8685311059466774873, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+  m_PrefabInstance: {fileID: 5158147745985195678}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &8783211612127363414 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4499465907065450440, guid: 81742e9a99b8f3840961bfbf0ec71bb9, type: 3}
+  m_PrefabInstance: {fileID: 5158147745985195678}
+  m_PrefabAsset: {fileID: 0}
