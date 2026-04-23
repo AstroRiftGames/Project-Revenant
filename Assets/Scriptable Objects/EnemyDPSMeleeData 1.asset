@@ -26,7 +26,7 @@ MonoBehaviour:
   softCurrencyRewardOnSoulAbsorb: 2
   skill: {fileID: 0}
   stats:
-    maxHealth: 60
+    maxHealth: 120
     attackDamage: 2
     attackCooldown: 0.75
     attackRangeInCells: 1
