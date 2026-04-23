@@ -47,9 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
-  _blocksMovement: 1
-  _grid: {fileID: 0}
-  _debugCombatLockLogs: 1
 --- !u!1 &1261821990994168952
 GameObject:
   m_ObjectHideFlags: 0
@@ -97,9 +94,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
-  _blocksMovement: 1
-  _grid: {fileID: 0}
-  _debugCombatLockLogs: 1
 --- !u!1 &1335042572350580095
 GameObject:
   m_ObjectHideFlags: 0
@@ -2719,9 +2713,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
-  _blocksMovement: 1
-  _grid: {fileID: 0}
-  _debugCombatLockLogs: 1
 --- !u!1 &4347932947661017972
 GameObject:
   m_ObjectHideFlags: 0
@@ -2842,7 +2833,9 @@ MonoBehaviour:
     - CategoryName: Support
       Weight: 20
       Prefabs:
-      - Prefab: {fileID: 6436315245445220754, guid: c7bda3d703dbaa34a98114e067d0b217, type: 3}
+      - Prefab: {fileID: 2877200134568416365, guid: aa60640e34418224b892287878b9d235, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 3728447125570570876, guid: 753353430278e2544ad2d5b038aaac7e, type: 3}
         Weight: 50
   LootRoomConfig:
     SpawnCountRange: {x: 0, y: 0}
@@ -3093,9 +3086,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomA: {fileID: 0}
   roomB: {fileID: 0}
-  _blocksMovement: 1
-  _grid: {fileID: 0}
-  _debugCombatLockLogs: 1
 --- !u!1 &8652037412062293294
 GameObject:
   m_ObjectHideFlags: 0

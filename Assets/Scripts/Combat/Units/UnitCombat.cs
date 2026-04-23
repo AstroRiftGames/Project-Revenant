@@ -162,7 +162,8 @@ public class UnitCombat : MonoBehaviour
         if (projectilePrefab == null)
             return;
 
-        CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        Transform projectileParent = _unit.RoomContext != null ? _unit.RoomContext.transform : null;
+        CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity, projectileParent);
         projectile.Launch(transform.position, target.transform, target.Position);
     }
 

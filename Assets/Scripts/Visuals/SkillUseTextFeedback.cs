@@ -67,6 +67,9 @@ public class SkillUseTextFeedback : MonoBehaviour
         if (context == null)
             return null;
 
+        if (context.Skill != null && context.Skill.Shape == SkillShape.SpawnMinions)
+            return context.Caster;
+
         if (context.Skill != null && context.Skill.TargetMode == SkillTargetMode.Self)
             return context.Caster;
 

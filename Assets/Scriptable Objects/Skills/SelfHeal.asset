@@ -10,20 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
-  m_Name: FocusedBolt
+  m_Name: SelfHeal
   m_EditorClassIdentifier: 
-  _skillId: FocusedBolt
-  _displayName: Focused Bolt
-  _icon: {fileID: 21300000, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
-  _cooldown: 3
-  _rangeInCells: 3
-  _splashRadiusInCells: 1
-  _lineLengthInCells: 3
-  _targetMode: 0
-  _shape: 4
+  _skillId: SelfHeal
+  _displayName: Self Heal
+  _icon: {fileID: 21300000, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
+  _cooldown: 4
+  _rangeInCells: 0
+  _targetMode: 1
+  _shape: 0
   _requirements:
     requiresTarget: 1
-    mustTargetHostile: 1
-    mustTargetInjured: 0
+    mustTargetHostile: 0
+    mustTargetInjured: 1
   _effects:
-  - {fileID: 11400000, guid: 1bb54c81cb124622876166d91dc48ceb, type: 2}
+  - {fileID: 11400000, guid: 7040e877f3f44ca7aa6606f66d24fb56, type: 2}

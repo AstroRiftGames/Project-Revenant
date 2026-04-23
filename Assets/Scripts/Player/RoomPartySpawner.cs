@@ -55,6 +55,8 @@ public class RoomPartySpawner : MonoBehaviour
     [SerializeField] private TemporaryFormationPattern _temporaryFormation = new();
 
     private readonly List<GameObject> _spawnedPartyUnits = new();
+    private CombatRoomController _currentCombatRoomController;
+    private bool _isSubscribedToCombatController;
 
     public void Configure(FloorManager floorManager, NecromancerParty party)
     {
@@ -65,17 +67,22 @@ public class RoomPartySpawner : MonoBehaviour
     private void OnEnable()
     {
         FloorManager.OnRoomEntered += HandleRoomEntered;
+        RefreshCombatRoomSubscription();
     }
 
     private void OnDisable()
     {
         FloorManager.OnRoomEntered -= HandleRoomEntered;
+        UnsubscribeFromCurrentCombatController();
     }
 
     private void Start()
     {
         if (_floorManager != null && _floorManager.CurrentRoom != null)
+        {
             DeployToRoom(_floorManager.CurrentRoom);
+            RefreshCombatRoomSubscription(_floorManager.CurrentRoom);
+        }
     }
 
     private void OnValidate()
@@ -93,6 +100,7 @@ public class RoomPartySpawner : MonoBehaviour
     private void HandleRoomEntered(RoomDoor door, GameObject newRoom)
     {
         DeployToRoom(door, newRoom);
+        RefreshCombatRoomSubscription(newRoom);
     }
 
     public void DeployToRoom(GameObject roomObject)
@@ -274,6 +282,57 @@ public class RoomPartySpawner : MonoBehaviour
         }
 
         _spawnedPartyUnits.Clear();
+    }
+
+    private void RefreshCombatRoomSubscription(GameObject roomObject = null)
+    {
+        if (_floorManager == null)
+            _floorManager = FindFirstObjectByType<FloorManager>();
+
+        GameObject targetRoom = roomObject != null
+            ? roomObject
+            : _floorManager != null ? _floorManager.CurrentRoom : null;
+
+        CombatRoomController nextController = null;
+        if (targetRoom != null && targetRoom.TryGetComponent(out RoomContext roomContext))
+            nextController = roomContext.CombatController;
+
+        if (ReferenceEquals(_currentCombatRoomController, nextController))
+            return;
+
+        UnsubscribeFromCurrentCombatController();
+        _currentCombatRoomController = nextController;
+        SubscribeToCurrentCombatController();
+    }
+
+    private void SubscribeToCurrentCombatController()
+    {
+        if (_currentCombatRoomController == null || _isSubscribedToCombatController)
+            return;
+
+        _currentCombatRoomController.StateChanged += HandleCombatStateChanged;
+        _isSubscribedToCombatController = true;
+    }
+
+    private void UnsubscribeFromCurrentCombatController()
+    {
+        if (!_isSubscribedToCombatController || _currentCombatRoomController == null)
+            return;
+
+        _currentCombatRoomController.StateChanged -= HandleCombatStateChanged;
+        _currentCombatRoomController = null;
+        _isSubscribedToCombatController = false;
+    }
+
+    private void HandleCombatStateChanged(CombatRoomController controller, CombatRoomState state)
+    {
+        if (!ReferenceEquals(controller, _currentCombatRoomController))
+            return;
+
+        if (state != CombatRoomState.Resolved || controller.Outcome != CombatRoomOutcome.PlayerVictory)
+            return;
+
+        ClearCurrentDeployment();
     }
 
     public void TrackDeployment(GameObject instance, string partyMemberId)
