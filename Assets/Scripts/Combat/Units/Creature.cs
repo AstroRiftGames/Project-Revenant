@@ -12,6 +12,7 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(RecruitableUnitState))]
 [RequireComponent(typeof(UnitAffiliationState))]
 [RequireComponent(typeof(StatusEffectController))]
+[RequireComponent(typeof(UnitVisualMaterialController))]
 [RequireComponent(typeof(StatusEffectVisualFeedback))]
 [RequireComponent(typeof(StatusEffectDebugPopupPresenter))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
@@ -88,6 +89,15 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
                 "Update the prefab setup to include it explicitly if this unit should show status feedback.",
                 this);
             gameObject.AddComponent<StatusEffectVisualFeedback>();
+        }
+
+        if (GetComponent<UnitVisualMaterialController>() == null)
+        {
+            Debug.LogWarning(
+                $"[{nameof(Creature)}] '{name}' was missing {nameof(UnitVisualMaterialController)} at runtime and it was auto-added. " +
+                "Update the prefab setup to include it explicitly if this unit should use unified material feedback.",
+                this);
+            gameObject.AddComponent<UnitVisualMaterialController>();
         }
 
         if (GetComponent<StatusEffectDebugPopupPresenter>() == null)

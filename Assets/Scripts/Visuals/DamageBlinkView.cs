@@ -2,24 +2,20 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(UnitVisualMaterialController))]
 public class DamageBlinkView : MonoBehaviour
 {
     [Header("Settings")]
     [SerializeField] private float _flashDuration = 0.08f;
-    [SerializeField] private string _flashPropertyName = "_FlashAmount";
 
-    private int _flashPropertyId;
     private LifeController _lifeController;
-    private SpriteRenderer[] _spriteRenderers;
-    private MaterialPropertyBlock _propertyBlock;
+    private UnitVisualMaterialController _visualMaterialController;
     private Coroutine _blinkCoroutine;
 
     private void Awake()
     {
-        _flashPropertyId = Shader.PropertyToID(_flashPropertyName);
         _lifeController = GetComponent<LifeController>();
-        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
-        _propertyBlock = new MaterialPropertyBlock();
+        _visualMaterialController = GetComponent<UnitVisualMaterialController>() ?? gameObject.AddComponent<UnitVisualMaterialController>();
     }
 
     private void OnEnable()
@@ -38,7 +34,7 @@ public class DamageBlinkView : MonoBehaviour
         }
 
         StopBlink();
-        SetFlashAmount(0f);
+        _visualMaterialController?.SetBlinkOverride(false);
     }
 
     private void HandleDamageTaken(int amount)
@@ -58,26 +54,11 @@ public class DamageBlinkView : MonoBehaviour
 
     private IEnumerator BlinkRoutine()
     {
-        SetFlashAmount(1f);
+        _visualMaterialController?.SetBlinkOverride(true);
 
         yield return new WaitForSeconds(_flashDuration);
 
-        SetFlashAmount(0f);
+        _visualMaterialController?.SetBlinkOverride(false);
         _blinkCoroutine = null;
-    }
-
-    private void SetFlashAmount(float amount)
-    {
-        if (_spriteRenderers == null) return;
-
-        for (int i = 0; i < _spriteRenderers.Length; i++)
-        {
-            SpriteRenderer renderer = _spriteRenderers[i];
-            if (renderer == null) continue;
-
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetFloat(_flashPropertyId, amount);
-            renderer.SetPropertyBlock(_propertyBlock);
-        }
     }
 }

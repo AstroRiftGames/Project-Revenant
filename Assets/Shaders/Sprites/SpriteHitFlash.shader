@@ -8,6 +8,10 @@ Shader "ProjectRevenant/Sprites/Hit Flash"
         [Header(Flash Settings)]
         _FlashColor ("Flash Color", Color) = (1,1,1,1)
         _FlashAmount ("Flash Amount", Range(0, 1)) = 0
+        
+        [Header(Overlay Settings)]
+        _OverlayColor ("Overlay Color", Color) = (1,1,1,0)
+        _OverlayAmount ("Overlay Amount", Range(0, 1)) = 0
 
         [HideInInspector] _RendererColor ("RendererColor", Color) = (1,1,1,1)
         [HideInInspector] _Flip ("Flip", Vector) = (1,1,1,1)
@@ -56,7 +60,9 @@ Shader "ProjectRevenant/Sprites/Hit Flash"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half4 _FlashColor;
+                half4 _OverlayColor;
                 float _FlashAmount;
+                float _OverlayAmount;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -75,8 +81,10 @@ Shader "ProjectRevenant/Sprites/Hit Flash"
             {
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 half4 finalColor = texColor * input.color;
+                half overlayAmount = saturate(_OverlayAmount * _OverlayColor.a);
 
-                // Apply Flash: Interpolate between original color and flash color based on _FlashAmount
+                finalColor.rgb = lerp(finalColor.rgb, _OverlayColor.rgb * finalColor.a, overlayAmount);
+
                 finalColor.rgb = lerp(finalColor.rgb, _FlashColor.rgb * finalColor.a, _FlashAmount);
 
                 return finalColor;
@@ -117,7 +125,9 @@ Shader "ProjectRevenant/Sprites/Hit Flash"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half4 _FlashColor;
+                half4 _OverlayColor;
                 float _FlashAmount;
+                float _OverlayAmount;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -136,6 +146,9 @@ Shader "ProjectRevenant/Sprites/Hit Flash"
             {
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 half4 finalColor = texColor * input.color;
+                half overlayAmount = saturate(_OverlayAmount * _OverlayColor.a);
+
+                finalColor.rgb = lerp(finalColor.rgb, _OverlayColor.rgb * finalColor.a, overlayAmount);
 
                 finalColor.rgb = lerp(finalColor.rgb, _FlashColor.rgb * finalColor.a, _FlashAmount);
 

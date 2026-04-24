@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,54 +5,12 @@ using UnityEngine;
 [RequireComponent(typeof(StatusEffectController))]
 [RequireComponent(typeof(LifeController))]
 [RequireComponent(typeof(RecruitableUnitState))]
+[RequireComponent(typeof(UnitVisualMaterialController))]
 public class StatusEffectVisualFeedback : MonoBehaviour
 {
-    private enum UnitVisualState
-    {
-        Normal,
-        Buff,
-        HealOverTime,
-        Debuff,
-        DamageOverTime,
-        DamageOverTimePermanent,
-        Stun,
-        Dead,
-        Recruitable
-    }
-
-    [Serializable]
-    private struct VisualStateColorBinding
-    {
-        [SerializeField] private UnitVisualState _state;
-        [SerializeField] private Color _color;
-
-        public VisualStateColorBinding(UnitVisualState state, Color color)
-        {
-            _state = state;
-            _color = color;
-        }
-
-        public UnitVisualState State => _state;
-        public Color Color => _color;
-    }
-
     [Header("Popup")]
     [SerializeField] private SkillTextPopup _popupPrefab;
     [SerializeField] private Vector3 _popupOffset = new(0f, 0.95f, 0f);
-
-    [Header("Colors")]
-    [SerializeField] private VisualStateColorBinding[] _stateColors =
-    {
-        new(UnitVisualState.Normal, Color.white),
-        new(UnitVisualState.Buff, new Color(0.35f, 0.85f, 1f, 1f)),
-        new(UnitVisualState.HealOverTime, new Color(0.35f, 1f, 0.55f, 1f)),
-        new(UnitVisualState.Debuff, new Color(0.95f, 0.45f, 0.78f, 1f)),
-        new(UnitVisualState.DamageOverTime, new Color(1f, 0.38f, 0.38f, 1f)),
-        new(UnitVisualState.DamageOverTimePermanent, new Color(0.62f, 0.2f, 0.9f, 1f)),
-        new(UnitVisualState.Stun, new Color(1f, 0.9f, 0.25f, 1f)),
-        new(UnitVisualState.Dead, new Color(0.239f, 0.239f, 0.239f, 1f)),
-        new(UnitVisualState.Recruitable, Color.black),
-    };
 
     [Header("Debug")]
     [SerializeField] private bool _debugLogs;
@@ -61,21 +18,19 @@ public class StatusEffectVisualFeedback : MonoBehaviour
     private StatusEffectController _statusEffectController;
     private LifeController _lifeController;
     private RecruitableUnitState _recruitableUnitState;
-    private SpriteRenderer[] _spriteRenderers;
-    private UnitVisualState _currentVisualState = UnitVisualState.Normal;
-    private Color _currentResolvedColor = Color.white;
+    private UnitDeathHandler _unitDeathHandler;
+    private UnitVisualMaterialController _unitVisualMaterialController;
+    private UnitVisualMaterialState _currentVisualState = (UnitVisualMaterialState)(-1);
 
     private void Awake()
     {
         ResolveReferences();
-        RefreshRendererCache();
         ForceRefreshVisualState();
     }
 
     private void OnEnable()
     {
         ResolveReferences();
-        RefreshRendererCache();
 
         if (_statusEffectController != null)
         {
@@ -104,12 +59,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         if (_recruitableUnitState != null)
             _recruitableUnitState.OnStateChanged -= HandleLifecycleStateChanged;
 
-        ApplyResolvedColor(UnitVisualState.Normal, ResolveColor(UnitVisualState.Normal));
-    }
-
-    private void Update()
-    {
-        RefreshVisualState();
+        ApplyResolvedState(UnitVisualMaterialState.Normal);
     }
 
     private void HandleEffectApplied(StatusEffectController controller, ActiveStatusEffect activeEffect)
@@ -150,24 +100,27 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         ForceRefreshVisualState();
     }
 
-    private UnitVisualState ResolveCurrentVisualState()
+    private UnitVisualMaterialState ResolveCurrentVisualState()
     {
+        if (_unitDeathHandler != null && _unitDeathHandler.IsSoulAbsorbedCorpse)
+            return UnitVisualMaterialState.SoulAbsorbed;
+
         if (_recruitableUnitState != null && _recruitableUnitState.IsRecruitable)
-            return UnitVisualState.Recruitable;
+            return UnitVisualMaterialState.Recruitable;
 
         if (_lifeController != null && !_lifeController.IsAlive)
-            return UnitVisualState.Dead;
+            return UnitVisualMaterialState.Dead;
 
         return ResolveStatusVisualState();
     }
 
-    private UnitVisualState ResolveStatusVisualState()
+    private UnitVisualMaterialState ResolveStatusVisualState()
     {
         if (_statusEffectController == null)
-            return UnitVisualState.Normal;
+            return UnitVisualMaterialState.Normal;
 
         IReadOnlyList<ActiveStatusEffect> activeEffects = _statusEffectController.ActiveEffects;
-        UnitVisualState bestState = UnitVisualState.Normal;
+        UnitVisualMaterialState bestState = UnitVisualMaterialState.Normal;
         int bestPriority = int.MinValue;
         List<string> debugEntries = _debugLogs ? new List<string>(activeEffects.Count) : null;
 
@@ -179,7 +132,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
                 continue;
 
             StatusVisualStyle visualStyle = ResolveRepresentableVisualStyle(definition);
-            UnitVisualState candidateState = MapVisualStyleToState(visualStyle);
+            UnitVisualMaterialState candidateState = MapVisualStyleToState(visualStyle);
             int priority = ResolveVisualPriority(candidateState);
             debugEntries?.Add($"{definition.DisplayName}:{visualStyle}->{candidateState}");
             if (priority <= bestPriority)
@@ -200,80 +153,37 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         _statusEffectController ??= GetComponent<StatusEffectController>();
         _lifeController ??= GetComponent<LifeController>();
         _recruitableUnitState ??= GetComponent<RecruitableUnitState>();
-    }
-
-    private void RefreshRendererCache()
-    {
-        _spriteRenderers = GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
-        LogDebug(
-            $"[StatusEffectVisualFeedback] '{name}' refs: status={_statusEffectController != null}, life={_lifeController != null}, " +
-            $"recruitable={_recruitableUnitState != null}, renderers={(_spriteRenderers != null ? _spriteRenderers.Length : 0)}.");
-    }
-
-    private void RefreshVisualState()
-    {
-        UnitVisualState resolvedState = ResolveCurrentVisualState();
-        Color resolvedColor = ResolveColor(resolvedState);
-
-        if (_currentVisualState == resolvedState && ColorsEqual(_currentResolvedColor, resolvedColor))
-            return;
-
-        ApplyResolvedColor(resolvedState, resolvedColor);
+        _unitDeathHandler ??= GetComponent<UnitDeathHandler>();
+        _unitVisualMaterialController ??= GetComponent<UnitVisualMaterialController>() ?? gameObject.AddComponent<UnitVisualMaterialController>();
     }
 
     private void ForceRefreshVisualState()
     {
-        ApplyResolvedColor(ResolveCurrentVisualState(), ResolveColor(ResolveCurrentVisualState()));
+        ApplyResolvedState(ResolveCurrentVisualState());
     }
 
-    private void ApplyResolvedColor(UnitVisualState visualState, Color resolvedColor)
+    private void ApplyResolvedState(UnitVisualMaterialState visualState)
     {
-        _currentVisualState = visualState;
-        _currentResolvedColor = resolvedColor;
-
-        if (_spriteRenderers == null)
+        if (_currentVisualState == visualState)
             return;
 
-        for (int i = 0; i < _spriteRenderers.Length; i++)
-        {
-            SpriteRenderer spriteRenderer = _spriteRenderers[i];
-            if (spriteRenderer == null)
-                continue;
+        _currentVisualState = visualState;
+        _unitVisualMaterialController?.SetBaseState(visualState);
 
-            Color color = resolvedColor;
-            color.a = spriteRenderer.color.a;
-            spriteRenderer.color = color;
-        }
-
-        LogDebug(
-            $"[StatusEffectVisualFeedback] '{name}' applied state={visualState} color=({resolvedColor.r:F2}, {resolvedColor.g:F2}, {resolvedColor.b:F2}, {resolvedColor.a:F2}).");
+        LogDebug($"[StatusEffectVisualFeedback] '{name}' applied visual state={visualState}.");
     }
 
-    private Color ResolveColor(UnitVisualState state)
-    {
-        if (_stateColors != null)
-        {
-            for (int i = 0; i < _stateColors.Length; i++)
-            {
-                if (_stateColors[i].State == state)
-                    return _stateColors[i].Color;
-            }
-        }
-
-        return Color.white;
-    }
-
-    private static UnitVisualState MapVisualStyleToState(StatusVisualStyle style)
+    private static UnitVisualMaterialState MapVisualStyleToState(StatusVisualStyle style)
     {
         return style switch
         {
-            StatusVisualStyle.Stun => UnitVisualState.Stun,
-            StatusVisualStyle.DamageOverTimePermanent => UnitVisualState.DamageOverTimePermanent,
-            StatusVisualStyle.DamageOverTime => UnitVisualState.DamageOverTime,
-            StatusVisualStyle.Debuff => UnitVisualState.Debuff,
-            StatusVisualStyle.HealOverTime => UnitVisualState.HealOverTime,
-            StatusVisualStyle.Buff => UnitVisualState.Buff,
-            _ => UnitVisualState.Normal
+            StatusVisualStyle.Stun => UnitVisualMaterialState.Stun,
+            StatusVisualStyle.DamageOverTimePermanent => UnitVisualMaterialState.DamageOverTimePermanent,
+            StatusVisualStyle.DamageOverTime => UnitVisualMaterialState.DamageOverTime,
+            StatusVisualStyle.Debuff => UnitVisualMaterialState.Debuff,
+            StatusVisualStyle.HealOverTime => UnitVisualMaterialState.HealOverTime,
+            StatusVisualStyle.Buff => UnitVisualMaterialState.Buff,
+            _ => UnitVisualMaterialState.Normal
         };
     }
 
@@ -297,18 +207,19 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         };
     }
 
-    private static int ResolveVisualPriority(UnitVisualState state)
+    private static int ResolveVisualPriority(UnitVisualMaterialState state)
     {
         return state switch
         {
-            UnitVisualState.Recruitable => 800,
-            UnitVisualState.Dead => 700,
-            UnitVisualState.Stun => 600,
-            UnitVisualState.DamageOverTimePermanent => 500,
-            UnitVisualState.DamageOverTime => 400,
-            UnitVisualState.Debuff => 300,
-            UnitVisualState.HealOverTime => 200,
-            UnitVisualState.Buff => 100,
+            UnitVisualMaterialState.SoulAbsorbed => 900,
+            UnitVisualMaterialState.Recruitable => 800,
+            UnitVisualMaterialState.Dead => 700,
+            UnitVisualMaterialState.Stun => 600,
+            UnitVisualMaterialState.DamageOverTimePermanent => 500,
+            UnitVisualMaterialState.DamageOverTime => 400,
+            UnitVisualMaterialState.Debuff => 300,
+            UnitVisualMaterialState.HealOverTime => 200,
+            UnitVisualMaterialState.Buff => 100,
             _ => 0
         };
     }
@@ -319,7 +230,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             ? ResolveRepresentableVisualStyle(activeEffect.Definition)
             : StatusVisualStyle.None;
 
-        return ResolveColor(MapVisualStyleToState(style));
+        return ResolvePopupColor(MapVisualStyleToState(style));
     }
 
     private void ShowPopup(string message, Color color)
@@ -340,12 +251,17 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             Debug.Log(message, this);
     }
 
-    private static bool ColorsEqual(Color left, Color right)
+    private static Color ResolvePopupColor(UnitVisualMaterialState state)
     {
-        const float epsilon = 0.001f;
-        return Mathf.Abs(left.r - right.r) <= epsilon &&
-               Mathf.Abs(left.g - right.g) <= epsilon &&
-               Mathf.Abs(left.b - right.b) <= epsilon &&
-               Mathf.Abs(left.a - right.a) <= epsilon;
+        return state switch
+        {
+            UnitVisualMaterialState.Stun => new Color(1f, 0.9f, 0.25f, 1f),
+            UnitVisualMaterialState.DamageOverTimePermanent => new Color(0.62f, 0.2f, 0.9f, 1f),
+            UnitVisualMaterialState.DamageOverTime => new Color(1f, 0.38f, 0.38f, 1f),
+            UnitVisualMaterialState.Debuff => new Color(0.95f, 0.45f, 0.78f, 1f),
+            UnitVisualMaterialState.HealOverTime => new Color(0.35f, 1f, 0.55f, 1f),
+            UnitVisualMaterialState.Buff => new Color(0.35f, 0.85f, 1f, 1f),
+            _ => Color.white
+        };
     }
 }
