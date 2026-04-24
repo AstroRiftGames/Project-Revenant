@@ -172,6 +172,10 @@ namespace PrefabDungeonGeneration
                                 {
                                     parentDoorComponent.roomA = parentRoom;
                                     parentDoorComponent.roomB = instance;
+                                    
+                                    DoorVisuals doorVisuals = parentDoorComponent.GetComponent<DoorVisuals>();
+                                    if (doorVisuals == null) doorVisuals = parentDoorComponent.GetComponentInChildren<DoorVisuals>();
+                                    if (doorVisuals != null) doorVisuals.UpdateDoorSprite(roomNode.RoomType);
                                 }
                             }
                         }
@@ -194,6 +198,10 @@ namespace PrefabDungeonGeneration
                                 {
                                     childDoorComponent.roomA = instance;
                                     childDoorComponent.roomB = parentRoom;
+                                    
+                                    DoorVisuals doorVisuals = childDoorComponent.GetComponent<DoorVisuals>();
+                                    if (doorVisuals == null) doorVisuals = childDoorComponent.GetComponentInChildren<DoorVisuals>();
+                                    if (doorVisuals != null) doorVisuals.UpdateDoorSprite(roomNode.ParentNode.RoomType);
                                 }
                             }
                         }

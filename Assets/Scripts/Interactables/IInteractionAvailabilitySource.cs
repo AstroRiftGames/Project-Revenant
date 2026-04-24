@@ -30,6 +30,6 @@ public static class GridInteractionAvailability
         if (!grid.HasCell(necromancerCell))
             return false;
 
-        return GridNavigationUtility.GetCellDistance(interactableCell, necromancerCell) == 1;
+        return GridNavigationUtility.GetCellDistance(interactableCell, necromancerCell) <= 2;
     }
 }

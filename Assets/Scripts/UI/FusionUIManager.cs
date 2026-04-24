@@ -3,17 +3,16 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class FusionUIManager : MonoBehaviour
+public class FusionUIManager : StationUIManager
 {
-    [SerializeField] private FusionController _fusionController;
-    
-    [Header("Panels")]
-    [SerializeField] private GameObject _mainPanel;
+    // Acceso tipado al controlador específico de fusión
+    private FusionController FusionController => (_currentActiveController as FusionController) ?? (_stationController as FusionController);
+
+    [Header("Panels Adicionales")]
     [SerializeField] private GameObject _selectionPanel;
     [SerializeField] private GameObject _resultPanel;
 
     [Header("Main Panel Elements")]
-    [SerializeField] private Button _closeMainButton;
     [SerializeField] private Button _fuseButton;
     [SerializeField] private Button _slotAButton;
     [SerializeField] private Button _slotBButton;
@@ -37,22 +36,22 @@ public class FusionUIManager : MonoBehaviour
 
     private List<CreatureFusionCard> _spawnedCards = new List<CreatureFusionCard>();
 
-    private void Awake()
+    protected override void Awake()
     {
-        _mainPanel?.SetActive(false);
+        base.Awake(); // Oculta el _mainPanel
         _selectionPanel?.SetActive(false);
         _resultPanel?.SetActive(false);
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
-        if (_fusionController != null)
+        base.OnEnable(); // Suscribe _closeMainButton y OpenMainPanel
+
+        if (FusionController != null)
         {
-            _fusionController.OnUIRequested += OpenMainPanel;
-            _fusionController.OnFusionCompleted += ShowResultPanel;
+            FusionController.OnFusionCompleted += ShowResultPanel;
         }
 
-        _closeMainButton?.onClick.AddListener(CloseAllPanels);
         _fuseButton?.onClick.AddListener(TryFuse);
         _slotAButton?.onClick.AddListener(() => OpenSelectionPanel(1));
         _slotBButton?.onClick.AddListener(() => OpenSelectionPanel(2));
@@ -60,15 +59,15 @@ public class FusionUIManager : MonoBehaviour
         _closeResultButton?.onClick.AddListener(ReturnToMainPanel);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
-        if (_fusionController != null)
+        base.OnDisable(); // Desuscribe _closeMainButton y OpenMainPanel
+
+        if (FusionController != null)
         {
-            _fusionController.OnUIRequested -= OpenMainPanel;
-            _fusionController.OnFusionCompleted -= ShowResultPanel;
+            FusionController.OnFusionCompleted -= ShowResultPanel;
         }
 
-        _closeMainButton?.onClick.RemoveListener(CloseAllPanels);
         _fuseButton?.onClick.RemoveListener(TryFuse);
         _slotAButton?.onClick.RemoveAllListeners();
         _slotBButton?.onClick.RemoveAllListeners();
@@ -76,7 +75,7 @@ public class FusionUIManager : MonoBehaviour
         _closeResultButton?.onClick.RemoveListener(ReturnToMainPanel);
     }
 
-    private void OpenMainPanel()
+    protected override void OpenMainPanel()
     {
         _memberA = null;
         _memberB = null;
@@ -84,12 +83,13 @@ public class FusionUIManager : MonoBehaviour
         
         _selectionPanel.SetActive(false);
         _resultPanel.SetActive(false);
-        _mainPanel.SetActive(true);
+
+        base.OpenMainPanel(); // Activa el _mainPanel
     }
 
-    private void CloseAllPanels()
+    protected override void CloseAllPanels()
     {
-        _mainPanel.SetActive(false);
+        base.CloseAllPanels(); // Oculta el _mainPanel
         _selectionPanel.SetActive(false);
         _resultPanel.SetActive(false);
     }
@@ -99,7 +99,9 @@ public class FusionUIManager : MonoBehaviour
         _selectionPanel.SetActive(false);
         _resultPanel.SetActive(false);
         RefreshMainPanel();
-        _mainPanel.SetActive(true);
+        
+        if (_mainPanel != null)
+            _mainPanel.SetActive(true);
     }
 
     private void RefreshMainPanel()
@@ -166,7 +168,7 @@ public class FusionUIManager : MonoBehaviour
     private void TryFuse()
     {
         if (_memberA == null || _memberB == null) return;
-        _fusionController.ExecuteFusion(_memberA, _memberB);
+        FusionController.ExecuteFusion(_memberA, _memberB);
     }
 
     private void ShowResultPanel(FusionResult result)

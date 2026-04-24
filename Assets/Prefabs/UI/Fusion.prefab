@@ -1853,11 +1853,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9bf3954298cf44aa8dfdc86bfcfc9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _fusionController: {fileID: 0}
+  _myUIType: 5
+  _stationController: {fileID: 0}
   _mainPanel: {fileID: 8554571707005160400}
+  _closeMainButton: {fileID: 7741002035684491055}
   _selectionPanel: {fileID: 4688462075891225693}
   _resultPanel: {fileID: 3607745767000983169}
-  _closeMainButton: {fileID: 7741002035684491055}
   _fuseButton: {fileID: 4098458636351758090}
   _slotAButton: {fileID: 6366704646777473575}
   _slotBButton: {fileID: 1469033311922723295}
