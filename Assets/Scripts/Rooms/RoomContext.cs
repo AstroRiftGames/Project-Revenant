@@ -17,7 +17,6 @@ public class RoomContext : MonoBehaviour
 
     private readonly List<Unit> _units = new();
     private readonly List<MonoBehaviour> _roomComponents = new();
-    private bool _hasGeneratedContent;
 
     public RoomGrid RoomGrid => _roomGrid;
     public CombatRoomController CombatController => _combatController;
@@ -60,50 +59,7 @@ public class RoomContext : MonoBehaviour
     public List<Vector3Int> GetAvailableSpawnCells(int edgePadding = 0)
     {
         ResolveDependencies();
-
-        var result = new List<Vector3Int>();
-        if (_roomGrid == null || _walkableTilemap == null)
-            return result;
-
-        BoundsInt bounds = _walkableTilemap.cellBounds;
-        bool hasWalkableTiles = false;
-        int minX = int.MaxValue;
-        int minY = int.MaxValue;
-        int maxX = int.MinValue;
-        int maxY = int.MinValue;
-
-        foreach (Vector3Int cell in bounds.allPositionsWithin)
-        {
-            if (!_walkableTilemap.HasTile(cell))
-                continue;
-
-            hasWalkableTiles = true;
-            minX = Mathf.Min(minX, cell.x);
-            minY = Mathf.Min(minY, cell.y);
-            maxX = Mathf.Max(maxX, cell.x);
-            maxY = Mathf.Max(maxY, cell.y);
-        }
-
-        if (!hasWalkableTiles)
-            return result;
-
-        int padding = Mathf.Max(0, edgePadding);
-        for (int x = minX + padding; x <= maxX - padding; x++)
-        {
-            for (int y = minY + padding; y <= maxY - padding; y++)
-            {
-                Vector3Int cell = new Vector3Int(x, y, 0);
-                if (!_walkableTilemap.HasTile(cell))
-                    continue;
-
-                if (!_roomGrid.IsCellWalkable(cell))
-                    continue;
-
-                result.Add(cell);
-            }
-        }
-
-        return result;
+        return RoomSpawnCellUtility.GetAvailableSpawnCells(_walkableTilemap, _roomGrid, edgePadding);
     }
 
     private void ResolveDependencies()
@@ -230,7 +186,7 @@ public class RoomContext : MonoBehaviour
 
     private void GenerateContentIfNeeded()
     {
-        if (_hasGeneratedContent || _contentGenerator == null)
+        if (_contentGenerator == null)
             return;
 
         if (_roomGrid == null)
@@ -242,7 +198,6 @@ public class RoomContext : MonoBehaviour
         }
 
         _contentGenerator.GenerateContent(this);
-        _hasGeneratedContent = true;
     }
 
     private void CacheUnits()
@@ -294,11 +249,6 @@ public class RoomContext : MonoBehaviour
 
     private bool ResolveIsCombatRoom()
     {
-        if (_roomProfile == null)
-            return false;
-
-        return _roomProfile.RoomType == PDRoomType.Combat ||
-               _roomProfile.RoomType == PDRoomType.MiniBoss ||
-               _roomProfile.RoomType == PDRoomType.Boss;
+        return RoomCombatUtility.IsCombatRoom(_roomProfile);
     }
 }

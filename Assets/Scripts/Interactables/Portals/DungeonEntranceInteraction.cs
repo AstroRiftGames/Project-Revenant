@@ -70,9 +70,7 @@ namespace Interactables.Portals
                 return;
 
             _roomContext ??= GetComponentInParent<RoomContext>(includeInactive: true);
-            _grid = _roomContext != null
-                ? _roomContext.RoomGrid
-                : GetComponentInParent<RoomGrid>(includeInactive: true);
+            _grid = RoomGridResolver.ResolveFromContext(_roomContext) ?? RoomGridResolver.ResolveInParents(this);
         }
 
         private void SetInteractionAvailability(bool isAvailable, bool forceEvent)

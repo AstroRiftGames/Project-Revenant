@@ -28,6 +28,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
     [SerializeField] private int _enemyFormationEdgePadding = 1;
     [SerializeField] private int _deploymentMinForwardDistance = 1;
     [SerializeField] private int _deploymentFallbackMaxForwardDistance = 3;
+    [SerializeField] private Necromancer _necromancer;
     [SerializeField] private bool _debugLogs = true;
 
     public RoomContext RoomContext => _roomContext;
@@ -130,14 +131,14 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (grid == null || !grid.HasCell(cell) || !grid.IsCellEnterable(cell, unit))
             return false;
 
-        if (!TryResolveDeploymentFrame(grid, out Vector3Int anchorCell, out Vector3Int forwardDirection))
+        if (!RoomFormationPlacementUtility.TryResolveDeploymentFrame(grid, _roomContext, ResolveNecromancer(), out RoomPlacementFrame placementFrame))
             return false;
 
-        int forwardDistance = Mathf.RoundToInt(Vector3.Dot((Vector3)(cell - anchorCell), (Vector3)forwardDirection));
+        int forwardDistance = Mathf.RoundToInt(Vector3.Dot((Vector3)(cell - placementFrame.AnchorCell), (Vector3)placementFrame.ForwardDirection));
         if (forwardDistance < Mathf.Max(0, _deploymentMinForwardDistance))
             return false;
 
-        int maxForwardDistance = ResolveDeploymentMaxForwardDistance(anchorCell, forwardDirection);
+        int maxForwardDistance = ResolveDeploymentMaxForwardDistance(placementFrame.AnchorCell, placementFrame.ForwardDirection);
         return forwardDistance <= maxForwardDistance;
     }
 
@@ -145,6 +146,12 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
     {
         _roomContext ??= GetComponent<RoomContext>() ?? GetComponentInParent<RoomContext>(includeInactive: true);
         _roomProfile ??= GetComponent<RoomPrefabProfile>() ?? GetComponentInParent<RoomPrefabProfile>(includeInactive: true);
+    }
+
+    private Necromancer ResolveNecromancer()
+    {
+        _necromancer ??= FindAnyObjectByType<Necromancer>();
+        return _necromancer;
     }
 
     private void HandleUnitDied(Unit unit)
@@ -207,12 +214,12 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (enemies.Count == 0)
             return;
 
-        Vector3Int playerAnchorCell = ResolvePlayerAnchorCell(grid, enteredDoor, out Vector3Int forwardDirection);
-        Vector3Int lateralDirection = new(-forwardDirection.y, forwardDirection.x, 0);
+        if (!RoomFormationPlacementUtility.TryResolveEntryFrame(grid, _roomContext, enteredDoor, ResolveNecromancer(), out RoomPlacementFrame placementFrame))
+            return;
 
         List<UnitMovement> enemyMovements = ReleaseEnemyOccupancy(enemies);
         List<Vector3Int> candidateCells = _roomContext.GetAvailableSpawnCells(_enemyFormationEdgePadding);
-        candidateCells.Sort((left, right) => CompareEnemyCells(left, right, playerAnchorCell, forwardDirection, lateralDirection));
+        RoomPlacementCellSelectionUtility.SortByEntryPriority(candidateCells, placementFrame);
 
         int assignedCount = Mathf.Min(enemies.Count, candidateCells.Count);
         for (int i = 0; i < assignedCount; i++)
@@ -271,48 +278,6 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         return movements;
     }
 
-    private Vector3Int ResolvePlayerAnchorCell(RoomGrid grid, RoomDoor enteredDoor, out Vector3Int forwardDirection)
-    {
-        Vector3Int roomCenterCell = grid.WorldToCell(_roomContext.transform.position);
-        Vector3Int resolvedArrivalCell =
-            RoomTransitionPlacementUtility.ResolveArrivalCell(grid, _roomContext, enteredDoor, out forwardDirection);
-
-        Necromancer necromancer = FindAnyObjectByType<Necromancer>();
-        if (necromancer == null || !necromancer.TryGetGrid(out RoomGrid necromancerGrid) || !ReferenceEquals(necromancerGrid, grid))
-            return resolvedArrivalCell;
-
-        Vector3Int necromancerCell = grid.WorldToCell(necromancer.transform.position);
-        if (!grid.HasCell(necromancerCell))
-            return resolvedArrivalCell;
-
-        if (enteredDoor == null)
-            forwardDirection = RoomTransitionPlacementUtility.GetBestInwardDirection(necromancerCell, roomCenterCell);
-
-        return necromancerCell;
-    }
-
-    private static int CompareEnemyCells(
-        Vector3Int left,
-        Vector3Int right,
-        Vector3Int playerAnchorCell,
-        Vector3Int forwardDirection,
-        Vector3Int lateralDirection)
-    {
-        int leftForward = Mathf.RoundToInt(Vector3.Dot((Vector3)(left - playerAnchorCell), (Vector3)forwardDirection));
-        int rightForward = Mathf.RoundToInt(Vector3.Dot((Vector3)(right - playerAnchorCell), (Vector3)forwardDirection));
-        int forwardComparison = rightForward.CompareTo(leftForward);
-        if (forwardComparison != 0)
-            return forwardComparison;
-
-        int leftLateral = Mathf.RoundToInt(Vector3.Dot((Vector3)(left - playerAnchorCell), (Vector3)lateralDirection));
-        int rightLateral = Mathf.RoundToInt(Vector3.Dot((Vector3)(right - playerAnchorCell), (Vector3)lateralDirection));
-        int lateralMagnitudeComparison = Mathf.Abs(leftLateral).CompareTo(Mathf.Abs(rightLateral));
-        if (lateralMagnitudeComparison != 0)
-            return lateralMagnitudeComparison;
-
-        return rightLateral.CompareTo(leftLateral);
-    }
-
     private static bool IsValidCombatant(Unit unit)
     {
         return unit != null &&
@@ -336,33 +301,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     private bool ResolveIsCombatRoom()
     {
-        if (_roomProfile == null)
-            return false;
-
-        return _roomProfile.RoomType == PDRoomType.Combat ||
-               _roomProfile.RoomType == PDRoomType.MiniBoss ||
-               _roomProfile.RoomType == PDRoomType.Boss;
-    }
-
-    private bool TryResolveDeploymentFrame(RoomGrid grid, out Vector3Int anchorCell, out Vector3Int forwardDirection)
-    {
-        anchorCell = Vector3Int.zero;
-        forwardDirection = Vector3Int.up;
-
-        if (grid == null || _roomContext == null)
-            return false;
-
-        Vector3Int roomCenterCell = grid.WorldToCell(_roomContext.transform.position);
-        Necromancer necromancer = FindAnyObjectByType<Necromancer>();
-        if (necromancer == null || !necromancer.TryGetGrid(out RoomGrid necromancerGrid) || !ReferenceEquals(necromancerGrid, grid))
-            return false;
-
-        anchorCell = grid.WorldToCell(necromancer.transform.position);
-        if (!grid.HasCell(anchorCell))
-            return false;
-
-        forwardDirection = RoomTransitionPlacementUtility.GetBestInwardDirection(anchorCell, roomCenterCell);
-        return true;
+        return RoomCombatUtility.IsCombatRoom(_roomProfile);
     }
 
     private int ResolveDeploymentMaxForwardDistance(Vector3Int anchorCell, Vector3Int forwardDirection)
@@ -373,7 +312,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         for (int i = 0; i < candidateCells.Count; i++)
         {
             Vector3Int candidateCell = candidateCells[i];
-            int forwardDistance = Mathf.RoundToInt(Vector3.Dot((Vector3)(candidateCell - anchorCell), (Vector3)forwardDirection));
+            int forwardDistance = RoomPlacementCellSelectionUtility.ResolveForwardDistance(candidateCell, anchorCell, forwardDirection);
             if (forwardDistance > furthestForwardDistance)
                 furthestForwardDistance = forwardDistance;
         }

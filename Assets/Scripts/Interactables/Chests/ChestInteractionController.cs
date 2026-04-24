@@ -65,7 +65,7 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
     public void IntegrateWithRoom(RoomContext roomContext)
     {
         _roomContext = roomContext;
-        _grid = roomContext != null ? roomContext.RoomGrid : _grid;
+        _grid = RoomGridResolver.ResolveFromContext(roomContext) ?? _grid;
         _necromancer = null;
 
         TryRegisterOccupancy();
@@ -174,19 +174,11 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
 
     private void TryRegisterOccupancy()
     {
-        if (_isOccupancyRegistered || _grid == null)
-            return;
-
-        _grid.OccupancyService.RegisterOccupant(this);
-        _isOccupancyRegistered = true;
+        _isOccupancyRegistered = StaticGridOccupancyUtility.TryRegister(_grid, this, _isOccupancyRegistered);
     }
 
     private void ReleaseOccupancy()
     {
-        if (!_isOccupancyRegistered || _grid == null)
-            return;
-
-        _grid.OccupancyService.ReleaseOccupant(this);
-        _isOccupancyRegistered = false;
+        _isOccupancyRegistered = StaticGridOccupancyUtility.Release(_grid, this, _isOccupancyRegistered);
     }
 }

@@ -184,7 +184,6 @@ public class RoomGrid : MonoBehaviour
 
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
-    [SerializeField] private RoomContext _roomContext;
     [SerializeField] private GridOccupancyTracker _occupancyService;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
@@ -231,7 +230,6 @@ public class RoomGrid : MonoBehaviour
 
     private void ResolveDependencies()
     {
-        ResolveRoomContext();
         TryResolveOccupancyService();
         ConfigureTopology();
     }
@@ -274,14 +272,6 @@ public class RoomGrid : MonoBehaviour
     public bool IsCellWalkable(Vector3Int cell, IGridOccupant movingOccupant = null)
     {
         return IsCellEnterable(cell, movingOccupant);
-    }
-
-    private void ResolveRoomContext()
-    {
-        if (_roomContext != null)
-            return;
-
-        _roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
     }
 
     private void TryResolveOccupancyService()

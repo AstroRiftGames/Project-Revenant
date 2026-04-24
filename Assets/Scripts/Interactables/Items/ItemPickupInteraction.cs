@@ -96,17 +96,7 @@ namespace Interactables.Items
 
         private void ResolveGrid()
         {
-            if (_grid != null)
-                return;
-
-            RoomContext roomContext = GetComponentInParent<RoomContext>(includeInactive: true);
-            if (roomContext != null)
-            {
-                _grid = roomContext.RoomGrid;
-                return;
-            }
-
-            _grid = GetComponentInParent<RoomGrid>(includeInactive: true);
+            _grid ??= RoomGridResolver.ResolveInParents(this);
         }
 
         private void SetInteractionAvailability(bool isAvailable, bool forceEvent)

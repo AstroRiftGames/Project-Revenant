@@ -177,13 +177,6 @@ public class UnitCombat : MonoBehaviour
 
     private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
     {
-        if (grid == null || unit == null)
-            return Vector3Int.zero;
-
-        UnitMovement movement = unit.GetComponent<UnitMovement>();
-        if (movement != null && movement.TryGetLogicalCell(out Vector3Int cell))
-            return cell;
-
-        return grid.WorldToCell(unit.Position);
+        return GridUnitCellUtility.ResolveUnitCell(grid, unit);
     }
 }

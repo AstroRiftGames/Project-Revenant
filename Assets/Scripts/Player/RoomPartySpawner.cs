@@ -53,6 +53,7 @@ public class RoomPartySpawner : MonoBehaviour
     [SerializeField] private FloorManager _floorManager;
     [SerializeField] private NecromancerParty _party;
     [SerializeField] private TemporaryFormationPattern _temporaryFormation = new();
+    [SerializeField] private Necromancer _necromancer;
 
     private readonly List<GameObject> _spawnedPartyUnits = new();
     private CombatRoomController _currentCombatRoomController;
@@ -126,9 +127,10 @@ public class RoomPartySpawner : MonoBehaviour
         if (deployableMembers.Count == 0)
             return;
 
-        Vector3Int necromancerCell = ResolveFormationAnchorCell(grid, roomContext, enteredDoor, out Vector3Int forwardDirection);
-        Vector3Int lateralDirection = new(-forwardDirection.y, forwardDirection.x, 0);
-        var reservedCells = new HashSet<Vector3Int> { necromancerCell };
+        if (!RoomFormationPlacementUtility.TryResolveEntryFrame(grid, roomContext, enteredDoor, ResolveNecromancer(), out RoomPlacementFrame placementFrame))
+            return;
+
+        var reservedCells = new HashSet<Vector3Int> { placementFrame.AnchorCell };
         _temporaryFormation ??= new TemporaryFormationPattern();
         _temporaryFormation.EnsureDefaults();
 
@@ -140,9 +142,9 @@ public class RoomPartySpawner : MonoBehaviour
 
             if (!TryResolveFormationCell(
                     grid,
-                    necromancerCell,
-                    forwardDirection,
-                    lateralDirection,
+                    placementFrame.AnchorCell,
+                    placementFrame.ForwardDirection,
+                    placementFrame.LateralDirection,
                     spawnIndex,
                     _temporaryFormation,
                     reservedCells,
@@ -176,30 +178,6 @@ public class RoomPartySpawner : MonoBehaviour
         }
     }
 
-    private static Vector3Int ResolveFormationAnchorCell(
-        RoomGrid grid,
-        RoomContext roomContext,
-        RoomDoor enteredDoor,
-        out Vector3Int forwardDirection)
-    {
-        Vector3Int roomCenterCell = grid.WorldToCell(roomContext.transform.position);
-        Vector3Int resolvedArrivalCell =
-            RoomTransitionPlacementUtility.ResolveArrivalCell(grid, roomContext, enteredDoor, out forwardDirection);
-
-        Necromancer necromancer = FindAnyObjectByType<Necromancer>();
-        if (necromancer == null || !necromancer.TryGetGrid(out RoomGrid necromancerGrid) || !ReferenceEquals(necromancerGrid, grid))
-            return resolvedArrivalCell;
-
-        Vector3Int necromancerCell = grid.WorldToCell(necromancer.transform.position);
-        if (!grid.HasCell(necromancerCell))
-            return resolvedArrivalCell;
-
-        if (enteredDoor == null)
-            forwardDirection = RoomTransitionPlacementUtility.GetBestInwardDirection(necromancerCell, roomCenterCell);
-
-        return necromancerCell;
-    }
-
     private static bool TryResolveFormationCell(
         RoomGrid grid,
         Vector3Int anchorCell,
@@ -219,54 +197,13 @@ public class RoomPartySpawner : MonoBehaviour
         }
 
         Vector3Int desiredCell = anchorCell + slotOffset;
-        return TryFindValidFormationCell(grid, desiredCell, anchorCell, forwardDirection, reservedCells, out resultCell);
-    }
-
-    private static bool TryFindValidFormationCell(
-        RoomGrid grid,
-        Vector3Int desiredCell,
-        Vector3Int anchorCell,
-        Vector3Int forwardDirection,
-        HashSet<Vector3Int> reservedCells,
-        out Vector3Int resultCell)
-    {
-        resultCell = desiredCell;
-        int bestScore = int.MaxValue;
-        bool found = false;
-
-        for (int radius = 0; radius <= 3; radius++)
-        {
-            for (int x = -radius; x <= radius; x++)
-            {
-                for (int y = -radius; y <= radius; y++)
-                {
-                    Vector3Int candidateCell = desiredCell + new Vector3Int(x, y, 0);
-                    if (!grid.IsCellEnterable(candidateCell) || reservedCells.Contains(candidateCell))
-                        continue;
-
-                    int forwardScore = Mathf.RoundToInt(Vector3.Dot((Vector3)(candidateCell - anchorCell), (Vector3)forwardDirection) * 100f);
-                    if (forwardScore < 0)
-                        continue;
-
-                    int score =
-                        (radius * 1000) +
-                        (GridNavigationUtility.GetCellDistance(desiredCell, candidateCell) * 10) -
-                        forwardScore;
-
-                    if (found && score >= bestScore)
-                        continue;
-
-                    bestScore = score;
-                    resultCell = candidateCell;
-                    found = true;
-                }
-            }
-
-            if (found)
-                return true;
-        }
-
-        return false;
+        return RoomPlacementCellSelectionUtility.TryFindFormationCell(
+            grid,
+            desiredCell,
+            new RoomPlacementFrame(anchorCell, forwardDirection),
+            reservedCells,
+            maxSearchRadius: 3,
+            out resultCell);
     }
 
     private void ClearCurrentDeployment()
@@ -346,13 +283,17 @@ public class RoomPartySpawner : MonoBehaviour
         _party?.MarkDeployed(partyMemberId, true);
     }
 
+    private Necromancer ResolveNecromancer()
+    {
+        _necromancer ??= FindAnyObjectByType<Necromancer>();
+        return _necromancer;
+    }
+
     private static bool IsCombatRoom(GameObject roomObject)
     {
-        if (!roomObject.TryGetComponent(out RoomPrefabProfile profile) || profile == null)
+        if (roomObject == null || !roomObject.TryGetComponent(out RoomPrefabProfile profile))
             return false;
 
-        return profile.RoomType == PDRoomType.Combat ||
-               profile.RoomType == PDRoomType.MiniBoss ||
-               profile.RoomType == PDRoomType.Boss;
+        return RoomCombatUtility.IsCombatRoom(profile);
     }
 }

@@ -86,29 +86,16 @@ public class DoorInteractable : MonoBehaviour, IInteractable, IGridOccupant
     {
         _structuralDoor ??= GetComponentInParent<RoomDoor>(includeInactive: true);
         _roomContext ??= GetComponentInParent<RoomContext>(includeInactive: true);
-        _grid ??= _roomContext != null
-            ? _roomContext.RoomGrid
-            : GetComponentInParent<RoomGrid>(includeInactive: true);
+        _grid ??= RoomGridResolver.ResolveFromContext(_roomContext) ?? RoomGridResolver.ResolveInParents(this);
     }
 
     private void TryRegisterOccupancy()
     {
-        if (_isOccupancyRegistered)
-            return;
-
-        if (_grid == null)
-            return;
-
-        _grid.OccupancyService.RegisterOccupant(this);
-        _isOccupancyRegistered = true;
+        _isOccupancyRegistered = StaticGridOccupancyUtility.TryRegister(_grid, this, _isOccupancyRegistered);
     }
 
     private void ReleaseOccupancy()
     {
-        if (!_isOccupancyRegistered || _grid == null)
-            return;
-
-        _grid.OccupancyService.ReleaseOccupant(this);
-        _isOccupancyRegistered = false;
+        _isOccupancyRegistered = StaticGridOccupancyUtility.Release(_grid, this, _isOccupancyRegistered);
     }
 }
