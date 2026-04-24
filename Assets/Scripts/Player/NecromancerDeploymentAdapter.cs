@@ -15,6 +15,8 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
     private ISelectable _selectedSelectable;
     private MovementTileFeedbackController _movementTileFeedback;
     private Unit _movementLockedUnit;
+    private CombatRoomController _currentDeploymentController;
+    private bool _isSubscribedToController;
     private Vector3Int _lockedDestinationCell;
     private bool _hasLockedDestinationCell;
 
@@ -26,8 +28,15 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
 
     private void OnDisable()
     {
+        UnsubscribeFromDeploymentController();
+        LifeController.OnUnitDied -= HandleUnitDied;
         ClearSelection();
         ClearDestinationFeedback();
+    }
+
+    private void OnEnable()
+    {
+        LifeController.OnUnitDied += HandleUnitDied;
     }
 
     private void Update()
@@ -39,10 +48,13 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
 
         if (!TryResolveDeploymentController(out CombatRoomController deploymentController))
         {
+            UnsubscribeFromDeploymentController();
             ClearSelection();
             ClearDestinationFeedback();
             return;
         }
+
+        RefreshDeploymentControllerSubscription(deploymentController);
 
         ResolveRuntimeCamera();
 
@@ -141,11 +153,18 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
 
         _selectedUnit = unit;
         _selectedSelectable = unit;
+        _selectedSelectable.OnSelectionInvalidated += HandleSelectedInvalidated;
         _selectedSelectable?.Select();
     }
 
     private void ClearSelection()
     {
+        if (_selectedSelectable != null)
+            _selectedSelectable.OnSelectionInvalidated -= HandleSelectedInvalidated;
+
+        if (_selectedUnit != null)
+            LogDebug($"[{nameof(NecromancerDeploymentAdapter)}] Cleared deployment selection for '{_selectedUnit.name}'.");
+
         _selectedSelectable?.Deselect();
         _selectedSelectable = null;
         _selectedUnit = null;
@@ -185,6 +204,76 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
         _hasLockedDestinationCell = false;
         _lockedDestinationCell = Vector3Int.zero;
         _movementTileFeedback?.ClearSelection();
+    }
+
+    private void RefreshDeploymentControllerSubscription(CombatRoomController deploymentController)
+    {
+        if (ReferenceEquals(_currentDeploymentController, deploymentController))
+            return;
+
+        UnsubscribeFromDeploymentController();
+        _currentDeploymentController = deploymentController;
+
+        if (_currentDeploymentController == null)
+            return;
+
+        _currentDeploymentController.CombatStarted += HandleCombatStarted;
+        _currentDeploymentController.StateChanged += HandleDeploymentStateChanged;
+        _isSubscribedToController = true;
+    }
+
+    private void UnsubscribeFromDeploymentController()
+    {
+        if (!_isSubscribedToController || _currentDeploymentController == null)
+            return;
+
+        _currentDeploymentController.CombatStarted -= HandleCombatStarted;
+        _currentDeploymentController.StateChanged -= HandleDeploymentStateChanged;
+        _currentDeploymentController = null;
+        _isSubscribedToController = false;
+    }
+
+    private void HandleCombatStarted(CombatRoomController _)
+    {
+        ClearDeploymentVisualState();
+    }
+
+    private void HandleDeploymentStateChanged(CombatRoomController _, CombatRoomState state)
+    {
+        if (state == CombatRoomState.Deployment)
+            return;
+
+        ClearDeploymentVisualState();
+    }
+
+    private void HandleSelectedInvalidated(ISelectable selectable)
+    {
+        if (!ReferenceEquals(_selectedSelectable, selectable))
+            return;
+
+        LogDebug($"[{nameof(NecromancerDeploymentAdapter)}] Selected unit invalidated. Clearing selection feedback.");
+        ClearSelection();
+    }
+
+    private void HandleUnitDied(Unit unit)
+    {
+        if (unit == null)
+            return;
+
+        if (ReferenceEquals(unit, _selectedUnit))
+            ClearSelection();
+
+        if (ReferenceEquals(unit, _movementLockedUnit))
+        {
+            _movementLockedUnit = null;
+            ClearDestinationFeedback();
+        }
+    }
+
+    private void ClearDeploymentVisualState()
+    {
+        ClearSelection();
+        ClearDestinationFeedback();
     }
 
     private void LogDebug(string message)

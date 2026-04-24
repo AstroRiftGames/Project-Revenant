@@ -18,6 +18,8 @@ MonoBehaviour:
   _cooldown: 3
   _rangeInCells: 1
   _splashRadiusInCells: 1
+  _lineLengthInCells: 1
+  _maxTargets: 1
   _targetMode: 0
   _shape: 2
   _requirements:
@@ -26,3 +28,5 @@ MonoBehaviour:
     mustTargetInjured: 0
   _effects:
   - {fileID: 11400000, guid: 4a9ba9f81f6d430b85c219ec98edce5a, type: 2}
+  _appliedStatusEffects:
+  - _definition: {fileID: 11400000, guid: d47c718fc2c36539d80613e4f9da0404, type: 2}

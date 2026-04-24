@@ -34,7 +34,10 @@ public class StatusEffectPersistentPopup : MonoBehaviour
     public void SetText(string content)
     {
         if (_label != null)
+        {
             _label.text = content;
+            ForceOpaqueLabel();
+        }
     }
 
     public void SetVisible(bool isVisible)
@@ -52,6 +55,7 @@ public class StatusEffectPersistentPopup : MonoBehaviour
         if (_target == null || _parentCanvas == null || _canvasRectTransform == null || _rectTransform == null)
             return;
 
+        ForceOpaqueLabel();
         _worldCamera ??= ResolveWorldCamera(_parentCanvas);
         Vector3 worldPosition = _target.position + _worldOffset;
         Vector3 screenPoint = _worldCamera != null
@@ -59,20 +63,25 @@ public class StatusEffectPersistentPopup : MonoBehaviour
             : RectTransformUtility.WorldToScreenPoint(null, worldPosition);
 
         bool isBehindCamera = _worldCamera != null && screenPoint.z < 0f;
-        if (isBehindCamera)
-        {
-            if (gameObject.activeSelf)
-                gameObject.SetActive(false);
+        if (isBehindCamera) 
             return;
-        }
 
         Camera canvasCamera = _parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _parentCanvas.worldCamera;
         if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_canvasRectTransform, screenPoint, canvasCamera, out Vector2 localPoint))
-        {
             _rectTransform.anchoredPosition = localPoint;
-            if (!gameObject.activeSelf)
-                gameObject.SetActive(true);
-        }
+    }
+
+    private void ForceOpaqueLabel()
+    {
+        if (_label == null)
+            return;
+
+        Color color = _label.color;
+        if (color.a >= 0.999f)
+            return;
+
+        color.a = 1f;
+        _label.color = color;
     }
 
     private static Camera ResolveWorldCamera(Canvas parentCanvas)

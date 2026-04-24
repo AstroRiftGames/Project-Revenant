@@ -28,3 +28,5 @@ MonoBehaviour:
     mustTargetInjured: 0
   _effects:
   - {fileID: 11400000, guid: 48d8f39f7eb84d46b289514573f76f27, type: 2}
+  _appliedStatusEffects:
+  - _definition: {fileID: 11400000, guid: c36b607eb1b25428c7f502d3e8c9f303, type: 2}

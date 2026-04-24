@@ -52,6 +52,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     private UnitAffiliationState _affiliationState;
     private SkillCaster _skillCaster;
     private StatusEffectController _statusEffectController;
+    private UnitSelectionFeedbackView _selectionFeedbackView;
 
 
     [Header("Selection Visuals")]
@@ -109,6 +110,11 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
             gameObject.AddComponent<StatusEffectDebugPopupPresenter>();
         }
 
+        _selectionFeedbackView = GetComponent<UnitSelectionFeedbackView>();
+        if (_selectionFeedbackView == null)
+            _selectionFeedbackView = gameObject.AddComponent<UnitSelectionFeedbackView>();
+
+        _selectionFeedbackView.Configure(selectionIndicator);
         ValidateRequiredComponents();
     }
 
@@ -293,8 +299,13 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
             return;
 
         IsSelected = isSelected;
-        if (selectionIndicator != null)
-            selectionIndicator.SetActive(isSelected);
+        if (_selectionFeedbackView != null)
+        {
+            if (isSelected)
+                _selectionFeedbackView.ShowSelected();
+            else
+                _selectionFeedbackView.HideSelected();
+        }
 
         OnSelectionStateChanged?.Invoke(this, isSelected);
     }

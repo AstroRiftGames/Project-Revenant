@@ -47,6 +47,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2600880428766013517}
   - {fileID: 2612895928495225575}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -95,7 +96,7 @@ SpriteRenderer:
   m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
-  m_Color: {r: 1, g: 0.95132554, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -292,58 +293,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _flashDuration: 0.08
-  _flashPropertyName: _FlashAmount
---- !u!114 &2045612345678901237
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 168480000053724679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e63fccbdfaa340cb903efefb3715985b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _unitVisualMaterial: {fileID: 2100000, guid: 52d0d96152df4b43b7a5fd882df1b39d, type: 2}
-  _blinkColor: {r: 1, g: 1, b: 1, a: 1}
-  _blinkAmount: 1
-  _flashColorPropertyName: _FlashColor
-  _flashAmountPropertyName: _FlashAmount
-  _overlayColorPropertyName: _OverlayColor
-  _overlayAmountPropertyName: _OverlayAmount
-  _stateBindings:
-  - _state: 0
-    _overlayColor: {r: 0, g: 0, b: 0, a: 0}
-    _overlayAmount: 0
-  - _state: 1
-    _overlayColor: {r: 0.35, g: 0.85, b: 1, a: 0.32}
-    _overlayAmount: 1
-  - _state: 2
-    _overlayColor: {r: 0.35, g: 1, b: 0.55, a: 0.32}
-    _overlayAmount: 1
-  - _state: 3
-    _overlayColor: {r: 0.95, g: 0.45, b: 0.78, a: 0.34}
-    _overlayAmount: 1
-  - _state: 4
-    _overlayColor: {r: 1, g: 0.38, b: 0.38, a: 0.36}
-    _overlayAmount: 1
-  - _state: 5
-    _overlayColor: {r: 0.62, g: 0.2, b: 0.9, a: 0.4}
-    _overlayAmount: 1
-  - _state: 6
-    _overlayColor: {r: 1, g: 0.9, b: 0.25, a: 0.4}
-    _overlayAmount: 1
-  - _state: 7
-    _overlayColor: {r: 0.32, g: 0.32, b: 0.36, a: 0.6}
-    _overlayAmount: 1
-  - _state: 8
-    _overlayColor: {r: 0.38, g: 1, b: 0.76, a: 0.48}
-    _overlayAmount: 1
-  - _state: 9
-    _overlayColor: {r: 0.24, g: 0.24, b: 0.26, a: 0.72}
-    _overlayAmount: 1
-  _debugLogs: 0
 --- !u!114 &453047599472417330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,26 +336,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _popupPrefab: {fileID: 0}
   _popupOffset: {x: 0, y: 0.95, z: 0}
-  _stateColors:
-  - _state: 0
-    _color: {r: 1, g: 1, b: 1, a: 1}
-  - _state: 1
-    _color: {r: 0.35, g: 0.85, b: 1, a: 1}
-  - _state: 2
-    _color: {r: 0.35, g: 1, b: 0.55, a: 1}
-  - _state: 3
-    _color: {r: 0.95, g: 0.45, b: 0.78, a: 1}
-  - _state: 4
-    _color: {r: 1, g: 0.38, b: 0.38, a: 1}
-  - _state: 5
-    _color: {r: 0.62, g: 0.2, b: 0.9, a: 1}
-  - _state: 6
-    _color: {r: 1, g: 0.9, b: 0.25, a: 1}
-  - _state: 7
-    _color: {r: 0.239, g: 0.239, b: 0.239, a: 1}
-  - _state: 8
-    _color: {r: 0, g: 0, b: 0, a: 1}
   _debugLogs: 1
+--- !u!114 &2045612345678901237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168480000053724679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e63fccbdfaa340cb903efefb3715985b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _unitVisualMaterial: {fileID: 2100000, guid: 52d0d96152df4b43b7a5fd882df1b39d, type: 2}
+  _sourceRenderer: {fileID: 6917167946172172191}
+  _overlayRenderer: {fileID: 595677691054945617}
+  _overlaySortingOrderOffset: 1
+  _blinkColor: {r: 1, g: 1, b: 1, a: 1}
+  _blinkAmount: 1
+  _flashColorPropertyName: _FlashColor
+  _flashAmountPropertyName: _FlashAmount
+  _overlayColorPropertyName: _OverlayColor
+  _overlayAmountPropertyName: _OverlayAmount
+  _stateBindings:
+  - _state: 0
+    _overlayColor: {r: 0, g: 0, b: 0, a: 0}
+    _overlayAmount: 0
+  - _state: 1
+    _overlayColor: {r: 0, g: 0.7710843, b: 1, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 2
+    _overlayColor: {r: 0, g: 1, b: 0.30722904, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 3
+    _overlayColor: {r: 1, g: 0, b: 0.6614175, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 4
+    _overlayColor: {r: 1, g: 0, b: 0, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 5
+    _overlayColor: {r: 0.59776545, g: 0, b: 1, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 6
+    _overlayColor: {r: 1, g: 0.9, b: 0.25, a: 0.4}
+    _overlayAmount: 1
+  - _state: 7
+    _overlayColor: {r: 0.32, g: 0.32, b: 0.36, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 8
+    _overlayColor: {r: 0, g: 0.6431373, b: 0, a: 0.5882353}
+    _overlayAmount: 1
+  - _state: 9
+    _overlayColor: {r: 0, g: 0, b: 0, a: 0.5882353}
+    _overlayAmount: 1
+  _debugLogs: 0
 --- !u!114 &2868316400212845039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -689,6 +673,93 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &4445016258265036483
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2600880428766013517}
+  - component: {fileID: 595677691054945617}
+  m_Layer: 8
+  m_Name: VisualOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2600880428766013517
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4445016258265036483}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2447790576316403408}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &595677691054945617
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4445016258265036483}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 1008339267
+  m_SortingLayer: 4
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &4790247306531917359
 GameObject:
   m_ObjectHideFlags: 0
