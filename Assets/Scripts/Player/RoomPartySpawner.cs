@@ -59,10 +59,13 @@ public class RoomPartySpawner : MonoBehaviour
     private CombatRoomController _currentCombatRoomController;
     private bool _isSubscribedToCombatController;
 
-    public void Configure(FloorManager floorManager, NecromancerParty party)
+    public void Configure(FloorManager floorManager, NecromancerParty party, Necromancer necromancer = null)
     {
         _floorManager = floorManager;
         _party = party;
+
+        if (necromancer != null)
+            _necromancer = necromancer;
     }
 
     private void OnEnable()
@@ -223,8 +226,7 @@ public class RoomPartySpawner : MonoBehaviour
 
     private void RefreshCombatRoomSubscription(GameObject roomObject = null)
     {
-        if (_floorManager == null)
-            _floorManager = FindFirstObjectByType<FloorManager>();
+        _floorManager ??= GetComponent<FloorManager>() ?? GetComponentInParent<FloorManager>(includeInactive: true);
 
         GameObject targetRoom = roomObject != null
             ? roomObject
@@ -285,7 +287,7 @@ public class RoomPartySpawner : MonoBehaviour
 
     private Necromancer ResolveNecromancer()
     {
-        _necromancer ??= FindAnyObjectByType<Necromancer>();
+        _necromancer = NecromancerReferenceUtility.Resolve(_necromancer, this);
         return _necromancer;
     }
 

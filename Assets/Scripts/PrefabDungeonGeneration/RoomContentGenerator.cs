@@ -90,12 +90,14 @@ namespace PrefabDungeonGeneration
         public RoomContentConfig LootRoomConfig;
 
         private RoomPrefabProfile _roomProfile;
+        [SerializeField] private PrefabDungeonGenerator _dungeonGenerator;
         private readonly List<Vector3Int> _occupiedCells = new();
         private bool _hasGeneratedContent;
 
         private void Awake()
         {
             _roomProfile = GetComponent<RoomPrefabProfile>();
+            _dungeonGenerator = DungeonSceneReferenceUtility.ResolveGenerator(_dungeonGenerator, this);
         }
 
         public void GenerateContent(RoomContext roomContext)
@@ -136,10 +138,10 @@ namespace PrefabDungeonGeneration
             _occupiedCells.Clear();
 
             int currentFloor = 0;
-            PrefabDungeonGenerator generator = FindObjectOfType<PrefabDungeonGenerator>();
-            if (generator != null)
+            _dungeonGenerator = DungeonSceneReferenceUtility.ResolveGenerator(_dungeonGenerator, this);
+            if (_dungeonGenerator != null)
             {
-                currentFloor = generator.FloorNumber;
+                currentFloor = _dungeonGenerator.FloorNumber;
             }
 
             Vector2Int floorRange = configToUse.GetSpawnRangeForFloor(currentFloor);

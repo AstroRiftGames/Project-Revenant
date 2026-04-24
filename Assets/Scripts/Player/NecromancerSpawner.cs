@@ -7,9 +7,12 @@ public class NecromancerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject _necromancerPrefab;
     [SerializeField] private FloorManager _floorManager;
+    [SerializeField] private PrefabDungeonGenerator _dungeonGenerator;
+    [SerializeField] private RoomContext _fallbackRoomContext;
     [SerializeField] private List<UnitData> _startingPartyMembers = new();
     [SerializeField] private int _maxPartyMembers = 3;
     [SerializeField] private bool _showPartyDebug;
+    [SerializeField] private Necromancer _necromancer;
 
     private NecromancerParty _party;
     private RoomPartySpawner _partySpawner;
@@ -19,8 +22,6 @@ public class NecromancerSpawner : MonoBehaviour
     private PartyDefeatDetector _partyDefeatDetector;
     private PartyDefeatReturnHandler _partyDefeatResolver;
     private NecromancerRoomTransitioner _roomTransitioner;
-    private PrefabDungeonGenerator _dungeonGenerator;
-
     private bool _isFirstLaunch = true;
 
     private void Awake()
@@ -61,8 +62,10 @@ public class NecromancerSpawner : MonoBehaviour
 
     private void InitializeScene()
     {
-        _floorManager = FindFirstObjectByType<FloorManager>();
-        _dungeonGenerator = FindFirstObjectByType<PrefabDungeonGenerator>();
+        _floorManager = DungeonSceneReferenceUtility.ResolveFloorManager(_floorManager, this);
+        _dungeonGenerator = DungeonSceneReferenceUtility.ResolveGenerator(_dungeonGenerator, this);
+        _fallbackRoomContext = DungeonSceneReferenceUtility.ResolveRoomContext(_fallbackRoomContext, _floorManager, this);
+        _necromancer = NecromancerReferenceUtility.Resolve(_necromancer, this);
         EnsurePartySystems();
 
         if (_dungeonGenerator != null)
@@ -84,7 +87,7 @@ public class NecromancerSpawner : MonoBehaviour
     {
         // Solo spawneamos al jugador a causa de la generación del piso SI NO EXISTE un jugador todavía.
         // Es decir, al iniciar o recargar escena entera. NO al pasar de piso en la misma escena.
-        if (FindFirstObjectByType<Necromancer>() == null)
+        if (ResolveNecromancer() == null)
         {
             Spawn();
         }
@@ -107,6 +110,9 @@ public class NecromancerSpawner : MonoBehaviour
             return;
         }
 
+        _necromancer = necromancer;
+        _partySpawner?.Configure(_floorManager, _party, _necromancer);
+        _roomTransitioner?.Configure(_necromancer);
         necromancer.SetGrid(grid);
     }
 
@@ -122,7 +128,7 @@ public class NecromancerSpawner : MonoBehaviour
         if (_partySpawner == null)
             _partySpawner = gameObject.AddComponent<RoomPartySpawner>();
 
-        _partySpawner.Configure(_floorManager, _party);
+        _partySpawner.Configure(_floorManager, _party, ResolveNecromancer());
 
         _partyContext = GetComponent<NecromancerPartyContext>();
         if (_partyContext == null)
@@ -153,7 +159,7 @@ public class NecromancerSpawner : MonoBehaviour
         if (_roomTransitioner == null)
             _roomTransitioner = gameObject.AddComponent<NecromancerRoomTransitioner>();
 
-        _dungeonGenerator = FindFirstObjectByType<PrefabDungeonGenerator>();
+        _roomTransitioner.Configure(ResolveNecromancer());
 
         _partyDefeatResolver.Configure(_partyDefeatDetector);
     }
@@ -204,7 +210,7 @@ public class NecromancerSpawner : MonoBehaviour
         else
         {
             // Modo SafeZone: Si no hay generador procedural, tomamos la primera sala estática que exista en el mapa.
-            roomContext = FindFirstObjectByType<RoomContext>();
+            roomContext = DungeonSceneReferenceUtility.ResolveRoomContext(_fallbackRoomContext, _floorManager, this);
         }
 
         if (roomContext == null)
@@ -221,5 +227,11 @@ public class NecromancerSpawner : MonoBehaviour
         }
 
         return true;
+    }
+
+    private Necromancer ResolveNecromancer()
+    {
+        _necromancer = NecromancerReferenceUtility.Resolve(_necromancer, this);
+        return _necromancer;
     }
 }

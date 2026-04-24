@@ -133,7 +133,13 @@ public static class RoomTransitionPlacementUtility
 
 public class NecromancerRoomTransitioner : MonoBehaviour
 {
-    private Necromancer _necromancer;
+    [SerializeField] private Necromancer _necromancer;
+
+    public void Configure(Necromancer necromancer)
+    {
+        if (necromancer != null)
+            _necromancer = necromancer;
+    }
 
     private void OnEnable()
     {
@@ -157,8 +163,7 @@ public class NecromancerRoomTransitioner : MonoBehaviour
 
     public bool MoveNecromancerToRoom(RoomDoor enteredDoor, GameObject roomObject)
     {
-        if (_necromancer == null)
-            _necromancer = FindAnyObjectByType<Necromancer>();
+        _necromancer = NecromancerReferenceUtility.Resolve(_necromancer, this);
 
         if (_necromancer == null)
         {

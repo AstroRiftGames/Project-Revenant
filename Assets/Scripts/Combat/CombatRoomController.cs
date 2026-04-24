@@ -150,7 +150,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     private Necromancer ResolveNecromancer()
     {
-        _necromancer ??= FindAnyObjectByType<Necromancer>();
+        _necromancer = NecromancerReferenceUtility.Resolve(_necromancer);
         return _necromancer;
     }
 
