@@ -23,6 +23,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private Vector3 _stepStartWorld;
     private Vector3 _stepTargetWorld;
     private float _stepProgress;
+    private Vector2 _currentMovementDirection;
 
     private void Awake()
     {
@@ -53,6 +54,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     }
 
     public bool IsMoving => _isMoving;
+    public Vector2 CurrentMovementDirection => _currentMovementDirection;
 
     public void SetGrid(RoomGrid grid)
     {
@@ -429,6 +431,8 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         _stepStartWorld = _grid.CellToWorld(originCell);
         _stepTargetWorld = _grid.CellToWorld(destinationCell);
+        Vector3 stepDelta = _stepTargetWorld - _stepStartWorld;
+        _currentMovementDirection = new Vector2(stepDelta.x, stepDelta.y).normalized;
         _stepProgress = 0f;
         _isMoving = true;
         transform.position = _stepStartWorld;
@@ -454,6 +458,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     {
         _isMoving = false;
         _stepProgress = 0f;
+        _currentMovementDirection = Vector2.zero;
     }
 
     private void ReleaseCurrentOccupancy()

@@ -12,6 +12,7 @@ public class UnitBrain : MonoBehaviour
     private UnitMovement _movement;
     private TargetingStrategy _targeting;
     private SkillCaster _skillCaster;
+    private UnitAnimationController _animationController;
     private IAction _action;
     private Unit _currentTarget;
     private bool _hasLoggedMissingControllerBlock;
@@ -25,6 +26,7 @@ public class UnitBrain : MonoBehaviour
         _movement = GetComponent<UnitMovement>();
         _targeting = GetComponent<TargetingStrategy>();
         _skillCaster = GetComponent<SkillCaster>();
+        _animationController = GetComponent<UnitAnimationController>();
         _action = _unit != null ? _unit.Action : null;
     }
 
@@ -57,6 +59,8 @@ public class UnitBrain : MonoBehaviour
 
         if (!_action.CanExecute(_unit, _currentTarget))
             return;
+
+        _animationController?.SetAttackTarget(_currentTarget.Position);
 
         if (_skillCaster != null && _skillCaster.TryUse(_currentTarget))
         {
