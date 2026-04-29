@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EnemyInfoCanvas : MonoBehaviour
+public class UnitInfoCanvas : MonoBehaviour
 {
     [SerializeField] private Slider _lifeBar;
     [SerializeField] private GameObject DamageDealtPrefab;
-    private LifeController _enemyLC;
+    private LifeController _LC;
     private Canvas _canvas;
     private int _maxHP;
 
@@ -13,25 +13,25 @@ public class EnemyInfoCanvas : MonoBehaviour
     {
         TryGetComponent(out Canvas canvas);
         _canvas = canvas;
-        _enemyLC = GetComponentInParent<LifeController>();
+        _LC = GetComponentInParent<LifeController>();
     }
 
     private void OnEnable()
     {
-        _enemyLC.OnLifeUpdated += UpdateLifeBar;
-        _enemyLC.OnDamageTaken += ShowDamageTaken;
+        _LC.OnLifeUpdated += UpdateLifeBar;
+        _LC.OnDamageTaken += ShowDamageTaken;
     }
 
     private void OnDisable()
     {
-        _enemyLC.OnLifeUpdated -= UpdateLifeBar;
-        _enemyLC.OnDamageTaken -= ShowDamageTaken;
+        _LC.OnLifeUpdated -= UpdateLifeBar;
+        _LC.OnDamageTaken -= ShowDamageTaken;
     }
 
     private void Start()
     {
         _canvas.worldCamera = Camera.main;
-        _maxHP = _enemyLC.MaxHealth;
+        _maxHP = _LC.MaxHealth;
         _lifeBar.maxValue = _maxHP;
         UpdateLifeBar(_maxHP);
     }
@@ -43,9 +43,9 @@ public class EnemyInfoCanvas : MonoBehaviour
 
     private void ShowDamageTaken(int damage)
     {
-        Instantiate(DamageDealtPrefab, transform.up * .5f, Quaternion.identity).TryGetComponent(out LifeUpdateText lifeUpdate);
-        LifeUpdateText newText = lifeUpdate;
+        Instantiate(DamageDealtPrefab, transform.up * .5f, Quaternion.identity).TryGetComponent(out HealthDeltaText lifeUpdate);
+        HealthDeltaText newText = lifeUpdate;
         newText.transform.SetParent(_canvas.transform, true);
-        newText.Initialize(-damage);
+        newText.Play(-damage);
     }
 }

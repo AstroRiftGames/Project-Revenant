@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3625053842149917422}
   - component: {fileID: 3854118913187307640}
   m_Layer: 10
-  m_Name: EnemyCanvas
+  m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -116,7 +116,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _lifeBar: {fileID: 7034366346279351748}
-  DamageDealtPrefab: {fileID: 9153081796928895206, guid: 582f871958d93f14ea238cc880e4f79c, type: 3}
+  DamageDealtPrefab: {fileID: 4326233653113426999, guid: aac7e63c414708840ab564d100722293, type: 3}
 --- !u!1 &6595826922726615486
 GameObject:
   m_ObjectHideFlags: 0

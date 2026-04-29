@@ -86,11 +86,6 @@ public class LifeController : MonoBehaviour, IDamageable
             Debug.Log($"[Heal] {_unit.Id} healed {amount}. HP: {previousHealth} -> {CurrentHealth}", this);
     }
 
-    public void DealDamage()
-    {
-        TakeDamage(1);
-    }
-
     public List<Unit> GetAliveAggressors()
     {
         _aggressors.RemoveAll(aggressor => aggressor == null || !aggressor.IsAlive || !aggressor.gameObject.activeInHierarchy);
