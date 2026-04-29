@@ -93,10 +93,16 @@ public static class SkillTargetCollector
     private static bool TryCollectMultiTarget(SkillCastContext context, List<Unit> results, Action<string> debugLog)
     {
         Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+        bool useCasterAsCenter = UsesCasterCenteredRadius(context);
+        Unit centerUnit = useCasterAsCenter ? context.Caster : primaryTarget;
+        if (centerUnit == null || (primaryTarget == null && !useCasterAsCenter))
             return false;
 
-        results.Add(primaryTarget);
+        if (!useCasterAsCenter && !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        if (!useCasterAsCenter)
+            results.Add(primaryTarget);
 
         Unit caster = context.Caster;
         SkillData skill = context.Skill;
@@ -115,7 +121,7 @@ public static class SkillTargetCollector
             for (int i = 0; i < roomUnits.Count; i++)
             {
                 Unit candidate = roomUnits[i];
-                if (ReferenceEquals(candidate, primaryTarget))
+                if (!useCasterAsCenter && ReferenceEquals(candidate, primaryTarget))
                 {
                     skippedDuplicatePrimary++;
                     continue;
@@ -127,13 +133,13 @@ public static class SkillTargetCollector
                     continue;
                 }
 
-                if (!IsWithinImpactRadius(context, primaryTarget, candidate))
+                if (!IsWithinImpactRadius(context, centerUnit, candidate))
                 {
                     skippedOutOfRadius++;
                     continue;
                 }
 
-                candidates.Add(new DistanceCandidate(candidate, ResolveDistanceFromPrimary(context, primaryTarget, candidate)));
+                candidates.Add(new DistanceCandidate(candidate, ResolveDistanceFromPrimary(context, centerUnit, candidate)));
             }
 
             candidates.Sort(static (left, right) =>
@@ -160,7 +166,7 @@ public static class SkillTargetCollector
 
         debugLog?.Invoke(
             $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved multi target. " +
-            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(primaryTarget.Position)}. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(centerUnit.Position)}. " +
             $"Radius: {skill.ImpactRadiusInCells}. Max targets: {maxTargets}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
             $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
@@ -191,10 +197,15 @@ public static class SkillTargetCollector
         string shapeName)
     {
         Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+        bool useCasterAsCenter = UsesCasterCenteredRadius(context);
+        Unit centerUnit = useCasterAsCenter ? context.Caster : primaryTarget;
+        if (centerUnit == null || (primaryTarget == null && !useCasterAsCenter))
             return false;
 
-        if (includePrimaryTargetFirst)
+        if (!useCasterAsCenter && !IsValidImpactTarget(context, primaryTarget))
+            return false;
+
+        if (includePrimaryTargetFirst && !useCasterAsCenter)
             results.Add(primaryTarget);
 
         int skippedDuplicatePrimary = 0;
@@ -206,19 +217,19 @@ public static class SkillTargetCollector
         IReadOnlyList<Unit> roomUnits = roomContext != null ? roomContext.Units : null;
         if (roomUnits == null)
         {
-            if (!includePrimaryTargetFirst)
+            if (!includePrimaryTargetFirst && !useCasterAsCenter)
                 results.Add(primaryTarget);
 
             debugLog?.Invoke(
                 $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved {shapeName} with only " +
-                $"primary target {FormatUnit(primaryTarget)} because no room unit list was available.");
+                $"primary target {FormatUnit(useCasterAsCenter ? centerUnit : primaryTarget)} because no room unit list was available.");
             return results.Count > 0;
         }
 
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (includePrimaryTargetFirst && ReferenceEquals(candidate, primaryTarget))
+            if (!useCasterAsCenter && includePrimaryTargetFirst && ReferenceEquals(candidate, primaryTarget))
             {
                 skippedDuplicatePrimary++;
                 continue;
@@ -230,7 +241,7 @@ public static class SkillTargetCollector
                 continue;
             }
 
-            if (!IsWithinImpactRadius(context, primaryTarget, candidate))
+            if (!IsWithinImpactRadius(context, centerUnit, candidate))
             {
                 skippedOutOfRadius++;
                 continue;
@@ -241,7 +252,7 @@ public static class SkillTargetCollector
 
         debugLog?.Invoke(
             $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved {shapeName}. " +
-            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(primaryTarget.Position)}. " +
+            $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(centerUnit.Position)}. " +
             $"Radius: {context.Skill.ImpactRadiusInCells}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
             $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
@@ -269,9 +280,20 @@ public static class SkillTargetCollector
         return requirements == null || requirements.AreMet(caster, candidate);
     }
 
-    private static bool IsWithinImpactRadius(SkillCastContext context, Unit primaryTarget, Unit candidate)
+    private static bool UsesCasterCenteredRadius(SkillCastContext context)
     {
-        if (context == null || primaryTarget == null || candidate == null)
+        SkillData skill = context != null ? context.Skill : null;
+        if (skill == null || skill.TargetMode != SkillTargetMode.Self)
+            return false;
+
+        return skill.Shape == SkillShape.Area ||
+               skill.Shape == SkillShape.Splash ||
+               skill.Shape == SkillShape.MultiTarget;
+    }
+
+    private static bool IsWithinImpactRadius(SkillCastContext context, Unit centerUnit, Unit candidate)
+    {
+        if (context == null || centerUnit == null || candidate == null)
             return false;
 
         int radiusInCells = context.Skill != null ? context.Skill.ImpactRadiusInCells : 0;
@@ -284,11 +306,11 @@ public static class SkillTargetCollector
 
         if (grid == null)
         {
-            float distance = Vector3.Distance(primaryTarget.Position, candidate.Position);
+            float distance = Vector3.Distance(centerUnit.Position, candidate.Position);
             return distance <= radiusInCells;
         }
 
-        Vector3Int primaryCell = ResolveUnitCell(grid, primaryTarget);
+        Vector3Int primaryCell = ResolveUnitCell(grid, centerUnit);
         Vector3Int candidateCell = ResolveUnitCell(grid, candidate);
         return GridNavigationUtility.IsWithinCellRange(primaryCell, candidateCell, radiusInCells);
     }
@@ -344,9 +366,9 @@ public static class SkillTargetCollector
         return Mathf.Max(0.1f, cellStep * 0.35f);
     }
 
-    private static float ResolveDistanceFromPrimary(SkillCastContext context, Unit primaryTarget, Unit candidate)
+    private static float ResolveDistanceFromPrimary(SkillCastContext context, Unit centerUnit, Unit candidate)
     {
-        if (context == null || primaryTarget == null || candidate == null)
+        if (context == null || centerUnit == null || candidate == null)
             return float.MaxValue;
 
         RoomGrid grid = context.Caster != null && context.Caster.RoomContext != null
@@ -354,9 +376,9 @@ public static class SkillTargetCollector
             : null;
 
         if (grid == null)
-            return Vector3.Distance(primaryTarget.Position, candidate.Position);
+            return Vector3.Distance(centerUnit.Position, candidate.Position);
 
-        Vector3Int primaryCell = ResolveUnitCell(grid, primaryTarget);
+        Vector3Int primaryCell = ResolveUnitCell(grid, centerUnit);
         Vector3Int candidateCell = ResolveUnitCell(grid, candidate);
         return GridNavigationUtility.GetCellDistance(primaryCell, candidateCell);
     }

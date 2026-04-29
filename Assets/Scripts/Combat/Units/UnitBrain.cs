@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(TargetingStrategy))]
 public class UnitBrain : MonoBehaviour
 {
+    private const int FearDesiredDistanceInCells = 999;
+
     [SerializeField] private bool _debugEncounter = true;
     [SerializeField] private bool _debugSkillFlow;
 
@@ -35,7 +37,13 @@ public class UnitBrain : MonoBehaviour
         if (_unit == null || _movement == null || _targeting == null || _action == null || !_unit.IsAlive)
             return;
 
+        if (!CanActFromStatusEffects())
+            return;
+
         if (!CanActInCurrentEncounter())
+            return;
+
+        if (TryResolveFearBehavior())
             return;
 
         if (_movement.IsMoving)
@@ -72,6 +80,24 @@ public class UnitBrain : MonoBehaviour
         _action.Execute(_unit, _currentTarget);
     }
 
+    private bool TryResolveFearBehavior()
+    {
+        StatusEffectController statusEffects = _unit != null ? _unit.StatusEffects : null;
+        if (statusEffects == null || !statusEffects.ShouldFlee)
+            return false;
+
+        if (_movement.IsMoving)
+            return true;
+
+        Unit nearestThreat = _targeting.GetNearestVisibleHostile(_unit);
+        if (nearestThreat == null)
+            return true;
+
+        _currentTarget = nearestThreat;
+        _movement.MoveAway(nearestThreat, FearDesiredDistanceInCells);
+        return true;
+    }
+
     private bool CanActInCurrentEncounter()
     {
         RoomContext roomContext = _unit != null ? _unit.RoomContext : null;
@@ -92,17 +118,6 @@ public class UnitBrain : MonoBehaviour
 
         if (combatRoomController.CanUnitsAct)
         {
-            if (_unit.StatusEffects != null && !_unit.StatusEffects.CanAct)
-            {
-                if (_unit.StatusEffects.RestrictsMovement)
-                    _movement.InterruptMovement();
-
-                LogEncounterGate(
-                    ref _hasLoggedStatusBlock,
-                    $"[UnitBrain] '{name}' blocked by active status effect.");
-                return false;
-            }
-
             ResetEncounterGateLogs();
             return true;
         }
@@ -123,6 +138,20 @@ public class UnitBrain : MonoBehaviour
             return false;
         }
 
+        return false;
+    }
+
+    private bool CanActFromStatusEffects()
+    {
+        if (_unit == null || _unit.StatusEffects == null || _unit.StatusEffects.CanAct)
+            return true;
+
+        if (_unit.StatusEffects.RestrictsMovement)
+            _movement.InterruptMovement();
+
+        LogEncounterGate(
+            ref _hasLoggedStatusBlock,
+            $"[UnitBrain] '{name}' blocked by active status effect.");
         return false;
     }
 

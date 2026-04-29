@@ -80,6 +80,9 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null)
             return false;
 
+        if (_unit.StatusEffects != null && !_unit.StatusEffects.CanMove)
+            return false;
+
         if (_isMoving)
             return false;
 
@@ -100,6 +103,9 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     public bool SetTarget(Unit targetUnit, int rangeInCells)
     {
         if (!CanEvaluateTarget(targetUnit))
+            return false;
+
+        if (_unit != null && _unit.StatusEffects != null && !_unit.StatusEffects.CanMoveTowardTarget)
             return false;
 
         if (IsWithinRange(targetUnit, rangeInCells))
@@ -129,6 +135,9 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     public bool MoveAway(Unit targetUnit, int desiredDistance)
     {
         if (!CanEvaluateTarget(targetUnit))
+            return false;
+
+        if (_unit != null && _unit.StatusEffects != null && !_unit.StatusEffects.CanMove)
             return false;
 
         if (Time.time < _nextStepTime)

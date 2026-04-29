@@ -27,6 +27,8 @@ public readonly struct StatusEffectApplication
 
 public sealed class ActiveStatusEffect
 {
+    private const float SleepWakeProtectionSeconds = 0.1f;
+
     public ActiveStatusEffect(StatusEffectApplication application, float now)
     {
         Application = application;
@@ -104,5 +106,13 @@ public sealed class ActiveStatusEffect
 
         modifierValue = modifier.Value * StackCount;
         return true;
+    }
+
+    public bool CanBeWokenByAttack(float now)
+    {
+        if (Definition == null || Definition.EffectType != StatusEffectType.Sleep)
+            return false;
+
+        return now >= AppliedAt + SleepWakeProtectionSeconds;
     }
 }

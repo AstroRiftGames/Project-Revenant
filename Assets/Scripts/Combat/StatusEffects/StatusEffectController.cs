@@ -11,6 +11,7 @@ public class StatusEffectController : MonoBehaviour
 
     private Unit _unit;
     private LifeController _lifeController;
+    private UnitMovement _unitMovement;
     private readonly List<ActiveStatusEffect> _activeEffects = new();
     private bool _runtimeStoppedByDeath;
 
@@ -22,13 +23,24 @@ public class StatusEffectController : MonoBehaviour
 
     public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
     public bool HasStun => HasEffect(StatusEffectType.Stun);
-    public bool CanAct => !HasStun;
+    public bool HasSilence => HasEffect(StatusEffectType.Silence);
+    public bool HasFear => HasEffect(StatusEffectType.Fear);
+    public bool HasSleep => HasEffect(StatusEffectType.Sleep);
+    public bool HasTaunt => HasEffect(StatusEffectType.Taunt);
+    public bool CanAct => !HasBlockingActionEffect();
+    public bool CanMove => !HasMovementRestriction();
+    public bool CanAttack => !HasStun && !HasFear && !HasSleep;
+    public bool CanUseSkills => !HasStun && !HasFear && !HasSleep && !HasSilence;
+    public bool CanMoveTowardTarget => !HasStun && !HasFear && !HasSleep;
+    public bool ShouldFlee => HasFear;
     public bool RestrictsMovement => HasMovementRestriction();
+    public bool PreventsSkillCooldownCharge => IsSourceOfEffectInCurrentRoom(StatusEffectType.Taunt);
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
         _lifeController = GetComponent<LifeController>();
+        _unitMovement = GetComponent<UnitMovement>();
     }
 
     private void OnEnable()
@@ -57,6 +69,9 @@ public class StatusEffectController : MonoBehaviour
             return false;
 
         if (_runtimeStoppedByDeath || !isActiveAndEnabled || !ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive)
+            return false;
+
+        if (IsApplicationBlocked(application))
             return false;
 
         StatusEffectStackResolution resolution =
@@ -141,6 +156,11 @@ public class StatusEffectController : MonoBehaviour
         ClearAllEffects(StatusEffectRemovalReason.EncounterResolved);
     }
 
+    public void HandleIncomingAttack()
+    {
+        RemoveSleepEffectsWokenByAttack(Time.time, StatusEffectRemovalReason.Explicit);
+    }
+
     public void HandleOwnerDeath()
     {
         if (_runtimeStoppedByDeath)
@@ -156,12 +176,42 @@ public class StatusEffectController : MonoBehaviour
         _runtimeStoppedByDeath = false;
     }
 
+    public bool TryGetForcedTarget(out Unit forcedTarget)
+    {
+        forcedTarget = null;
+
+        for (int i = _activeEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null || activeEffect.Definition.EffectType != StatusEffectType.Taunt)
+                continue;
+
+            Unit sourceUnit = activeEffect.SourceUnit;
+            if (!IsValidForcedTarget(sourceUnit))
+                continue;
+
+            forcedTarget = sourceUnit;
+            return true;
+        }
+
+        return false;
+    }
+
     private bool AddNewEffect(StatusEffectApplication application, float now)
     {
         ActiveStatusEffect newEffect = new(application, now);
         _activeEffects.Add(newEffect);
+        ApplyImmediateRuntimeRestrictions(newEffect);
         EffectApplied?.Invoke(this, newEffect);
         return true;
+    }
+
+    private bool IsApplicationBlocked(StatusEffectApplication application)
+    {
+        if (application.Definition == null)
+            return true;
+
+        return application.Definition.EffectType == StatusEffectType.Sleep && HasSleep;
     }
 
     private void ProcessTicks(float now)
@@ -225,6 +275,30 @@ public class StatusEffectController : MonoBehaviour
             EffectRemoved?.Invoke(this, activeEffect, reason);
     }
 
+    private void RemoveEffectsOfType(StatusEffectType effectType, StatusEffectRemovalReason reason)
+    {
+        for (int i = _activeEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null || activeEffect.Definition.EffectType != effectType)
+                continue;
+
+            RemoveEffect(activeEffect, reason);
+        }
+    }
+
+    private void RemoveSleepEffectsWokenByAttack(float now, StatusEffectRemovalReason reason)
+    {
+        for (int i = _activeEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || !activeEffect.CanBeWokenByAttack(now))
+                continue;
+
+            RemoveEffect(activeEffect, reason);
+        }
+    }
+
     private void HandleAnyUnitDied(Unit unit)
     {
         if (!ReferenceEquals(unit, _unit))
@@ -246,6 +320,82 @@ public class StatusEffectController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool HasBlockingActionEffect()
+    {
+        for (int i = 0; i < _activeEffects.Count; i++)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null)
+                continue;
+
+            if (activeEffect.Definition.BlocksActions)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void ApplyImmediateRuntimeRestrictions(ActiveStatusEffect activeEffect)
+    {
+        if (activeEffect == null || activeEffect.Definition == null)
+            return;
+
+        if (activeEffect.Definition.RestrictsMovement)
+            _unitMovement?.InterruptMovement();
+    }
+
+    private bool IsSourceOfEffectInCurrentRoom(StatusEffectType effectType)
+    {
+        if (_unit == null || _unit.RoomContext == null)
+            return false;
+
+        IReadOnlyList<Unit> roomUnits = _unit.RoomContext.Units;
+        if (roomUnits == null)
+            return false;
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (candidate == null || ReferenceEquals(candidate, _unit) || !candidate.IsAlive || candidate.StatusEffects == null)
+                continue;
+
+            if (candidate.StatusEffects.HasEffectFromSource(effectType, _unit))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasEffectFromSource(StatusEffectType effectType, Unit sourceUnit)
+    {
+        if (sourceUnit == null)
+            return false;
+
+        for (int i = 0; i < _activeEffects.Count; i++)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null)
+                continue;
+
+            if (activeEffect.Definition.EffectType != effectType || !ReferenceEquals(activeEffect.SourceUnit, sourceUnit))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsValidForcedTarget(Unit sourceUnit)
+    {
+        return sourceUnit != null &&
+               sourceUnit.IsAlive &&
+               sourceUnit.gameObject.activeInHierarchy &&
+               _unit != null &&
+               _unit.IsHostileTo(sourceUnit) &&
+               ReferenceEquals(_unit.RoomContext, sourceUnit.RoomContext);
     }
 
     private void LogDebug(string message)

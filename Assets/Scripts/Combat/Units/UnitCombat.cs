@@ -128,6 +128,9 @@ public class UnitCombat : MonoBehaviour
         if (_unit == null || target == null || !target.IsAlive)
             return false;
 
+        if (_unit.StatusEffects != null && !_unit.StatusEffects.CanAttack)
+            return false;
+
         if (Time.time < _nextAttackTime)
             return false;
 

@@ -2,18 +2,24 @@ using UnityEngine;
 
 public sealed class SkillState
 {
-    public float NextReadyTime { get; private set; }
-
-    public bool IsReady => Time.time >= NextReadyTime;
-    public float RemainingCooldown => Mathf.Max(0f, NextReadyTime - Time.time);
+    public bool IsReady => RemainingCooldown <= 0f;
+    public float RemainingCooldown { get; private set; }
 
     public void StartCooldown(float duration)
     {
-        NextReadyTime = Time.time + Mathf.Max(0f, duration);
+        RemainingCooldown = Mathf.Max(0f, duration);
+    }
+
+    public void Tick(float deltaTime)
+    {
+        if (RemainingCooldown <= 0f)
+            return;
+
+        RemainingCooldown = Mathf.Max(0f, RemainingCooldown - Mathf.Max(0f, deltaTime));
     }
 
     public void Reset()
     {
-        NextReadyTime = 0f;
+        RemainingCooldown = 0f;
     }
 }

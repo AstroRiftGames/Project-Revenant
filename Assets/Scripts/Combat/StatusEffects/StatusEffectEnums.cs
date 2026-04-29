@@ -1,6 +1,10 @@
 public enum StatusEffectType
 {
     Stun,
+    Silence,
+    Fear,
+    Sleep,
+    Taunt,
     HealOverTime,
     DamageOverTime,
     StatModifier

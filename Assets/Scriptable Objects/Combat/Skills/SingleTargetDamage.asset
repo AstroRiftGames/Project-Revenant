@@ -29,4 +29,4 @@ MonoBehaviour:
   _effects:
   - {fileID: 11400000, guid: 8349c801ef624b019c831c79f52a130a, type: 2}
   _appliedStatusEffects:
-  - _definition: {fileID: 11400000, guid: a14f4e6c9f8f42f6a5d3e0b1c6a7d101, type: 2}
+  - _definition: {fileID: 11400000, guid: b2dc5d2ee8b9468d9a7324f8ec4d2d13, type: 2}

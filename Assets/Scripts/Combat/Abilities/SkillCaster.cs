@@ -28,6 +28,14 @@ public class SkillCaster : MonoBehaviour
         ResolveSkill();
     }
 
+    private void Update()
+    {
+        if (_state.IsReady || !CanChargeCooldown())
+            return;
+
+        _state.Tick(Time.deltaTime);
+    }
+
     public bool TryUse(Unit combatTarget)
     {
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
@@ -42,6 +50,12 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: no skill assigned.");
+            return false;
+        }
+
+        if (_unit.StatusEffects != null && !_unit.StatusEffects.CanUseSkills)
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: active status effect blocks skill usage.");
             return false;
         }
 
@@ -102,6 +116,11 @@ public class SkillCaster : MonoBehaviour
         _state.Reset();
     }
 
+    private bool CanChargeCooldown()
+    {
+        return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCooldownCharge;
+    }
+
     private SkillData ResolveSkill()
     {
         if (_overrideSkill != null)
@@ -131,6 +150,9 @@ public class SkillCaster : MonoBehaviour
     {
         if (skill == null)
             return false;
+
+        if (IsSelfCenteredAreaSkill(skill))
+            return _unit != null && _unit.IsAlive;
 
         SkillRequirements requirements = skill.Requirements;
         return requirements == null || requirements.AreMet(_unit, primaryTarget);
@@ -163,6 +185,16 @@ public class SkillCaster : MonoBehaviour
     private static bool ResolveRequiresRangeCheck(SkillData skill)
     {
         return skill != null && skill.Requirements != null && skill.Requirements.requiresTarget;
+    }
+
+    private static bool IsSelfCenteredAreaSkill(SkillData skill)
+    {
+        if (skill == null || skill.TargetMode != SkillTargetMode.Self)
+            return false;
+
+        return skill.Shape == SkillShape.Area ||
+               skill.Shape == SkillShape.Splash ||
+               skill.Shape == SkillShape.MultiTarget;
     }
 
     private static bool ApplyEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)

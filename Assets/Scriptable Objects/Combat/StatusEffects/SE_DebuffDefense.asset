@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _effectId: SE_DebuffDefense
   _displayName: Defense Debuff
-  _effectType: 3
+  _effectType: 7
   _durationMode: 0
   _stackingMode: 0
   _durationSeconds: 4

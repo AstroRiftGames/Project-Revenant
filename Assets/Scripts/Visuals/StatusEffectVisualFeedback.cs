@@ -68,7 +68,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             return;
 
         ForceRefreshVisualState();
-        ShowPopup(activeEffect != null ? activeEffect.Definition?.ApplyPopupText : null, ResolveEffectColor(activeEffect));
+        ShowPopup(ResolveApplyPopupText(activeEffect), ResolveEffectColor(activeEffect));
     }
 
     private void HandleEffectChanged(StatusEffectController controller, ActiveStatusEffect activeEffect)
@@ -198,13 +198,42 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         return definition.EffectType switch
         {
             StatusEffectType.Stun => StatusVisualStyle.Stun,
+            StatusEffectType.Sleep => StatusVisualStyle.Stun,
             StatusEffectType.HealOverTime => StatusVisualStyle.HealOverTime,
             StatusEffectType.DamageOverTime when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
             StatusEffectType.DamageOverTime => StatusVisualStyle.DamageOverTime,
+            StatusEffectType.Silence => StatusVisualStyle.Debuff,
+            StatusEffectType.Fear => StatusVisualStyle.Debuff,
+            StatusEffectType.Taunt => StatusVisualStyle.Debuff,
             StatusEffectType.StatModifier when definition.StatModifier.Value < 0f => StatusVisualStyle.Debuff,
             StatusEffectType.StatModifier when definition.StatModifier.Value > 0f => StatusVisualStyle.Buff,
             _ => StatusVisualStyle.None
         };
+    }
+
+    private static string ResolveApplyPopupText(ActiveStatusEffect activeEffect)
+    {
+        StatusEffectDefinition definition = activeEffect != null ? activeEffect.Definition : null;
+        if (definition == null)
+            return null;
+
+        string popupText = definition.ApplyPopupText;
+        if (string.IsNullOrWhiteSpace(popupText))
+            popupText = definition.DisplayName;
+
+        if (!definition.HasTimedDuration || !ShouldIncludeDurationInApplyPopup(definition.EffectType))
+            return popupText;
+
+        return $"{popupText} {definition.DurationSeconds:0.0}s";
+    }
+
+    private static bool ShouldIncludeDurationInApplyPopup(StatusEffectType effectType)
+    {
+        return effectType == StatusEffectType.Stun ||
+               effectType == StatusEffectType.Silence ||
+               effectType == StatusEffectType.Fear ||
+               effectType == StatusEffectType.Sleep ||
+               effectType == StatusEffectType.Taunt;
     }
 
     private static int ResolveVisualPriority(UnitVisualMaterialState state)

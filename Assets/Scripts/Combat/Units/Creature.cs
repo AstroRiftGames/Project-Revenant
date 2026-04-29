@@ -212,7 +212,11 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        _lifeController?.TakeDamage(ResolveIncomingDamage(amount, source), source);
+        int resolvedDamage = ResolveIncomingDamage(amount, source);
+        if (resolvedDamage > 0)
+            _statusEffectController?.HandleIncomingAttack();
+
+        _lifeController?.TakeDamage(resolvedDamage, source);
     }
 
     public void Heal(int amount, IUnit source = null)

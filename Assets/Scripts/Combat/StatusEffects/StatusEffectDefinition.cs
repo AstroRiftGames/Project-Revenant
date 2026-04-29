@@ -53,7 +53,7 @@ public class StatusEffectDefinition : ScriptableObject
     public bool HasPeriodicTicks =>
         (_effectType == StatusEffectType.HealOverTime || _effectType == StatusEffectType.DamageOverTime) &&
         TickIntervalSeconds > 0f;
-    public bool BlocksActions => _effectType == StatusEffectType.Stun;
-    public bool RestrictsMovement => _effectType == StatusEffectType.Stun;
+    public bool BlocksActions => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
+    public bool RestrictsMovement => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
     public bool AffectsStats => _effectType == StatusEffectType.StatModifier;
 }

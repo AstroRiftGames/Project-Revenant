@@ -9,6 +9,9 @@ public class TargetingStrategy : MonoBehaviour
         if (self == null)
             return null;
 
+        if (self.StatusEffects != null && self.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
+            return forcedTarget;
+
         return self.TargetingMode switch
         {
             UnitTargetingMode.Dynamic => SelectDynamicTarget(self, currentTarget),
@@ -22,12 +25,17 @@ public class TargetingStrategy : MonoBehaviour
             return null;
 
         if (self.Role == UnitRole.Support)
-            return GetNearestVisibleHostile(self);
+            return GetNearestVisibleHostileInternal(self);
 
         if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
             return currentTarget;
 
-        return GetNearestVisibleHostile(self);
+        return GetNearestVisibleHostileInternal(self);
+    }
+
+    public Unit GetNearestVisibleHostile(Unit self)
+    {
+        return GetNearestVisibleHostileInternal(self);
     }
 
     private Unit SelectDynamicTarget(Unit self, Unit currentTarget)
@@ -49,7 +57,7 @@ public class TargetingStrategy : MonoBehaviour
         if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
             return currentTarget;
 
-        return GetNearestVisibleHostile(self);
+        return GetNearestVisibleHostileInternal(self);
     }
 
     private Unit SelectRolePriorityTarget(Unit self, Unit currentTarget)
@@ -117,7 +125,7 @@ public class TargetingStrategy : MonoBehaviour
         return closest;
     }
 
-    private static Unit GetNearestVisibleHostile(Unit self)
+    private static Unit GetNearestVisibleHostileInternal(Unit self)
     {
         if (self == null)
             return null;
