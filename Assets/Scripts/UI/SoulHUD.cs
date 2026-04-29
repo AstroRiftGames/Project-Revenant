@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -8,6 +9,13 @@ using UnityEngine;
 /// </summary>
 public class SoulHUD : MonoBehaviour
 {
+    public static SoulHUD Instance { get; private set; }
+
+    [Header("Visibility")]
+    [SerializeField] private CanvasGroup _canvasGroup;
+    [SerializeField] private float _showDuration = 3f;
+    [SerializeField] private float _fadeDuration = 0.5f;
+
     [Header("Counter")]
     [SerializeField] private TextMeshProUGUI _counterLabel;
 
@@ -17,6 +25,17 @@ public class SoulHUD : MonoBehaviour
     [SerializeField] private RectTransform _deltaSpawnPoint;
 
     private SoulBank _bank;
+    private Coroutine _hideCoroutine;
+    private bool _isForcedVisible = false;
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else if (Instance != this) Destroy(this);
+
+        if (_canvasGroup == null) _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup != null) _canvasGroup.alpha = 0f;
+    }
 
     private void OnEnable()
     {
@@ -64,6 +83,44 @@ public class SoulHUD : MonoBehaviour
     {
         RefreshCounter(newTotal);
         SpawnDelta(delta);
+        ShowTemporarily();
+    }
+
+    public void SetForceVisible(bool force)
+    {
+        _isForcedVisible = force;
+        if (_isForcedVisible)
+        {
+            if (_hideCoroutine != null) StopCoroutine(_hideCoroutine);
+            if (_canvasGroup != null) _canvasGroup.alpha = 1f;
+        }
+        else
+        {
+            ShowTemporarily();
+        }
+    }
+
+    private void ShowTemporarily()
+    {
+        if (_isForcedVisible || _canvasGroup == null) return;
+
+        if (_hideCoroutine != null) StopCoroutine(_hideCoroutine);
+        _hideCoroutine = StartCoroutine(ShowAndFadeRoutine());
+    }
+
+    private IEnumerator ShowAndFadeRoutine()
+    {
+        _canvasGroup.alpha = 1f;
+        yield return new WaitForSeconds(_showDuration);
+
+        float timer = 0f;
+        while (timer < _fadeDuration)
+        {
+            timer += Time.deltaTime;
+            _canvasGroup.alpha = Mathf.Lerp(1f, 0f, timer / _fadeDuration);
+            yield return null;
+        }
+        _canvasGroup.alpha = 0f;
     }
 
     private void RefreshCounter(int total)

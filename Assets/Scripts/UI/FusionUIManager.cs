@@ -22,19 +22,19 @@ public class FusionUIManager : StationUIManager
     [Header("Selection Panel Elements")]
     [SerializeField] private Button _closeSelectionButton;
     [SerializeField] private Transform _gridContainer;
-    [SerializeField] private CreatureFusionCard _cardPrefab;
+    [SerializeField] private CreatureCard _cardPrefab;
 
     [Header("Result Panel Elements")]
     [SerializeField] private Button _closeResultButton;
     [SerializeField] private TextMeshProUGUI _resultTitleText;
     [SerializeField] private TextMeshProUGUI _resultDescText;
-    [SerializeField] private CreatureFusionCard _resultCard;
+    [SerializeField] private CreatureCard _resultCard;
 
     private PartyMemberData _memberA;
     private PartyMemberData _memberB;
     private int _selectingSlot = 0;
 
-    private List<CreatureFusionCard> _spawnedCards = new List<CreatureFusionCard>();
+    private List<CreatureCard> _spawnedCards = new List<CreatureCard>();
 
     protected override void Awake()
     {
@@ -151,7 +151,7 @@ public class FusionUIManager : StationUIManager
             if (_selectingSlot == 1 && member == _memberB) isLocked = true;
             if (_selectingSlot == 2 && member == _memberA) isLocked = true;
 
-            CreatureFusionCard newCard = Instantiate(_cardPrefab, _gridContainer);
+            CreatureCard newCard = Instantiate(_cardPrefab, _gridContainer);
             newCard.Setup(member, OnCardSelected, isLocked);
             _spawnedCards.Add(newCard);
         }

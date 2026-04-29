@@ -27,6 +27,9 @@ public class UIManager : MonoBehaviour
     [Tooltip("List of UI Elements managed by the UIManager")]
     [SerializeField] private List<UIElement> _uiElements = new List<UIElement>();
     
+    [Tooltip("UI elements that should be hidden when a Station is open")]
+    [SerializeField] private List<UIType> _gameplayUIElements = new List<UIType>() { UIType.Inspector, UIType.Minimap, UIType.LOG, UIType.ProgressBar };
+    
     private Dictionary<UIType, GameObject> _uiDictionary = new Dictionary<UIType, GameObject>();
 
     private void Awake()
@@ -103,6 +106,22 @@ public class UIManager : MonoBehaviour
         else
         {
             Debug.LogWarning($"[UIManager] Element not found or not assigned: {elementType}");
+        }
+    }
+
+    public void HideGameplayUI()
+    {
+        foreach (var type in _gameplayUIElements)
+        {
+            HideElement(type);
+        }
+    }
+
+    public void ShowGameplayUI()
+    {
+        foreach (var type in _gameplayUIElements)
+        {
+            ShowElement(type);
         }
     }
 }

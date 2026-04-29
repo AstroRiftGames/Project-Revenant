@@ -79,6 +79,11 @@ public abstract class StationUIManager : MonoBehaviour
         {
             _mainPanel.SetActive(true);
         }
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.HideGameplayUI();
+        }
     }
 
     /// <summary>
@@ -94,6 +99,7 @@ public abstract class StationUIManager : MonoBehaviour
         if (UIManager.Instance != null)
         {
             UIManager.Instance.HideElement(_myUIType);
+            UIManager.Instance.ShowGameplayUI();
         }
     }
 }

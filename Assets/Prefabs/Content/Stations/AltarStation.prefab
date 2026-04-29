@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 13157873264930484}
   - component: {fileID: 8399234270863758894}
   - component: {fileID: 880286760910944578}
-  - component: {fileID: 4303307612844229077}
+  - component: {fileID: 6801590984564667764}
   m_Layer: 7
   m_Name: AltarStation
   m_TagString: Untagged
@@ -150,7 +150,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.84375, y: 1.21875}
   m_EdgeRadius: 0
---- !u!114 &4303307612844229077
+--- !u!114 &6801590984564667764
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -159,7 +159,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 7968870976559896535}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c700511a85cf57445b779883452f3569, type: 3}
+  m_Script: {fileID: 11500000, guid: ca394c07a97fbb544928d959f138fcac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _station: {fileID: 13157873264930484}
+  _settings: {fileID: 11400000, guid: dc930356742d43344b9352908d3d877d, type: 2}
