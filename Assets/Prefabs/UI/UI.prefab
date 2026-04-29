@@ -116,6 +116,7 @@ GameObject:
   m_Component:
   - component: {fileID: 695698286585038492}
   - component: {fileID: 7646299912200099850}
+  - component: {fileID: 2801507986058169102}
   m_Layer: 5
   m_Name: CurrencyCounter
   m_TagString: Untagged
@@ -155,9 +156,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6113ced54229240419d41b0580c80001, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 0}
+  _showDuration: 3
+  _fadeDuration: 0.5
   _counterLabel: {fileID: 1609061554047985792}
   _deltaTextPrefab: {fileID: 4580632153240491463, guid: 232b9b6f9da580d48b63554b73bb48b4, type: 3}
   _deltaSpawnPoint: {fileID: 4975050900531137396}
+--- !u!225 &2801507986058169102
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464542717361359186}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1751284192441151522
 GameObject:
   m_ObjectHideFlags: 0
