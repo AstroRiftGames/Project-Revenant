@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b43d1d0e4b248f39b7df0c4c69a0a11, type: 3}
-  m_Name: DefaultNecromancerProgressionProfile
+  m_Name: NecromancerProgressionProfile
   m_EditorClassIdentifier: 
   _startingLevel: 1
   _startingTotalExperience: 0

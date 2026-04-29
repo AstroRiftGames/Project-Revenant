@@ -2,14 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MovementTileFeedbackController))]
-[RequireComponent(typeof(NecromancerInputAdapter))]
-[RequireComponent(typeof(NecromancerCombatStartAdapter))]
-[RequireComponent(typeof(NecromancerDeploymentAdapter))]
+[RequireComponent(typeof(NecromancerInputController))]
+[RequireComponent(typeof(NecromancerDeploymentController))]
 public class Necromancer : MonoBehaviour
 {
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
+    [SerializeField] private KeyCode _startCombatKey = KeyCode.F;
+    [SerializeField] private bool _debugCombatStartLogs = true;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
     private readonly Queue<Vector3Int> _remainingPathCells = new();
@@ -50,7 +51,16 @@ public class Necromancer : MonoBehaviour
 
     private void Update()
     {
+        HandleCombatStartInput();
         HandleMovement();
+    }
+
+    private void HandleCombatStartInput()
+    {
+        if (!Input.GetKeyDown(_startCombatKey))
+            return;
+
+        TryStartCombatInCurrentRoom();
     }
 
     private void HandleMovement()
@@ -256,6 +266,34 @@ public class Necromancer : MonoBehaviour
         ResetMovementContext();
     }
 
+    public bool TryStartCombatInCurrentRoom()
+    {
+        if (!TryResolveCurrentRoomContext(out RoomContext roomContext))
+        {
+            LogCombatStartDebug($"[{nameof(Necromancer)}] Could not resolve current RoomContext.");
+            return false;
+        }
+
+        if (!roomContext.IsCombatRoom)
+        {
+            LogCombatStartDebug($"[{nameof(Necromancer)}] Room '{roomContext.name}' is not a combat room.");
+            return false;
+        }
+
+        CombatRoomController combatController = roomContext.CombatController;
+        if (combatController == null)
+        {
+            LogCombatStartDebug($"[{nameof(Necromancer)}] Combat room '{roomContext.name}' has no CombatRoomController.");
+            return false;
+        }
+
+        bool started = combatController.TryStartCombat();
+        LogCombatStartDebug(
+            $"[{nameof(Necromancer)}] Start combat requested in room '{roomContext.name}'. " +
+            $"Started: {started}. Current state: {combatController.State}.");
+        return started;
+    }
+
     private void StopMovement()
     {
         _remainingPathCells.Clear();
@@ -318,6 +356,22 @@ public class Necromancer : MonoBehaviour
             return false;
 
         return true;
+    }
+
+    private bool TryResolveCurrentRoomContext(out RoomContext roomContext)
+    {
+        roomContext = null;
+        if (!TryGetGrid(out RoomGrid grid) || grid == null)
+            return false;
+
+        roomContext = grid.GetComponentInParent<RoomContext>(includeInactive: true);
+        return roomContext != null;
+    }
+
+    private void LogCombatStartDebug(string message)
+    {
+        if (_debugCombatStartLogs)
+            Debug.Log(message, this);
     }
 
 #if UNITY_EDITOR

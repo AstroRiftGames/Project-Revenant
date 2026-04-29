@@ -325,7 +325,6 @@ GameObject:
   - component: {fileID: 3197931699983048068}
   - component: {fileID: 8099833755549800280}
   - component: {fileID: 8614445989427827143}
-  - component: {fileID: 7130604938610462658}
   - component: {fileID: 8402979529564583725}
   - component: {fileID: 4178970290454888842}
   - component: {fileID: -2721680991065955918}
@@ -435,6 +434,8 @@ MonoBehaviour:
   _grid: {fileID: 0}
   _moveSpeed: 5
   _movementTileFeedback: {fileID: 8099833755549800280}
+  _startCombatKey: 102
+  _debugCombatStartLogs: 1
   _drawHoveredCellGizmo: 1
   _drawClickedCellGizmo: 1
 --- !u!114 &8099833755549800280
@@ -473,21 +474,6 @@ MonoBehaviour:
     m_Bits: 128
   _cancelSelectionOnRightClick: 1
   _cancelSelectionOnEscape: 1
---- !u!114 &7130604938610462658
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce62cf9be9dbfd241ac511f5b2cdc9f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _necromancer: {fileID: 3197931699983048068}
-  _startCombatKey: 102
-  _debugLogs: 1
 --- !u!114 &8402979529564583725
 MonoBehaviour:
   m_ObjectHideFlags: 0

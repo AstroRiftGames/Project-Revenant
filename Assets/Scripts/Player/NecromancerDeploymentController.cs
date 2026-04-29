@@ -3,7 +3,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Necromancer))]
-public class NecromancerDeploymentAdapter : MonoBehaviour
+public class NecromancerDeploymentController : MonoBehaviour
 {
     [SerializeField] private Necromancer _necromancer;
     [SerializeField] private Camera _inputCamera;
@@ -67,7 +67,7 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
         if (IsMovementLockActive())
         {
             LogDebug(
-                $"[{nameof(NecromancerDeploymentAdapter)}] Deployment input ignored while '{_movementLockedUnit.name}' " +
+                $"[{nameof(NecromancerDeploymentController)}] Deployment input ignored while '{_movementLockedUnit.name}' " +
                 $"is still moving to {_lockedDestinationCell}.");
             return;
         }
@@ -88,7 +88,7 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
             LockDestinationUntilArrival(_selectedUnit, targetCell);
 
         LogDebug(
-            $"[{nameof(NecromancerDeploymentAdapter)}] Deployment move requested for '{_selectedUnit.name}' to {targetCell}. " +
+            $"[{nameof(NecromancerDeploymentController)}] Deployment move requested for '{_selectedUnit.name}' to {targetCell}. " +
             $"Moved: {moved}.");
     }
 
@@ -118,7 +118,7 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
         }
 
         SetSelectedUnit(unit);
-        LogDebug($"[{nameof(NecromancerDeploymentAdapter)}] Selected deployment unit '{unit.name}'.");
+        LogDebug($"[{nameof(NecromancerDeploymentController)}] Selected deployment unit '{unit.name}'.");
         return true;
     }
 
@@ -163,7 +163,7 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
             _selectedSelectable.OnSelectionInvalidated -= HandleSelectedInvalidated;
 
         if (_selectedUnit != null)
-            LogDebug($"[{nameof(NecromancerDeploymentAdapter)}] Cleared deployment selection for '{_selectedUnit.name}'.");
+            LogDebug($"[{nameof(NecromancerDeploymentController)}] Cleared deployment selection for '{_selectedUnit.name}'.");
 
         _selectedSelectable?.Deselect();
         _selectedSelectable = null;
@@ -251,7 +251,7 @@ public class NecromancerDeploymentAdapter : MonoBehaviour
         if (!ReferenceEquals(_selectedSelectable, selectable))
             return;
 
-        LogDebug($"[{nameof(NecromancerDeploymentAdapter)}] Selected unit invalidated. Clearing selection feedback.");
+        LogDebug($"[{nameof(NecromancerDeploymentController)}] Selected unit invalidated. Clearing selection feedback.");
         ClearSelection();
     }
 

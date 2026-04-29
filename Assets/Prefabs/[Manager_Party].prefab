@@ -20,7 +20,6 @@ GameObject:
   - component: {fileID: 604001000000000004}
   - component: {fileID: 604001000000000005}
   - component: {fileID: 604001000000000013}
-  - component: {fileID: 604001000000000006}
   - component: {fileID: 604001000000000007}
   - component: {fileID: 604001000000000008}
   - component: {fileID: 604001000000000009}
@@ -216,27 +215,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 3028949743866895316}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e28aaea946e948cc9355955df3314e05, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _manaBank: {fileID: 604001000000000012}
-  _progressionContext: {fileID: 604001000000000004}
-  _fallbackMaxMana: 10
---- !u!114 &604001000000000006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3028949743866895316}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 992ecac7b08345a18a77dba2775c2dce, type: 3}
+  m_Script: {fileID: 11500000, guid: 6209f81cefa84030ac9b3ac488f4bd0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _party: {fileID: 318337083921246986}
+  _manaBank: {fileID: 604001000000000012}
   _progressionContext: {fileID: 604001000000000004}
   _fallbackMaxPartyMembers: 4
+  _fallbackMaxMana: 10
 --- !u!114 &604001000000000007
 MonoBehaviour:
   m_ObjectHideFlags: 0

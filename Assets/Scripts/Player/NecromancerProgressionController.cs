@@ -1,10 +1,12 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class NecromancerManaCapacityProgressionAdapter : MonoBehaviour
+public class NecromancerProgressionController : MonoBehaviour
 {
+    [SerializeField] private NecromancerParty _party;
     [SerializeField] private ManaBank _manaBank;
     [SerializeField] private NecromancerProgressionContext _progressionContext;
+    [SerializeField, Min(1)] private int _fallbackMaxPartyMembers = 3;
     [SerializeField, Min(0)] private int _fallbackMaxMana = 10;
 
     private NecromancerProgressionBank _progressionBank;
@@ -18,7 +20,7 @@ public class NecromancerManaCapacityProgressionAdapter : MonoBehaviour
     {
         ResolveDependencies();
         BindToProgression();
-        RefreshMaxMana();
+        ApplyProgressionState();
     }
 
     private void Start()
@@ -29,7 +31,7 @@ public class NecromancerManaCapacityProgressionAdapter : MonoBehaviour
             BindToProgression();
         }
 
-        RefreshMaxMana();
+        ApplyProgressionState();
     }
 
     private void OnDisable()
@@ -37,39 +39,58 @@ public class NecromancerManaCapacityProgressionAdapter : MonoBehaviour
         UnbindFromProgression();
     }
 
-    public void Configure(ManaBank manaBank, NecromancerProgressionContext progressionContext, int fallbackMaxMana)
+    public void Configure(
+        NecromancerParty party,
+        ManaBank manaBank,
+        NecromancerProgressionContext progressionContext,
+        int fallbackMaxPartyMembers,
+        int fallbackMaxMana)
     {
+        _party = party;
         _manaBank = manaBank;
         _progressionContext = progressionContext;
+        _fallbackMaxPartyMembers = Mathf.Max(1, fallbackMaxPartyMembers);
         _fallbackMaxMana = Mathf.Max(0, fallbackMaxMana);
 
         ResolveDependencies();
         BindToProgression();
-        RefreshMaxMana();
+        ApplyProgressionState();
     }
 
     private void HandleProgressionChanged(NecromancerProgressionSnapshot snapshot, int delta)
     {
-        RefreshMaxMana();
+        ApplyProgressionState();
     }
 
-    private void RefreshMaxMana()
+    private void ApplyProgressionState()
     {
         ResolveDependencies();
-        if (_manaBank == null)
-            return;
 
         NecromancerProgressionProfile profile = _progressionContext != null ? _progressionContext.Profile : null;
         int currentLevel = _progressionBank != null ? _progressionBank.CurrentLevel : 1;
-        int maximumMana = profile != null
-            ? profile.GetMaxManaForLevel(currentLevel, _fallbackMaxMana)
-            : _fallbackMaxMana;
 
-        _manaBank.SetMaximumMana(maximumMana);
+        if (_party != null)
+        {
+            int maxPartyMembers = profile != null
+                ? profile.GetMaxPartyMembersForLevel(currentLevel, _fallbackMaxPartyMembers)
+                : _fallbackMaxPartyMembers;
+
+            _party.SetMaxPartyMembers(maxPartyMembers);
+        }
+
+        if (_manaBank != null)
+        {
+            int maxMana = profile != null
+                ? profile.GetMaxManaForLevel(currentLevel, _fallbackMaxMana)
+                : _fallbackMaxMana;
+
+            _manaBank.SetMaximumMana(maxMana);
+        }
     }
 
     private void ResolveDependencies()
     {
+        _party ??= GetComponent<NecromancerParty>();
         _manaBank ??= GetComponent<ManaBank>();
         _progressionContext ??= GetComponent<NecromancerProgressionContext>();
         _progressionContext ??= NecromancerProgressionContext.Current;

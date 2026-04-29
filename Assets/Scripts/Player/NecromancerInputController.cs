@@ -4,7 +4,7 @@ using Selection.Core;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Necromancer))]
-public class NecromancerInputAdapter : MonoBehaviour
+public class NecromancerInputController : MonoBehaviour
 {
     private readonly struct PointerContractContext
     {
