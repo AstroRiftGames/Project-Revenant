@@ -3,6 +3,18 @@ using PrefabDungeonGeneration;
 using UnityEngine;
 
 [DefaultExecutionOrder(100)]
+[RequireComponent(typeof(NecromancerParty))]
+[RequireComponent(typeof(RoomPartySpawner))]
+[RequireComponent(typeof(NecromancerPartyContext))]
+[RequireComponent(typeof(SoulContext))]
+[RequireComponent(typeof(SoulBank))]
+[RequireComponent(typeof(NecromancerProgressionContext))]
+[RequireComponent(typeof(NecromancerProgressionBank))]
+[RequireComponent(typeof(NecromancerPartyCapacityProgressionAdapter))]
+[RequireComponent(typeof(NecromancerRoomExperienceTracker))]
+[RequireComponent(typeof(PartyDefeatDetector))]
+[RequireComponent(typeof(PartyDefeatReturnHandler))]
+[RequireComponent(typeof(NecromancerRoomTransitioner))]
 public class NecromancerSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject _necromancerPrefab;
@@ -19,6 +31,9 @@ public class NecromancerSpawner : MonoBehaviour
     private NecromancerPartyContext _partyContext;
     private SoulContext _soulContext;
     private SoulBank _soulBank;
+    private NecromancerProgressionContext _progressionContext;
+    private NecromancerPartyCapacityProgressionAdapter _partyCapacityProgressionAdapter;
+    private NecromancerRoomExperienceTracker _roomExperienceTracker;
     private PartyDefeatDetector _partyDefeatDetector;
     private PartyDefeatReturnHandler _partyDefeatResolver;
     private NecromancerRoomTransitioner _roomTransitioner;
@@ -26,7 +41,8 @@ public class NecromancerSpawner : MonoBehaviour
 
     private void Awake()
     {
-        EnsurePartySystems();
+        if (!EnsurePartySystems())
+            enabled = false;
     }
 
     private void OnEnable()
@@ -46,8 +62,6 @@ public class NecromancerSpawner : MonoBehaviour
         if (_isFirstLaunch)
         {
             _isFirstLaunch = false;
-            // First time play mode is pressed, manually trigger setup 
-            // since SceneLoaded already passed before this component awakened.
             InitializeScene();
         }
     }
@@ -55,9 +69,7 @@ public class NecromancerSpawner : MonoBehaviour
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         if (!_isFirstLaunch)
-        {
             InitializeScene();
-        }
     }
 
     private void InitializeScene()
@@ -66,31 +78,28 @@ public class NecromancerSpawner : MonoBehaviour
         _dungeonGenerator = DungeonSceneReferenceUtility.ResolveGenerator(_dungeonGenerator, this);
         _fallbackRoomContext = DungeonSceneReferenceUtility.ResolveRoomContext(_fallbackRoomContext, _floorManager, this);
         _necromancer = NecromancerReferenceUtility.Resolve(_necromancer, this);
-        EnsurePartySystems();
+
+        if (!EnsurePartySystems())
+            return;
+
+        _partyCapacityProgressionAdapter.Configure(_party, _progressionContext, _maxPartyMembers);
+        _roomExperienceTracker.Configure(_progressionContext, _dungeonGenerator);
 
         if (_dungeonGenerator != null)
         {
             if (_dungeonGenerator.CurrentFloorData != null)
-            {
-                Spawn(); // Ya se generó por Start() antes de nosotros
-            }
-            // Si es null, esperamos a que el evento OnFloorGenerated avise que terminó.
+                Spawn();
         }
         else
         {
-            // Sin generador estricto (Modo SafeZone).
             Spawn();
         }
     }
 
     private void HandleFloorGenerated(PDFloorData floorData)
     {
-        // Solo spawneamos al jugador a causa de la generación del piso SI NO EXISTE un jugador todavía.
-        // Es decir, al iniciar o recargar escena entera. NO al pasar de piso en la misma escena.
         if (ResolveNecromancer() == null)
-        {
             Spawn();
-        }
     }
 
     private void Spawn()
@@ -111,57 +120,55 @@ public class NecromancerSpawner : MonoBehaviour
         }
 
         _necromancer = necromancer;
-        _partySpawner?.Configure(_floorManager, _party, _necromancer);
-        _roomTransitioner?.Configure(_necromancer);
+        _partySpawner.Configure(_floorManager, _party, _necromancer);
+        _roomTransitioner.Configure(_necromancer);
         necromancer.SetGrid(grid);
     }
 
-    private void EnsurePartySystems()
+    private bool EnsurePartySystems()
     {
         _party = GetComponent<NecromancerParty>();
-        if (_party == null)
-            _party = gameObject.AddComponent<NecromancerParty>();
+        _partySpawner = GetComponent<RoomPartySpawner>();
+        _partyContext = GetComponent<NecromancerPartyContext>();
+        _soulContext = GetComponent<SoulContext>();
+        _soulBank = GetComponent<SoulBank>();
+        _progressionContext = GetComponent<NecromancerProgressionContext>();
+        _partyCapacityProgressionAdapter = GetComponent<NecromancerPartyCapacityProgressionAdapter>();
+        _roomExperienceTracker = GetComponent<NecromancerRoomExperienceTracker>();
+        _partyDefeatDetector = GetComponent<PartyDefeatDetector>();
+        _partyDefeatResolver = GetComponent<PartyDefeatReturnHandler>();
+        _roomTransitioner = GetComponent<NecromancerRoomTransitioner>();
+
+        if (_party == null ||
+            _partySpawner == null ||
+            _partyContext == null ||
+            _soulContext == null ||
+            _soulBank == null ||
+            _progressionContext == null ||
+            _partyCapacityProgressionAdapter == null ||
+            _roomExperienceTracker == null ||
+            _partyDefeatDetector == null ||
+            _partyDefeatResolver == null ||
+            _roomTransitioner == null)
+        {
+            Debug.LogError(
+                $"[{nameof(NecromancerSpawner)}] Manager prefab is missing one or more required components. " +
+                "Add all party/progression scripts in authoring time instead of relying on runtime setup.",
+                this);
+            return false;
+        }
 
         _party.Configure(_startingPartyMembers, _maxPartyMembers, _showPartyDebug);
-
-        _partySpawner = GetComponent<RoomPartySpawner>();
-        if (_partySpawner == null)
-            _partySpawner = gameObject.AddComponent<RoomPartySpawner>();
-
         _partySpawner.Configure(_floorManager, _party, ResolveNecromancer());
-
-        _partyContext = GetComponent<NecromancerPartyContext>();
-        if (_partyContext == null)
-            _partyContext = gameObject.AddComponent<NecromancerPartyContext>();
-
-        _soulContext = GetComponent<SoulContext>();
-        if (_soulContext == null)
-            _soulContext = gameObject.AddComponent<SoulContext>();
-
-        _soulBank = GetComponent<SoulBank>();
-        if (_soulBank == null)
-            _soulBank = gameObject.AddComponent<SoulBank>();
-
         _partyContext.Configure(_party, _partySpawner);
         _soulContext.Configure(_soulBank);
-
-        _partyDefeatDetector = GetComponent<PartyDefeatDetector>();
-        if (_partyDefeatDetector == null)
-            _partyDefeatDetector = gameObject.AddComponent<PartyDefeatDetector>();
-
+        _progressionContext.Configure();
+        _partyCapacityProgressionAdapter.Configure(_party, _progressionContext, _maxPartyMembers);
+        _roomExperienceTracker.Configure(_progressionContext, _dungeonGenerator);
         _partyDefeatDetector.Configure(_party, _floorManager);
-
-        _partyDefeatResolver = GetComponent<PartyDefeatReturnHandler>();
-        if (_partyDefeatResolver == null)
-            _partyDefeatResolver = gameObject.AddComponent<PartyDefeatReturnHandler>();
-
-        _roomTransitioner = GetComponent<NecromancerRoomTransitioner>();
-        if (_roomTransitioner == null)
-            _roomTransitioner = gameObject.AddComponent<NecromancerRoomTransitioner>();
-
         _roomTransitioner.Configure(ResolveNecromancer());
-
         _partyDefeatResolver.Configure(_partyDefeatDetector);
+        return true;
     }
 
     private Vector3Int FindSpawnCell(RoomGrid grid, RoomContext roomContext)
@@ -188,7 +195,6 @@ public class NecromancerSpawner : MonoBehaviour
         }
 
         Vector3Int centerCell = grid.WorldToCell(roomContext.transform.position);
-
         return grid.FindClosestWalkableCell(centerCell, centerCell);
     }
 
@@ -209,13 +215,12 @@ public class NecromancerSpawner : MonoBehaviour
         }
         else
         {
-            // Modo SafeZone: Si no hay generador procedural, tomamos la primera sala estática que exista en el mapa.
             roomContext = DungeonSceneReferenceUtility.ResolveRoomContext(_fallbackRoomContext, _floorManager, this);
         }
 
         if (roomContext == null)
         {
-            Debug.LogWarning("[NecromancerSpawner] No se encontro ni una sala procedural ni un RoomContext estático en la escena.", this);
+            Debug.LogWarning("[NecromancerSpawner] No se encontro ni una sala procedural ni un RoomContext estÃ¡tico en la escena.", this);
             return false;
         }
 

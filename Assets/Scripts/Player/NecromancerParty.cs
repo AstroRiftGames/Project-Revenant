@@ -85,7 +85,7 @@ public class NecromancerParty : MonoBehaviour
 
     public void Configure(List<UnitData> startingMembers, int maxPartyMembers, bool showDebugOverlay)
     {
-        _maxPartyMembers = Mathf.Max(1, maxPartyMembers);
+        SetMaxPartyMembers(maxPartyMembers, notify: false);
         _showDebugOverlay = showDebugOverlay;
 
         if (startingMembers != null && startingMembers.Count > 0)
@@ -177,6 +177,18 @@ public class NecromancerParty : MonoBehaviour
 
         NormalizeFormationIndices();
         OnPartyUpdated?.Invoke();
+    }
+
+    public void SetMaxPartyMembers(int maxPartyMembers, bool notify = true)
+    {
+        int nextMaxPartyMembers = Mathf.Max(1, maxPartyMembers);
+        if (_maxPartyMembers == nextMaxPartyMembers)
+            return;
+
+        _maxPartyMembers = nextMaxPartyMembers;
+
+        if (notify)
+            OnPartyUpdated?.Invoke();
     }
 
     public void ResetToStartingParty()

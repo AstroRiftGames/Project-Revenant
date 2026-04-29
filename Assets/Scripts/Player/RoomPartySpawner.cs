@@ -16,7 +16,11 @@ public class RoomPartySpawner : MonoBehaviour
         {
             offset = forwardDirection;
 
-            if (slotIndex < 0 || _slotOffsets == null || slotIndex >= _slotOffsets.Count)
+            if (slotIndex < 0)
+                return false;
+
+            EnsureSlotOffsets(slotIndex + 1);
+            if (_slotOffsets == null || slotIndex >= _slotOffsets.Count)
                 return false;
 
             Vector2Int localOffset = _slotOffsets[slotIndex];
@@ -33,6 +37,55 @@ public class RoomPartySpawner : MonoBehaviour
         public void ResetToDefaults()
         {
             _slotOffsets = CreateDefaultOffsets();
+        }
+
+        private void EnsureSlotOffsets(int requiredCount)
+        {
+            _slotOffsets ??= new List<Vector2Int>();
+
+            while (_slotOffsets.Count < requiredCount)
+            {
+                if (!TryGenerateNextOffset(out Vector2Int nextOffset))
+                    break;
+
+                _slotOffsets.Add(nextOffset);
+            }
+        }
+
+        private bool TryGenerateNextOffset(out Vector2Int nextOffset)
+        {
+            _slotOffsets ??= new List<Vector2Int>();
+
+            int depth = 1;
+            while (depth < 128)
+            {
+                int lateralRange = Mathf.Max(1, depth);
+                for (int lateral = 0; lateral <= lateralRange; lateral++)
+                {
+                    if (TryUseCandidate(new Vector2Int(lateral, depth), out nextOffset))
+                        return true;
+
+                    if (lateral > 0 && TryUseCandidate(new Vector2Int(-lateral, depth), out nextOffset))
+                        return true;
+                }
+
+                depth++;
+            }
+
+            nextOffset = Vector2Int.zero;
+            return false;
+        }
+
+        private bool TryUseCandidate(Vector2Int candidate, out Vector2Int nextOffset)
+        {
+            if (_slotOffsets.Contains(candidate))
+            {
+                nextOffset = Vector2Int.zero;
+                return false;
+            }
+
+            nextOffset = candidate;
+            return true;
         }
 
         private static List<Vector2Int> CreateDefaultOffsets()

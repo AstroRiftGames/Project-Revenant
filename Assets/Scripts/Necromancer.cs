@@ -27,17 +27,16 @@ public class Necromancer : MonoBehaviour
 
     private void Awake()
     {
-        if (GetComponent<NecromancerInputAdapter>() == null)
-            gameObject.AddComponent<NecromancerInputAdapter>();
-
-        if (GetComponent<NecromancerCombatStartAdapter>() == null)
-            gameObject.AddComponent<NecromancerCombatStartAdapter>();
-
-        if (GetComponent<NecromancerDeploymentAdapter>() == null)
-            gameObject.AddComponent<NecromancerDeploymentAdapter>();
-
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
+
+        if (_movementTileFeedback == null)
+        {
+            Debug.LogError(
+                $"[{nameof(Necromancer)}] Missing {nameof(MovementTileFeedbackController)} on '{name}'. " +
+                "Add the required scripts on the Necromancer prefab instead of relying on runtime setup.",
+                this);
+        }
     }
 
     private void Start()

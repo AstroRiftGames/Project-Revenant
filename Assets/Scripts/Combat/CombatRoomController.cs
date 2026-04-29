@@ -42,6 +42,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
     public bool CanUnitsAct => !IsCombatRoom || _state == CombatRoomState.Combat;
     public bool CanDeployUnits => IsCombatRoom && _state == CombatRoomState.Deployment;
 
+    public static event Action<CombatRoomController, CombatRoomOutcome> AnyCombatResolved;
     public event Action<CombatRoomController> CombatStarted;
     public event Action<CombatRoomController, CombatRoomOutcome> CombatResolved;
     public event Action<CombatRoomController, CombatRoomState> StateChanged;
@@ -93,6 +94,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         CleanupResolvedCombatRuntime();
         LogDebug($"[{nameof(CombatRoomController)}] Room '{name}' resolved with outcome: {_outcome}.");
         CombatResolved?.Invoke(this, _outcome);
+        AnyCombatResolved?.Invoke(this, _outcome);
         return true;
     }
 

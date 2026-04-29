@@ -12,6 +12,16 @@ GameObject:
   - component: {fileID: 167064952393830357}
   - component: {fileID: 318337083921246986}
   - component: {fileID: 2919952549340581019}
+  - component: {fileID: 604001000000000001}
+  - component: {fileID: 604001000000000002}
+  - component: {fileID: 604001000000000003}
+  - component: {fileID: 604001000000000004}
+  - component: {fileID: 604001000000000005}
+  - component: {fileID: 604001000000000006}
+  - component: {fileID: 604001000000000007}
+  - component: {fileID: 604001000000000008}
+  - component: {fileID: 604001000000000009}
+  - component: {fileID: 604001000000000010}
   m_Layer: 0
   m_Name: '[Manager_Party]'
   m_TagString: Untagged
@@ -55,7 +65,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
   - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
   - {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
-  _maxPartyMembers: 6
+  _maxPartyMembers: 4
   _showPartyDebug: 1
 --- !u!114 &318337083921246986
 MonoBehaviour:
@@ -69,7 +79,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e851b6fc9c5c9e41919bddfeef26246, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxPartyMembers: 3
+  _maxPartyMembers: 4
   _showDebugOverlay: 0
   _startingMembers: []
   _members: []
@@ -86,7 +96,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _floorManager: {fileID: 0}
-  _party: {fileID: 0}
+  _party: {fileID: 318337083921246986}
   _temporaryFormation:
     _slotOffsets:
     - {x: 0, y: 1}
@@ -95,4 +105,146 @@ MonoBehaviour:
     - {x: 0, y: 2}
     - {x: 1, y: 2}
     - {x: -1, y: 2}
-    - {x: -1, y: 2}
+    - {x: 0, y: 3}
+  _necromancer: {fileID: 0}
+--- !u!114 &604001000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80c5ad72dce24448bf3f0f4fc321f6a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _party: {fileID: 318337083921246986}
+  _partySpawner: {fileID: 2919952549340581019}
+--- !u!114 &604001000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7148112d335ceee4c804173e9677e373, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _soulBank: {fileID: 604001000000000003}
+--- !u!114 &604001000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 300df53a3a724d8f8a14ce95449717b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _storedSouls: 0
+  _testAmount: 10
+--- !u!114 &604001000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f4e65700bb34de9a72db0f25dfbc6d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _profile: {fileID: 11400000, guid: b3d4b4b7af004f9bad6afd4d3b48478d, type: 2}
+  _progressionBank: {fileID: 604001000000000005}
+--- !u!114 &604001000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c6308cf8c9c4d2b8af568d6a74d8cf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _currentLevel: 1
+  _totalExperience: 0
+  _hasInitialized: 0
+--- !u!114 &604001000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 992ecac7b08345a18a77dba2775c2dce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _party: {fileID: 318337083921246986}
+  _progressionContext: {fileID: 604001000000000004}
+  _fallbackMaxPartyMembers: 4
+--- !u!114 &604001000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ea64b7323a4432a801af0f86dd7d08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _dungeonGenerator: {fileID: 0}
+  _progressionContext: {fileID: 604001000000000004}
+  _debugLogs: 0
+--- !u!114 &604001000000000008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9d61d7bd6bf2d04e9ef3ac307e69821, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _party: {fileID: 318337083921246986}
+  _floorManager: {fileID: 0}
+  _debugLogs: 1
+--- !u!114 &604001000000000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3dffec81365b924ba4ed4ca7a8254e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _detector: {fileID: 604001000000000008}
+--- !u!114 &604001000000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3028949743866895316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 269286a667c2cd84c9f894f6eb258286, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancer: {fileID: 0}

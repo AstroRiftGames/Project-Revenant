@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b43d1d0e4b248f39b7df0c4c69a0a11, type: 3}
+  m_Name: DefaultNecromancerProgressionProfile
+  m_EditorClassIdentifier: 
+  _startingLevel: 1
+  _startingTotalExperience: 0
+  _maximumPartyMembers: 18
+  _stopLevelProgressionAtMaxPartyCapacity: 1
+  _roomVictoryBaseExperience: 10
+  _experiencePerEnemyDefeated: 15
+  _experiencePerFloor: 5
+  _levelThresholds:
+  - Level: 1
+    RequiredTotalExperience: 0
+  - Level: 2
+    RequiredTotalExperience: 100
+  - Level: 3
+    RequiredTotalExperience: 250
+  - Level: 4
+    RequiredTotalExperience: 450
+  - Level: 5
+    RequiredTotalExperience: 700
+  - Level: 6
+    RequiredTotalExperience: 1000
+  - Level: 7
+    RequiredTotalExperience: 1350
+  - Level: 8
+    RequiredTotalExperience: 1750
+  - Level: 9
+    RequiredTotalExperience: 2200
+  - Level: 10
+    RequiredTotalExperience: 2700
+  - Level: 11
+    RequiredTotalExperience: 3250
+  - Level: 12
+    RequiredTotalExperience: 3850
+  - Level: 13
+    RequiredTotalExperience: 4500
+  - Level: 14
+    RequiredTotalExperience: 5200
+  - Level: 15
+    RequiredTotalExperience: 5950
+  _partyCapacityThresholds:
+  - Level: 1
+    MaxPartyMembers: 4
+  - Level: 2
+    MaxPartyMembers: 5
+  - Level: 3
+    MaxPartyMembers: 6
+  - Level: 4
+    MaxPartyMembers: 7
+  - Level: 5
+    MaxPartyMembers: 8
+  - Level: 6
+    MaxPartyMembers: 9
+  - Level: 7
+    MaxPartyMembers: 10
+  - Level: 8
+    MaxPartyMembers: 11
+  - Level: 9
+    MaxPartyMembers: 12
+  - Level: 10
+    MaxPartyMembers: 13
+  - Level: 11
+    MaxPartyMembers: 14
+  - Level: 12
+    MaxPartyMembers: 15
+  - Level: 13
+    MaxPartyMembers: 16
+  - Level: 14
+    MaxPartyMembers: 17
+  - Level: 15
+    MaxPartyMembers: 18

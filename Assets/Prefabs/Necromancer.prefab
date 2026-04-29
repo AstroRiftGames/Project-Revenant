@@ -323,12 +323,12 @@ GameObject:
   - component: {fileID: 4319667460501799238}
   - component: {fileID: 6397360623999948256}
   - component: {fileID: 3197931699983048068}
-  - component: {fileID: -2721680991065955918}
   - component: {fileID: 8099833755549800280}
-  - component: {fileID: 4178970290454888842}
   - component: {fileID: 8614445989427827143}
   - component: {fileID: 7130604938610462658}
   - component: {fileID: 8402979529564583725}
+  - component: {fileID: 4178970290454888842}
+  - component: {fileID: -2721680991065955918}
   m_Layer: 0
   m_Name: Necromancer
   m_TagString: Player
@@ -419,6 +419,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 269286a667c2cd84c9f894f6eb258286, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _necromancer: {fileID: 0}
 --- !u!114 &3197931699983048068
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -433,36 +434,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
   _moveSpeed: 5
-  _movementTileFeedback: {fileID: 0}
+  _movementTileFeedback: {fileID: 8099833755549800280}
   _drawHoveredCellGizmo: 1
   _drawClickedCellGizmo: 1
---- !u!50 &-2721680991065955918
-Rigidbody2D:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_GravityScale: 0
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 0
-  m_Constraints: 4
 --- !u!114 &8099833755549800280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -477,6 +451,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _grid: {fileID: 0}
   _view: {fileID: 0}
+--- !u!114 &8614445989427827143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98123659bafb9d44a8425c2aa9d96228, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancer: {fileID: 3197931699983048068}
+  _inputCamera: {fileID: 0}
+  _selectionBlockerLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  _interactionBlockerLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  _cancelSelectionOnRightClick: 1
+  _cancelSelectionOnEscape: 1
+--- !u!114 &7130604938610462658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce62cf9be9dbfd241ac511f5b2cdc9f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancer: {fileID: 3197931699983048068}
+  _startCombatKey: 102
+  _debugLogs: 1
+--- !u!114 &8402979529564583725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347385983871711347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4848e278e64c0bf4db4cd86db5841d90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _necromancer: {fileID: 3197931699983048068}
+  _inputCamera: {fileID: 0}
+  _selectableLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  _debugLogs: 0
 --- !u!58 &4178970290454888842
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -513,58 +542,30 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.09375}
   m_Radius: 0.25
---- !u!114 &8614445989427827143
-MonoBehaviour:
+--- !u!50 &-2721680991065955918
+Rigidbody2D:
+  serializedVersion: 5
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98123659bafb9d44a8425c2aa9d96228, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _necromancer: {fileID: 0}
-  _inputCamera: {fileID: 0}
-  _selectionBlockerLayer:
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  _interactionBlockerLayer:
+  m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 128
-  _cancelSelectionOnRightClick: 1
-  _cancelSelectionOnEscape: 1
---- !u!114 &7130604938610462658
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce62cf9be9dbfd241ac511f5b2cdc9f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _necromancer: {fileID: 0}
-  _startCombatKey: 102
-  _debugLogs: 1
---- !u!114 &8402979529564583725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8347385983871711347}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4848e278e64c0bf4db4cd86db5841d90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _necromancer: {fileID: 0}
-  _inputCamera: {fileID: 0}
-  _selectableLayer:
-    serializedVersion: 2
-    m_Bits: 256
-  _debugLogs: 0
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
