@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System;
 using TMPro;
 
-public class CreatureFusionCard : MonoBehaviour
+public class CreatureCard : MonoBehaviour
 {
     [SerializeField] private Image _creatureImage;
     [SerializeField] private TextMeshProUGUI _nameText;

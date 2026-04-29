@@ -44,7 +44,27 @@ public class ShopUIManager : StationUIManager
             ShopController.OnPurchaseAttempted += HandlePurchaseAttempt;
         }
 
+        // Forzar a que la moneda siga visible, por si fue oculta por la lógica base
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.ShowElement(UIType.Currency);
+        }
+
+        if (SoulHUD.Instance != null)
+        {
+            SoulHUD.Instance.SetForceVisible(true);
+        }
+
         RefreshShopItems();
+    }
+
+    protected override void CloseAllPanels()
+    {
+        if (SoulHUD.Instance != null)
+        {
+            SoulHUD.Instance.SetForceVisible(false);
+        }
+        base.CloseAllPanels();
     }
 
     private void RefreshShopItems()

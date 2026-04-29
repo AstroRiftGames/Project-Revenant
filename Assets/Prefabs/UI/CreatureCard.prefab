@@ -335,7 +335,7 @@ GameObject:
   - component: {fileID: -6448580096578043682}
   - component: {fileID: 6019568366135903982}
   m_Layer: 5
-  m_Name: CreatureFusionCard
+  m_Name: CreatureCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -372,7 +372,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7695746285360431242}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 352b0b42585e06b498f1d09884c7a0be, type: 3}
+  m_Script: {fileID: 11500000, guid: f26e049f7dfaaeb4a83ba85737361f01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _creatureImage: {fileID: 2975764151358131125}
