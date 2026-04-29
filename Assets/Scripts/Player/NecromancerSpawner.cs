@@ -6,6 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(NecromancerParty))]
 [RequireComponent(typeof(RoomPartySpawner))]
 [RequireComponent(typeof(NecromancerPartyContext))]
+[RequireComponent(typeof(ManaContext))]
+[RequireComponent(typeof(ManaBank))]
 [RequireComponent(typeof(SoulContext))]
 [RequireComponent(typeof(SoulBank))]
 [RequireComponent(typeof(NecromancerProgressionContext))]
@@ -29,6 +31,8 @@ public class NecromancerSpawner : MonoBehaviour
     private NecromancerParty _party;
     private RoomPartySpawner _partySpawner;
     private NecromancerPartyContext _partyContext;
+    private ManaContext _manaContext;
+    private ManaBank _manaBank;
     private SoulContext _soulContext;
     private SoulBank _soulBank;
     private NecromancerProgressionContext _progressionContext;
@@ -130,6 +134,8 @@ public class NecromancerSpawner : MonoBehaviour
         _party = GetComponent<NecromancerParty>();
         _partySpawner = GetComponent<RoomPartySpawner>();
         _partyContext = GetComponent<NecromancerPartyContext>();
+        _manaContext = GetComponent<ManaContext>();
+        _manaBank = GetComponent<ManaBank>();
         _soulContext = GetComponent<SoulContext>();
         _soulBank = GetComponent<SoulBank>();
         _progressionContext = GetComponent<NecromancerProgressionContext>();
@@ -142,6 +148,8 @@ public class NecromancerSpawner : MonoBehaviour
         if (_party == null ||
             _partySpawner == null ||
             _partyContext == null ||
+            _manaContext == null ||
+            _manaBank == null ||
             _soulContext == null ||
             _soulBank == null ||
             _progressionContext == null ||
@@ -161,6 +169,7 @@ public class NecromancerSpawner : MonoBehaviour
         _party.Configure(_startingPartyMembers, _maxPartyMembers, _showPartyDebug);
         _partySpawner.Configure(_floorManager, _party, ResolveNecromancer());
         _partyContext.Configure(_party, _partySpawner);
+        _manaContext.Configure(_manaBank);
         _soulContext.Configure(_soulBank);
         _progressionContext.Configure();
         _partyCapacityProgressionAdapter.Configure(_party, _progressionContext, _maxPartyMembers);

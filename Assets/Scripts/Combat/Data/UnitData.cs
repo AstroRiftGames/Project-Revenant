@@ -50,6 +50,8 @@ public class UnitData : ScriptableObject
     public Sprite sprite;
     public int tileSize;
     public int softCurrencyRewardOnSoulAbsorb = 1;
+    public int manaCostToRecruit = 1;
+    public int manaCostToAbsorbSoul = 1;
     public SkillData skill;
     public UnitStatsData stats = new();
 }

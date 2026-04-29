@@ -135,7 +135,7 @@ public class UnitDeathHandler : MonoBehaviour
         UnitRecruitmentHandler recruitmentHandler = GetComponent<UnitRecruitmentHandler>() ?? gameObject.AddComponent<UnitRecruitmentHandler>();
         RecruitableCorpseHandler corpseHandler = GetComponent<RecruitableCorpseHandler>() ?? gameObject.AddComponent<RecruitableCorpseHandler>();
         recruitmentHandler.Configure(NecromancerPartyContext.Current);
-        corpseHandler.Configure(NecromancerPartyContext.Current, SoulContext.Current);
+        corpseHandler.Configure(NecromancerPartyContext.Current, SoulContext.Current, ManaContext.Current);
     }
 
     private void EnterRecruitableCorpseState()

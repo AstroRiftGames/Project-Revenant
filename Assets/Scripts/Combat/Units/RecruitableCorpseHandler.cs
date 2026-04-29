@@ -21,6 +21,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
     private UnitRecruitmentHandler _recruitmentHandler;
     private UnitDeathHandler _deathHandler;
     private NecromancerPartyContext _partyContext;
+    private ManaContext _manaContext;
     private SoulContext _soulContext;
     private bool _hasBeenResolved;
 
@@ -32,6 +33,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
         _recruitmentHandler = GetComponent<UnitRecruitmentHandler>();
         _deathHandler = GetComponent<UnitDeathHandler>();
         _partyContext = NecromancerPartyContext.Current;
+        _manaContext = ManaContext.Current;
         _soulContext = SoulContext.Current;
     }
 
@@ -53,16 +55,17 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
             _state.OnStateChanged -= HandleStateChanged;
     }
 
-    public void Configure(NecromancerPartyContext partyContext, SoulContext soulContext)
+    public void Configure(NecromancerPartyContext partyContext, SoulContext soulContext, ManaContext manaContext)
     {
         _partyContext = partyContext;
         _soulContext = soulContext;
+        _manaContext = manaContext;
         _recruitmentHandler?.Configure(partyContext);
     }
 
     public void IntegrateWithRoom(RoomContext roomContext)
     {
-        Configure(NecromancerPartyContext.Current, SoulContext.Current);
+        Configure(NecromancerPartyContext.Current, SoulContext.Current, ManaContext.Current);
     }
 
     public bool TryResolve(RecruitableCorpseResolutionOption option)
@@ -88,7 +91,15 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
         if (!CanResolveRequestedOption(RecruitableCorpseResolutionOption.Recruit))
             return false;
 
-        return _recruitmentHandler != null && _recruitmentHandler.AttemptRecruitment();
+        int manaCost = ResolveRecruitManaCost();
+        if (!TrySpendMana(manaCost, RecruitableCorpseResolutionOption.Recruit))
+            return false;
+
+        bool recruited = _recruitmentHandler != null && _recruitmentHandler.AttemptRecruitment();
+        if (!recruited)
+            RefundMana(manaCost);
+
+        return recruited;
     }
 
     public bool TryAbsorbSoul()
@@ -102,6 +113,10 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
         int soulReward = ResolveSoulReward();
         if (soulReward <= 0)
+            return false;
+
+        int manaCost = ResolveAbsorbSoulManaCost();
+        if (!TrySpendMana(manaCost, RecruitableCorpseResolutionOption.AbsorbSoul))
             return false;
 
         _soulContext.AwardSouls(soulReward);
@@ -142,6 +157,49 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
     {
         UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
         return Mathf.Max(0, unitData != null ? unitData.softCurrencyRewardOnSoulAbsorb : 0);
+    }
+
+    private int ResolveRecruitManaCost()
+    {
+        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
+        return Mathf.Max(0, unitData != null ? unitData.manaCostToRecruit : 0);
+    }
+
+    private int ResolveAbsorbSoulManaCost()
+    {
+        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
+        return Mathf.Max(0, unitData != null ? unitData.manaCostToAbsorbSoul : 0);
+    }
+
+    private bool TrySpendMana(int amount, RecruitableCorpseResolutionOption option)
+    {
+        if (amount <= 0)
+            return true;
+
+        _manaContext ??= ManaContext.Current;
+        if (_manaContext == null)
+        {
+            Debug.LogWarning($"[{nameof(RecruitableCorpseHandler)}] Missing {nameof(ManaContext)} while resolving '{option}' on '{name}'.", this);
+            return false;
+        }
+
+        if (_manaContext.TrySpendMana(amount))
+            return true;
+
+        Debug.LogWarning(
+            $"[{nameof(RecruitableCorpseHandler)}] Not enough mana to resolve '{option}' on '{name}'. " +
+            $"Required: {amount}, current: {(_manaContext.ManaBank != null ? _manaContext.ManaBank.StoredMana : 0)}.",
+            this);
+        return false;
+    }
+
+    private void RefundMana(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        _manaContext ??= ManaContext.Current;
+        _manaContext?.AwardMana(amount);
     }
 
     private void HandleStateChanged(UnitLifecycleState state)
