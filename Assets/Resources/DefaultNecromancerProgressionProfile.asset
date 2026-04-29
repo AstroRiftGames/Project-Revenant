@@ -15,6 +15,7 @@ MonoBehaviour:
   _startingLevel: 1
   _startingTotalExperience: 0
   _maximumPartyMembers: 18
+  _maximumMana: 24
   _stopLevelProgressionAtMaxPartyCapacity: 1
   _roomVictoryBaseExperience: 10
   _experiencePerEnemyDefeated: 15
@@ -81,3 +82,34 @@ MonoBehaviour:
     MaxPartyMembers: 17
   - Level: 15
     MaxPartyMembers: 18
+  _manaCapacityThresholds:
+  - Level: 1
+    MaxMana: 10
+  - Level: 2
+    MaxMana: 11
+  - Level: 3
+    MaxMana: 12
+  - Level: 4
+    MaxMana: 13
+  - Level: 5
+    MaxMana: 14
+  - Level: 6
+    MaxMana: 15
+  - Level: 7
+    MaxMana: 16
+  - Level: 8
+    MaxMana: 17
+  - Level: 9
+    MaxMana: 18
+  - Level: 10
+    MaxMana: 19
+  - Level: 11
+    MaxMana: 20
+  - Level: 12
+    MaxMana: 21
+  - Level: 13
+    MaxMana: 22
+  - Level: 14
+    MaxMana: 23
+  - Level: 15
+    MaxMana: 24

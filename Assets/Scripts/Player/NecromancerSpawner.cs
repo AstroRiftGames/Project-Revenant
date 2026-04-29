@@ -12,6 +12,7 @@ using UnityEngine;
 [RequireComponent(typeof(SoulBank))]
 [RequireComponent(typeof(NecromancerProgressionContext))]
 [RequireComponent(typeof(NecromancerProgressionBank))]
+[RequireComponent(typeof(NecromancerManaCapacityProgressionAdapter))]
 [RequireComponent(typeof(NecromancerPartyCapacityProgressionAdapter))]
 [RequireComponent(typeof(NecromancerRoomExperienceTracker))]
 [RequireComponent(typeof(PartyDefeatDetector))]
@@ -36,6 +37,7 @@ public class NecromancerSpawner : MonoBehaviour
     private SoulContext _soulContext;
     private SoulBank _soulBank;
     private NecromancerProgressionContext _progressionContext;
+    private NecromancerManaCapacityProgressionAdapter _manaCapacityProgressionAdapter;
     private NecromancerPartyCapacityProgressionAdapter _partyCapacityProgressionAdapter;
     private NecromancerRoomExperienceTracker _roomExperienceTracker;
     private PartyDefeatDetector _partyDefeatDetector;
@@ -87,6 +89,7 @@ public class NecromancerSpawner : MonoBehaviour
             return;
 
         _partyCapacityProgressionAdapter.Configure(_party, _progressionContext, _maxPartyMembers);
+        _manaCapacityProgressionAdapter.Configure(_manaBank, _progressionContext, _manaBank != null ? _manaBank.MaximumMana : 0);
         _roomExperienceTracker.Configure(_progressionContext, _dungeonGenerator);
 
         if (_dungeonGenerator != null)
@@ -139,6 +142,7 @@ public class NecromancerSpawner : MonoBehaviour
         _soulContext = GetComponent<SoulContext>();
         _soulBank = GetComponent<SoulBank>();
         _progressionContext = GetComponent<NecromancerProgressionContext>();
+        _manaCapacityProgressionAdapter = GetComponent<NecromancerManaCapacityProgressionAdapter>();
         _partyCapacityProgressionAdapter = GetComponent<NecromancerPartyCapacityProgressionAdapter>();
         _roomExperienceTracker = GetComponent<NecromancerRoomExperienceTracker>();
         _partyDefeatDetector = GetComponent<PartyDefeatDetector>();
@@ -153,6 +157,7 @@ public class NecromancerSpawner : MonoBehaviour
             _soulContext == null ||
             _soulBank == null ||
             _progressionContext == null ||
+            _manaCapacityProgressionAdapter == null ||
             _partyCapacityProgressionAdapter == null ||
             _roomExperienceTracker == null ||
             _partyDefeatDetector == null ||
@@ -172,6 +177,7 @@ public class NecromancerSpawner : MonoBehaviour
         _manaContext.Configure(_manaBank);
         _soulContext.Configure(_soulBank);
         _progressionContext.Configure();
+        _manaCapacityProgressionAdapter.Configure(_manaBank, _progressionContext, _manaBank.MaximumMana);
         _partyCapacityProgressionAdapter.Configure(_party, _progressionContext, _maxPartyMembers);
         _roomExperienceTracker.Configure(_progressionContext, _dungeonGenerator);
         _partyDefeatDetector.Configure(_party, _floorManager);

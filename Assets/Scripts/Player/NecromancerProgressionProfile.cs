@@ -16,6 +16,13 @@ public struct NecromancerPartyCapacityThreshold
     [Min(1)] public int MaxPartyMembers;
 }
 
+[Serializable]
+public struct NecromancerManaCapacityThreshold
+{
+    [Min(1)] public int Level;
+    [Min(0)] public int MaxMana;
+}
+
 [CreateAssetMenu(fileName = "NecromancerProgressionProfile", menuName = "Player/Necromancer Progression Profile")]
 public class NecromancerProgressionProfile : ScriptableObject
 {
@@ -24,7 +31,8 @@ public class NecromancerProgressionProfile : ScriptableObject
     [SerializeField, Min(0)] private int _startingTotalExperience;
 
     [Header("Hard Caps")]
-    [SerializeField, Min(1)] private int _maximumPartyMembers = 18;
+    [SerializeField, Min(1)] private int _maxPartyMembers = 18;
+    [SerializeField, Min(0)] private int _maxMana = 24;
     [SerializeField] private bool _stopLevelProgressionAtMaxPartyCapacity = true;
 
     [Header("Room Victory Formula")]
@@ -72,9 +80,30 @@ public class NecromancerProgressionProfile : ScriptableObject
         new NecromancerPartyCapacityThreshold { Level = 15, MaxPartyMembers = 18 }
     };
 
+    [Header("Max Mana By Level")]
+    [SerializeField] private List<NecromancerManaCapacityThreshold> _manaCapacityThresholds = new()
+    {
+        new NecromancerManaCapacityThreshold { Level = 1, MaxMana = 10 },
+        new NecromancerManaCapacityThreshold { Level = 2, MaxMana = 11 },
+        new NecromancerManaCapacityThreshold { Level = 3, MaxMana = 12 },
+        new NecromancerManaCapacityThreshold { Level = 4, MaxMana = 13 },
+        new NecromancerManaCapacityThreshold { Level = 5, MaxMana = 14 },
+        new NecromancerManaCapacityThreshold { Level = 6, MaxMana = 15 },
+        new NecromancerManaCapacityThreshold { Level = 7, MaxMana = 16 },
+        new NecromancerManaCapacityThreshold { Level = 8, MaxMana = 17 },
+        new NecromancerManaCapacityThreshold { Level = 9, MaxMana = 18 },
+        new NecromancerManaCapacityThreshold { Level = 10, MaxMana = 19 },
+        new NecromancerManaCapacityThreshold { Level = 11, MaxMana = 20 },
+        new NecromancerManaCapacityThreshold { Level = 12, MaxMana = 21 },
+        new NecromancerManaCapacityThreshold { Level = 13, MaxMana = 22 },
+        new NecromancerManaCapacityThreshold { Level = 14, MaxMana = 23 },
+        new NecromancerManaCapacityThreshold { Level = 15, MaxMana = 24 }
+    };
+
     public int StartingLevel => Mathf.Max(1, _startingLevel);
     public int StartingTotalExperience => Mathf.Max(0, _startingTotalExperience);
-    public int MaximumPartyMembers => Mathf.Max(1, _maximumPartyMembers);
+    public int MaxPartyMembers => Mathf.Max(1, _maxPartyMembers);
+    public int MaxMana => Mathf.Max(0, _maxMana);
 
     public int CalculateRoomVictoryExperience(int defeatedEnemies, int floorNumber)
     {
@@ -171,7 +200,25 @@ public class NecromancerProgressionProfile : ScriptableObject
             resolvedCapacity = Mathf.Max(resolvedCapacity, threshold.MaxPartyMembers);
         }
 
-        return Mathf.Min(resolvedCapacity, MaximumPartyMembers);
+        return Mathf.Min(resolvedCapacity, MaxPartyMembers);
+    }
+
+    public int GetMaxManaForLevel(int level, int fallbackMaxMana = 0)
+    {
+        int resolvedCapacity = Mathf.Max(0, fallbackMaxMana);
+        int safeLevel = Mathf.Clamp(level, 1, GetMaximumLevel());
+        List<NecromancerManaCapacityThreshold> sortedThresholds = GetSortedManaCapacityThresholds();
+
+        for (int i = 0; i < sortedThresholds.Count; i++)
+        {
+            NecromancerManaCapacityThreshold threshold = sortedThresholds[i];
+            if (safeLevel < threshold.Level)
+                break;
+
+            resolvedCapacity = Mathf.Max(resolvedCapacity, threshold.MaxMana);
+        }
+
+        return Mathf.Min(resolvedCapacity, MaxMana);
     }
 
     public int GetMaximumLevel()
@@ -189,7 +236,7 @@ public class NecromancerProgressionProfile : ScriptableObject
         for (int i = 0; i < sortedCapacityThresholds.Count; i++)
         {
             NecromancerPartyCapacityThreshold threshold = sortedCapacityThresholds[i];
-            if (threshold.MaxPartyMembers < MaximumPartyMembers)
+            if (threshold.MaxPartyMembers < MaxPartyMembers)
                 continue;
 
             return Mathf.Min(maximumLevelFromExperience, Mathf.Max(StartingLevel, threshold.Level));
@@ -263,5 +310,37 @@ public class NecromancerProgressionProfile : ScriptableObject
             return levelComparison;
 
         return left.MaxPartyMembers.CompareTo(right.MaxPartyMembers);
+    }
+
+    private List<NecromancerManaCapacityThreshold> GetSortedManaCapacityThresholds()
+    {
+        var sortedThresholds = new List<NecromancerManaCapacityThreshold>(_manaCapacityThresholds.Count);
+
+        for (int i = 0; i < _manaCapacityThresholds.Count; i++)
+        {
+            NecromancerManaCapacityThreshold threshold = _manaCapacityThresholds[i];
+            if (threshold.Level <= 0 || threshold.MaxMana < 0)
+                continue;
+
+            sortedThresholds.Add(new NecromancerManaCapacityThreshold
+            {
+                Level = threshold.Level,
+                MaxMana = Mathf.Max(0, threshold.MaxMana)
+            });
+        }
+
+        sortedThresholds.Sort(CompareManaCapacityThresholds);
+        return sortedThresholds;
+    }
+
+    private static int CompareManaCapacityThresholds(
+        NecromancerManaCapacityThreshold left,
+        NecromancerManaCapacityThreshold right)
+    {
+        int levelComparison = left.Level.CompareTo(right.Level);
+        if (levelComparison != 0)
+            return levelComparison;
+
+        return left.MaxMana.CompareTo(right.MaxMana);
     }
 }
