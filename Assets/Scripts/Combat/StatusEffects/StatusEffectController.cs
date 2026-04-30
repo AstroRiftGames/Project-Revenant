@@ -156,9 +156,6 @@ public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBl
 
     public float GetModifierTotal(CombatStatType statType, StatusModifierOperation operation)
     {
-        if (statType == CombatStatType.Damage)
-            Debug.Log($"[StatusEffectController] {name} GetModifierTotal Damage, operation={operation}, activeEffects={_activeEffects.Count}");
-
         float modifierTotal = 0f;
         for (int i = 0; i < _activeEffects.Count; i++)
         {
@@ -168,14 +165,9 @@ public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBl
 
             if (activeEffect.TryGetStatModifier(statType, operation, out float modifierValue))
             {
-                if (statType == CombatStatType.Damage)
-                    Debug.Log($"[StatusEffectController] {name} found modifier: {activeEffect.Definition.EffectId} value={modifierValue}");
                 modifierTotal += modifierValue;
             }
         }
-
-        if (statType == CombatStatType.Damage && modifierTotal != 0)
-            Debug.Log($"[StatusEffectController] {name} GetModifierTotal result: {modifierTotal}");
 
         return modifierTotal;
     }

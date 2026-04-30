@@ -264,12 +264,8 @@ private void Awake()
                 bool isAlly = IsAllyOf(context.Caster, impactedUnit);
                 bool showPopupEvenIfBlocked = requireAlly && !isAlly;
 
-                Debug.Log($"[SkillCaster] Applying {definition.DisplayName}. requireAlly={requireAlly}, isAlly={isAlly}, target={impactedUnit.name}");
-
                 StatusEffectApplication application = new(impactedUnit, context.Caster, context.Skill, definition);
                 bool applied = impactedUnit.StatusEffects.TryApply(application, showPopupEvenIfBlocked);
-                
-                Debug.Log($"[SkillCaster] Applied {definition.DisplayName} to {impactedUnit.name}: {applied}");
                 
                 if (applied)
                     anyApplied = true;
