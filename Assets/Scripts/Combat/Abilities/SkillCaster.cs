@@ -22,7 +22,7 @@ public class SkillCaster : MonoBehaviour
     public float MaxCooldown => Skill != null ? Skill.Cooldown : 0f;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
-    private void Awake()
+private void Awake()
     {
         _unit = GetComponent<Unit>();
         ResolveSkill();
@@ -101,6 +101,9 @@ public class SkillCaster : MonoBehaviour
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
             return false;
         }
+
+        if (_unit.StatusEffects != null && _unit.StatusEffects.HasInvisibility)
+            _unit.StatusEffects.RemoveEffectOfType(StatusEffectType.Invisibility);
 
         _state.StartCooldown(skill.Cooldown);
         int listenerCount = SkillUsed?.GetInvocationList().Length ?? 0;
@@ -245,9 +248,12 @@ public class SkillCaster : MonoBehaviour
 
         for (int i = 0; i < statusEffects.Length; i++)
         {
-            StatusEffectDefinition definition = statusEffects[i].Definition;
+            AppliedStatusEffectSpec spec = statusEffects[i];
+            StatusEffectDefinition definition = spec.Definition;
             if (definition == null)
                 continue;
+
+            bool requireAlly = spec.RequireAllyTarget;
 
             for (int targetIndex = 0; targetIndex < impactedUnits.Count; targetIndex++)
             {
@@ -255,12 +261,27 @@ public class SkillCaster : MonoBehaviour
                 if (impactedUnit == null || impactedUnit.StatusEffects == null)
                     continue;
 
+                bool isAlly = IsAllyOf(context.Caster, impactedUnit);
+                bool showPopupEvenIfBlocked = requireAlly && !isAlly;
+
+                Debug.Log($"[SkillCaster] Applying {definition.DisplayName}. requireAlly={requireAlly}, isAlly={isAlly}, target={impactedUnit.name}");
+
                 StatusEffectApplication application = new(impactedUnit, context.Caster, context.Skill, definition);
-                anyApplied |= impactedUnit.StatusEffects.TryApply(application);
+                bool applied = impactedUnit.StatusEffects.TryApply(application, showPopupEvenIfBlocked);
+                
+                Debug.Log($"[SkillCaster] Applied {definition.DisplayName} to {impactedUnit.name}: {applied}");
+                
+                if (applied)
+                    anyApplied = true;
             }
         }
 
         return anyApplied;
+    }
+
+    private static bool IsAllyOf(Unit caster, Unit target)
+    {
+        return ReferenceEquals(caster, target) || caster.Team == target.Team;
     }
 
     private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)

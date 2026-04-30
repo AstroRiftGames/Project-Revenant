@@ -195,23 +195,30 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         if (definition.VisualStyle != StatusVisualStyle.None)
             return definition.VisualStyle;
 
-        return definition.EffectType switch
+return definition.EffectType switch
         {
             StatusEffectType.Stun => StatusVisualStyle.Stun,
             StatusEffectType.Sleep => StatusVisualStyle.Stun,
-            StatusEffectType.HealOverTime => StatusVisualStyle.HealOverTime,
-            StatusEffectType.DamageOverTime when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
-            StatusEffectType.DamageOverTime => StatusVisualStyle.DamageOverTime,
             StatusEffectType.Silence => StatusVisualStyle.Debuff,
             StatusEffectType.Fear => StatusVisualStyle.Debuff,
             StatusEffectType.Taunt => StatusVisualStyle.Debuff,
-            StatusEffectType.StatModifier when definition.StatModifier.Value < 0f => StatusVisualStyle.Debuff,
-            StatusEffectType.StatModifier when definition.StatModifier.Value > 0f => StatusVisualStyle.Buff,
+            StatusEffectType.Heal => StatusVisualStyle.HealOverTime,
+            StatusEffectType.HealOverTime => StatusVisualStyle.HealOverTime,
+            StatusEffectType.DamageOverTime when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
+            StatusEffectType.DamageOverTime => StatusVisualStyle.DamageOverTime,
+            StatusEffectType.StatModifierBuff => StatusVisualStyle.Buff,
+            StatusEffectType.StatModifierDebuff => StatusVisualStyle.Debuff,
+            StatusEffectType.Invisibility => StatusVisualStyle.Invisible,
+            StatusEffectType.Invincibility => StatusVisualStyle.Invincible,
+            StatusEffectType.Incorruptible => StatusVisualStyle.Incorruptible,
+            StatusEffectType.Berserk => StatusVisualStyle.Buff,
+            StatusEffectType.LifeSteal => StatusVisualStyle.LifeSteal,
+            StatusEffectType.Knockback => StatusVisualStyle.Knockback,
             _ => StatusVisualStyle.None
         };
     }
 
-    private static string ResolveApplyPopupText(ActiveStatusEffect activeEffect)
+private static string ResolveApplyPopupText(ActiveStatusEffect activeEffect)
     {
         StatusEffectDefinition definition = activeEffect != null ? activeEffect.Definition : null;
         if (definition == null)
@@ -221,28 +228,29 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         if (string.IsNullOrWhiteSpace(popupText))
             popupText = definition.DisplayName;
 
-        if (!definition.HasTimedDuration || !ShouldIncludeDurationInApplyPopup(definition.EffectType))
-            return popupText;
+        string result = popupText;
 
-        return $"{popupText} {definition.DurationSeconds:0.0}s";
-    }
+        int stacks = activeEffect.StackCount;
+        if (stacks > 1)
+            result += $" x{stacks}";
 
-    private static bool ShouldIncludeDurationInApplyPopup(StatusEffectType effectType)
-    {
-        return effectType == StatusEffectType.Stun ||
-               effectType == StatusEffectType.Silence ||
-               effectType == StatusEffectType.Fear ||
-               effectType == StatusEffectType.Sleep ||
-               effectType == StatusEffectType.Taunt;
+        if (definition.HasTimedDuration && activeEffect.ExpiresAt > 0)
+        {
+            float remaining = activeEffect.ExpiresAt - Time.time;
+            if (remaining > 0)
+                result += $" ({remaining:0.0}s)";
+        }
+
+        return result;
     }
 
     private static int ResolveVisualPriority(UnitVisualMaterialState state)
     {
         return state switch
         {
+            UnitVisualMaterialState.Dead => 1000,
             UnitVisualMaterialState.SoulAbsorbed => 900,
             UnitVisualMaterialState.Recruitable => 800,
-            UnitVisualMaterialState.Dead => 700,
             UnitVisualMaterialState.Stun => 600,
             UnitVisualMaterialState.DamageOverTimePermanent => 500,
             UnitVisualMaterialState.DamageOverTime => 400,

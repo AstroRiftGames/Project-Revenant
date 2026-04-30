@@ -49,11 +49,14 @@ public class StatusEffectDefinition : ScriptableObject
     public bool ShowExpirePopup => _showExpirePopup;
     public string ExpirePopupText => _expirePopupText;
 
-    public bool HasTimedDuration => _durationMode == StatusEffectDurationMode.Timed;
+public bool HasTimedDuration => _durationMode == StatusEffectDurationMode.Timed;
     public bool HasPeriodicTicks =>
         (_effectType == StatusEffectType.HealOverTime || _effectType == StatusEffectType.DamageOverTime) &&
         TickIntervalSeconds > 0f;
     public bool BlocksActions => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
     public bool RestrictsMovement => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
-    public bool AffectsStats => _effectType == StatusEffectType.StatModifier;
+    public bool IsHeal => _effectType == StatusEffectType.Heal || _effectType == StatusEffectType.HealOverTime;
+    public bool AffectsStats => _effectType == StatusEffectType.StatModifierBuff || _effectType == StatusEffectType.StatModifierDebuff;
+    public bool IsStateEffect => _effectType == StatusEffectType.Invisibility || _effectType == StatusEffectType.Invincibility || _effectType == StatusEffectType.Incorruptible;
+    public bool IsModifierEffect => _effectType == StatusEffectType.Berserk || _effectType == StatusEffectType.LifeSteal || _effectType == StatusEffectType.Knockback;
 }

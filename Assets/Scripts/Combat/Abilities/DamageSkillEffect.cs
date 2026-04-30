@@ -11,6 +11,16 @@ public class DamageSkillEffect : SkillEffect
             return false;
 
         target.TakeDamage(Mathf.Max(0, _damage), context.Caster);
+
+        if (context.Caster.StatusEffects != null && context.Caster.StatusEffects.HasLifeSteal)
+        {
+            float healPercent = context.Caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
+            int healAmount = Mathf.RoundToInt(_damage * healPercent);
+            LifeController casterLife = context.Caster.GetComponent<LifeController>();
+            if (healAmount > 0 && casterLife != null)
+                casterLife.Heal(healAmount, target);
+        }
+
         return true;
     }
 }

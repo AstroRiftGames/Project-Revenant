@@ -182,6 +182,14 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             transform.position = _grid.CellToWorld(_currentCell);
     }
 
+    public void ForceSyncPosition()
+    {
+        InvalidatePathCache();
+        _hasCurrentCell = false;
+        if (_grid != null)
+            _currentCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position, _unit);
+    }
+
     private void SnapToCurrentCell()
     {
         if (_grid == null)

@@ -258,6 +258,10 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
         float additiveModifier = _statusEffectController.GetModifierTotal(statType, StatusModifierOperation.Additive);
         float multiplierModifier = _statusEffectController.GetModifierTotal(statType, StatusModifierOperation.Multiplier);
+
+        if (statType == CombatStatType.Damage && (additiveModifier != 0 || multiplierModifier != 0))
+            Debug.Log($"[Creature] {name} Damage: base={baseValue}, add={additiveModifier}, mult={multiplierModifier}, result={(baseValue + additiveModifier) * (1f + multiplierModifier)}");
+
         return Mathf.Max(0f, (baseValue + additiveModifier) * (1f + multiplierModifier));
     }
 
