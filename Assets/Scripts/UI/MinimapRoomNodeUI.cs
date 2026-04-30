@@ -8,16 +8,31 @@ namespace ProjectRevenant.UI
     {
         public Image BackgroundImage;
         public Image HighlightImage; 
+        public Image RoomIconImage;
         
         public int RoomID { get; private set; }
 
-        public void Initialize(PDRoomNode roomNode)
+        public void Initialize(PDRoomNode roomNode, Data.GameIconDatabase iconDatabase = null)
         {
             RoomID = roomNode.ID;
             
             if (BackgroundImage != null)
             {
                 BackgroundImage.color = GetColorForRoomType(roomNode.RoomType);
+            }
+
+            if (RoomIconImage != null && iconDatabase != null)
+            {
+                Sprite icon = iconDatabase.GetRoomIcon(roomNode.RoomType);
+                if (icon != null)
+                {
+                    RoomIconImage.sprite = icon;
+                    RoomIconImage.enabled = true;
+                }
+                else
+                {
+                    RoomIconImage.enabled = false;
+                }
             }
 
             SetIsCurrentRoom(false);

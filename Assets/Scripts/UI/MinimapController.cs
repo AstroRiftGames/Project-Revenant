@@ -15,6 +15,8 @@ namespace ProjectRevenant.UI
         public RectTransform LinePrefab; 
         [Tooltip("Raíz visual del minimapa para prender o apagar. Poner acá el parent superior.")]
         public GameObject MinimapRoot;
+        [Tooltip("Base de datos de iconos para mostrar el tipo de habitación.")]
+        public Data.GameIconDatabase IconDatabase;
 
         [Header("Settings")]
         public float NodeSize = 30f;
@@ -247,7 +249,7 @@ namespace ProjectRevenant.UI
             rt.anchoredPosition = new Vector2(logicalPos.x * NodeSpacing * _currentScale, logicalPos.y * NodeSpacing * _currentScale) + _centeringOffset;
             rt.sizeDelta = new Vector2(NodeSize * _currentScale, NodeSize * _currentScale);
             
-            nodeUI.Initialize(roomNode);
+            nodeUI.Initialize(roomNode, IconDatabase);
             _roomNodes[roomNode.ID] = nodeUI;
         }
 

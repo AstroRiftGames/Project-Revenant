@@ -28,6 +28,13 @@ namespace Data
             public Sprite icon;
         }
 
+        [Serializable]
+        public struct RoomIcon
+        {
+            public PrefabDungeonGeneration.PDRoomType roomType;
+            public Sprite icon;
+        }
+
         [Header("Faction Icons")]
         public List<FactionIcon> factionIcons = new List<FactionIcon>();
 
@@ -36,6 +43,9 @@ namespace Data
 
         [Header("Stat Icons")]
         public List<StatIcon> statIcons = new List<StatIcon>();
+
+        [Header("Room Icons")]
+        public List<RoomIcon> roomIcons = new List<RoomIcon>();
 
         private static GameIconDatabase _instance;
         
@@ -68,6 +78,13 @@ namespace Data
         {
             foreach (var entry in statIcons)
                 if (entry.stat == stat) return entry.icon;
+            return null;
+        }
+
+        public Sprite GetRoomIcon(PrefabDungeonGeneration.PDRoomType roomType)
+        {
+            foreach (var entry in roomIcons)
+                if (entry.roomType == roomType) return entry.icon;
             return null;
         }
     }

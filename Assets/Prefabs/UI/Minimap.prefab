@@ -205,6 +205,7 @@ MonoBehaviour:
   NodePrefab: {fileID: 1003851633621458084, guid: 1dd62cbb4dca2c940a0cbbb523f513b5, type: 3}
   LinePrefab: {fileID: 5057221246027599690, guid: 67b32376889bdaa4086724d0b2f65333, type: 3}
   MinimapRoot: {fileID: 0}
+  IconDatabase: {fileID: 11400000, guid: ef13445337a73b54ea2bde42f89de657, type: 2}
   NodeSize: 30
   NodeSpacing: 50
 --- !u!114 &7328443077636681250

@@ -45,3 +45,18 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
   - stat: 8
     icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+  roomIcons:
+  - roomType: 0
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 1
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 2
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 3
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 4
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 5
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
+  - roomType: 6
+    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}

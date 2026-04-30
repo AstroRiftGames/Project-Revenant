@@ -3169,18 +3169,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1105995987414680426, guid: 810ae4ceae47f3941ba79ce2130c6d73, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 50
-      objectReference: {fileID: 0}
-    - target: {fileID: 3269179352181099057, guid: 810ae4ceae47f3941ba79ce2130c6d73, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: -100
-      objectReference: {fileID: 0}
-    - target: {fileID: 3269179352181099057, guid: 810ae4ceae47f3941ba79ce2130c6d73, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: -25
-      objectReference: {fileID: 0}
     - target: {fileID: 7639865318886106929, guid: 810ae4ceae47f3941ba79ce2130c6d73, type: 3}
       propertyPath: m_Name
       value: Shop
@@ -3287,10 +3275,6 @@ PrefabInstance:
     - target: {fileID: 2901536094304785415, guid: 5e14d8bda72ebb04c83dc7b664d0ab73, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5236992157846035852, guid: 5e14d8bda72ebb04c83dc7b664d0ab73, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 133
       objectReference: {fileID: 0}
     - target: {fileID: 6246780615640058944, guid: 5e14d8bda72ebb04c83dc7b664d0ab73, type: 3}
       propertyPath: m_Name
