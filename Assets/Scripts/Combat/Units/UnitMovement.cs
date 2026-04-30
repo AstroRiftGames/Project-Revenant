@@ -31,9 +31,21 @@ private RoomGrid _registeredGrid;
     [SerializeField] private float _softBlockRetryDelay = 0.1f;
     [SerializeField] private float _hardBlockRetryDelay = 0.3f;
     [SerializeField] private int _maxSoftRetries = 3;
+    [SerializeField] private int _deadlockMaxAttempts = 5;
+    [SerializeField] private float _deadlockCooldown = 1.0f;
     
     private int _consecutiveBlockedSteps;
     private float _nextRetryTime;
+    
+    private Vector3Int _lastOriginCell;
+    private Vector3Int _lastFailedStep;
+    private int _sameStepFailureCount;
+    private int _totalAttemptsWithoutProgress;
+    private float _lastProgressTime;
+    private bool _isInDeadlock;
+    private float _deadlockCooldownEndTime;
+    private readonly int _maxHistorySize = 8;
+    private readonly List<Vector3Int> _recentFailedSteps = new();
 
     private void Awake()
     {
@@ -461,6 +473,117 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         _nextRepathTime = 0f;
         _cachedPath.Clear();
     }
+        
+    private enum DeadlockType
+    {
+        None,
+        RepeatedStepFailure,  //Misma celda fallida repetidamente
+        MutualBlock,           //Dos unidades bloqueandose mutuamente
+        ChainBlock,            //Multiples unidades aliadas en cadena
+        StalledNoProgress      //Demasiados intentos sin avance real
+    }
+    
+    private void UpdateDeadlockState(Vector3Int originCell, Vector3Int failedStep)
+    {
+        _recentFailedSteps.Add(failedStep);
+        if (_recentFailedSteps.Count > _maxHistorySize)
+            _recentFailedSteps.RemoveAt(0);
+        
+        if (_lastOriginCell != originCell)
+        {
+            _lastOriginCell = originCell;
+            _sameStepFailureCount = 0;
+        }
+        
+        if (failedStep == _lastFailedStep)
+        {
+            _sameStepFailureCount++;
+        }
+        else
+        {
+            _sameStepFailureCount = 1;
+        }
+        
+        _lastFailedStep = failedStep;
+    }
+    
+    private DeadlockType DetectDeadlockType(Vector3Int originCell, Vector3Int failedStep)
+    {
+        if (_sameStepFailureCount >= _deadlockMaxAttempts)
+        {
+            return DeadlockType.RepeatedStepFailure;
+        }
+        
+        if (_totalAttemptsWithoutProgress >= _deadlockMaxAttempts * 2)
+        {
+            return DeadlockType.StalledNoProgress;
+        }
+        
+        if (_recentFailedSteps.Count >= 4)
+        {
+            int lastIndex = _recentFailedSteps.Count - 1;
+            if (lastIndex >= 1 && _recentFailedSteps[lastIndex] == _recentFailedSteps[lastIndex - 2] &&
+                _recentFailedSteps[lastIndex - 1] != _recentFailedSteps[lastIndex])
+            {
+                return DeadlockType.MutualBlock;
+            }
+        }
+        
+        if (_consecutiveBlockedSteps >= _deadlockMaxAttempts && _recentFailedSteps.Count >= 3)
+        {
+            HashSet<Vector3Int> uniqueFailed = new(_recentFailedSteps);
+            if (uniqueFailed.Count >= 2)
+            {
+                return DeadlockType.ChainBlock;
+            }
+        }
+        
+        return DeadlockType.None;
+    }
+    
+    private bool ResolveDeadlock(DeadlockType type, Vector3Int originCell)
+    {
+        Debug.Log($"[UnitMovement] {name} - DeadlockResolved: {type}");
+        
+        _recentFailedSteps.Clear();
+        
+        switch (type)
+        {
+            case DeadlockType.RepeatedStepFailure:
+            case DeadlockType.MutualBlock:
+            case DeadlockType.ChainBlock:
+            case DeadlockType.StalledNoProgress:
+                _isInDeadlock = true;
+                _deadlockCooldownEndTime = Time.time + _deadlockCooldown;
+                _totalAttemptsWithoutProgress = 0;
+                _sameStepFailureCount = 0;
+                _nextRetryTime = _deadlockCooldownEndTime;
+                
+                Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Started: {_deadlockCooldown}s");
+                return false;
+                
+            default:
+                return false;
+        }
+    }
+    
+    private void OnProgressMade()
+    {
+        _totalAttemptsWithoutProgress = 0;
+        _sameStepFailureCount = 0;
+        _recentFailedSteps.Clear();
+        
+        if (_isInDeadlock)
+        {
+            Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Cleared");
+            _isInDeadlock = false;
+            _deadlockCooldownEndTime = 0f;
+        }
+        
+        _lastProgressTime = Time.time;
+    }
+    
+    public bool IsInDeadlock => _isInDeadlock && Time.time < _deadlockCooldownEndTime;
 
     public void CaptureCorpseOccupancy()
     {
@@ -506,6 +629,16 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         if (nextStep == originCell)
             return false;
 
+        if (_isInDeadlock && Time.time < _deadlockCooldownEndTime)
+        {
+            return false;
+        }
+        
+        if (Time.time < _nextRetryTime)
+        {
+            return false;
+        }
+
         if (_grid.OccupancyService.IsCellBlockedFor(_unit, nextStep))
         {
             bool isOccupied = _grid.OccupancyService.IsOccupied(nextStep, _unit);
@@ -513,9 +646,20 @@ public bool SetDestinationCell(Vector3Int destinationCell)
             
             Debug.Log($"[UnitMovement] {name} - StepBlocked: {(isOccupied ? "Occupied" : isReserved ? "Reserved" : "Unknown")} at {nextStep}");
             
+            UpdateDeadlockState(originCell, nextStep);
+            
+            DeadlockType deadlockType = DetectDeadlockType(originCell, nextStep);
+            
+            if (deadlockType != DeadlockType.None)
+            {
+                Debug.Log($"[UnitMovement] {name} - DeadlockDetected: {deadlockType} | attempts: {_totalAttemptsWithoutProgress}, sameStep: {_sameStepFailureCount}");
+                return ResolveDeadlock(deadlockType, originCell);
+            }
+            
             InvalidatePathCache();
             
             _consecutiveBlockedSteps++;
+            _totalAttemptsWithoutProgress++;
             
             if (isReserved)
             {
@@ -545,6 +689,8 @@ public bool SetDestinationCell(Vector3Int destinationCell)
             return false;
         }
 
+        OnProgressMade();
+        
         _consecutiveBlockedSteps = 0;
         _nextRetryTime = 0f;
         

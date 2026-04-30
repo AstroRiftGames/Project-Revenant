@@ -416,7 +416,12 @@ public class RoomGrid : MonoBehaviour
             return false;
 
         bool found = false;
-        int bestDistance = int.MaxValue;
+        int bestScore = int.MaxValue;
+        Vector3Int bestCell = originCell;
+        
+        UnitRole? role = movingUnit?.Role;
+        bool isRangedOrSupport = role == UnitRole.DPS && movingUnit.CombatStyle == UnitCombatStyle.Ranged ||
+                                  role == UnitRole.Support;
 
         for (int x = -rangeInCells; x <= rangeInCells; x++)
         {
@@ -429,17 +434,71 @@ public class RoomGrid : MonoBehaviour
                 if (!IsCellEnterable(candidateCell, movingUnit))
                     continue;
 
-                int distance = GridNavigationUtility.GetCellDistance(originCell, candidateCell);
-                if (distance >= bestDistance)
-                    continue;
-
-                bestDistance = distance;
-                resultCell = candidateCell;
-                found = true;
+                int distanceToOrigin = GridNavigationUtility.GetCellDistance(originCell, candidateCell);
+                
+                int neighborPenalty = CalculateCrowdingPenalty(candidateCell, movingUnit);
+                
+                int rolePenalty = 0;
+                if (isRangedOrSupport && distanceToOrigin == 0)
+                {
+                    rolePenalty = 2;
+                }
+                
+                int score = distanceToOrigin + neighborPenalty + rolePenalty;
+                
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestCell = candidateCell;
+                    found = true;
+                    
+                    if (neighborPenalty > 0)
+                    {
+                        Debug.Log($"[RoomGrid] DesiredCellScored: {candidateCell} score={score} (dist={distanceToOrigin}, crowdPenalty={neighborPenalty}, rolePenalty={rolePenalty})");
+                    }
+                }
             }
         }
 
+        if (found)
+        {
+            resultCell = bestCell;
+            Debug.Log($"[RoomGrid] DesiredCellChosen_BestScore: {resultCell} score={bestScore}");
+        }
+        
         return found;
+    }
+    
+    private int CalculateCrowdingPenalty(Vector3Int cell, IGridOccupant movingOccupant)
+    {
+        int occupiedNeighbors = 0;
+        int maxPenalty = 3;
+        
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+                    
+                Vector3Int neighbor = cell + new Vector3Int(dx, dy, 0);
+                
+                if (OccupancyService.IsOccupied(neighbor, movingOccupant) || 
+                    OccupancyService.IsCellReserved(neighbor, movingOccupant))
+                {
+                    occupiedNeighbors++;
+                }
+            }
+        }
+        
+        if (occupiedNeighbors >= 5)
+            return maxPenalty;
+        if (occupiedNeighbors >= 3)
+            return 2;
+        if (occupiedNeighbors >= 1)
+            return 1;
+        
+        return 0;
     }
 
     private void OnDrawGizmosSelected()
