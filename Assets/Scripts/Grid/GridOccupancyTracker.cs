@@ -186,6 +186,27 @@ public class GridOccupancyTracker : MonoBehaviour
         return false;
     }
 
+    public IGridOccupant GetBlockingOccupant(Vector3Int cell, IGridOccupant ignoredOccupant = null)
+    {
+        if (_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
+        {
+            foreach (IGridOccupant occupant in occupants)
+            {
+                if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
+                    continue;
+
+                return occupant;
+            }
+        }
+        
+        return null;
+    }
+
+    public IGridOccupant GetReservingOccupant(Vector3Int cell)
+    {
+        return _cellReservations.TryGetValue(cell, out IGridOccupant occupant) ? occupant : null;
+    }
+
     private void RemoveFromCurrentCell(IGridOccupant occupant)
     {
         if (!_cellsByOccupant.TryGetValue(occupant, out Vector3Int currentCell))

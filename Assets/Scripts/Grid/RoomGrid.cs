@@ -274,6 +274,102 @@ public class RoomGrid : MonoBehaviour
         return IsCellEnterable(cell, movingOccupant);
     }
 
+    public bool TryFindAttackPositionFromBlockedDesiredCell(Vector3Int blockedCell, Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit movingUnit, Unit targetUnit, out Vector3Int attackPosition)
+    {
+        attackPosition = originCell;
+        
+        if (movingUnit == null || targetUnit == null)
+            return false;
+        
+        if (GridNavigationUtility.IsWithinCellRange(originCell, targetCell, rangeInCells))
+        {
+            attackPosition = originCell;
+            return true;
+        }
+        
+        for (int searchRadius = 1; searchRadius <= rangeInCells; searchRadius++)
+        {
+            for (int x = -searchRadius; x <= searchRadius; x++)
+            {
+                for (int y = -searchRadius; y <= searchRadius; y++)
+                {
+                    Vector3Int candidate = targetCell + new Vector3Int(x, y, 0);
+                    
+                    if (!IsCellEnterable(candidate, movingUnit))
+                        continue;
+                    
+                    if (!GridNavigationUtility.IsWithinCellRange(candidate, targetCell, rangeInCells))
+                        continue;
+                    
+                    int distFromOrigin = GridNavigationUtility.GetCellDistance(originCell, candidate);
+                    if (distFromOrigin > rangeInCells)
+                        continue;
+                    
+                    attackPosition = candidate;
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    public bool TryFindNearbyAlternativeCell(Vector3Int blockedCell, Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit movingUnit, out Vector3Int alternativeCell)
+    {
+        alternativeCell = originCell;
+        
+        if (movingUnit == null)
+            return false;
+        
+        int bestDistanceFromBlocked = int.MaxValue;
+        int bestScore = int.MaxValue;
+        Vector3Int bestCell = originCell;
+        bool found = false;
+        
+        int searchRadius = Mathf.Max(2, rangeInCells);
+        
+        for (int dx = -searchRadius; dx <= searchRadius; dx++)
+        {
+            for (int dy = -searchRadius; dy <= searchRadius; dy++)
+            {
+                Vector3Int candidate = blockedCell + new Vector3Int(dx, dy, 0);
+                
+                if (candidate == blockedCell)
+                    continue;
+                
+                if (!IsCellEnterable(candidate, movingUnit))
+                    continue;
+                
+                int distFromTarget = GridNavigationUtility.GetCellDistance(candidate, targetCell);
+                if (distFromTarget > rangeInCells)
+                    continue;
+                
+                int distFromOrigin = GridNavigationUtility.GetCellDistance(originCell, candidate);
+                int distFromBlocked = Mathf.Abs(dx) + Mathf.Abs(dy);
+                
+                int crowdingPenalty = CalculateCrowdingPenalty(candidate, movingUnit);
+                
+                int score = distFromOrigin + crowdingPenalty;
+                
+                if (distFromBlocked < bestDistanceFromBlocked || (distFromBlocked == bestDistanceFromBlocked && score < bestScore))
+                {
+                    bestDistanceFromBlocked = distFromBlocked;
+                    bestScore = score;
+                    bestCell = candidate;
+                    found = true;
+                }
+            }
+        }
+        
+        if (found)
+        {
+            alternativeCell = bestCell;
+            return true;
+        }
+        
+        return false;
+    }
+
     private void TryResolveOccupancyService()
     {
         if (_occupancyService == null)

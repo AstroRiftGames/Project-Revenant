@@ -137,7 +137,10 @@ public bool SetDestinationCell(Vector3Int destinationCell)
             return false;
 
         if (IsWithinRange(targetUnit, rangeInCells))
+        {
+            Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AlreadyInRange: {targetUnit.name}");
             return false;
+        }
 
         if (Time.time < _nextStepTime)
             return false;
@@ -149,10 +152,84 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, Mathf.Max(0, rangeInCells), _unit, out desiredCell))
             return false;
 
+        if (!TryResolveBlockedDesiredCell(desiredCell, targetCell, originCell, rangeInCells, targetUnit, out Vector3Int resolvedCell))
+        {
+            return false;
+        }
+
+        if (resolvedCell != desiredCell)
+        {
+            desiredCell = resolvedCell;
+            Debug.Log($"[UnitMovement] {name} - DesiredCellResolved: original={targetCell} resolved={desiredCell}");
+        }
+
         RefreshPathCache(originCell, targetCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
 
         Vector3Int nextStep = GetNextStepTowards(originCell);
         return TryCommitMovementStep(originCell, nextStep);
+    }
+
+    private bool TryResolveBlockedDesiredCell(Vector3Int desiredCell, Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit targetUnit, out Vector3Int resolvedCell)
+    {
+        resolvedCell = desiredCell;
+
+        if (_grid.OccupancyService.IsCellBlockedFor(_unit, desiredCell))
+        {
+            IGridOccupant blockingOccupant = _grid.OccupancyService.GetBlockingOccupant(desiredCell, _unit);
+            IGridOccupant reservingOccupant = _grid.OccupancyService.GetReservingOccupant(desiredCell);
+
+            Unit blockerAsUnit = blockingOccupant as Unit;
+            bool isEnemyBlocker = blockerAsUnit != null && _unit.IsHostileTo(blockerAsUnit);
+            bool isAllyBlocker = blockerAsUnit != null && !_unit.IsHostileTo(blockerAsUnit);
+
+            bool isReservedByAlly = false;
+            if (reservingOccupant != null && reservingOccupant != _unit)
+            {
+                Unit reserverAsUnit = reservingOccupant as Unit;
+                isReservedByAlly = reserverAsUnit != null && !_unit.IsHostileTo(reserverAsUnit);
+            }
+
+            if (isEnemyBlocker)
+            {
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy: {desiredCell} blocker={blockerAsUnit?.name}");
+
+                if (_grid.TryFindAttackPositionFromBlockedDesiredCell(desiredCell, targetCell, originCell, rangeInCells, _unit, targetUnit, out Vector3Int attackPosition))
+                {
+                    if (attackPosition == originCell)
+                    {
+                        Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AlreadyInRange: can attack from current position");
+                        resolvedCell = originCell;
+                        return true;
+                    }
+
+                    Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
+                    resolvedCell = attackPosition;
+                    return true;
+                }
+
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_NoValidAttackPosition");
+                return false;
+            }
+
+            if (isAllyBlocker || isReservedByAlly)
+            {
+                string blockType = isAllyBlocker ? "Occupied" : "Reserved";
+                string blockerName = isAllyBlocker ? blockerAsUnit?.name : (reservingOccupant as Unit)?.name;
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_{blockType}: {desiredCell} blocker={blockerName}");
+
+                if (_grid.TryFindNearbyAlternativeCell(desiredCell, targetCell, originCell, rangeInCells, _unit, out Vector3Int alternativeCell))
+                {
+                    Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_RepositionNearby: {alternativeCell}");
+                    resolvedCell = alternativeCell;
+                    return true;
+                }
+
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_NoNearbyCellFound");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public bool MoveTowards(Unit targetUnit, int desiredDistance)
