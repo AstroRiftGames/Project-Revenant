@@ -18,12 +18,15 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private int _cachedTargetRange;
     private float _nextRepathTime;
     private readonly List<Vector3Int> _cachedPath = new();
-    private RoomGrid _registeredGrid;
+private RoomGrid _registeredGrid;
     private bool _isMoving;
     private Vector3 _stepStartWorld;
     private Vector3 _stepTargetWorld;
     private float _stepProgress;
     private Vector2 _currentMovementDirection;
+    
+    private Vector3Int _stepOriginCell;
+    private Vector3Int _reservedDestinationCell;
 
     private void Awake()
     {
@@ -75,7 +78,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         SetGrid(roomContext != null ? roomContext.RoomGrid : null);
     }
 
-    public bool SetDestinationCell(Vector3Int destinationCell)
+public bool SetDestinationCell(Vector3Int destinationCell)
     {
         if (_grid == null || _unit == null)
             return false;
@@ -93,9 +96,15 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (!_grid.IsCellEnterable(destinationCell, _unit))
             return false;
 
-        _grid.OccupancyService.MoveOccupant(_unit, destinationCell);
-        _currentCell = destinationCell;
-        _hasCurrentCell = true;
+        if (!_grid.OccupancyService.TryReserveCell(destinationCell, _unit))
+        {
+            Debug.Log($"[UnitMovement] {name} - ReservationFailed: {destinationCell}");
+            return false;
+        }
+
+        _stepOriginCell = originCell;
+        _reservedDestinationCell = destinationCell;
+
         BeginVisualStep(originCell, destinationCell);
         return true;
     }
@@ -176,6 +185,14 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     public void InterruptMovement()
     {
         InvalidatePathCache();
+        
+        if (_reservedDestinationCell != Vector3Int.zero)
+        {
+            _grid?.OccupancyService.ReleaseReservation(_unit);
+            _stepOriginCell = Vector3Int.zero;
+            _reservedDestinationCell = Vector3Int.zero;
+        }
+
         ResetVisualStep();
 
         if (_grid != null && _hasCurrentCell)
@@ -468,14 +485,40 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             return;
 
         transform.position = _stepTargetWorld;
-        ResetVisualStep();
+        
+        CommitStepOccupancy();
     }
 
-    private void ResetVisualStep()
+private void ResetVisualStep()
     {
         _isMoving = false;
         _stepProgress = 0f;
         _currentMovementDirection = Vector2.zero;
+    }
+    
+    private void CommitStepOccupancy()
+    {
+        if (_grid == null)
+        {
+            ResetVisualStep();
+            return;
+        }
+        
+        if (_reservedDestinationCell != Vector3Int.zero)
+        {
+            _grid.OccupancyService.MoveOccupant(_unit, _reservedDestinationCell);
+            _currentCell = _reservedDestinationCell;
+            _hasCurrentCell = true;
+            
+            _grid.OccupancyService.ReleaseReservation(_unit);
+            
+            Debug.Log($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedDestinationCell}");
+            
+            _stepOriginCell = Vector3Int.zero;
+            _reservedDestinationCell = Vector3Int.zero;
+        }
+        
+        ResetVisualStep();
     }
 
     private void ReleaseCurrentOccupancy()

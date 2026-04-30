@@ -8,6 +8,9 @@ public class GridOccupancyTracker : MonoBehaviour
     private readonly Dictionary<IGridOccupant, Vector3Int> _cellsByOccupant = new();
     private readonly Dictionary<Vector3Int, HashSet<IGridOccupant>> _occupantsByCell = new();
     private readonly Dictionary<Object, PersistentGridOccupant> _persistentOccupantsByOwner = new();
+    
+    private readonly Dictionary<IGridOccupant, Vector3Int> _reservedCellsByOccupant = new();
+    private readonly Dictionary<Vector3Int, IGridOccupant> _cellReservations = new();
 
     private RoomGrid _grid;
 
@@ -59,7 +62,61 @@ public class GridOccupancyTracker : MonoBehaviour
 
     public void MoveOccupant(IGridOccupant occupant, Vector3Int destinationCell)
     {
+        if (_cellReservations.TryGetValue(destinationCell, out IGridOccupant reservedBy) && 
+            !ReferenceEquals(reservedBy, occupant))
+        {
+            Debug.LogWarning($"[GridOccupancyTracker] Cannot move {occupant} to {destinationCell}: cell is reserved by {reservedBy}");
+            return;
+        }
+        
+        ReleaseReservation(occupant);
+        
         RegisterOccupant(occupant, destinationCell);
+    }
+    
+    public bool TryReserveCell(Vector3Int cell, IGridOccupant occupant)
+    {
+        if (cell == Vector3Int.zero || occupant == null)
+            return false;
+        
+        if (_cellReservations.ContainsKey(cell))
+            return false;
+        
+        if (IsOccupied(cell, occupant))
+            return false;
+        
+        _reservedCellsByOccupant[occupant] = cell;
+        _cellReservations[cell] = occupant;
+        
+        return true;
+    }
+    
+    public void ReleaseReservation(IGridOccupant occupant)
+    {
+        if (occupant == null)
+            return;
+        
+        if (!_reservedCellsByOccupant.TryGetValue(occupant, out Vector3Int reservedCell))
+            return;
+        
+        _reservedCellsByOccupant.Remove(occupant);
+        _cellReservations.Remove(reservedCell);
+    }
+    
+    public bool IsCellReserved(Vector3Int cell, IGridOccupant ignoredOccupant = null)
+    {
+        if (!_cellReservations.TryGetValue(cell, out IGridOccupant reservingOccupant))
+            return false;
+        
+        if (ignoredOccupant != null && ReferenceEquals(reservingOccupant, ignoredOccupant))
+            return false;
+        
+        return true;
+    }
+    
+    public bool IsCellBlockedFor(IGridOccupant occupant, Vector3Int cell)
+    {
+        return IsOccupied(cell, occupant) || IsCellReserved(cell, occupant);
     }
 
     public void ReleaseOccupant(IGridOccupant occupant)
@@ -112,16 +169,19 @@ public class GridOccupancyTracker : MonoBehaviour
 
     public bool DoesCellBlockMovement(Vector3Int cell, IGridOccupant ignoredOccupant = null)
     {
-        if (!_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
-            return false;
-
-        foreach (IGridOccupant occupant in occupants)
+        if (_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
         {
-            if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
-                continue;
+            foreach (IGridOccupant occupant in occupants)
+            {
+                if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
+                    continue;
 
-            return true;
+                return true;
+            }
         }
+        
+        if (IsCellReserved(cell, ignoredOccupant))
+            return true;
 
         return false;
     }
