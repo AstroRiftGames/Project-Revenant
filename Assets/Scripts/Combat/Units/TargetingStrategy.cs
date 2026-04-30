@@ -83,10 +83,16 @@ public Unit SelectTarget(Unit self, Unit currentTarget)
         return lowest;
     }
 
-    public Unit GetSpacingThreat(Unit self, Unit currentTarget)
+public Unit GetSpacingThreat(Unit self, Unit currentTarget)
     {
         if (self == null || !self.WantsToHoldSpacing)
             return null;
+
+        if (self.StatusEffects != null && self.StatusEffects.TryGetForcedTarget(out Unit tauntTarget))
+        {
+            if (ReferenceEquals(currentTarget, tauntTarget))
+                return null;
+        }
 
         if (self.Role == UnitRole.Support)
             return GetNearestVisibleHostileInternal(self);
