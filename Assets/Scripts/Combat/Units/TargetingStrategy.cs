@@ -4,13 +4,16 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class TargetingStrategy : MonoBehaviour
 {
-    public Unit SelectTarget(Unit self, Unit currentTarget)
+public Unit SelectTarget(Unit self, Unit currentTarget)
     {
         if (self == null)
             return null;
 
         if (self.StatusEffects != null && self.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
             return forcedTarget;
+
+        if (self.Role == UnitRole.Support && ShouldTargetAllies(self))
+            return SelectAllyTarget(self, currentTarget);
 
         return self.TargetingMode switch
         {
@@ -19,10 +22,77 @@ public class TargetingStrategy : MonoBehaviour
         };
     }
 
-    public Unit GetSpacingThreat(Unit self, Unit currentTarget)
+    private bool ShouldTargetAllies(Unit self)
+    {
+        UnitData unitData = self.GetUnitData();
+        SkillData skill = unitData?.skill;
+        if (skill == null || skill.Requirements == null)
+            return false;
+
+        return !skill.Requirements.mustTargetHostile;
+    }
+
+    public Unit SelectAllyTarget(Unit self, Unit currentTarget)
+    {
+        RoomContext roomContext = self.RoomContext;
+        if (roomContext == null)
+            return null;
+
+        List<Unit> allies = GetAlliesInRoom(self, roomContext);
+        if (allies.Count == 0)
+            return null;
+
+        return GetLowestHealthAliveAlly(allies);
+    }
+
+    private List<Unit> GetAlliesInRoom(Unit self, RoomContext roomContext)
+    {
+        var allies = new List<Unit>();
+        IReadOnlyList<Unit> units = roomContext.Units;
+
+        for (int i = 0; i < units.Count; i++)
+        {
+            Unit candidate = units[i];
+            if (candidate == null || !candidate.IsAlive)
+                continue;
+
+            if (self.Team == candidate.Team && !ReferenceEquals(candidate, self))
+                allies.Add(candidate);
+        }
+
+        return allies;
+    }
+
+    private Unit GetLowestHealthAliveAlly(List<Unit> allies)
+    {
+        Unit lowest = null;
+        float lowestHealthRatio = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit ally = allies[i];
+            float healthRatio = (float)ally.CurrentHealth / ally.MaxHealth;
+
+            if (healthRatio < lowestHealthRatio)
+            {
+                lowestHealthRatio = healthRatio;
+                lowest = ally;
+            }
+        }
+
+        return lowest;
+    }
+
+public Unit GetSpacingThreat(Unit self, Unit currentTarget)
     {
         if (self == null || !self.WantsToHoldSpacing)
             return null;
+
+        if (self.StatusEffects != null && self.StatusEffects.TryGetForcedTarget(out Unit tauntTarget))
+        {
+            if (ReferenceEquals(currentTarget, tauntTarget))
+                return null;
+        }
 
         if (self.Role == UnitRole.Support)
             return GetNearestVisibleHostileInternal(self);

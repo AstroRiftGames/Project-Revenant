@@ -56,6 +56,9 @@ public class LifeController : MonoBehaviour, IDamageable
         if (!IsAlive || amount <= 0)
             return;
 
+        if (_statusEffectController != null && _statusEffectController.HasInvincibility)
+            return;
+
         if (source is Unit attacker && attacker.IsAlive && attacker != _unit)
         {
             LastAttacker = attacker;
@@ -68,6 +71,9 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(amount);
+
+        if (_statusEffectController != null && _statusEffectController.HasInvisibility)
+            _statusEffectController.RemoveEffectOfType(StatusEffectType.Invisibility);
 
         if (CurrentHealth == 0)
             Die();

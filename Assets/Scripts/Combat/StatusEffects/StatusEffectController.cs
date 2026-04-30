@@ -21,20 +21,27 @@ public class StatusEffectController : MonoBehaviour
     public event Action<StatusEffectController, ActiveStatusEffect, int> EffectTickResolved;
     public event Action<StatusEffectController, ActiveStatusEffect, StatusEffectRemovalReason> EffectRemoved;
 
-    public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
+public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
     public bool HasStun => HasEffect(StatusEffectType.Stun);
     public bool HasSilence => HasEffect(StatusEffectType.Silence);
     public bool HasFear => HasEffect(StatusEffectType.Fear);
     public bool HasSleep => HasEffect(StatusEffectType.Sleep);
     public bool HasTaunt => HasEffect(StatusEffectType.Taunt);
+    public bool HasInvisibility => HasEffect(StatusEffectType.Invisibility);
+    public bool HasInvincibility => HasEffect(StatusEffectType.Invincibility);
+    public bool HasIncorruptible => HasEffect(StatusEffectType.Incorruptible);
+    public bool HasBerserk => HasEffect(StatusEffectType.Berserk);
+    public bool HasLifeSteal => HasEffect(StatusEffectType.LifeSteal);
+    public bool HasKnockback => HasEffect(StatusEffectType.Knockback);
     public bool CanAct => !HasBlockingActionEffect();
     public bool CanMove => !HasMovementRestriction();
     public bool CanAttack => !HasStun && !HasFear && !HasSleep;
-    public bool CanUseSkills => !HasStun && !HasFear && !HasSleep && !HasSilence;
+    public bool CanUseSkills => !HasStun && !HasFear && !HasSleep && !HasSilence && !HasBerserk;
     public bool CanMoveTowardTarget => !HasStun && !HasFear && !HasSleep;
     public bool ShouldFlee => HasFear;
     public bool RestrictsMovement => HasMovementRestriction();
     public bool PreventsSkillCooldownCharge => IsSourceOfEffectInCurrentRoom(StatusEffectType.Taunt);
+    public bool IsImmuneToControl => HasIncorruptible;
 
     private void Awake()
     {
@@ -63,12 +70,21 @@ public class StatusEffectController : MonoBehaviour
         RemoveExpiredEffects(now);
     }
 
-    public bool TryApply(StatusEffectApplication application)
+public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBlocked = false)
     {
         if (application.TargetUnit == null || application.Definition == null)
             return false;
 
-        if (_runtimeStoppedByDeath || !isActiveAndEnabled || !ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive)
+        bool isBlocked = _runtimeStoppedByDeath || !isActiveAndEnabled || !ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive;
+
+        if (showPopupEvenIfBlocked && isBlocked)
+        {
+            ActiveStatusEffect dummyEffect = new(application, Time.time);
+            EffectApplied?.Invoke(this, dummyEffect);
+            return false;
+        }
+
+        if (isBlocked)
             return false;
 
         if (IsApplicationBlocked(application))
@@ -123,6 +139,21 @@ public class StatusEffectController : MonoBehaviour
         return false;
     }
 
+    public float GetEffectStrength(StatusEffectType effectType)
+    {
+        for (int i = 0; i < _activeEffects.Count; i++)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null)
+                continue;
+
+            if (activeEffect.Definition.EffectType == effectType)
+                return activeEffect.Definition.Strength;
+        }
+
+        return 0f;
+    }
+
     public float GetModifierTotal(CombatStatType statType, StatusModifierOperation operation)
     {
         float modifierTotal = 0f;
@@ -133,7 +164,9 @@ public class StatusEffectController : MonoBehaviour
                 continue;
 
             if (activeEffect.TryGetStatModifier(statType, operation, out float modifierValue))
+            {
                 modifierTotal += modifierValue;
+            }
         }
 
         return modifierTotal;
@@ -197,21 +230,46 @@ public class StatusEffectController : MonoBehaviour
         return false;
     }
 
-    private bool AddNewEffect(StatusEffectApplication application, float now)
+private bool AddNewEffect(StatusEffectApplication application, float now)
     {
         ActiveStatusEffect newEffect = new(application, now);
         _activeEffects.Add(newEffect);
         ApplyImmediateRuntimeRestrictions(newEffect);
+        
+        if (application.Definition.EffectType == StatusEffectType.Heal && _lifeController != null)
+        {
+            int healAmount = Mathf.Max(0, application.Definition.TickValue);
+            if (healAmount > 0)
+                _lifeController.Heal(healAmount, application.SourceUnit);
+        }
+        
         EffectApplied?.Invoke(this, newEffect);
         return true;
     }
 
-    private bool IsApplicationBlocked(StatusEffectApplication application)
+private bool IsApplicationBlocked(StatusEffectApplication application)
     {
         if (application.Definition == null)
             return true;
 
-        return application.Definition.EffectType == StatusEffectType.Sleep && HasSleep;
+        StatusEffectType effectType = application.Definition.EffectType;
+
+        if (effectType == StatusEffectType.Sleep && HasSleep)
+            return true;
+
+        if (IsImmuneToControl && IsControlEffect(effectType))
+            return true;
+
+        return false;
+    }
+
+    private bool IsControlEffect(StatusEffectType effectType)
+    {
+        return effectType == StatusEffectType.Stun ||
+               effectType == StatusEffectType.Sleep ||
+               effectType == StatusEffectType.Fear ||
+               effectType == StatusEffectType.Silence ||
+               effectType == StatusEffectType.Taunt;
     }
 
     private void ProcessTicks(float now)
@@ -272,7 +330,12 @@ public class StatusEffectController : MonoBehaviour
             return;
 
         if (_activeEffects.Remove(activeEffect))
-            EffectRemoved?.Invoke(this, activeEffect, reason);
+EffectRemoved?.Invoke(this, activeEffect, reason);
+    }
+
+    public void RemoveEffectOfType(StatusEffectType effectType)
+    {
+        RemoveEffectsOfType(effectType, StatusEffectRemovalReason.Explicit);
     }
 
     private void RemoveEffectsOfType(StatusEffectType effectType, StatusEffectRemovalReason reason)
@@ -398,7 +461,7 @@ public class StatusEffectController : MonoBehaviour
                ReferenceEquals(_unit.RoomContext, sourceUnit.RoomContext);
     }
 
-    private void LogDebug(string message)
+private void LogDebug(string message)
     {
         if (_debugLogs)
             Debug.Log(message, this);

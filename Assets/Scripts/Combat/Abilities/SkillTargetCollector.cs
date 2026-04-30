@@ -261,7 +261,7 @@ public static class SkillTargetCollector
         return results.Count > 0;
     }
 
-    private static bool IsValidImpactTarget(SkillCastContext context, Unit candidate)
+private static bool IsValidImpactTarget(SkillCastContext context, Unit candidate)
     {
         if (context == null || candidate == null)
             return false;
@@ -273,7 +273,10 @@ public static class SkillTargetCollector
         if (!candidate.gameObject.activeInHierarchy || !candidate.IsAlive)
             return false;
 
-        if (!ReferenceEquals(candidate.RoomContext, caster.RoomContext))
+        if (!ReferenceEquals(caster.RoomContext, candidate.RoomContext))
+            return false;
+
+        if (candidate.StatusEffects != null && candidate.StatusEffects.HasInvisibility)
             return false;
 
         SkillRequirements requirements = context.Skill != null ? context.Skill.Requirements : null;

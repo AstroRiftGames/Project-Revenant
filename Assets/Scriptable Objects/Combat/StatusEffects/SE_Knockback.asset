@@ -10,24 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b904e7e126f94a42b55735c6cca25c6, type: 3}
-  m_Name: SE_BuffDamage
+  m_Name: SE_Knockback
   m_EditorClassIdentifier: 
-  _effectId: SE_BuffDamage
-  _displayName: Damage Buff
-  _effectType: 8
+  _effectId: SE_Knockback
+  _displayName: Knockback
+  _effectType: 15
   _durationMode: 0
   _stackingMode: 0
-  _durationSeconds: 4
+  _durationSeconds: 0
   _tickIntervalSeconds: 0
   _tickValue: 0
   _maxStacks: 1
-  _strength: 0.2
+  _strength: 1
   _statModifier:
-    _statType: 1
-    _operation: 1
-    _value: 0.2
-  _visualStyle: 5
-  _applyPopupText: ATK+
+    _statType: 0
+    _operation: 0
+    _value: 0
+  _visualStyle: 11
+  _applyPopupText: KNOCKBACK
   _showExpirePopup: 0
   _expirePopupText: 
-  _requireAllyTarget: 1 

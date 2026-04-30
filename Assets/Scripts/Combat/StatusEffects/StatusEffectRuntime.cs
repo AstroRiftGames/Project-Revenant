@@ -5,8 +5,10 @@ using UnityEngine;
 public struct AppliedStatusEffectSpec
 {
     [SerializeField] private StatusEffectDefinition _definition;
+    [SerializeField] private bool _requireAllyTarget;
 
     public StatusEffectDefinition Definition => _definition;
+    public bool RequireAllyTarget => _requireAllyTarget;
 }
 
 public readonly struct StatusEffectApplication

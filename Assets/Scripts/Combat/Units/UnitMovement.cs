@@ -18,12 +18,34 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private int _cachedTargetRange;
     private float _nextRepathTime;
     private readonly List<Vector3Int> _cachedPath = new();
-    private RoomGrid _registeredGrid;
+private RoomGrid _registeredGrid;
     private bool _isMoving;
     private Vector3 _stepStartWorld;
     private Vector3 _stepTargetWorld;
     private float _stepProgress;
     private Vector2 _currentMovementDirection;
+    
+    private Vector3Int _stepOriginCell;
+    private Vector3Int _reservedDestinationCell;
+    
+    [SerializeField] private float _softBlockRetryDelay = 0.1f;
+    [SerializeField] private float _hardBlockRetryDelay = 0.3f;
+    [SerializeField] private int _maxSoftRetries = 3;
+    [SerializeField] private int _deadlockMaxAttempts = 5;
+    [SerializeField] private float _deadlockCooldown = 1.0f;
+    
+    private int _consecutiveBlockedSteps;
+    private float _nextRetryTime;
+    
+    private Vector3Int _lastOriginCell;
+    private Vector3Int _lastFailedStep;
+    private int _sameStepFailureCount;
+    private int _totalAttemptsWithoutProgress;
+    private float _lastProgressTime;
+    private bool _isInDeadlock;
+    private float _deadlockCooldownEndTime;
+    private readonly int _maxHistorySize = 8;
+    private readonly List<Vector3Int> _recentFailedSteps = new();
 
     private void Awake()
     {
@@ -75,7 +97,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         SetGrid(roomContext != null ? roomContext.RoomGrid : null);
     }
 
-    public bool SetDestinationCell(Vector3Int destinationCell)
+public bool SetDestinationCell(Vector3Int destinationCell)
     {
         if (_grid == null || _unit == null)
             return false;
@@ -93,9 +115,15 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (!_grid.IsCellEnterable(destinationCell, _unit))
             return false;
 
-        _grid.OccupancyService.MoveOccupant(_unit, destinationCell);
-        _currentCell = destinationCell;
-        _hasCurrentCell = true;
+        if (!_grid.OccupancyService.TryReserveCell(destinationCell, _unit))
+        {
+            Debug.Log($"[UnitMovement] {name} - ReservationFailed: {destinationCell}");
+            return false;
+        }
+
+        _stepOriginCell = originCell;
+        _reservedDestinationCell = destinationCell;
+
         BeginVisualStep(originCell, destinationCell);
         return true;
     }
@@ -109,7 +137,10 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             return false;
 
         if (IsWithinRange(targetUnit, rangeInCells))
+        {
+            Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AlreadyInRange: {targetUnit.name}");
             return false;
+        }
 
         if (Time.time < _nextStepTime)
             return false;
@@ -121,10 +152,84 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, Mathf.Max(0, rangeInCells), _unit, out desiredCell))
             return false;
 
-        RefreshPathCache(originCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
+        if (!TryResolveBlockedDesiredCell(desiredCell, targetCell, originCell, rangeInCells, targetUnit, out Vector3Int resolvedCell))
+        {
+            return false;
+        }
 
-        Vector3Int nextStep = GetNextStepTowards(originCell, desiredCell);
+        if (resolvedCell != desiredCell)
+        {
+            desiredCell = resolvedCell;
+            Debug.Log($"[UnitMovement] {name} - DesiredCellResolved: original={targetCell} resolved={desiredCell}");
+        }
+
+        RefreshPathCache(originCell, targetCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
+
+        Vector3Int nextStep = GetNextStepTowards(originCell);
         return TryCommitMovementStep(originCell, nextStep);
+    }
+
+    private bool TryResolveBlockedDesiredCell(Vector3Int desiredCell, Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit targetUnit, out Vector3Int resolvedCell)
+    {
+        resolvedCell = desiredCell;
+
+        if (_grid.OccupancyService.IsCellBlockedFor(_unit, desiredCell))
+        {
+            IGridOccupant blockingOccupant = _grid.OccupancyService.GetBlockingOccupant(desiredCell, _unit);
+            IGridOccupant reservingOccupant = _grid.OccupancyService.GetReservingOccupant(desiredCell);
+
+            Unit blockerAsUnit = blockingOccupant as Unit;
+            bool isEnemyBlocker = blockerAsUnit != null && _unit.IsHostileTo(blockerAsUnit);
+            bool isAllyBlocker = blockerAsUnit != null && !_unit.IsHostileTo(blockerAsUnit);
+
+            bool isReservedByAlly = false;
+            if (reservingOccupant != null && reservingOccupant != _unit)
+            {
+                Unit reserverAsUnit = reservingOccupant as Unit;
+                isReservedByAlly = reserverAsUnit != null && !_unit.IsHostileTo(reserverAsUnit);
+            }
+
+            if (isEnemyBlocker)
+            {
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy: {desiredCell} blocker={blockerAsUnit?.name}");
+
+                if (_grid.TryFindAttackPositionFromBlockedDesiredCell(desiredCell, targetCell, originCell, rangeInCells, _unit, targetUnit, out Vector3Int attackPosition))
+                {
+                    if (attackPosition == originCell)
+                    {
+                        Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AlreadyInRange: can attack from current position");
+                        resolvedCell = originCell;
+                        return true;
+                    }
+
+                    Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
+                    resolvedCell = attackPosition;
+                    return true;
+                }
+
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_NoValidAttackPosition");
+                return false;
+            }
+
+            if (isAllyBlocker || isReservedByAlly)
+            {
+                string blockType = isAllyBlocker ? "Occupied" : "Reserved";
+                string blockerName = isAllyBlocker ? blockerAsUnit?.name : (reservingOccupant as Unit)?.name;
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_{blockType}: {desiredCell} blocker={blockerName}");
+
+                if (_grid.TryFindNearbyAlternativeCell(desiredCell, targetCell, originCell, rangeInCells, _unit, out Vector3Int alternativeCell))
+                {
+                    Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_RepositionNearby: {alternativeCell}");
+                    resolvedCell = alternativeCell;
+                    return true;
+                }
+
+                Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByAlly_NoNearbyCellFound");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public bool MoveTowards(Unit targetUnit, int desiredDistance)
@@ -176,10 +281,26 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     public void InterruptMovement()
     {
         InvalidatePathCache();
+        
+        if (_reservedDestinationCell != Vector3Int.zero)
+        {
+            _grid?.OccupancyService.ReleaseReservation(_unit);
+            _stepOriginCell = Vector3Int.zero;
+            _reservedDestinationCell = Vector3Int.zero;
+        }
+
         ResetVisualStep();
 
         if (_grid != null && _hasCurrentCell)
             transform.position = _grid.CellToWorld(_currentCell);
+    }
+
+    public void ForceSyncPosition()
+    {
+        InvalidatePathCache();
+        _hasCurrentCell = false;
+        if (_grid != null)
+            _currentCell = GridNavigationUtility.ResolvePlacementCell(_grid, transform.position, _unit);
     }
 
     private void SnapToCurrentCell()
@@ -234,15 +355,31 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         return true;
     }
 
-    private Vector3Int GetNextStepTowards(Vector3Int originCell, Vector3Int targetCell)
+    private Vector3Int GetNextStepTowards(Vector3Int originCell)
     {
         if (_grid == null || _unit == null)
             return originCell;
 
         if (_cachedPath.Count > 1 && _cachedPath[0] == originCell)
-            return _cachedPath[1];
+        {
+            Vector3Int cachedNextStep = _cachedPath[1];
+            
 
-        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetCell);
+            if (!_grid.OccupancyService.IsCellBlockedFor(_unit, cachedNextStep))
+            {
+                if (_grid.IsStepAllowed(originCell, cachedNextStep, _unit))
+                {
+                    return cachedNextStep;
+                }
+            }
+            
+            Debug.Log($"[UnitMovement] {name} - CachedStepInvalidated: {cachedNextStep}");
+        }
+
+        Vector3Int targetReference = _cachedTargetCell != Vector3Int.zero ? _cachedTargetCell : 
+                                    (_cachedPath.Count > 2 ? _cachedPath[_cachedPath.Count - 1] : originCell);
+        
+        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetReference);
         Vector3Int bestImprovingStep = originCell;
         int bestImprovingDistance = originDistance;
         Vector3Int bestFallbackStep = originCell;
@@ -252,7 +389,11 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetCell);
+            
+            if (_grid.OccupancyService.IsCellBlockedFor(_unit, candidate))
+                continue;
+            
+            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetReference);
 
             if (candidateDistance < bestImprovingDistance)
             {
@@ -321,16 +462,40 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         return originCell;
     }
 
-    private void RefreshPathCache(Vector3Int originCell, Vector3Int targetCell, Unit targetUnit, int rangeInCells)
+    private void RefreshPathCache(Vector3Int originCell, Vector3Int targetCell, Vector3Int desiredCell, Unit targetUnit, int rangeInCells)
     {
         bool targetChanged = _cachedTargetUnit != targetUnit;
         bool targetCellChanged = !_hasCachedTargetCell || _cachedTargetCell != targetCell;
         bool targetRangeChanged = _cachedTargetRange != rangeInCells;
-        bool pathInvalid = !IsCachedPathStillValid(originCell);
-        bool shouldRepath = targetChanged || targetCellChanged || targetRangeChanged || pathInvalid || Time.time >= _nextRepathTime;
+        
+        bool pathStillValid = IsCachedPathStillValid(originCell);
+        
+        string invalidationReason = null;
+        if (pathStillValid && _cachedPath.Count > 1)
+        {
+            Vector3Int nextStep = _cachedPath[1];
+            if (_grid.OccupancyService.IsOccupied(nextStep, _unit))
+            {
+                invalidationReason = "NextStepOccupied";
+                pathStillValid = false;
+            }
+            else if (_grid.OccupancyService.IsCellReserved(nextStep, _unit))
+            {
+                invalidationReason = "NextStepReserved";
+                pathStillValid = false;
+            }
+        }
+        
+        bool shouldRepath = targetChanged || targetCellChanged || targetRangeChanged || 
+                            !pathStillValid || Time.time >= _nextRepathTime;
 
         if (!shouldRepath)
             return;
+
+        if (invalidationReason != null)
+        {
+            Debug.Log($"[UnitMovement] {name} - PathInvalidated: {invalidationReason}");
+        }
 
         _cachedTargetUnit = targetUnit;
         _cachedTargetCell = targetCell;
@@ -339,7 +504,12 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         _nextRepathTime = Time.time + _repathInterval;
 
         _cachedPath.Clear();
-        _cachedPath.AddRange(FindPath(originCell, targetCell));
+        _cachedPath.AddRange(FindPath(originCell, desiredCell));
+        
+        if (_cachedPath.Count > 0)
+        {
+            Debug.Log($"[UnitMovement] {name} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredCell}");
+        }
     }
 
     private bool IsCachedPathStillValid(Vector3Int originCell)
@@ -380,6 +550,117 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         _nextRepathTime = 0f;
         _cachedPath.Clear();
     }
+        
+    private enum DeadlockType
+    {
+        None,
+        RepeatedStepFailure,  //Misma celda fallida repetidamente
+        MutualBlock,           //Dos unidades bloqueandose mutuamente
+        ChainBlock,            //Multiples unidades aliadas en cadena
+        StalledNoProgress      //Demasiados intentos sin avance real
+    }
+    
+    private void UpdateDeadlockState(Vector3Int originCell, Vector3Int failedStep)
+    {
+        _recentFailedSteps.Add(failedStep);
+        if (_recentFailedSteps.Count > _maxHistorySize)
+            _recentFailedSteps.RemoveAt(0);
+        
+        if (_lastOriginCell != originCell)
+        {
+            _lastOriginCell = originCell;
+            _sameStepFailureCount = 0;
+        }
+        
+        if (failedStep == _lastFailedStep)
+        {
+            _sameStepFailureCount++;
+        }
+        else
+        {
+            _sameStepFailureCount = 1;
+        }
+        
+        _lastFailedStep = failedStep;
+    }
+    
+    private DeadlockType DetectDeadlockType(Vector3Int originCell, Vector3Int failedStep)
+    {
+        if (_sameStepFailureCount >= _deadlockMaxAttempts)
+        {
+            return DeadlockType.RepeatedStepFailure;
+        }
+        
+        if (_totalAttemptsWithoutProgress >= _deadlockMaxAttempts * 2)
+        {
+            return DeadlockType.StalledNoProgress;
+        }
+        
+        if (_recentFailedSteps.Count >= 4)
+        {
+            int lastIndex = _recentFailedSteps.Count - 1;
+            if (lastIndex >= 1 && _recentFailedSteps[lastIndex] == _recentFailedSteps[lastIndex - 2] &&
+                _recentFailedSteps[lastIndex - 1] != _recentFailedSteps[lastIndex])
+            {
+                return DeadlockType.MutualBlock;
+            }
+        }
+        
+        if (_consecutiveBlockedSteps >= _deadlockMaxAttempts && _recentFailedSteps.Count >= 3)
+        {
+            HashSet<Vector3Int> uniqueFailed = new(_recentFailedSteps);
+            if (uniqueFailed.Count >= 2)
+            {
+                return DeadlockType.ChainBlock;
+            }
+        }
+        
+        return DeadlockType.None;
+    }
+    
+    private bool ResolveDeadlock(DeadlockType type, Vector3Int originCell)
+    {
+        Debug.Log($"[UnitMovement] {name} - DeadlockResolved: {type}");
+        
+        _recentFailedSteps.Clear();
+        
+        switch (type)
+        {
+            case DeadlockType.RepeatedStepFailure:
+            case DeadlockType.MutualBlock:
+            case DeadlockType.ChainBlock:
+            case DeadlockType.StalledNoProgress:
+                _isInDeadlock = true;
+                _deadlockCooldownEndTime = Time.time + _deadlockCooldown;
+                _totalAttemptsWithoutProgress = 0;
+                _sameStepFailureCount = 0;
+                _nextRetryTime = _deadlockCooldownEndTime;
+                
+                Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Started: {_deadlockCooldown}s");
+                return false;
+                
+            default:
+                return false;
+        }
+    }
+    
+    private void OnProgressMade()
+    {
+        _totalAttemptsWithoutProgress = 0;
+        _sameStepFailureCount = 0;
+        _recentFailedSteps.Clear();
+        
+        if (_isInDeadlock)
+        {
+            Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Cleared");
+            _isInDeadlock = false;
+            _deadlockCooldownEndTime = 0f;
+        }
+        
+        _lastProgressTime = Time.time;
+    }
+    
+    public bool IsInDeadlock => _isInDeadlock && Time.time < _deadlockCooldownEndTime;
 
     public void CaptureCorpseOccupancy()
     {
@@ -417,12 +698,79 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private bool TryCommitMovementStep(Vector3Int originCell, Vector3Int nextStep)
     {
+        if (Time.time < _nextRetryTime)
+        {
+            return false;
+        }
+        
         if (nextStep == originCell)
             return false;
 
-        if (!SetDestinationCell(nextStep))
+        if (_isInDeadlock && Time.time < _deadlockCooldownEndTime)
+        {
             return false;
+        }
+        
+        if (Time.time < _nextRetryTime)
+        {
+            return false;
+        }
 
+        if (_grid.OccupancyService.IsCellBlockedFor(_unit, nextStep))
+        {
+            bool isOccupied = _grid.OccupancyService.IsOccupied(nextStep, _unit);
+            bool isReserved = _grid.OccupancyService.IsCellReserved(nextStep, _unit);
+            
+            Debug.Log($"[UnitMovement] {name} - StepBlocked: {(isOccupied ? "Occupied" : isReserved ? "Reserved" : "Unknown")} at {nextStep}");
+            
+            UpdateDeadlockState(originCell, nextStep);
+            
+            DeadlockType deadlockType = DetectDeadlockType(originCell, nextStep);
+            
+            if (deadlockType != DeadlockType.None)
+            {
+                Debug.Log($"[UnitMovement] {name} - DeadlockDetected: {deadlockType} | attempts: {_totalAttemptsWithoutProgress}, sameStep: {_sameStepFailureCount}");
+                return ResolveDeadlock(deadlockType, originCell);
+            }
+            
+            InvalidatePathCache();
+            
+            _consecutiveBlockedSteps++;
+            _totalAttemptsWithoutProgress++;
+            
+            if (isReserved)
+            {
+                if (_consecutiveBlockedSteps > _maxSoftRetries)
+                {
+                    _nextRetryTime = Time.time + _hardBlockRetryDelay;
+                    Debug.Log($"[UnitMovement] {name} - SoftBlockEscalated: hard retry in {_hardBlockRetryDelay}s");
+                }
+                else
+                {
+                    _nextRetryTime = Time.time + _softBlockRetryDelay;
+                }
+            }
+            else
+            {
+                _nextRetryTime = Time.time + _hardBlockRetryDelay;
+                Debug.Log($"[UnitMovement] {name} - HardBlockCooldown: {_hardBlockRetryDelay}s");
+            }
+            
+            return false;
+        }
+
+        if (!SetDestinationCell(nextStep))
+        {
+            Debug.Log($"[UnitMovement] {name} - ReservationFailed at {nextStep}");
+            InvalidatePathCache();
+            return false;
+        }
+
+        OnProgressMade();
+        
+        _consecutiveBlockedSteps = 0;
+        _nextRetryTime = 0f;
+        
         ScheduleNextStepTime();
         return true;
     }
@@ -460,14 +808,40 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             return;
 
         transform.position = _stepTargetWorld;
-        ResetVisualStep();
+        
+        CommitStepOccupancy();
     }
 
-    private void ResetVisualStep()
+private void ResetVisualStep()
     {
         _isMoving = false;
         _stepProgress = 0f;
         _currentMovementDirection = Vector2.zero;
+    }
+    
+    private void CommitStepOccupancy()
+    {
+        if (_grid == null)
+        {
+            ResetVisualStep();
+            return;
+        }
+        
+        if (_reservedDestinationCell != Vector3Int.zero)
+        {
+            _grid.OccupancyService.MoveOccupant(_unit, _reservedDestinationCell);
+            _currentCell = _reservedDestinationCell;
+            _hasCurrentCell = true;
+            
+            _grid.OccupancyService.ReleaseReservation(_unit);
+            
+            Debug.Log($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedDestinationCell}");
+            
+            _stepOriginCell = Vector3Int.zero;
+            _reservedDestinationCell = Vector3Int.zero;
+        }
+        
+        ResetVisualStep();
     }
 
     private void ReleaseCurrentOccupancy()

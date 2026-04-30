@@ -5,9 +5,17 @@ public enum StatusEffectType
     Fear,
     Sleep,
     Taunt,
+    Heal,
     HealOverTime,
     DamageOverTime,
-    StatModifier
+    StatModifierBuff,
+    StatModifierDebuff,
+    Invisibility,
+    Invincibility,
+    Incorruptible,
+    Berserk,
+    LifeSteal,
+    Knockback
 }
 
 public enum StatusEffectDurationMode
@@ -57,5 +65,10 @@ public enum StatusVisualStyle
     DamageOverTime,
     DamageOverTimePermanent,
     Buff,
-    Debuff
+    Debuff,
+    Invincible,
+    Invisible,
+    Incorruptible,
+    LifeSteal,
+    Knockback
 }

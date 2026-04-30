@@ -24,7 +24,9 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
   softCurrencyRewardOnSoulAbsorb: 3
-  skill: {fileID: 11400000, guid: dcae80f7bc254b8fa09b1846e7c51fdc, type: 2}
+  manaCostToRecruit: 1
+  manaCostToAbsorbSoul: 1
+  skill: {fileID: 0}
   stats:
     maxHealth: 90
     attackDamage: 3
