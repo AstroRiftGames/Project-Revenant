@@ -27,6 +27,13 @@ private RoomGrid _registeredGrid;
     
     private Vector3Int _stepOriginCell;
     private Vector3Int _reservedDestinationCell;
+    
+    [SerializeField] private float _softBlockRetryDelay = 0.1f;
+    [SerializeField] private float _hardBlockRetryDelay = 0.3f;
+    [SerializeField] private int _maxSoftRetries = 3;
+    
+    private int _consecutiveBlockedSteps;
+    private float _nextRetryTime;
 
     private void Awake()
     {
@@ -130,9 +137,9 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, Mathf.Max(0, rangeInCells), _unit, out desiredCell))
             return false;
 
-        RefreshPathCache(originCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
+        RefreshPathCache(originCell, targetCell, desiredCell, targetUnit, Mathf.Max(0, rangeInCells));
 
-        Vector3Int nextStep = GetNextStepTowards(originCell, desiredCell);
+        Vector3Int nextStep = GetNextStepTowards(originCell);
         return TryCommitMovementStep(originCell, nextStep);
     }
 
@@ -259,15 +266,31 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         return true;
     }
 
-    private Vector3Int GetNextStepTowards(Vector3Int originCell, Vector3Int targetCell)
+    private Vector3Int GetNextStepTowards(Vector3Int originCell)
     {
         if (_grid == null || _unit == null)
             return originCell;
 
         if (_cachedPath.Count > 1 && _cachedPath[0] == originCell)
-            return _cachedPath[1];
+        {
+            Vector3Int cachedNextStep = _cachedPath[1];
+            
 
-        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetCell);
+            if (!_grid.OccupancyService.IsCellBlockedFor(_unit, cachedNextStep))
+            {
+                if (_grid.IsStepAllowed(originCell, cachedNextStep, _unit))
+                {
+                    return cachedNextStep;
+                }
+            }
+            
+            Debug.Log($"[UnitMovement] {name} - CachedStepInvalidated: {cachedNextStep}");
+        }
+
+        Vector3Int targetReference = _cachedTargetCell != Vector3Int.zero ? _cachedTargetCell : 
+                                    (_cachedPath.Count > 2 ? _cachedPath[_cachedPath.Count - 1] : originCell);
+        
+        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetReference);
         Vector3Int bestImprovingStep = originCell;
         int bestImprovingDistance = originDistance;
         Vector3Int bestFallbackStep = originCell;
@@ -277,7 +300,11 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         for (int i = 0; i < neighbors.Count; i++)
         {
             Vector3Int candidate = neighbors[i];
-            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetCell);
+            
+            if (_grid.OccupancyService.IsCellBlockedFor(_unit, candidate))
+                continue;
+            
+            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetReference);
 
             if (candidateDistance < bestImprovingDistance)
             {
@@ -346,16 +373,40 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         return originCell;
     }
 
-    private void RefreshPathCache(Vector3Int originCell, Vector3Int targetCell, Unit targetUnit, int rangeInCells)
+    private void RefreshPathCache(Vector3Int originCell, Vector3Int targetCell, Vector3Int desiredCell, Unit targetUnit, int rangeInCells)
     {
         bool targetChanged = _cachedTargetUnit != targetUnit;
         bool targetCellChanged = !_hasCachedTargetCell || _cachedTargetCell != targetCell;
         bool targetRangeChanged = _cachedTargetRange != rangeInCells;
-        bool pathInvalid = !IsCachedPathStillValid(originCell);
-        bool shouldRepath = targetChanged || targetCellChanged || targetRangeChanged || pathInvalid || Time.time >= _nextRepathTime;
+        
+        bool pathStillValid = IsCachedPathStillValid(originCell);
+        
+        string invalidationReason = null;
+        if (pathStillValid && _cachedPath.Count > 1)
+        {
+            Vector3Int nextStep = _cachedPath[1];
+            if (_grid.OccupancyService.IsOccupied(nextStep, _unit))
+            {
+                invalidationReason = "NextStepOccupied";
+                pathStillValid = false;
+            }
+            else if (_grid.OccupancyService.IsCellReserved(nextStep, _unit))
+            {
+                invalidationReason = "NextStepReserved";
+                pathStillValid = false;
+            }
+        }
+        
+        bool shouldRepath = targetChanged || targetCellChanged || targetRangeChanged || 
+                            !pathStillValid || Time.time >= _nextRepathTime;
 
         if (!shouldRepath)
             return;
+
+        if (invalidationReason != null)
+        {
+            Debug.Log($"[UnitMovement] {name} - PathInvalidated: {invalidationReason}");
+        }
 
         _cachedTargetUnit = targetUnit;
         _cachedTargetCell = targetCell;
@@ -364,7 +415,12 @@ public bool SetDestinationCell(Vector3Int destinationCell)
         _nextRepathTime = Time.time + _repathInterval;
 
         _cachedPath.Clear();
-        _cachedPath.AddRange(FindPath(originCell, targetCell));
+        _cachedPath.AddRange(FindPath(originCell, desiredCell));
+        
+        if (_cachedPath.Count > 0)
+        {
+            Debug.Log($"[UnitMovement] {name} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredCell}");
+        }
     }
 
     private bool IsCachedPathStillValid(Vector3Int originCell)
@@ -442,12 +498,56 @@ public bool SetDestinationCell(Vector3Int destinationCell)
 
     private bool TryCommitMovementStep(Vector3Int originCell, Vector3Int nextStep)
     {
+        if (Time.time < _nextRetryTime)
+        {
+            return false;
+        }
+        
         if (nextStep == originCell)
             return false;
 
-        if (!SetDestinationCell(nextStep))
+        if (_grid.OccupancyService.IsCellBlockedFor(_unit, nextStep))
+        {
+            bool isOccupied = _grid.OccupancyService.IsOccupied(nextStep, _unit);
+            bool isReserved = _grid.OccupancyService.IsCellReserved(nextStep, _unit);
+            
+            Debug.Log($"[UnitMovement] {name} - StepBlocked: {(isOccupied ? "Occupied" : isReserved ? "Reserved" : "Unknown")} at {nextStep}");
+            
+            InvalidatePathCache();
+            
+            _consecutiveBlockedSteps++;
+            
+            if (isReserved)
+            {
+                if (_consecutiveBlockedSteps > _maxSoftRetries)
+                {
+                    _nextRetryTime = Time.time + _hardBlockRetryDelay;
+                    Debug.Log($"[UnitMovement] {name} - SoftBlockEscalated: hard retry in {_hardBlockRetryDelay}s");
+                }
+                else
+                {
+                    _nextRetryTime = Time.time + _softBlockRetryDelay;
+                }
+            }
+            else
+            {
+                _nextRetryTime = Time.time + _hardBlockRetryDelay;
+                Debug.Log($"[UnitMovement] {name} - HardBlockCooldown: {_hardBlockRetryDelay}s");
+            }
+            
             return false;
+        }
 
+        if (!SetDestinationCell(nextStep))
+        {
+            Debug.Log($"[UnitMovement] {name} - ReservationFailed at {nextStep}");
+            InvalidatePathCache();
+            return false;
+        }
+
+        _consecutiveBlockedSteps = 0;
+        _nextRetryTime = 0f;
+        
         ScheduleNextStepTime();
         return true;
     }
