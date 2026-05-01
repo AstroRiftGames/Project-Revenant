@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SafeZone.unity
+    path: Assets/Core/Scenes/SafeZone.unity
     guid: e43afec264e116544aa2bca5ad156bde
   - enabled: 1
-    path: Assets/Scenes/Dungeon.unity
+    path: Assets/Dungeon/Scenes/Dungeon.unity
     guid: 0cdf3ae570cef4d4689c4ea258d8d16e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
