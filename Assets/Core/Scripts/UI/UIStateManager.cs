@@ -12,7 +12,6 @@ public class UIStateManager : MonoBehaviour
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RequestHideUI(UIType.Minimap);
-            GameManager.Instance.RequestHideUI(UIType.ProgressBar);
             GameManager.Instance.RequestHideUI(UIType.LOG);
         }
 

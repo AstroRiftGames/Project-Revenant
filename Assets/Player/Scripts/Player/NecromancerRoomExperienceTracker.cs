@@ -7,7 +7,6 @@ public class NecromancerRoomExperienceTracker : MonoBehaviour
 {
     [SerializeField] private PrefabDungeonGenerator _dungeonGenerator;
     [SerializeField] private NecromancerProgressionContext _progressionContext;
-    [SerializeField] private bool _debugLogs;
 
     private readonly Dictionary<CombatRoomController, int> _enemyDefeatsByRoom = new();
 
@@ -62,22 +61,18 @@ public class NecromancerRoomExperienceTracker : MonoBehaviour
         _enemyDefeatsByRoom.Remove(combatController);
 
         if (outcome != CombatRoomOutcome.PlayerVictory)
+        {
             return;
+        }
 
         ResolveDependencies();
         if (_progressionContext == null)
+        {
             return;
+        }
 
         int floorNumber = ResolveCurrentFloorNumber();
         int awardedExperience = _progressionContext.AwardRoomVictoryExperience(defeatedEnemies, floorNumber);
-
-        if (_debugLogs)
-        {
-            Debug.Log(
-                $"[{nameof(NecromancerRoomExperienceTracker)}] Awarded {awardedExperience} XP " +
-                $"for room '{combatController.name}' ({defeatedEnemies} enemies defeated, floor {floorNumber}).",
-                this);
-        }
     }
 
     private void ResolveDependencies()

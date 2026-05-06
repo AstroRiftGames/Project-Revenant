@@ -36,6 +36,7 @@ public class NecromancerProgressionBank : MonoBehaviour
 
     public event Action<NecromancerProgressionSnapshot, int> OnProgressionChanged;
     public event Action<int, int> OnLevelChanged;
+    public event Action<int> OnXPGained;
 
     public void Initialize(NecromancerProgressionProfile profile)
     {
@@ -61,7 +62,9 @@ public class NecromancerProgressionBank : MonoBehaviour
     public int AwardExperience(int amount, NecromancerProgressionProfile profile)
     {
         if (profile == null || amount <= 0)
+        {
             return 0;
+        }
 
         if (!_hasInitialized)
             Initialize(profile);
@@ -82,6 +85,11 @@ public class NecromancerProgressionBank : MonoBehaviour
 
         if (_currentLevel != previousLevel)
             OnLevelChanged?.Invoke(previousLevel, _currentLevel);
+
+        if (awardedExperience > 0)
+        {
+            OnXPGained?.Invoke(awardedExperience);
+        }
 
         NotifyProgressionChanged(profile, awardedExperience);
         return awardedExperience;
