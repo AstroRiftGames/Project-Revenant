@@ -6,11 +6,12 @@ public enum UIType
     Inspector,
     Minimap,
     LOG,
-    Currency,
+    Souls,
     ProgressBar,
     Fusion,
     Altar,
-    Shop
+    Shop,
+    Mana,
 }
 
 public class UIManager : MonoBehaviour

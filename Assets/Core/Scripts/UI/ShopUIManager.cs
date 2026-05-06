@@ -47,12 +47,12 @@ public class ShopUIManager : StationUIManager
         // Forzar a que la moneda siga visible, por si fue oculta por la lógica base
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.ShowElement(UIType.Currency);
+            UIManager.Instance.ShowElement(UIType.Souls);
         }
 
-        if (SoulHUD.Instance != null)
+        if (SoulCounter.Instance != null)
         {
-            SoulHUD.Instance.SetForceVisible(true);
+            SoulCounter.Instance.SetForceVisible(true);
         }
 
         RefreshShopItems();
@@ -60,9 +60,9 @@ public class ShopUIManager : StationUIManager
 
     protected override void CloseAllPanels()
     {
-        if (SoulHUD.Instance != null)
+        if (SoulCounter.Instance != null)
         {
-            SoulHUD.Instance.SetForceVisible(false);
+            SoulCounter.Instance.SetForceVisible(false);
         }
         base.CloseAllPanels();
     }

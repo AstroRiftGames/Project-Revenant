@@ -1,0 +1,76 @@
+using System.Collections;
+using TMPro;
+using UnityEngine;
+
+/// <summary>
+/// Persistent HUD element showing the player's current Soul count.
+/// Spawn point for SoulDeltaText popups when souls are gained or spent.
+/// Requires a SoulBank reference via SoulContext.Current.SoulBank or direct assignment.
+/// </summary>
+/// <summary>
+/// Persistent HUD element showing the player's current Soul count.
+/// Spawn point for SoulDeltaText popups when souls are gained or spent.
+/// Requires a SoulBank reference via SoulContext.Current.SoulBank or direct assignment.
+/// </summary>
+public class SoulCounter : BaseCurrencyCounter
+{
+    public static SoulCounter Instance { get; private set; }
+
+    private SoulBank _bank;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        if (Instance == null) Instance = this;
+        else if (Instance != this) Destroy(this);
+    }
+
+    private void OnEnable()
+    {
+        if (SoulContext.Current != null)
+            Bind(SoulContext.Current.SoulBank);
+    }
+
+    private void Start()
+    {
+        if (_bank != null) return; // Already bound from OnEnable.
+
+        if (SoulContext.Current != null)
+            Bind(SoulContext.Current.SoulBank);
+    }
+
+    private void OnDisable()
+    {
+        Unbind();
+    }
+
+    /// <summary>Late-bind to a bank (e.g. after a scene transition sets up SoulContext).</summary>
+    public void Bind(SoulBank bank)
+    {
+        Unbind();
+        _bank = bank;
+        if (_bank == null)
+        {
+            return;
+        }
+
+        _bank.OnSoulsChanged += HandleSoulsChanged;
+        RefreshCounter(_bank.StoredSouls);
+    }
+
+    private void Unbind()
+    {
+        if (_bank != null)
+        {
+            _bank.OnSoulsChanged -= HandleSoulsChanged;
+            _bank = null;
+        }
+    }
+
+    private void HandleSoulsChanged(int newTotal, int delta)
+    {
+        RefreshCounter(newTotal);
+        SpawnDelta(delta);
+        ShowTemporarily();
+    }
+}
