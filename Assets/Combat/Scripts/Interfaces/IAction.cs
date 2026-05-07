@@ -1,5 +1,6 @@
 public interface IAction
 {
+    RequiredTargetRelationship PreferredTargetRelationship { get; }
     int RangeInCells { get; }
     int PreferredDistanceInCells { get; }
     bool IsInRange(Unit self, Unit target);

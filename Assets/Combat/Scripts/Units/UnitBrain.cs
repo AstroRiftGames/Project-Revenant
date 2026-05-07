@@ -49,12 +49,18 @@ public class UnitBrain : MonoBehaviour
         if (_movement.IsMoving)
             return;
 
-        _currentTarget = _targeting.SelectTarget(_unit, _currentTarget);
+        _currentTarget = _targeting.SelectTarget(_unit, _action, _currentTarget);
         int preferredDistance = _unit.GetPreferredDistance(_action);
         Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
 
         if (TryMaintainSpacing(spacingThreat, preferredDistance))
             return;
+
+        if (_skillCaster != null && _skillCaster.TryUse(_currentTarget))
+        {
+            LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
+            return;
+        }
 
         if (_currentTarget == null)
             return;
@@ -69,12 +75,6 @@ public class UnitBrain : MonoBehaviour
             return;
 
         _animationController?.SetAttackTarget(_currentTarget.Position);
-
-        if (_skillCaster != null && _skillCaster.TryUse(_currentTarget))
-        {
-            LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
-            return;
-        }
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_currentTarget)}.");
         _action.Execute(_unit, _currentTarget);

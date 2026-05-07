@@ -13,6 +13,9 @@ public sealed class CombatAction : IAction
         _supportsAllies = supportsAllies;
     }
 
+    public RequiredTargetRelationship PreferredTargetRelationship => _supportsAllies
+        ? RequiredTargetRelationship.Ally
+        : RequiredTargetRelationship.Hostile;
     public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
 
@@ -23,21 +26,21 @@ public sealed class CombatAction : IAction
 
     public bool CanExecute(Unit self, Unit target)
     {
-        if (self == null || target == null || _combat == null)
+        if (_combat == null)
+            return false;
+
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
             return false;
 
         if (_supportsAllies)
         {
-            if (self.IsHostileTo(target))
-                return false;
-
             if (target.CurrentHealth >= target.MaxHealth)
                 return false;
 
-            return _combat.CanUseOn(target);
+            return _combat.CanUseOn(target, PreferredTargetRelationship);
         }
 
-        return self.IsHostileTo(target) && _combat.CanUseOn(target);
+        return _combat.CanUseOn(target, PreferredTargetRelationship);
     }
 
     public bool Execute(Unit self, Unit target)

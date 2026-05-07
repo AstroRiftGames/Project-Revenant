@@ -2,6 +2,7 @@ using UnityEngine;
 
 public abstract class UnitAction : MonoBehaviour, IAction
 {
+    public abstract RequiredTargetRelationship PreferredTargetRelationship { get; }
     public abstract int RangeInCells { get; }
     public abstract int PreferredDistanceInCells { get; }
     public abstract bool IsInRange(Unit self, Unit target);
@@ -15,6 +16,7 @@ public class AttackAction : UnitAction
     private UnitCombat _combat;
     private Unit _unit;
 
+    public override RequiredTargetRelationship PreferredTargetRelationship => RequiredTargetRelationship.Hostile;
     public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
 
@@ -31,10 +33,10 @@ public class AttackAction : UnitAction
 
     public override bool CanExecute(Unit self, Unit target)
     {
-        if (self == null || target == null)
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
             return false;
 
-        return self.IsHostileTo(target) && _combat != null && _combat.CanUseOn(target);
+        return _combat != null && _combat.CanUseOn(target, PreferredTargetRelationship);
     }
 
     public override bool Execute(Unit self, Unit target)
@@ -52,6 +54,7 @@ public class HealAction : UnitAction
     private UnitCombat _combat;
     private Unit _unit;
 
+    public override RequiredTargetRelationship PreferredTargetRelationship => RequiredTargetRelationship.Ally;
     public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
 
@@ -68,16 +71,16 @@ public class HealAction : UnitAction
 
     public override bool CanExecute(Unit self, Unit target)
     {
-        if (self == null || target == null || _combat == null)
+        if (_combat == null)
             return false;
 
-        if (self.IsHostileTo(target))
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
             return false;
 
         if (target.CurrentHealth >= target.MaxHealth)
             return false;
 
-        return _combat.CanUseOn(target);
+        return _combat.CanUseOn(target, PreferredTargetRelationship);
     }
 
     public override bool Execute(Unit self, Unit target)
@@ -108,24 +111,20 @@ public class UnitCombat : MonoBehaviour
 
     public bool IsTargetInRange(Unit target)
     {
-        if (_unit == null || target == null || !target.IsAlive)
+        if (!UnitTargetValidator.IsTargetSelectable(_unit, target, RequiredTargetRelationship.Any, allowInvisible: false))
             return false;
 
-        RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
-        if (grid == null)
-        {
-            float distance = Vector3.Distance(_unit.Position, target.Position);
-            return distance <= Mathf.Max(0f, AttackRangeInCells);
-        }
-
-        Vector3Int selfCell = ResolveUnitCell(grid, _unit);
-        Vector3Int targetCell = ResolveUnitCell(grid, target);
-        return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, AttackRangeInCells);
+        return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
 
     public bool CanUseOn(Unit target)
     {
-        if (_unit == null || target == null || !target.IsAlive)
+        return CanUseOn(target, RequiredTargetRelationship.Any);
+    }
+
+    public bool CanUseOn(Unit target, RequiredTargetRelationship relationship)
+    {
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(_unit, target, relationship))
             return false;
 
         if (_unit.StatusEffects != null && !_unit.StatusEffects.CanAttack)
@@ -176,10 +175,5 @@ public class UnitCombat : MonoBehaviour
             return _supportProjectileVisualPrefab;
 
         return _projectileVisualPrefab;
-    }
-
-    private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
-    {
-        return GridUnitCellUtility.ResolveUnitCell(grid, unit);
     }
 }

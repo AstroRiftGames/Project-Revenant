@@ -18,10 +18,10 @@ public class SkillRequirements
         if (target == null)
             return !requiresTarget;
 
-        if (!target.gameObject.activeInHierarchy || !target.IsAlive)
+        if (mustTargetHostile && !caster.IsHostileTo(target))
             return false;
 
-        if (mustTargetHostile && !caster.IsHostileTo(target))
+        if (!mustTargetHostile && caster.IsHostileTo(target))
             return false;
 
         if (mustTargetInjured && target.CurrentHealth >= target.MaxHealth)

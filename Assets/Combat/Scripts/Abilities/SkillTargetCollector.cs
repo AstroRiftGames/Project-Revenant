@@ -267,20 +267,15 @@ private static bool IsValidImpactTarget(SkillCastContext context, Unit candidate
             return false;
 
         Unit caster = context.Caster;
-        if (caster == null)
-            return false;
-
-        if (!candidate.gameObject.activeInHierarchy || !candidate.IsAlive)
-            return false;
-
-        if (!ReferenceEquals(caster.RoomContext, candidate.RoomContext))
-            return false;
-
-        if (candidate.StatusEffects != null && candidate.StatusEffects.HasInvisibility)
-            return false;
-
         SkillRequirements requirements = context.Skill != null ? context.Skill.Requirements : null;
-        return requirements == null || requirements.AreMet(caster, candidate);
+        if (context.Skill != null && context.Skill.TargetMode == SkillTargetMode.Self)
+        {
+            RequiredTargetRelationship relationship = UnitTargetValidator.ResolveSkillRelationship(requirements);
+            return UnitTargetValidator.IsTargetSelectable(caster, candidate, relationship, allowInvisible: false, excludeSelf: false) &&
+                   (requirements == null || requirements.AreMet(caster, candidate));
+        }
+
+        return UnitTargetValidator.IsTargetSelectableForSkill(caster, candidate, requirements);
     }
 
     private static bool UsesCasterCenteredRadius(SkillCastContext context)

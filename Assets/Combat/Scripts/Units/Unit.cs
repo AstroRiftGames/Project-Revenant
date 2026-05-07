@@ -84,25 +84,25 @@ public class Unit : Creature, IGridOccupant
 
     public List<IUnit> GetVisibleUnitsInScene()
     {
-        PopulateRoomUnits(_visibleUnitsBuffer, TargetRelationship.Any);
+        PopulateRoomUnits(_visibleUnitsBuffer, RequiredTargetRelationship.Any);
         return _visibleUnitsBuffer;
     }
 
     public List<IUnit> GetVisibleHostileUnitsInScene()
     {
-        PopulateRoomUnits(_visibleHostilesBuffer, TargetRelationship.Hostile);
+        PopulateRoomUnits(_visibleHostilesBuffer, RequiredTargetRelationship.Hostile);
         return _visibleHostilesBuffer;
     }
 
     public List<Unit> GetHostileUnitsInScene()
     {
-        PopulateRoomUnits(_hostileUnitsBuffer, TargetRelationship.Hostile);
+        PopulateRoomUnits(_hostileUnitsBuffer, RequiredTargetRelationship.Hostile);
         return _hostileUnitsBuffer;
     }
 
     public List<Unit> GetAlliedUnitsInScene()
     {
-        PopulateRoomUnits(_alliedUnitsBuffer, TargetRelationship.Ally);
+        PopulateRoomUnits(_alliedUnitsBuffer, RequiredTargetRelationship.Ally);
         return _alliedUnitsBuffer;
     }
 
@@ -135,7 +135,7 @@ public class Unit : Creature, IGridOccupant
         transform.position = GridNavigationUtility.ResolvePlacementWorldPosition(grid, transform.position, this);
     }
 
-    private void PopulateRoomUnits(List<IUnit> results, TargetRelationship relationship)
+    private void PopulateRoomUnits(List<IUnit> results, RequiredTargetRelationship relationship)
     {
         if (results == null)
             return;
@@ -155,7 +155,7 @@ public class Unit : Creature, IGridOccupant
         }
     }
 
-    private void PopulateRoomUnits(List<Unit> results, TargetRelationship relationship)
+    private void PopulateRoomUnits(List<Unit> results, RequiredTargetRelationship relationship)
     {
         if (results == null)
             return;
@@ -175,26 +175,9 @@ public class Unit : Creature, IGridOccupant
         }
     }
 
-    private bool IsValidRoomCandidate(Unit candidate, TargetRelationship relationship)
+    private bool IsValidRoomCandidate(Unit candidate, RequiredTargetRelationship relationship)
     {
-        if (candidate == null || ReferenceEquals(candidate, this))
-            return false;
-
-        if (!candidate.gameObject.activeInHierarchy || !candidate.IsAlive)
-            return false;
-
-        if (_roomContext == null || !ReferenceEquals(candidate.RoomContext, _roomContext))
-            return false;
-
-        if (!CanDetect(candidate))
-            return false;
-
-        return relationship switch
-        {
-            TargetRelationship.Hostile => IsHostileTo(candidate),
-            TargetRelationship.Ally => !IsHostileTo(candidate),
-            _ => true
-        };
+        return UnitTargetValidator.IsTargetSelectable(this, candidate, relationship, allowInvisible: false);
     }
 
     private IAction ResolveAction()

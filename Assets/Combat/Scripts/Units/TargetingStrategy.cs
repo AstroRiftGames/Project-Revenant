@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class TargetingStrategy : MonoBehaviour
 {
-public Unit SelectTarget(Unit self, Unit currentTarget)
+    public Unit SelectTarget(Unit self, IAction action, Unit currentTarget)
     {
         if (self == null)
             return null;
@@ -12,7 +12,11 @@ public Unit SelectTarget(Unit self, Unit currentTarget)
         if (self.StatusEffects != null && self.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
             return forcedTarget;
 
-        if (self.Role == UnitRole.Support && ShouldTargetAllies(self))
+        RequiredTargetRelationship targetRelationship = action != null
+            ? action.PreferredTargetRelationship
+            : RequiredTargetRelationship.Hostile;
+
+        if (targetRelationship == RequiredTargetRelationship.Ally)
             return SelectAllyTarget(self, currentTarget);
 
         return self.TargetingMode switch
@@ -22,45 +26,24 @@ public Unit SelectTarget(Unit self, Unit currentTarget)
         };
     }
 
-    private bool ShouldTargetAllies(Unit self)
-    {
-        UnitData unitData = self.GetUnitData();
-        SkillData skill = unitData?.skill;
-        if (skill == null || skill.Requirements == null)
-            return false;
-
-        return !skill.Requirements.mustTargetHostile;
-    }
-
     public Unit SelectAllyTarget(Unit self, Unit currentTarget)
     {
-        RoomContext roomContext = self.RoomContext;
-        if (roomContext == null)
+        if (self == null)
             return null;
 
-        List<Unit> allies = GetAlliesInRoom(self, roomContext);
+        if (IsTargetStillValid(self, currentTarget, RequiredTargetRelationship.Ally) && currentTarget.CurrentHealth < currentTarget.MaxHealth)
+            return currentTarget;
+
+        List<Unit> allies = GetAlliesInScene(self);
         if (allies.Count == 0)
             return null;
 
         return GetLowestHealthAliveAlly(allies);
     }
 
-    private List<Unit> GetAlliesInRoom(Unit self, RoomContext roomContext)
+    private List<Unit> GetAlliesInScene(Unit self)
     {
-        var allies = new List<Unit>();
-        IReadOnlyList<Unit> units = roomContext.Units;
-
-        for (int i = 0; i < units.Count; i++)
-        {
-            Unit candidate = units[i];
-            if (candidate == null || !candidate.IsAlive)
-                continue;
-
-            if (self.Team == candidate.Team && !ReferenceEquals(candidate, self))
-                allies.Add(candidate);
-        }
-
-        return allies;
+        return self != null ? self.GetAlliedUnitsInScene() : new List<Unit>();
     }
 
     private Unit GetLowestHealthAliveAlly(List<Unit> allies)
@@ -97,7 +80,7 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
         if (self.Role == UnitRole.Support)
             return GetNearestVisibleHostileInternal(self);
 
-        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
+        if (IsTargetStillValid(self, currentTarget, RequiredTargetRelationship.Hostile))
             return currentTarget;
 
         return GetNearestVisibleHostileInternal(self);
@@ -114,17 +97,17 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
         if (aggressors.Count == 1)
         {
             Unit loneAggressor = aggressors[0];
-            if (IsTargetStillValid(self, loneAggressor, TargetRelationship.Hostile))
+            if (IsTargetStillValid(self, loneAggressor, RequiredTargetRelationship.Hostile))
                 return loneAggressor;
         }
         else if (aggressors.Count > 1)
         {
             Unit weakestAggressor = GetLowestHealthUnit(self, aggressors);
-            if (IsTargetStillValid(self, weakestAggressor, TargetRelationship.Hostile))
+            if (IsTargetStillValid(self, weakestAggressor, RequiredTargetRelationship.Hostile))
                 return weakestAggressor;
         }
 
-        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile))
+        if (IsTargetStillValid(self, currentTarget, RequiredTargetRelationship.Hostile))
             return currentTarget;
 
         return GetNearestVisibleHostileInternal(self);
@@ -140,7 +123,7 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
         if (!highestPriorityRole.HasValue)
             return null;
 
-        if (IsTargetStillValid(self, currentTarget, TargetRelationship.Hostile) && currentTarget.Role == highestPriorityRole.Value)
+        if (IsTargetStillValid(self, currentTarget, RequiredTargetRelationship.Hostile) && currentTarget.Role == highestPriorityRole.Value)
             return currentTarget;
 
         return GetClosestUnitByRole(self, hostiles, highestPriorityRole.Value);
@@ -148,26 +131,12 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
 
     private bool IsTargetStillValid(Unit self, Unit target)
     {
-        return IsTargetStillValid(self, target, TargetRelationship.Hostile);
+        return IsTargetStillValid(self, target, RequiredTargetRelationship.Hostile);
     }
 
-    private bool IsTargetStillValid(Unit self, Unit target, TargetRelationship relationship)
+    private bool IsTargetStillValid(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        if (self == null || target == null)
-            return false;
-
-        if (!target.gameObject.activeInHierarchy || !target.IsAlive)
-            return false;
-
-        if (!self.CanDetect(target) || !ReferenceEquals(self.RoomContext, target.RoomContext))
-            return false;
-
-        return relationship switch
-        {
-            TargetRelationship.Hostile => self.IsHostileTo(target),
-            TargetRelationship.Ally => !self.IsHostileTo(target) && !ReferenceEquals(self, target),
-            _ => true
-        };
+        return UnitTargetValidator.IsTargetSelectableForRelationship(self, target, relationship);
     }
 
     private static Unit GetClosestUnit(Unit self, List<Unit> units)
@@ -227,36 +196,6 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
         }
 
         return nearest;
-    }
-
-    private static Unit GetClosestUnitByLowestHealth(Unit self, List<Unit> units)
-    {
-        if (self == null || units == null || units.Count == 0)
-            return null;
-
-        Unit bestTarget = null;
-        float bestSqrDistance = float.MaxValue;
-        int lowestHealth = int.MaxValue;
-
-        for (int i = 0; i < units.Count; i++)
-        {
-            Unit candidate = units[i];
-            if (candidate == null || !candidate.IsAlive)
-                continue;
-
-            float sqrDistance = (candidate.Position - self.Position).sqrMagnitude;
-            if (sqrDistance > bestSqrDistance)
-                continue;
-
-            if (Mathf.Approximately(sqrDistance, bestSqrDistance) && candidate.CurrentHealth >= lowestHealth)
-                continue;
-
-            bestTarget = candidate;
-            bestSqrDistance = sqrDistance;
-            lowestHealth = candidate.CurrentHealth;
-        }
-
-        return bestTarget;
     }
 
     private static Unit GetLowestHealthUnit(Unit self, List<Unit> units)
@@ -342,7 +281,7 @@ public Unit GetSpacingThreat(Unit self, Unit currentTarget)
     }
 }
 
-public enum TargetRelationship
+public enum RequiredTargetRelationship
 {
     Any,
     Hostile,

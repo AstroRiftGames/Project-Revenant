@@ -142,11 +142,13 @@ private void Awake()
         if (skill == null || _unit == null)
             return null;
 
-        return skill.TargetMode switch
-        {
-            SkillTargetMode.Self => _unit,
-            _ => combatTarget
-        };
+        if (skill.TargetMode == SkillTargetMode.Self)
+            return _unit.IsAlive ? _unit : null;
+
+        if (IsTargetValid(skill, combatTarget))
+            return combatTarget;
+
+        return FindFallbackTarget(skill);
     }
 
     private bool IsTargetValid(SkillData skill, Unit primaryTarget)
@@ -157,8 +159,7 @@ private void Awake()
         if (IsSelfCenteredAreaSkill(skill))
             return _unit != null && _unit.IsAlive;
 
-        SkillRequirements requirements = skill.Requirements;
-        return requirements == null || requirements.AreMet(_unit, primaryTarget);
+        return UnitTargetValidator.IsTargetSelectableForSkill(_unit, primaryTarget, skill.Requirements);
     }
 
     private bool IsInRange(SkillData skill, Unit primaryTarget)
@@ -173,16 +174,7 @@ private void Awake()
         if (skill.TargetMode == SkillTargetMode.Self)
             return true;
 
-        RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
-        if (grid == null)
-        {
-            float distance = Vector3.Distance(_unit.Position, primaryTarget.Position);
-            return distance <= Mathf.Max(0f, rangeInCells);
-        }
-
-        Vector3Int selfCell = ResolveUnitCell(grid, _unit);
-        Vector3Int targetCell = ResolveUnitCell(grid, primaryTarget);
-        return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, rangeInCells);
+        return UnitTargetValidator.IsTargetInRange(_unit, primaryTarget, rangeInCells);
     }
 
     private static bool ResolveRequiresRangeCheck(SkillData skill)
@@ -280,9 +272,79 @@ private void Awake()
         return ReferenceEquals(caster, target) || caster.Team == target.Team;
     }
 
-    private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
+    private Unit FindFallbackTarget(SkillData skill)
     {
-        return GridUnitCellUtility.ResolveUnitCell(grid, unit);
+        if (_unit == null || skill == null)
+            return null;
+
+        SkillRequirements requirements = skill.Requirements;
+        RequiredTargetRelationship relationship = UnitTargetValidator.ResolveSkillRelationship(requirements);
+        return relationship switch
+        {
+            RequiredTargetRelationship.Ally => FindBestAllyTarget(skill),
+            RequiredTargetRelationship.Hostile => FindClosestHostileTarget(skill),
+            _ => null
+        };
+    }
+
+    private Unit FindBestAllyTarget(SkillData skill)
+    {
+        List<Unit> allies = _unit.GetAlliedUnitsInScene();
+        Unit bestTarget = null;
+        float bestHealthRatio = float.MaxValue;
+        float bestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            Unit candidate = allies[i];
+            if (!IsTargetValid(skill, candidate))
+                continue;
+
+            float healthRatio = candidate.MaxHealth > 0
+                ? (float)candidate.CurrentHealth / candidate.MaxHealth
+                : 1f;
+            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
+
+            if (healthRatio > bestHealthRatio)
+                continue;
+
+            if (Mathf.Approximately(healthRatio, bestHealthRatio) && sqrDistance >= bestSqrDistance)
+                continue;
+
+            bestTarget = candidate;
+            bestHealthRatio = healthRatio;
+            bestSqrDistance = sqrDistance;
+        }
+
+        return bestTarget;
+    }
+
+    private Unit FindClosestHostileTarget(SkillData skill)
+    {
+        List<Unit> hostiles = _unit.GetHostileUnitsInScene();
+        Unit bestTarget = null;
+        float bestSqrDistance = float.MaxValue;
+        int bestHealth = int.MaxValue;
+
+        for (int i = 0; i < hostiles.Count; i++)
+        {
+            Unit candidate = hostiles[i];
+            if (!IsTargetValid(skill, candidate))
+                continue;
+
+            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
+            if (sqrDistance > bestSqrDistance)
+                continue;
+
+            if (Mathf.Approximately(sqrDistance, bestSqrDistance) && candidate.CurrentHealth >= bestHealth)
+                continue;
+
+            bestTarget = candidate;
+            bestSqrDistance = sqrDistance;
+            bestHealth = candidate.CurrentHealth;
+        }
+
+        return bestTarget;
     }
 
     private void LogDebug(string message)
