@@ -250,6 +250,23 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         return ForceRelocateToCell(cell);
     }
 
+    public bool AttachToGridAtCell(RoomGrid grid, Vector3Int cell)
+    {
+        if (grid == null || _unit == null || !grid.IsCellEnterable(cell, _unit))
+            return false;
+
+        StopMovementAndReleaseReservation(snapToCurrentCell: false, invalidatePlanner: true);
+        ReleaseOccupancyFrom(_grid);
+
+        _grid = grid;
+        _currentCell = cell;
+        _hasCurrentCell = true;
+        transform.position = _grid.CellToWorld(cell);
+        _grid.OccupancyService.RegisterOccupant(_unit, cell);
+        _registeredGrid = _grid;
+        return true;
+    }
+
     public bool ForceSyncToWorldPosition(Vector3 worldPosition)
     {
         StopMovementAndReleaseReservation(snapToCurrentCell: false, invalidatePlanner: false);

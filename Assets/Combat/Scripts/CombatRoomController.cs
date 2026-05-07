@@ -228,18 +228,26 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         {
             Unit enemy = enemies[i];
             UnitMovement movement = enemyMovements[i];
-            enemy.transform.position = grid.CellToWorld(candidateCells[i]);
-
             if (movement != null)
-                movement.SetGrid(grid);
+            {
+                if (!movement.AttachToGridAtCell(grid, candidateCells[i]))
+                    enemy.SnapToGrid();
+            }
             else
+            {
+                enemy.transform.position = grid.CellToWorld(candidateCells[i]);
                 enemy.SnapToGrid();
+            }
         }
 
         for (int i = assignedCount; i < enemies.Count; i++)
         {
             if (enemyMovements[i] != null)
-                enemyMovements[i].SetGrid(grid);
+            {
+                Vector3Int currentCell = GridNavigationUtility.ResolvePlacementCell(grid, enemies[i].transform.position, enemies[i]);
+                if (!enemyMovements[i].AttachToGridAtCell(grid, currentCell))
+                    enemies[i].SnapToGrid();
+            }
             else
                 enemies[i].SnapToGrid();
         }

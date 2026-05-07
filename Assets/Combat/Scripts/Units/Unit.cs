@@ -124,6 +124,14 @@ public class Unit : Creature, IGridOccupant
         if (grid == null)
             return;
 
+        UnitMovement movement = GetComponent<UnitMovement>();
+        if (movement != null)
+        {
+            movement.SetGrid(grid);
+            movement.ForceSyncToWorldPosition(transform.position);
+            return;
+        }
+
         transform.position = GridNavigationUtility.ResolvePlacementWorldPosition(grid, transform.position, this);
     }
 
