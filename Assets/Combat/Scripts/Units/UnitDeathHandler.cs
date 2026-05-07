@@ -13,6 +13,7 @@ public class UnitDeathHandler : MonoBehaviour
     private LifeController _lifeController;
     private RecruitableUnitState _recruitableState;
     private RecruitableUnitInteraction _recruitableInteraction;
+    private UnitMovement _unitMovement;
     private bool[] _initialBehaviourEnabledStates = Array.Empty<bool>();
     private bool _hasResolvedDeath;
     private bool _isSoulAbsorbedCorpse;
@@ -28,6 +29,7 @@ public class UnitDeathHandler : MonoBehaviour
         _lifeController = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
         _recruitableInteraction = GetComponent<RecruitableUnitInteraction>();
+        _unitMovement = GetComponent<UnitMovement>();
 
         if (_behavioursToDisableForRecruitableDeath == null || _behavioursToDisableForRecruitableDeath.Length == 0)
             _behavioursToDisableForRecruitableDeath = ResolveDefaultBehavioursToDisable();
@@ -59,7 +61,7 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _hasResolvedDeath = false;
         _isSoulAbsorbedCorpse = false;
-        GetComponent<UnitMovement>()?.ClearCorpseOccupancy();
+        ClearCorpseOccupancy();
         RestoreBehaviours();
         ApplyRecruitableCorpseTransition(state);
     }
@@ -68,7 +70,7 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _isSoulAbsorbedCorpse = false;
         PrepareMovementForDeath();
-        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
+        CaptureCorpseOccupancy();
         ApplyRecruitableCorpseTransition(UnitLifecycleState.Dead);
         gameObject.SetActive(false);
     }
@@ -78,7 +80,7 @@ public class UnitDeathHandler : MonoBehaviour
         _isSoulAbsorbedCorpse = false;
         EnsureRecruitableComponents();
         PrepareMovementForDeath();
-        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
+        CaptureCorpseOccupancy();
         DisableBehavioursForRecruitableDeath();
         EnterRecruitableCorpseState();
     }
@@ -88,7 +90,7 @@ public class UnitDeathHandler : MonoBehaviour
         _isSoulAbsorbedCorpse = true;
         EnsureRecruitableComponents();
         PrepareMovementForDeath();
-        GetComponent<UnitMovement>()?.CaptureCorpseOccupancy();
+        CaptureCorpseOccupancy();
         DisableBehavioursForRecruitableDeath();
         EnterResolvedCorpseState();
     }
@@ -125,7 +127,7 @@ public class UnitDeathHandler : MonoBehaviour
 
     private void PrepareMovementForDeath()
     {
-        GetComponent<UnitMovement>()?.InterruptMovement();
+        _unitMovement?.InterruptMovement();
     }
 
     private void EnsureRecruitableComponents()
@@ -153,6 +155,16 @@ public class UnitDeathHandler : MonoBehaviour
         _recruitableState?.SetState(state);
     }
 
+    private void CaptureCorpseOccupancy()
+    {
+        _unitMovement?.CaptureCorpseOccupancy();
+    }
+
+    private void ClearCorpseOccupancy()
+    {
+        _unitMovement?.ClearCorpseOccupancy();
+    }
+
     public void RestoreAliveState()
     {
         ResetDeathState(UnitLifecycleState.Alive);
@@ -164,7 +176,6 @@ public class UnitDeathHandler : MonoBehaviour
             return;
 
         _lifeController.RestoreHealth(currentHealth);
-        RestoreAliveState();
     }
 
     private void CacheInitialState()

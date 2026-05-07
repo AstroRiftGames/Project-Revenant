@@ -45,9 +45,7 @@ public class LifeController : MonoBehaviour, IDamageable
     public void Initialize(int maxHealth)
     {
         CurrentHealth = Mathf.Max(0, maxHealth);
-        _hasResolvedDeath = false;
-        _statusEffectController?.RestoreLivingRuntimeState();
-        _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
+        RestoreLivingRuntimeState();
         NotifyHealthChanged();
     }
 
@@ -66,7 +64,6 @@ public class LifeController : MonoBehaviour, IDamageable
                 _aggressors.Add(attacker);
         }
 
-        int previousHealth = CurrentHealth;
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
@@ -76,7 +73,7 @@ public class LifeController : MonoBehaviour, IDamageable
             _statusEffectController.RemoveEffectOfType(StatusEffectType.Invisibility);
 
         if (CurrentHealth == 0)
-            Die();
+            ResolveDeath();
     }
 
     public void Heal(int amount, IUnit source = null)
@@ -102,7 +99,7 @@ public class LifeController : MonoBehaviour, IDamageable
         return new List<Unit>(_aggressors);
     }
 
-    private void Die()
+    private void ResolveDeath()
     {
         if (_hasResolvedDeath)
             return;
@@ -134,8 +131,7 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void Revive(int currentHealth)
     {
-        _hasResolvedDeath = false;
-        _statusEffectController?.RestoreLivingRuntimeState();
+        RestoreLivingRuntimeState();
         SetCurrentHealth(Mathf.Max(1, currentHealth));
         OnLifeUpdated?.Invoke(CurrentHealth);
     }
@@ -149,5 +145,12 @@ public class LifeController : MonoBehaviour, IDamageable
     {
         if (_unit != null)
             OnHealthChanged?.Invoke(_unit);
+    }
+
+    private void RestoreLivingRuntimeState()
+    {
+        _hasResolvedDeath = false;
+        _statusEffectController?.RestoreLivingRuntimeState();
+        _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
     }
 }

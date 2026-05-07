@@ -21,7 +21,7 @@ public class StatusEffectController : MonoBehaviour
     public event Action<StatusEffectController, ActiveStatusEffect, int> EffectTickResolved;
     public event Action<StatusEffectController, ActiveStatusEffect, StatusEffectRemovalReason> EffectRemoved;
 
-public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
+    public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
     public bool HasStun => HasEffect(StatusEffectType.Stun);
     public bool HasSilence => HasEffect(StatusEffectType.Silence);
     public bool HasFear => HasEffect(StatusEffectType.Fear);
@@ -50,41 +50,23 @@ public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
         _unitMovement = GetComponent<UnitMovement>();
     }
 
-    private void OnEnable()
-    {
-        LifeController.OnUnitDied += HandleAnyUnitDied;
-    }
-
-    private void OnDisable()
-    {
-        LifeController.OnUnitDied -= HandleAnyUnitDied;
-    }
-
     private void Update()
     {
         if (_runtimeStoppedByDeath || _activeEffects.Count == 0)
             return;
 
-        float now = Time.time;
-        ProcessTicks(now);
-        RemoveExpiredEffects(now);
+        UpdateActiveEffects(Time.time);
     }
 
-public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBlocked = false)
+    public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBlocked = false)
     {
         if (application.TargetUnit == null || application.Definition == null)
             return false;
 
-        bool isBlocked = _runtimeStoppedByDeath || !isActiveAndEnabled || !ReferenceEquals(application.TargetUnit, _unit) || !_unit.IsAlive;
-
-        if (showPopupEvenIfBlocked && isBlocked)
-        {
-            ActiveStatusEffect dummyEffect = new(application, Time.time);
-            EffectApplied?.Invoke(this, dummyEffect);
+        if (TryEmitBlockedApplicationFeedback(application, showPopupEvenIfBlocked))
             return false;
-        }
 
-        if (isBlocked)
+        if (IsRuntimeApplicationBlocked(application))
             return false;
 
         if (IsApplicationBlocked(application))
@@ -213,41 +195,43 @@ public bool TryApply(StatusEffectApplication application, bool showPopupEvenIfBl
     {
         forcedTarget = null;
 
-        for (int i = _activeEffects.Count - 1; i >= 0; i--)
-        {
-            ActiveStatusEffect activeEffect = _activeEffects[i];
-            if (activeEffect == null || activeEffect.Definition == null || activeEffect.Definition.EffectType != StatusEffectType.Taunt)
-                continue;
-
-            Unit sourceUnit = activeEffect.SourceUnit;
-            if (!IsValidForcedTarget(sourceUnit))
-                continue;
-
-            forcedTarget = sourceUnit;
-            return true;
-        }
-
-        return false;
+        return TryResolveForcedTarget(out forcedTarget);
     }
 
-private bool AddNewEffect(StatusEffectApplication application, float now)
+    private void UpdateActiveEffects(float now)
+    {
+        ProcessPeriodicTicks(now);
+        RemoveExpiredTimedEffects(now);
+    }
+
+    private bool TryEmitBlockedApplicationFeedback(StatusEffectApplication application, bool showPopupEvenIfBlocked)
+    {
+        if (!showPopupEvenIfBlocked || !IsRuntimeApplicationBlocked(application))
+            return false;
+
+        ActiveStatusEffect dummyEffect = new(application, Time.time);
+        EffectApplied?.Invoke(this, dummyEffect);
+        return true;
+    }
+
+    private bool IsRuntimeApplicationBlocked(StatusEffectApplication application)
+    {
+        return _runtimeStoppedByDeath ||
+               !isActiveAndEnabled ||
+               !ReferenceEquals(application.TargetUnit, _unit) ||
+               !_unit.IsAlive;
+    }
+
+    private bool AddNewEffect(StatusEffectApplication application, float now)
     {
         ActiveStatusEffect newEffect = new(application, now);
         _activeEffects.Add(newEffect);
-        ApplyImmediateRuntimeRestrictions(newEffect);
-        
-        if (application.Definition.EffectType == StatusEffectType.Heal && _lifeController != null)
-        {
-            int healAmount = Mathf.Max(0, application.Definition.TickValue);
-            if (healAmount > 0)
-                _lifeController.Heal(healAmount, application.SourceUnit);
-        }
-        
+        ApplyImmediateStatusRuntimeEffects(newEffect);
         EffectApplied?.Invoke(this, newEffect);
         return true;
     }
 
-private bool IsApplicationBlocked(StatusEffectApplication application)
+    private bool IsApplicationBlocked(StatusEffectApplication application)
     {
         if (application.Definition == null)
             return true;
@@ -272,7 +256,7 @@ private bool IsApplicationBlocked(StatusEffectApplication application)
                effectType == StatusEffectType.Taunt;
     }
 
-    private void ProcessTicks(float now)
+    private void ProcessPeriodicTicks(float now)
     {
         for (int i = 0; i < _activeEffects.Count; i++)
         {
@@ -282,11 +266,11 @@ private bool IsApplicationBlocked(StatusEffectApplication application)
 
             int ticksToProcess = activeEffect.ConsumePendingTicks(now);
             for (int tickIndex = 0; tickIndex < ticksToProcess; tickIndex++)
-                ResolveTick(activeEffect);
+                ResolvePeriodicTick(activeEffect);
         }
     }
 
-    private void ResolveTick(ActiveStatusEffect activeEffect)
+    private void ResolvePeriodicTick(ActiveStatusEffect activeEffect)
     {
         if (activeEffect == null || activeEffect.Definition == null || _lifeController == null || !_lifeController.IsAlive)
             return;
@@ -295,24 +279,30 @@ private bool IsApplicationBlocked(StatusEffectApplication application)
         if (tickValue <= 0)
             return;
 
-        switch (activeEffect.Definition.EffectType)
-        {
-            case StatusEffectType.HealOverTime:
-                _lifeController.Heal(tickValue, activeEffect.SourceUnit);
-                break;
-
-            case StatusEffectType.DamageOverTime:
-                _lifeController.TakeDamage(tickValue, activeEffect.SourceUnit);
-                break;
-
-            default:
-                return;
-        }
+        if (!TryApplyLifeTick(activeEffect, tickValue))
+            return;
 
         EffectTickResolved?.Invoke(this, activeEffect, tickValue);
     }
 
-    private void RemoveExpiredEffects(float now)
+    private bool TryApplyLifeTick(ActiveStatusEffect activeEffect, int tickValue)
+    {
+        switch (activeEffect.Definition.EffectType)
+        {
+            case StatusEffectType.HealOverTime:
+                _lifeController.Heal(tickValue, activeEffect.SourceUnit);
+                return true;
+
+            case StatusEffectType.DamageOverTime:
+                _lifeController.TakeDamage(tickValue, activeEffect.SourceUnit);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    private void RemoveExpiredTimedEffects(float now)
     {
         for (int i = _activeEffects.Count - 1; i >= 0; i--)
         {
@@ -330,7 +320,7 @@ private bool IsApplicationBlocked(StatusEffectApplication application)
             return;
 
         if (_activeEffects.Remove(activeEffect))
-EffectRemoved?.Invoke(this, activeEffect, reason);
+            EffectRemoved?.Invoke(this, activeEffect, reason);
     }
 
     public void RemoveEffectOfType(StatusEffectType effectType)
@@ -360,14 +350,6 @@ EffectRemoved?.Invoke(this, activeEffect, reason);
 
             RemoveEffect(activeEffect, reason);
         }
-    }
-
-    private void HandleAnyUnitDied(Unit unit)
-    {
-        if (!ReferenceEquals(unit, _unit))
-            return;
-
-        HandleOwnerDeath();
     }
 
     private bool HasMovementRestriction()
@@ -400,13 +382,49 @@ EffectRemoved?.Invoke(this, activeEffect, reason);
         return false;
     }
 
-    private void ApplyImmediateRuntimeRestrictions(ActiveStatusEffect activeEffect)
+    private bool TryResolveForcedTarget(out Unit forcedTarget)
+    {
+        forcedTarget = null;
+
+        for (int i = _activeEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null || activeEffect.Definition.EffectType != StatusEffectType.Taunt)
+                continue;
+
+            Unit sourceUnit = activeEffect.SourceUnit;
+            if (!IsValidForcedTarget(sourceUnit))
+                continue;
+
+            forcedTarget = sourceUnit;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ApplyImmediateStatusRuntimeEffects(ActiveStatusEffect activeEffect)
     {
         if (activeEffect == null || activeEffect.Definition == null)
             return;
 
         if (activeEffect.Definition.RestrictsMovement)
             _unitMovement?.InterruptMovement();
+
+        TryApplyImmediateLifeEffect(activeEffect);
+    }
+
+    private void TryApplyImmediateLifeEffect(ActiveStatusEffect activeEffect)
+    {
+        if (activeEffect == null || activeEffect.Definition == null || _lifeController == null)
+            return;
+
+        if (activeEffect.Definition.EffectType != StatusEffectType.Heal)
+            return;
+
+        int healAmount = Mathf.Max(0, activeEffect.Definition.TickValue);
+        if (healAmount > 0)
+            _lifeController.Heal(healAmount, activeEffect.SourceUnit);
     }
 
     private bool IsSourceOfEffectInCurrentRoom(StatusEffectType effectType)
@@ -461,7 +479,7 @@ EffectRemoved?.Invoke(this, activeEffect, reason);
                ReferenceEquals(_unit.RoomContext, sourceUnit.RoomContext);
     }
 
-private void LogDebug(string message)
+    private void LogDebug(string message)
     {
         if (_debugLogs)
             Debug.Log(message, this);
