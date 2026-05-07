@@ -76,18 +76,30 @@ public class GridOccupancyTracker : MonoBehaviour
     
     public bool TryReserveCell(Vector3Int cell, IGridOccupant occupant)
     {
-        if (cell == Vector3Int.zero || occupant == null)
+        if (occupant == null)
             return false;
-        
-        if (_cellReservations.ContainsKey(cell))
+
+        if (_reservedCellsByOccupant.TryGetValue(occupant, out Vector3Int currentlyReservedCell) &&
+            currentlyReservedCell == cell)
+        {
+            return true;
+        }
+
+        if (_cellReservations.TryGetValue(cell, out IGridOccupant reservedBy) &&
+            !ReferenceEquals(reservedBy, occupant))
+        {
             return false;
-        
+        }
+
         if (IsOccupied(cell, occupant))
             return false;
-        
+
+        if (_reservedCellsByOccupant.TryGetValue(occupant, out currentlyReservedCell))
+            _cellReservations.Remove(currentlyReservedCell);
+
         _reservedCellsByOccupant[occupant] = cell;
         _cellReservations[cell] = occupant;
-        
+
         return true;
     }
     
@@ -113,6 +125,13 @@ public class GridOccupancyTracker : MonoBehaviour
         
         return true;
     }
+
+    public bool IsCellReservedBy(Vector3Int cell, IGridOccupant occupant)
+    {
+        return occupant != null &&
+               _cellReservations.TryGetValue(cell, out IGridOccupant reservingOccupant) &&
+               ReferenceEquals(reservingOccupant, occupant);
+    }
     
     public bool IsCellBlockedFor(IGridOccupant occupant, Vector3Int cell)
     {
@@ -124,6 +143,7 @@ public class GridOccupancyTracker : MonoBehaviour
         if (occupant == null)
             return;
 
+        ReleaseReservation(occupant);
         RemoveFromCurrentCell(occupant);
     }
 

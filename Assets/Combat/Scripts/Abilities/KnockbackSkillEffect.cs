@@ -22,15 +22,10 @@ public class KnockbackSkillEffect : SkillEffect
         return true;
     }
 
-    private void SyncMovementWithPathfinding(Unit target)
-    {
-        UnitMovement movement = target.GetComponent<UnitMovement>();
-        movement?.ForceSyncPosition();
-    }
-
     private void ApplyKnockback(Unit target, Unit sourceUnit)
     {
         RoomGrid grid = target.RoomContext?.RoomGrid;
+        UnitMovement movement = target.GetComponent<UnitMovement>();
 
         Vector3 knockbackDirection = (target.Position - sourceUnit.Position).normalized;
         knockbackDirection.z = 0f;
@@ -43,44 +38,56 @@ public class KnockbackSkillEffect : SkillEffect
         if (grid != null)
         {
             Vector3Int currentCell = GridUnitCellUtility.ResolveUnitCell(grid, target);
-            Vector3Int targetCell = currentCell + new Vector3Int(
-                Mathf.RoundToInt(knockbackDirection.x) * knockbackCells,
-                Mathf.RoundToInt(knockbackDirection.y) * knockbackCells,
-                0);
-
-            if (grid.IsCellEnterable(targetCell, target))
-            {
-                target.transform.position = grid.CellToWorld(targetCell);
-                SyncMovementWithPathfinding(target);
-                LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {targetCell}.");
-                return;
-            }
+            int stepX = Mathf.RoundToInt(knockbackDirection.x);
+            int stepY = Mathf.RoundToInt(knockbackDirection.y);
+            Vector3Int resolvedCell = currentCell;
+            Vector3Int blockedCell = currentCell;
+            bool hitBlocker = false;
 
             for (int i = 1; i <= knockbackCells; i++)
             {
                 Vector3Int intermediateCell = currentCell + new Vector3Int(
-                    Mathf.RoundToInt(knockbackDirection.x) * i,
-                    Mathf.RoundToInt(knockbackDirection.y) * i,
+                    stepX * i,
+                    stepY * i,
                     0);
 
                 if (!grid.IsCellEnterable(intermediateCell, target))
                 {
-                    Vector3Int validCell = currentCell + new Vector3Int(
-                        Mathf.RoundToInt(knockbackDirection.x) * (i - 1),
-                        Mathf.RoundToInt(knockbackDirection.y) * (i - 1),
-                        0);
-                    target.transform.position = grid.CellToWorld(validCell);
-                    SyncMovementWithPathfinding(target);
-                    LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {validCell} (blocked at {intermediateCell}).");
+                    blockedCell = intermediateCell;
+                    hitBlocker = true;
+                    break;
+                }
+
+                resolvedCell = intermediateCell;
+            }
+
+            if (movement != null)
+            {
+                if (!movement.ForceRelocateToCell(resolvedCell))
+                {
+                    LogDebug($"[KnockbackSkillEffect] {target.name} knockback relocation failed at cell {resolvedCell}.");
                     return;
                 }
             }
+            else
+            {
+                target.transform.position = grid.CellToWorld(resolvedCell);
+            }
+
+            if (hitBlocker)
+                LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {resolvedCell} (blocked at {blockedCell}).");
+            else
+                LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {resolvedCell}.");
+            return;
         }
 
         float worldDistance = knockbackCells;
         Vector3 newPosition = target.Position + knockbackDirection * worldDistance;
-        target.transform.position = newPosition;
-        SyncMovementWithPathfinding(target);
+        if (movement != null)
+            movement.ForceSyncToWorldPosition(newPosition);
+        else
+            target.transform.position = newPosition;
+
         LogDebug($"[KnockbackSkillEffect] {target.name} knocked back {worldDistance:F2} units (no grid).");
     }
 
