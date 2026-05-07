@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public sealed class CombatAction : IAction
+public sealed class CombatAction : IBasicAction
 {
     private readonly UnitCombat _combat;
     private readonly Unit _owner;
@@ -13,7 +13,7 @@ public sealed class CombatAction : IAction
         _supportsAllies = supportsAllies;
     }
 
-    public RequiredTargetRelationship PreferredTargetRelationship => _supportsAllies
+    public RequiredTargetRelationship RequiredTargetRelationship => _supportsAllies
         ? RequiredTargetRelationship.Ally
         : RequiredTargetRelationship.Hostile;
     public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
@@ -21,26 +21,12 @@ public sealed class CombatAction : IAction
 
     public bool IsInRange(Unit self, Unit target)
     {
-        return _combat != null && _combat.IsTargetInRange(target);
+        return _combat != null && _combat.IsTargetInBasicActionRange(target);
     }
 
     public bool CanExecute(Unit self, Unit target)
     {
-        if (_combat == null)
-            return false;
-
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
-            return false;
-
-        if (_supportsAllies)
-        {
-            if (target.CurrentHealth >= target.MaxHealth)
-                return false;
-
-            return _combat.CanUseOn(target, PreferredTargetRelationship);
-        }
-
-        return _combat.CanUseOn(target, PreferredTargetRelationship);
+        return _combat != null && _combat.CanExecuteBasicAction(self, target, RequiredTargetRelationship, _supportsAllies);
     }
 
     public bool Execute(Unit self, Unit target)
@@ -49,8 +35,8 @@ public sealed class CombatAction : IAction
             return false;
 
         if (_supportsAllies)
-            return _combat.TryExecute(target, candidate => candidate.Heal(self.AttackDamage, self));
+            return _combat.TryExecuteHealAction(self, target, RequiredTargetRelationship);
 
-        return _combat.TryAttack(target);
+        return _combat.TryExecuteAttackAction(self, target, RequiredTargetRelationship);
     }
 }

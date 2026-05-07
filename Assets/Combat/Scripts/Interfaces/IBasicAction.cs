@@ -1,6 +1,6 @@
-public interface IAction
+public interface IBasicAction
 {
-    RequiredTargetRelationship PreferredTargetRelationship { get; }
+    RequiredTargetRelationship RequiredTargetRelationship { get; }
     int RangeInCells { get; }
     int PreferredDistanceInCells { get; }
     bool IsInRange(Unit self, Unit target);

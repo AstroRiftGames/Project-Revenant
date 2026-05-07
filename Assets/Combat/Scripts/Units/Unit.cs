@@ -13,7 +13,7 @@ public class Unit : Creature, IGridOccupant
     [SerializeField] private MonoBehaviour _actionSource;
 
     private RoomContext _roomContext;
-    private IAction _resolvedAction;
+    private IBasicAction _resolvedAction;
     private readonly List<IUnit> _visibleUnitsBuffer = new();
     private readonly List<Unit> _alliedUnitsBuffer = new();
     private readonly List<IUnit> _visibleHostilesBuffer = new();
@@ -44,7 +44,7 @@ public class Unit : Creature, IGridOccupant
     }
 
     public RoomContext RoomContext => _roomContext;
-    public IAction Action => _resolvedAction ??= ResolveAction();
+    public IBasicAction Action => _resolvedAction ??= ResolveAction();
     public bool IsDpsMelee => Role == UnitRole.DPS && CombatStyle != UnitCombatStyle.Ranged;
     public bool IsDpsRanged => Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged;
     public bool WantsToHoldSpacing => Role == UnitRole.Support || IsDpsRanged;
@@ -106,7 +106,7 @@ public class Unit : Creature, IGridOccupant
         return _alliedUnitsBuffer;
     }
 
-    public int GetPreferredDistance(IAction action)
+    public int GetPreferredDistance(IBasicAction action)
     {
         if (action == null)
             return 0;
@@ -180,12 +180,12 @@ public class Unit : Creature, IGridOccupant
         return UnitTargetValidator.IsTargetSelectable(this, candidate, relationship, allowInvisible: false);
     }
 
-    private IAction ResolveAction()
+    private IBasicAction ResolveAction()
     {
-        if (_actionSource is IAction explicitAction)
+        if (_actionSource is IBasicAction explicitAction)
             return explicitAction;
 
-        UnitAction attachedAction = GetComponent<UnitAction>();
+        BasicUnitAction attachedAction = GetComponent<BasicUnitAction>();
         if (attachedAction != null)
             return attachedAction;
 

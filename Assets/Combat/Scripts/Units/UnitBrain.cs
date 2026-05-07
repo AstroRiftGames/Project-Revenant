@@ -15,7 +15,7 @@ public class UnitBrain : MonoBehaviour
     private TargetingStrategy _targeting;
     private SkillCaster _skillCaster;
     private UnitAnimationController _animationController;
-    private IAction _action;
+    private IBasicAction _action;
     private Unit _currentTarget;
     private bool _hasLoggedMissingControllerBlock;
     private bool _hasLoggedDeploymentBlock;

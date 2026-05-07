@@ -1,94 +1,63 @@
 using UnityEngine;
 
-public abstract class UnitAction : MonoBehaviour, IAction
+public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
 {
-    public abstract RequiredTargetRelationship PreferredTargetRelationship { get; }
-    public abstract int RangeInCells { get; }
-    public abstract int PreferredDistanceInCells { get; }
-    public abstract bool IsInRange(Unit self, Unit target);
-    public abstract bool CanExecute(Unit self, Unit target);
-    public abstract bool Execute(Unit self, Unit target);
-}
+    protected UnitCombat Combat { get; private set; }
+    protected Unit Owner { get; private set; }
 
-[RequireComponent(typeof(UnitCombat))]
-public class AttackAction : UnitAction
-{
-    private UnitCombat _combat;
-    private Unit _unit;
+    public abstract RequiredTargetRelationship RequiredTargetRelationship { get; }
+    public int RangeInCells => Combat != null ? Combat.AttackRangeInCells : 0;
+    public int PreferredDistanceInCells => Owner != null ? Mathf.Max(0, Owner.PreferredDistanceInCells) : RangeInCells;
 
-    public override RequiredTargetRelationship PreferredTargetRelationship => RequiredTargetRelationship.Hostile;
-    public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
-    public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
+    protected virtual bool RequiresInjuredTarget => false;
 
-    private void Awake()
+    protected virtual void Awake()
     {
-        _combat = GetComponent<UnitCombat>();
-        _unit = GetComponent<Unit>();
+        Combat = GetComponent<UnitCombat>();
+        Owner = GetComponent<Unit>();
     }
 
-    public override bool IsInRange(Unit self, Unit target)
+    public bool IsInRange(Unit self, Unit target)
     {
-        return _combat != null && _combat.IsTargetInRange(target);
+        return Combat != null && Combat.IsTargetInBasicActionRange(target);
     }
 
-    public override bool CanExecute(Unit self, Unit target)
+    public bool CanExecute(Unit self, Unit target)
     {
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
-            return false;
-
-        return _combat != null && _combat.CanUseOn(target, PreferredTargetRelationship);
+        return Combat != null && Combat.CanExecuteBasicAction(self, target, RequiredTargetRelationship, RequiresInjuredTarget);
     }
 
-    public override bool Execute(Unit self, Unit target)
+    public bool Execute(Unit self, Unit target)
     {
         if (!CanExecute(self, target))
             return false;
 
-        return _combat.TryAttack(target);
+        return ExecuteValidated(self, target);
+    }
+
+    protected abstract bool ExecuteValidated(Unit self, Unit target);
+}
+
+[RequireComponent(typeof(UnitCombat))]
+public class AttackAction : BasicUnitAction
+{
+    public override RequiredTargetRelationship RequiredTargetRelationship => RequiredTargetRelationship.Hostile;
+
+    protected override bool ExecuteValidated(Unit self, Unit target)
+    {
+        return Combat != null && Combat.TryExecuteAttackAction(self, target, RequiredTargetRelationship);
     }
 }
 
 [RequireComponent(typeof(UnitCombat))]
-public class HealAction : UnitAction
+public class HealAction : BasicUnitAction
 {
-    private UnitCombat _combat;
-    private Unit _unit;
+    public override RequiredTargetRelationship RequiredTargetRelationship => RequiredTargetRelationship.Ally;
+    protected override bool RequiresInjuredTarget => true;
 
-    public override RequiredTargetRelationship PreferredTargetRelationship => RequiredTargetRelationship.Ally;
-    public override int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
-    public override int PreferredDistanceInCells => _unit != null ? Mathf.Max(0, _unit.PreferredDistanceInCells) : RangeInCells;
-
-    private void Awake()
+    protected override bool ExecuteValidated(Unit self, Unit target)
     {
-        _combat = GetComponent<UnitCombat>();
-        _unit = GetComponent<Unit>();
-    }
-
-    public override bool IsInRange(Unit self, Unit target)
-    {
-        return _combat != null && _combat.IsTargetInRange(target);
-    }
-
-    public override bool CanExecute(Unit self, Unit target)
-    {
-        if (_combat == null)
-            return false;
-
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, PreferredTargetRelationship))
-            return false;
-
-        if (target.CurrentHealth >= target.MaxHealth)
-            return false;
-
-        return _combat.CanUseOn(target, PreferredTargetRelationship);
-    }
-
-    public override bool Execute(Unit self, Unit target)
-    {
-        if (!CanExecute(self, target))
-            return false;
-
-        return _combat.TryExecute(target, candidate => candidate.Heal(self.AttackDamage, self));
+        return Combat != null && Combat.TryExecuteHealAction(self, target, RequiredTargetRelationship);
     }
 }
 
@@ -109,7 +78,7 @@ public class UnitCombat : MonoBehaviour
         _unit = GetComponent<Unit>();
     }
 
-    public bool IsTargetInRange(Unit target)
+    public bool IsTargetInBasicActionRange(Unit target)
     {
         if (!UnitTargetValidator.IsTargetSelectable(_unit, target, RequiredTargetRelationship.Any, allowInvisible: false))
             return false;
@@ -117,42 +86,74 @@ public class UnitCombat : MonoBehaviour
         return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
 
-    public bool CanUseOn(Unit target)
+    public bool CanExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
     {
-        return CanUseOn(target, RequiredTargetRelationship.Any);
+        if (self == null || _unit == null)
+            return false;
+
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, relationship))
+            return false;
+
+        if (requiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
+            return false;
+
+        if (!CanOwnerUseBasicAction())
+            return false;
+
+        if (!IsBasicActionOffCooldown())
+            return false;
+
+        return IsTargetInBasicActionRange(target);
     }
 
-    public bool CanUseOn(Unit target, RequiredTargetRelationship relationship)
+    public bool TryExecuteAttackAction(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(_unit, target, relationship))
-            return false;
-
-        if (_unit.StatusEffects != null && !_unit.StatusEffects.CanAttack)
-            return false;
-
-        if (Time.time < _nextAttackTime)
-            return false;
-
-        return IsTargetInRange(target);
+        return TryExecuteBasicAction(self, target, relationship, requiresInjuredTarget: false, candidate => candidate.TakeDamage(self.AttackDamage, self));
     }
 
-    public bool TryExecute(Unit target, System.Action<Unit> effect)
+    public bool TryExecuteHealAction(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        if (effect == null || !CanUseOn(target))
+        return TryExecuteBasicAction(self, target, relationship, requiresInjuredTarget: true, candidate => candidate.Heal(self.AttackDamage, self));
+    }
+
+    public bool TryExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget, System.Action<Unit> effect)
+    {
+        if (self == null || effect == null)
             return false;
 
-        effect(target);
-        PlayAttackVisual(target);
-        _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackCooldown);
+        if (!CanExecuteBasicAction(self, target, relationship, requiresInjuredTarget))
+            return false;
+
+        ApplyBasicActionEffect(target, effect);
+        ConsumeBasicActionCooldown();
+        TriggerBasicActionPresentation(target);
         return true;
     }
 
-    public bool TryAttack(Unit target)
+    private bool CanOwnerUseBasicAction()
     {
-        return TryExecute(target, candidate => candidate.TakeDamage(_unit.AttackDamage, _unit));
+        return _unit == null || _unit.StatusEffects == null || _unit.StatusEffects.CanAttack;
     }
 
-    private void PlayAttackVisual(Unit target)
+    private bool IsBasicActionOffCooldown()
+    {
+        return Time.time >= _nextAttackTime;
+    }
+
+    private static void ApplyBasicActionEffect(Unit target, System.Action<Unit> effect)
+    {
+        effect(target);
+    }
+
+    private void ConsumeBasicActionCooldown()
+    {
+        if (_unit == null)
+            return;
+
+        _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackCooldown);
+    }
+
+    private void TriggerBasicActionPresentation(Unit target)
     {
         if (_unit == null || target == null)
             return;
@@ -160,7 +161,7 @@ public class UnitCombat : MonoBehaviour
         if (_unit.AttackPresentation == UnitAttackKind.Melee)
             return;
 
-        CombatProjectileVisual projectilePrefab = ResolveProjectileVisualPrefab();
+        CombatProjectileVisual projectilePrefab = ResolveBasicActionProjectilePrefab();
         if (projectilePrefab == null)
             return;
 
@@ -169,7 +170,7 @@ public class UnitCombat : MonoBehaviour
         projectile.Launch(transform.position, target.transform, target.Position);
     }
 
-    private CombatProjectileVisual ResolveProjectileVisualPrefab()
+    private CombatProjectileVisual ResolveBasicActionProjectilePrefab()
     {
         if (_unit.AttackPresentation == UnitAttackKind.SupportProjectile)
             return _supportProjectileVisualPrefab;

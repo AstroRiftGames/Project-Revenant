@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class TargetingStrategy : MonoBehaviour
 {
-    public Unit SelectTarget(Unit self, IAction action, Unit currentTarget)
+    public Unit SelectTarget(Unit self, IBasicAction action, Unit currentTarget)
     {
         if (self == null)
             return null;
@@ -13,7 +13,7 @@ public class TargetingStrategy : MonoBehaviour
             return forcedTarget;
 
         RequiredTargetRelationship targetRelationship = action != null
-            ? action.PreferredTargetRelationship
+            ? action.RequiredTargetRelationship
             : RequiredTargetRelationship.Hostile;
 
         if (targetRelationship == RequiredTargetRelationship.Ally)
