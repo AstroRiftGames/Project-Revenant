@@ -20,8 +20,13 @@ public static class UnitTargetValidator
         if (requirements != null && !requirements.requiresTarget && target == null)
             return true;
 
+        SkillTargetRequirement targetRequirement = ResolveSkillTargetRequirement(requirements);
+        if (targetRequirement == SkillTargetRequirement.GroundCell || targetRequirement == SkillTargetRequirement.NoTarget)
+            return false;
+
         RequiredTargetRelationship relationship = ResolveSkillRelationship(requirements);
-        if (!IsTargetSelectable(source, target, relationship, allowInvisible: false, excludeSelf: relationship != RequiredTargetRelationship.Any))
+        bool excludeSelf = targetRequirement != SkillTargetRequirement.Any && targetRequirement != SkillTargetRequirement.Self;
+        if (!IsTargetSelectable(source, target, relationship, allowInvisible: false, excludeSelf: excludeSelf))
             return false;
 
         return requirements == null || requirements.AreMet(source, target);
@@ -77,9 +82,21 @@ public static class UnitTargetValidator
         if (requirements == null || !requirements.requiresTarget)
             return RequiredTargetRelationship.Any;
 
-        return requirements.mustTargetHostile
-            ? RequiredTargetRelationship.Hostile
-            : RequiredTargetRelationship.Ally;
+        return ResolveSkillTargetRequirement(requirements) switch
+        {
+            SkillTargetRequirement.Hostile => RequiredTargetRelationship.Hostile,
+            SkillTargetRequirement.Ally => RequiredTargetRelationship.Ally,
+            SkillTargetRequirement.Self => RequiredTargetRelationship.Any,
+            SkillTargetRequirement.Any => RequiredTargetRelationship.Any,
+            _ => RequiredTargetRelationship.Any
+        };
+    }
+
+    public static SkillTargetRequirement ResolveSkillTargetRequirement(SkillRequirements requirements)
+    {
+        return requirements != null
+            ? requirements.ResolveTargetRequirement()
+            : SkillTargetRequirement.Any;
     }
 
     private static bool IsInSameResolvedRoom(Unit source, Unit target)
