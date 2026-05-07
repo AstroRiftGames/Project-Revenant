@@ -22,6 +22,12 @@ public class UnitBrain : MonoBehaviour
     private bool _hasLoggedResolvedBlock;
     private bool _hasLoggedStatusBlock;
 
+    private enum BrainExecutionResult
+    {
+        NoOp,
+        Consumed
+    }
+
     private void Awake()
     {
         _unit = GetComponent<Unit>();
@@ -34,7 +40,7 @@ public class UnitBrain : MonoBehaviour
 
     private void Update()
     {
-        if (_unit == null || _movement == null || _targeting == null || _action == null || !_unit.IsAlive)
+        if (!CanUpdateBrain())
             return;
 
         if (!CanActFromStatusEffects())
@@ -43,37 +49,89 @@ public class UnitBrain : MonoBehaviour
         if (!CanActInCurrentEncounter())
             return;
 
-        if (TryResolveFearBehavior())
-            return;
-
         if (_movement.IsMoving)
             return;
 
+        UpdateDecisionState();
+        ExecuteDecision();
+    }
+
+    private bool CanUpdateBrain()
+    {
+        return _unit != null &&
+               _movement != null &&
+               _targeting != null &&
+               _action != null &&
+               _unit.IsAlive;
+    }
+
+    private void UpdateDecisionState()
+    {
         _currentTarget = _targeting.SelectTarget(_unit, _action, _currentTarget);
-        int preferredDistance = _unit.GetPreferredDistance(_action);
-        Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
+    }
 
-        if (TryMaintainSpacing(spacingThreat, preferredDistance))
+    private void ExecuteDecision()
+    {
+        if (ExecuteImmediateIntent() == BrainExecutionResult.Consumed)
             return;
 
-        if (_skillCaster != null && _skillCaster.TryUse(_currentTarget))
-        {
-            LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
-            return;
-        }
+        ExecuteCombatIntent();
+    }
 
+    private BrainExecutionResult ExecuteImmediateIntent()
+    {
+        if (TryResolveFearBehavior())
+            return BrainExecutionResult.Consumed;
+
+        if (TryMaintainSpacing())
+            return BrainExecutionResult.Consumed;
+
+        return BrainExecutionResult.NoOp;
+    }
+
+    private void ExecuteCombatIntent()
+    {
+        if (TryUseSkillIntent())
+            return;
+
+        ExecuteBasicActionIntent();
+    }
+
+    private bool TryUseSkillIntent()
+    {
+        if (_skillCaster == null || !_skillCaster.TryUse(_currentTarget))
+            return false;
+
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
+        return true;
+    }
+
+    private void ExecuteBasicActionIntent()
+    {
         if (_currentTarget == null)
             return;
 
-        if (!_action.IsInRange(_unit, _currentTarget))
-        {
-            _movement.MoveTowards(_currentTarget, preferredDistance);
+        if (TryMoveToBasicActionRange())
             return;
-        }
 
         if (!_action.CanExecute(_unit, _currentTarget))
             return;
 
+        ExecuteBasicAction();
+    }
+
+    private bool TryMoveToBasicActionRange()
+    {
+        if (_action.IsInRange(_unit, _currentTarget))
+            return false;
+
+        int preferredDistance = _unit.GetPreferredDistance(_action);
+        _movement.MoveTowards(_currentTarget, preferredDistance);
+        return true;
+    }
+
+    private void ExecuteBasicAction()
+    {
         _animationController?.SetAttackTarget(_currentTarget.Position);
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_currentTarget)}.");
@@ -96,6 +154,24 @@ public class UnitBrain : MonoBehaviour
         _currentTarget = nearestThreat;
         _movement.MoveAway(nearestThreat, FearDesiredDistanceInCells);
         return true;
+    }
+
+    private bool TryMaintainSpacing()
+    {
+        int preferredDistance = _unit.GetPreferredDistance(_action);
+        Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
+        return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
+    }
+
+    private bool TryMaintainSpacingFromThreat(Unit threat, int preferredDistance)
+    {
+        if (threat == null || preferredDistance <= 0)
+            return false;
+
+        if (!_movement.IsWithinRange(threat, preferredDistance - 1))
+            return false;
+
+        return _movement.MoveAway(threat, preferredDistance);
     }
 
     private bool CanActInCurrentEncounter()
@@ -153,17 +229,6 @@ public class UnitBrain : MonoBehaviour
             ref _hasLoggedStatusBlock,
             $"[UnitBrain] '{name}' blocked by active status effect.");
         return false;
-    }
-
-    private bool TryMaintainSpacing(Unit threat, int preferredDistance)
-    {
-        if (threat == null || preferredDistance <= 0)
-            return false;
-
-        if (!_movement.IsWithinRange(threat, preferredDistance - 1))
-            return false;
-
-        return _movement.MoveAway(threat, preferredDistance);
     }
 
     private void LogEncounterGate(ref bool guard, string message)
