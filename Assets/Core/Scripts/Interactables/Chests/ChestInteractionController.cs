@@ -11,6 +11,8 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private ChestState _state;
     [SerializeField] private bool _blocksMovement = true;
+    [SerializeField] private Transform _cellAnchor;
+    [SerializeField] private Vector3 _cellAnchorWorldOffset;
 
     private readonly List<MonoBehaviour> _componentBuffer = new();
 
@@ -23,7 +25,7 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
     public event Action<bool> OnInteractionAvailabilityChanged;
 
     public bool IsInteractionAvailable => _isInteractionAvailable;
-    public Vector3 OccupancyWorldPosition => transform.position;
+    public Vector3 OccupancyWorldPosition => GetAnchorWorldPosition();
     public bool OccupiesCell => gameObject.activeInHierarchy;
     public bool BlocksMovement => _blocksMovement;
 
@@ -132,7 +134,7 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
         bool shouldBeAvailable =
             _state != null &&
             _state.CanOpen &&
-            GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, transform.position);
+            GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, GetAnchorWorldPosition());
 
         SetInteractionAvailability(shouldBeAvailable, forceEvent);
     }
@@ -154,6 +156,14 @@ public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOcc
 
         Bounds bounds = spriteRenderer.bounds;
         return new Vector3(bounds.center.x, bounds.max.y, transform.position.z);
+    }
+
+    private Vector3 GetAnchorWorldPosition()
+    {
+        if (_cellAnchor != null)
+            return _cellAnchor.position;
+
+        return transform.position + _cellAnchorWorldOffset;
     }
 
     private void ResolveContentResolver()

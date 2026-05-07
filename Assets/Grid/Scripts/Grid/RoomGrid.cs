@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public sealed class RoomGridTopology
 {
@@ -82,6 +85,41 @@ public sealed class RoomGridTopology
         }
 
         return new Vector3(cell.x * _cellSize, cell.y * _cellSize, 0f);
+    }
+
+    public bool TryGetCellVisualCornersWorld(Vector3Int cell, Vector3[] corners)
+    {
+        if (corners == null || corners.Length < 4)
+            return false;
+
+        if (_walkableTilemap != null)
+        {
+            GridLayout layoutGrid = _walkableTilemap.layoutGrid;
+            if (layoutGrid != null)
+            {
+                corners[0] = CellInterpolatedToWorld(layoutGrid, new Vector3(cell.x + 0.5f, cell.y + 1f, cell.z));
+                corners[1] = CellInterpolatedToWorld(layoutGrid, new Vector3(cell.x + 1f, cell.y + 0.5f, cell.z));
+                corners[2] = CellInterpolatedToWorld(layoutGrid, new Vector3(cell.x + 0.5f, cell.y, cell.z));
+                corners[3] = CellInterpolatedToWorld(layoutGrid, new Vector3(cell.x, cell.y + 0.5f, cell.z));
+                return true;
+            }
+        }
+
+        Vector3 center = CellToWorld(cell);
+        Vector2 cellWorldSize = CellWorldSize;
+        corners[0] = center + new Vector3(0f, cellWorldSize.y * 0.5f, 0f);
+        corners[1] = center + new Vector3(cellWorldSize.x * 0.5f, 0f, 0f);
+        corners[2] = center + new Vector3(0f, -cellWorldSize.y * 0.5f, 0f);
+        corners[3] = center + new Vector3(-cellWorldSize.x * 0.5f, 0f, 0f);
+        return true;
+    }
+
+    private static Vector3 CellInterpolatedToWorld(GridLayout gridLayout, Vector3 cellPosition)
+    {
+        Vector3 localPosition = gridLayout.CellToLocalInterpolated(cellPosition);
+        Vector3 worldPosition = gridLayout.LocalToWorld(localPosition);
+        worldPosition.z = 0f;
+        return worldPosition;
     }
 
     public bool IsCellInsideWalkableBounds(Vector3Int cell)
@@ -178,26 +216,40 @@ public sealed class RoomGridTopology
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(GridOccupancyTracker))]
+[RequireComponent(typeof(GridAvoidanceObstacleRegistry))]
 public class RoomGrid : MonoBehaviour
 {
     private static readonly IGridCellMovementValidator DefaultMovementValidator = new GridCellMovementValidator();
+    private static readonly Vector3[] SharedGizmoCellCorners = new Vector3[4];
 
     [SerializeField] private Tilemap _walkableTilemap;
     [SerializeField] private Tilemap _blockedTilemap;
     [SerializeField] private GridOccupancyTracker _occupancyService;
+    [SerializeField] private GridAvoidanceObstacleRegistry _avoidanceObstacleRegistry;
     [SerializeField] private float _cellSize = 1f;
     [SerializeField] private Vector2 _cellCheckSize = new(0.8f, 0.8f);
     [SerializeField] private bool _usePhysicsBlockedCells;
     [SerializeField] private LayerMask _blockedCellsMask;
     [SerializeField] private bool _drawGridGizmos;
+    [SerializeField] private bool _drawAvoidanceDebug;
+    [SerializeField] private bool _drawAvoidanceBlockedCells = true;
+    [SerializeField] private bool _drawAvoidancePenalizedCells = true;
+    [SerializeField] private bool _drawAvoidanceCosts;
+    [SerializeField] private bool _drawLastPathDebug;
+    [SerializeField] private bool _debugPathfindingLogs;
+    [SerializeField] private bool _useCustomIsometricDebugShape = true;
+    [SerializeField] private Vector2 _isometricDebugCellSize = new(1f, 0.5f);
     [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
     [SerializeField] private int _maxClosestCellSearch = 512;
     private bool _hasLoggedMissingOccupancyService;
     private readonly RoomGridTopology _topology = new();
+    private readonly List<GridAvoidanceCellDebugInfo> _avoidanceDebugBuffer = new();
 
     public float CellSize => CellWorldSize.x;
     public GridOccupancyTracker OccupancyService => RequireOccupancyService();
+    public GridAvoidanceObstacleRegistry AvoidanceObstacleRegistry => ResolveAvoidanceObstacleRegistry();
     public RoomGridTopology Topology => _topology;
+    public bool DebugPathfindingLogs => _debugPathfindingLogs;
 
     private void Awake()
     {
@@ -225,13 +277,37 @@ public class RoomGrid : MonoBehaviour
     {
         if (_occupancyService == null)
             _occupancyService = GetComponent<GridOccupancyTracker>();
+
+        if (_avoidanceObstacleRegistry == null)
+            _avoidanceObstacleRegistry = GetComponent<GridAvoidanceObstacleRegistry>();
+
+        _isometricDebugCellSize.x = Mathf.Max(0.01f, _isometricDebugCellSize.x);
+        _isometricDebugCellSize.y = Mathf.Max(0.01f, _isometricDebugCellSize.y);
     }
 #endif
 
     private void ResolveDependencies()
     {
         TryResolveOccupancyService();
+        TryResolveAvoidanceObstacleRegistry();
         ConfigureTopology();
+    }
+
+    [ContextMenu("Log Grid Debug Info")]
+    private void LogGridDebugInfo()
+    {
+        GridLayout layoutGrid = _walkableTilemap != null ? _walkableTilemap.layoutGrid : null;
+        string layoutName = layoutGrid != null ? layoutGrid.cellLayout.ToString() : "None";
+        Vector3 layoutCellSize = layoutGrid != null ? layoutGrid.cellSize : new Vector3(_cellSize, _cellSize, 1f);
+        Vector3 layoutCellGap = layoutGrid != null ? layoutGrid.cellGap : Vector3.zero;
+        string tilemapOrientation = _walkableTilemap != null ? _walkableTilemap.orientation.ToString() : "None";
+
+        Debug.Log(
+            $"[RoomGrid] Grid debug info for '{name}': " +
+            $"cellLayout={layoutName}, cellSize={layoutCellSize}, cellGap={layoutCellGap}, " +
+            $"tilemapOrientation={tilemapOrientation}, useCustomIsometricDebugShape={_useCustomIsometricDebugShape}, " +
+            $"isometricDebugCellSize={_isometricDebugCellSize}",
+            this);
     }
 
     public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -242,6 +318,29 @@ public class RoomGrid : MonoBehaviour
     public Vector3 CellToWorld(Vector3Int cell)
     {
         return _topology.CellToWorld(cell);
+    }
+
+    public bool TryGetCellVisualCornersWorld(Vector3Int cell, Vector3[] corners)
+    {
+        if (_useCustomIsometricDebugShape)
+            return TryGetCellIsometricDebugCornersWorld(cell, corners);
+
+        return _topology.TryGetCellVisualCornersWorld(cell, corners);
+    }
+
+    public bool TryGetCellIsometricDebugCornersWorld(Vector3Int cell, Vector3[] corners)
+    {
+        if (corners == null || corners.Length < 4)
+            return false;
+
+        Vector3 center = CellToWorld(cell);
+        float halfWidth = Mathf.Max(0.01f, Mathf.Abs(_isometricDebugCellSize.x) * 0.5f);
+        float halfHeight = Mathf.Max(0.01f, Mathf.Abs(_isometricDebugCellSize.y) * 0.5f);
+        corners[0] = center + Vector3.up * halfHeight;
+        corners[1] = center + Vector3.right * halfWidth;
+        corners[2] = center + Vector3.down * halfHeight;
+        corners[3] = center + Vector3.left * halfWidth;
+        return true;
     }
 
     public bool IsCellStaticallyWalkable(Vector3Int cell)
@@ -272,6 +371,34 @@ public class RoomGrid : MonoBehaviour
     public bool IsCellWalkable(Vector3Int cell, IGridOccupant movingOccupant = null)
     {
         return IsCellEnterable(cell, movingOccupant);
+    }
+
+    public bool IsCellHardBlocked(Vector3Int cell)
+    {
+        return !HasCell(cell) || !Topology.IsCellStaticallyWalkable(cell) || IsCellBlockedByAvoidanceObstacle(cell);
+    }
+
+    public int GetAvoidanceCost(Vector3Int cell)
+    {
+        GridAvoidanceObstacleRegistry registry = ResolveAvoidanceObstacleRegistry();
+        return registry != null ? registry.GetAvoidanceCost(cell) : 0;
+    }
+
+    public bool IsCellBlockedByAvoidanceObstacle(Vector3Int cell)
+    {
+        GridAvoidanceObstacleRegistry registry = ResolveAvoidanceObstacleRegistry();
+        return registry != null && registry.IsCellBlockedByAvoidanceObstacle(cell);
+    }
+
+    public bool TryGetTraversalCost(Vector3Int cell, out int cost)
+    {
+        cost = 0;
+
+        if (IsCellHardBlocked(cell))
+            return false;
+
+        cost = 1 + Mathf.Max(0, GetAvoidanceCost(cell));
+        return true;
     }
 
     public bool TryFindAttackPositionFromBlockedDesiredCell(Vector3Int blockedCell, Vector3Int targetCell, Vector3Int originCell, int rangeInCells, Unit movingUnit, Unit targetUnit, out Vector3Int attackPosition)
@@ -388,6 +515,12 @@ public class RoomGrid : MonoBehaviour
             this);
     }
 
+    private void TryResolveAvoidanceObstacleRegistry()
+    {
+        if (_avoidanceObstacleRegistry == null)
+            _avoidanceObstacleRegistry = GetComponent<GridAvoidanceObstacleRegistry>();
+    }
+
     private GridOccupancyTracker RequireOccupancyService()
     {
         TryResolveOccupancyService();
@@ -396,6 +529,12 @@ public class RoomGrid : MonoBehaviour
 
         throw new InvalidOperationException(
             $"[RoomGrid] '{name}' no puede operar sin GridOccupancyTracker en el mismo GameObject.");
+    }
+
+    private GridAvoidanceObstacleRegistry ResolveAvoidanceObstacleRegistry()
+    {
+        TryResolveAvoidanceObstacleRegistry();
+        return _avoidanceObstacleRegistry;
     }
 
     private void ConfigureTopology()
@@ -623,6 +762,8 @@ public class RoomGrid : MonoBehaviour
                 }
             }
 
+            DrawAvoidanceDebugGizmos();
+            DrawLastPathDebugGizmos();
             return;
         }
 
@@ -633,6 +774,107 @@ public class RoomGrid : MonoBehaviour
                 Vector3 center = CellToWorld(new Vector3Int(x, y, 0));
                 Gizmos.DrawWireCube(center, new Vector3(CellWorldSize.x, CellWorldSize.y, 0f));
             }
+        }
+
+        DrawAvoidanceDebugGizmos();
+        DrawLastPathDebugGizmos();
+    }
+
+    private void DrawAvoidanceDebugGizmos()
+    {
+        if (!_drawAvoidanceDebug)
+            return;
+
+        GridAvoidanceObstacleRegistry registry = ResolveAvoidanceObstacleRegistry();
+        if (registry == null)
+            return;
+
+        registry.GetDebugCellData(_avoidanceDebugBuffer);
+        if (_avoidanceDebugBuffer.Count == 0)
+            return;
+
+        for (int i = 0; i < _avoidanceDebugBuffer.Count; i++)
+        {
+            GridAvoidanceCellDebugInfo debugInfo = _avoidanceDebugBuffer[i];
+            Vector3 world = CellToWorld(debugInfo.Cell);
+            if (!TryGetCellVisualCornersWorld(debugInfo.Cell, SharedGizmoCellCorners))
+                continue;
+
+            if (debugInfo.IsBlocked && _drawAvoidanceBlockedCells)
+            {
+                DrawCellDebugGizmo(
+                    SharedGizmoCellCorners,
+                    new Color(1f, 0.15f, 0.15f, 0.32f),
+                    new Color(1f, 0.15f, 0.15f, 0.95f));
+            }
+            else if (debugInfo.Cost > 0 && _drawAvoidancePenalizedCells)
+            {
+                float normalizedCost = Mathf.Clamp01(debugInfo.Cost / 12f);
+                DrawCellDebugGizmo(
+                    SharedGizmoCellCorners,
+                    Color.Lerp(
+                        new Color(1f, 0.9f, 0.1f, 0.12f),
+                        new Color(1f, 0.45f, 0.05f, 0.3f),
+                        normalizedCost),
+                    Color.Lerp(
+                        new Color(1f, 0.9f, 0.1f, 0.85f),
+                        new Color(1f, 0.45f, 0.05f, 1f),
+                        normalizedCost));
+            }
+
+#if UNITY_EDITOR
+            if (_drawAvoidanceCosts && debugInfo.Cost > 0)
+            {
+                Handles.color = debugInfo.IsBlocked ? new Color(1f, 0.85f, 0.85f, 1f) : new Color(1f, 0.95f, 0.55f, 1f);
+                float labelOffset = Mathf.Abs(SharedGizmoCellCorners[0].y - SharedGizmoCellCorners[2].y) * 0.18f;
+                Handles.Label(world + new Vector3(0f, labelOffset, 0f), debugInfo.Cost.ToString());
+            }
+#endif
+        }
+    }
+
+    private static void DrawCellDebugGizmo(Vector3[] corners, Color fillColor, Color outlineColor)
+    {
+        if (corners == null || corners.Length < 4)
+            return;
+
+#if UNITY_EDITOR
+        Handles.DrawSolidRectangleWithOutline(corners, fillColor, outlineColor);
+#else
+        Gizmos.color = outlineColor;
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 from = corners[i];
+            Vector3 to = corners[(i + 1) % 4];
+            Gizmos.DrawLine(from, to);
+        }
+#endif
+    }
+
+    private void DrawLastPathDebugGizmos()
+    {
+        if (!_drawLastPathDebug)
+            return;
+
+        if (!GridPathfinder.TryGetLastPathDebugInfo(this, out GridPathDebugInfo debugInfo))
+            return;
+
+        IReadOnlyList<Vector3Int> path = debugInfo.Path;
+        if (path == null || path.Count == 0)
+            return;
+
+        Vector2 cellSize = CellWorldSize;
+        Vector3 previousWorld = CellToWorld(path[0]);
+
+        Gizmos.color = new Color(0.2f, 1f, 0.85f, 0.95f);
+        Gizmos.DrawSphere(previousWorld, Mathf.Min(cellSize.x, cellSize.y) * 0.12f);
+
+        for (int i = 1; i < path.Count; i++)
+        {
+            Vector3 currentWorld = CellToWorld(path[i]);
+            Gizmos.DrawLine(previousWorld, currentWorld);
+            Gizmos.DrawSphere(currentWorld, Mathf.Min(cellSize.x, cellSize.y) * 0.09f);
+            previousWorld = currentWorld;
         }
     }
 }

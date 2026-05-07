@@ -5,7 +5,7 @@ public sealed class GridCellMovementValidator : IGridCellMovementValidator
         if (grid == null)
             return false;
 
-        if (!grid.Topology.IsCellStaticallyWalkable(query.Cell))
+        if (grid.IsCellHardBlocked(query.Cell))
             return false;
 
         return !grid.DoesCellBlockMovement(query.Cell, query.MovingOccupant);

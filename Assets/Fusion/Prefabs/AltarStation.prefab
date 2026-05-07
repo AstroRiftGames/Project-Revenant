@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 4100075159468465647}
   - component: {fileID: 13157873264930484}
   - component: {fileID: 8399234270863758894}
-  - component: {fileID: 880286760910944578}
   - component: {fileID: 6801590984564667764}
+  - component: {fileID: 5085116100856809542}
+  - component: {fileID: 8722598367268312625}
   m_Layer: 7
   m_Name: AltarStation
   m_TagString: Untagged
@@ -32,8 +33,40 @@ Transform:
   m_LocalPosition: {x: 0, y: -0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1133348504932334307}
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7277515022505165619
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1133348504932334307}
+  m_Layer: 0
+  m_Name: CellAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1133348504932334307
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7277515022505165619}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4100075159468465647}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &13157873264930484
 MonoBehaviour:
@@ -104,8 +137,22 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!61 &880286760910944578
-BoxCollider2D:
+--- !u!114 &6801590984564667764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7968870976559896535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca394c07a97fbb544928d959f138fcac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _station: {fileID: 13157873264930484}
+  _settings: {fileID: 11400000, guid: dc930356742d43344b9352908d3d877d, type: 2}
+--- !u!60 &5085116100856809542
+PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -148,9 +195,14 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.84375, y: 1.21875}
-  m_EdgeRadius: 0
---- !u!114 &6801590984564667764
+  m_Points:
+    m_Paths:
+    - - {x: 0.290454, y: -0.6219442}
+      - {x: 0.38063884, y: -0.22239703}
+      - {x: -0.27861243, y: -0.040317535}
+      - {x: -0.36551407, y: -0.41132492}
+  m_UseDelaunayMesh: 0
+--- !u!114 &8722598367268312625
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -159,8 +211,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 7968870976559896535}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca394c07a97fbb544928d959f138fcac, type: 3}
+  m_Script: {fileID: 11500000, guid: e7d4f28f6dcb4b1aa2b2d2c5d52c7e31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _station: {fileID: 13157873264930484}
-  _settings: {fileID: 11400000, guid: dc930356742d43344b9352908d3d877d, type: 2}
+  _radiusInCells: 1
+  _avoidanceCost: 5
+  _blocksCenterCell: 1
+  _includeDiagonals: 1
+  _isActive: 1
+  _drawGizmos: 1
+  _cellAnchor: {fileID: 1133348504932334307}
+  _cellAnchorWorldOffset: {x: 0, y: 0, z: 0}
