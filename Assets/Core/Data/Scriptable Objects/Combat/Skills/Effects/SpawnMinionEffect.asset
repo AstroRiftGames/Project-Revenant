@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _summonedUnit: {fileID: 11400000, guid: b86923acd10247d45bc11d58e87d1732, type: 2}
   _spawnRangeInCells: 1
-  _debugLogs: 0
+  _debugLogs: 1

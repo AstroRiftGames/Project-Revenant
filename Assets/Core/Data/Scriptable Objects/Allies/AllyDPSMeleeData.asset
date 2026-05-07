@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitId: AllyDpsMelee
   displayName: DPS Melee
+  isFusion: 0
   unitPrefab: {fileID: 7159805405016490059, guid: fff66658a920bc54e8c181cc460bddc3, type: 3}
   team: 1
   role: 1
@@ -23,7 +24,9 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
   tileSize: 0
   softCurrencyRewardOnSoulAbsorb: 1
-  skill: {fileID: 11400000, guid: a0923bb0537f4892a52b66e87cf8c506, type: 2}
+  manaCostToRecruit: 1
+  manaCostToAbsorbSoul: 1
+  skill: {fileID: 11400000, guid: d2c3f69f79c84f2d8138536c616dcdad, type: 2}
   stats:
     maxHealth: 14
     attackDamage: 3
@@ -32,5 +35,6 @@ MonoBehaviour:
     preferredDistanceInCells: 1
     accuracy: 0.85
     evasion: 0.15
+    defense: 0
     moveSpeed: 1.35
     visionRange: 4

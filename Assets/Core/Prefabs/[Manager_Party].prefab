@@ -60,15 +60,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _necromancerPrefab: {fileID: 8347385983871711347, guid: 51f4f49d5af4e01439f8d0d1c52639f3, type: 3}
   _floorManager: {fileID: 0}
+  _dungeonGenerator: {fileID: 0}
+  _fallbackRoomContext: {fileID: 0}
   _startingPartyMembers:
   - {fileID: 11400000, guid: 10346635b520dc841a7e2d33880d4151, type: 2}
   - {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
   - {fileID: 11400000, guid: 09805bfd4b29da444b5d407eb2b4ef04, type: 2}
   - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
-  - {fileID: 11400000, guid: 5e4c893056924afbb527c703fd5e6796, type: 2}
-  - {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
   _maxPartyMembers: 4
   _showPartyDebug: 1
+  _necromancer: {fileID: 0}
 --- !u!114 &318337083921246986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -175,6 +176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3d7c40d6f654b2b9309d11d56c2a1f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maximumMana: 10
   _storedMana: 10
   _testAmount: 1
 --- !u!114 &604001000000000004
@@ -237,7 +239,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dungeonGenerator: {fileID: 0}
   _progressionContext: {fileID: 604001000000000004}
-  _debugLogs: 0
 --- !u!114 &604001000000000008
 MonoBehaviour:
   m_ObjectHideFlags: 0

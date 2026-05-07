@@ -57,9 +57,29 @@ public class SummonUnitSkillEffect : SkillEffect
         summonedUnit.SetAffiliation(context.Caster.Team, context.Caster.Faction);
 
         if (instance.TryGetComponent(out UnitMovement movement))
-            movement.SetGrid(grid);
+        {
+            if (!movement.AttachToGridAtCell(grid, spawnCell))
+            {
+                Debug.LogWarning(
+                    $"[SummonUnitSkillEffect] Primary attach failed for summoned unit '{summonedUnit.name}' at cell {FormatCell(spawnCell)}. " +
+                    "Attempting safe fallback attach.",
+                    instance);
+
+                movement.SetGrid(grid);
+                if (!movement.ForceSyncToCell(spawnCell))
+                {
+                    Debug.LogWarning(
+                        $"[SummonUnitSkillEffect] Failed to safely attach summoned unit '{summonedUnit.name}' to cell {FormatCell(spawnCell)}.",
+                        instance);
+                    Object.Destroy(instance);
+                    return false;
+                }
+            }
+        }
         else
+        {
             summonedUnit.SnapToGrid();
+        }
 
         LogDebug(
             $"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
