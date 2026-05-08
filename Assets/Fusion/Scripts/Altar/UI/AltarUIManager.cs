@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -28,7 +27,7 @@ namespace Altar.UI
         [SerializeField] private Image _rewardIcon;
         [SerializeField] private TextMeshProUGUI _rewardName;
         [SerializeField] private Transform _rewardStatsContainer;
-        [SerializeField] private AltarStatUI _statPrefab;
+        [SerializeField] private StatUIElement _statPrefab;
 
         [Header("Selection Panel Elements")]
         [SerializeField] private GameObject _selectionPanel;
@@ -38,7 +37,7 @@ namespace Altar.UI
         [SerializeField] private CreatureCard _cardPrefab;
 
         private List<AltarRequirementUI> _spawnedRequirements = new List<AltarRequirementUI>();
-        private List<AltarStatUI> _spawnedStats = new List<AltarStatUI>();
+        private List<StatUIElement> _spawnedStats = new List<StatUIElement>();
         private List<CreatureCard> _spawnedCards = new List<CreatureCard>();
 
         // Estado de la selección
@@ -178,7 +177,7 @@ namespace Altar.UI
 
         private void CreateStatUI(StatType type, float value)
         {
-            AltarStatUI newStat = Instantiate(_statPrefab, _rewardStatsContainer);
+            StatUIElement newStat = Instantiate(_statPrefab, _rewardStatsContainer);
             newStat.Setup(type, value, _iconDatabase);
             _spawnedStats.Add(newStat);
         }

@@ -26,6 +26,7 @@ namespace Selection.UI
         [SerializeField] private EffectIcon effectIconPrefab;
 
         private ICharacterStatsProvider currentStats;
+        public ICharacterStatsProvider Stats => currentStats;
         private StatusEffectController currentController;
         private Data.GameIconDatabase iconDatabase;
         private readonly List<EffectIcon> activeEffectIcons = new List<EffectIcon>();

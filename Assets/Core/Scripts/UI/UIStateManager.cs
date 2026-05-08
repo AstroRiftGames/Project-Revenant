@@ -13,6 +13,7 @@ public class UIStateManager : MonoBehaviour
         {
             GameManager.Instance.RequestHideUI(UIType.Minimap);
             GameManager.Instance.RequestHideUI(UIType.LOG);
+            GameManager.Instance.RequestHideUI(UIType.DeepInspector);
         }
 
         CheckCurrentScene(SceneManager.GetActiveScene());
@@ -46,6 +47,7 @@ public class UIStateManager : MonoBehaviour
         {
             GameManager.Instance.RequestHideUI(UIType.Inspector);
             GameManager.Instance.RequestHideUI(UIType.Minimap);
+            GameManager.Instance.RequestHideUI(UIType.DeepInspector);
         }
         else if (scene.name == "Dungeon")
         {

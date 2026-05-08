@@ -20,6 +20,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public static event Action<Creature> OnCreatureEnabled;
     public static event Action<Creature> OnCreatureAffiliationChanged;
     public string Id { get; protected set; } = string.Empty;
+    public string DisplayName => _data != null ? _data.displayName : string.Empty;
     public UnitTeam Team => _affiliationState.Team;
     public UnitRole Role => _data != null ? _data.role : default;
     public UnitCombatStyle CombatStyle => _data != null ? _data.combatStyle : UnitCombatStyle.Default;
@@ -60,6 +61,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public float CurrentAbilityCooldown => _skillCaster != null ? _skillCaster.CurrentCooldown : 0f;
     public float MaxAbilityCooldown => _skillCaster != null ? _skillCaster.MaxCooldown : 0f;
     public Sprite AbilityIcon => _skillCaster != null ? _skillCaster.Icon : null;
+    public SkillData Skill => _data != null ? _data.skill : null;
     public Sprite CharacterSprite => _data != null ? _data.sprite : null;
     public bool IsSelected { get; private set; }
     public GameObject SelectionGameObject => gameObject;

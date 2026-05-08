@@ -37,6 +37,12 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
     public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;
     public StatusEffectController StatusEffects => null;
+
+    public string DisplayName => UnitDefinition.displayName;
+
+    public UnitFaction Faction => UnitDefinition.faction;
+
+    public SkillData Skill => UnitDefinition.skill;
 }
 
 public class NecromancerParty : MonoBehaviour

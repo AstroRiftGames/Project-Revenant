@@ -12,6 +12,7 @@ public enum UIType
     Altar,
     Shop,
     Mana,
+    DeepInspector,
 }
 
 public class UIManager : MonoBehaviour
@@ -29,7 +30,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private List<UIElement> _uiElements = new List<UIElement>();
     
     [Tooltip("UI elements that should be hidden when a Station is open")]
-    [SerializeField] private List<UIType> _gameplayUIElements = new List<UIType>() { UIType.Inspector, UIType.Minimap, UIType.LOG, UIType.ProgressBar };
+    [SerializeField] private List<UIType> _gameplayUIElements = new List<UIType>() { UIType.Inspector, UIType.Minimap, UIType.LOG, UIType.ProgressBar, UIType.DeepInspector };
     
     private Dictionary<UIType, GameObject> _uiDictionary = new Dictionary<UIType, GameObject>();
 

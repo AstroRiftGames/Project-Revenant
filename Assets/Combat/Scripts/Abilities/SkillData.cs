@@ -5,6 +5,7 @@ public class SkillData : ScriptableObject
 {
     [SerializeField] private string _skillId;
     [SerializeField] private string _displayName;
+    [SerializeField] [TextArea(3, 10)] private string _description;
     [SerializeField] private Sprite _icon;
     [SerializeField] private float _cooldown = 5f;
     [SerializeField] private int _rangeInCells = 1;
@@ -19,6 +20,7 @@ public class SkillData : ScriptableObject
 
     public string SkillId => _skillId;
     public string DisplayName => _displayName;
+    public string Description => _description;
     public Sprite Icon => _icon;
     public float Cooldown => Mathf.Max(0f, _cooldown);
     public int RangeInCells => Mathf.Max(0, _rangeInCells);
