@@ -75,12 +75,14 @@ public class NecromancerParty : MonoBehaviour
     {
         LifeController.OnUnitDied += HandleUnitDied;
         LifeController.OnHealthChanged += HandleUnitHealthChanged;
+        CombatRoomController.AnyCombatResolved += HandleCombatResolved;
     }
 
     private void OnDisable()
     {
         LifeController.OnUnitDied -= HandleUnitDied;
         LifeController.OnHealthChanged -= HandleUnitHealthChanged;
+        CombatRoomController.AnyCombatResolved -= HandleCombatResolved;
     }
 
     public void Configure(List<UnitData> startingMembers, int maxPartyMembers, bool showDebugOverlay)
@@ -234,7 +236,24 @@ public class NecromancerParty : MonoBehaviour
         if (!TryGetMember(link.PartyMemberId, out PartyMemberData member))
             return;
 
-        RemoveMember(member);
+        member.IsAlive = false;
+        member.CurrentHealth = 0;
+        OnPartyUpdated?.Invoke();
+    }
+
+    private void HandleCombatResolved(CombatRoomController controller, CombatRoomOutcome outcome)
+    {
+        CleanupDeadMembers();
+    }
+
+    private void CleanupDeadMembers()
+    {
+        bool changed = _members.RemoveAll(m => !m.IsAlive) > 0;
+        if (changed)
+        {
+            NormalizeFormationIndices();
+            OnPartyUpdated?.Invoke();
+        }
     }
 
     private void HandleUnitHealthChanged(Unit unit)

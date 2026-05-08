@@ -28,9 +28,9 @@ namespace Selection.Core
 
         private void OnEnable()
         {
-            LifeController.OnUnitDied += HandleUnitDied;
             FloorManager.OnRoomEntered += HandleRoomEntered;
             NecromancerParty.OnPartyUpdated += UpdateAlliesFromParty;
+            CombatRoomController.AnyCombatResolved += HandleCombatResolved;
         }
 
         private void Start()
@@ -40,9 +40,9 @@ namespace Selection.Core
 
         private void OnDisable()
         {
-            LifeController.OnUnitDied -= HandleUnitDied;
             FloorManager.OnRoomEntered -= HandleRoomEntered;
             NecromancerParty.OnPartyUpdated -= UpdateAlliesFromParty;
+            CombatRoomController.AnyCombatResolved -= HandleCombatResolved;
         }
 
         private void Update()
@@ -72,7 +72,7 @@ namespace Selection.Core
             selectedAllies.Clear();
             foreach (var member in party.Members)
             {
-                if (member != null && member.IsAlive)
+                if (member != null)
                 {
                     selectedAllies.Add(member);
                 }
@@ -80,11 +80,26 @@ namespace Selection.Core
             NotifySelectionChanged();
         }
 
-        private void HandleUnitDied(Unit unit)
+        private void HandleCombatResolved(CombatRoomController controller, CombatRoomOutcome outcome)
         {
-            if (unit != null && unit.IsEnemy)
+            CleanupDeadEnemies();
+        }
+
+        private void CleanupDeadEnemies()
+        {
+            bool wasChanged = false;
+            for (int i = selectedEnemies.Count - 1; i >= 0; i--)
             {
-                Deselect(unit, force: true);
+                if (selectedEnemies[i] is Unit enemy && !enemy.IsAlive)
+                {
+                    Deselect(selectedEnemies[i], force: true);
+                    wasChanged = true;
+                }
+            }
+
+            if (wasChanged)
+            {
+                NotifySelectionChanged();
             }
         }
 
@@ -186,6 +201,12 @@ namespace Selection.Core
 
         private void HandleSelectionInvalidated(ISelectable selectable)
         {
+            // If it's an enemy unit that died, we keep it in the selection until combat ends
+            if (selectable is Unit unit && !unit.IsAlive && unit.IsEnemy)
+            {
+                return;
+            }
+
             Deselect(selectable, force: selectable.StatsProvider != null && selectable.StatsProvider.Team != UnitTeam.Enemy ? false : true);
         }
 

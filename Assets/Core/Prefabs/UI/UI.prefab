@@ -808,6 +808,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1086981348606340620, guid: 5684cd5fd46199e46b428a5f66090180, type: 3}
+      propertyPath: selectionManager
+      value: 
+      objectReference: {fileID: 8175705738802489650}
     - target: {fileID: 5539790550254206453, guid: 5684cd5fd46199e46b428a5f66090180, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
