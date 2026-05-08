@@ -36,6 +36,7 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public Sprite AbilityIcon => null;
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
     public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;
+    public StatusEffectController StatusEffects => null;
 }
 
 public class NecromancerParty : MonoBehaviour

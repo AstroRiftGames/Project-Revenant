@@ -35,6 +35,14 @@ namespace Data
             public Sprite icon;
         }
 
+        [Serializable]
+        public struct EffectIcon
+        {
+            public StatusEffectType effectType;
+            public Sprite icon;
+            public Color color;
+        }
+
         [Header("Faction Icons")]
         public List<FactionIcon> factionIcons = new List<FactionIcon>();
 
@@ -46,6 +54,9 @@ namespace Data
 
         [Header("Room Icons")]
         public List<RoomIcon> roomIcons = new List<RoomIcon>();
+
+        [Header("Effects Icons")]
+        public List<EffectIcon> effectsIcons = new List<EffectIcon>();
 
         private static GameIconDatabase _instance;
         
@@ -86,6 +97,13 @@ namespace Data
             foreach (var entry in roomIcons)
                 if (entry.roomType == roomType) return entry.icon;
             return null;
+        }
+
+        public (Sprite, Color) GetEffectIcon(StatusEffectType effectType)
+        {
+            foreach (var entry in effectsIcons)
+                if (entry.effectType == effectType) return (entry.icon, entry.color);
+            return (null, Color.white);
         }
     }
 }

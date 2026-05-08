@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 440, y: 205}
+  m_SizeDelta: {x: 440, y: 255}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8383207570517607798
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 100}
+  m_CellSize: {x: 100, y: 125}
   m_Spacing: {x: 5, y: 5}
   m_Constraint: 0
   m_ConstraintCount: 2
@@ -244,7 +244,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 525, y: 205}
+  m_SizeDelta: {x: 525, y: 255}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8750851307907751114
 CanvasRenderer:
@@ -274,7 +274,7 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 100}
+  m_CellSize: {x: 100, y: 125}
   m_Spacing: {x: 5, y: 5}
   m_Constraint: 0
   m_ConstraintCount: 2
@@ -390,7 +390,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 25}
-  m_SizeDelta: {x: 1000, y: 250}
+  m_SizeDelta: {x: 1000, y: 275}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1086981348606340620
 MonoBehaviour:
@@ -408,6 +408,7 @@ MonoBehaviour:
   allyUIContainer: {fileID: 7420559342304276123}
   enemyUIContainer: {fileID: 862133248589798860}
   uiEntryPrefab: {fileID: -2935357074270545806, guid: 286299fe6578cde48a91e4515c42dcaa, type: 3}
+  iconDatabase: {fileID: 11400000, guid: ef13445337a73b54ea2bde42f89de657, type: 2}
 --- !u!1 &7814491465490424190
 GameObject:
   m_ObjectHideFlags: 0

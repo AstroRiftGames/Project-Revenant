@@ -499,26 +499,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-      propertyPath: _uiElements.Array.size
-      value: 9
-      objectReference: {fileID: 0}
-    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-      propertyPath: _gameplayUIElements.Array.size
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-      propertyPath: '_gameplayUIElements.Array.data[4]'
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-      propertyPath: _uiElements.Array.data[8].ElementType
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-      propertyPath: _uiElements.Array.data[8].ElementObject
-      value: 
-      objectReference: {fileID: 591729777}
     - target: {fileID: 8761675956006105106, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -544,11 +524,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
---- !u!1 &591729777 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3290402334824604385, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
-  m_PrefabInstance: {fileID: 12011240}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &692136110 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 604001000000000004, guid: ab142d70d694d444696282a2a10bf0f3, type: 3}

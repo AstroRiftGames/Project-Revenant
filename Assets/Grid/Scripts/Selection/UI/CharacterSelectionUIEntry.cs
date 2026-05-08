@@ -3,7 +3,8 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using Selection.Interfaces;
-using Selection.Core;
+using System.Collections.Generic;
+
 
 namespace Selection.UI
 {
@@ -21,13 +22,64 @@ namespace Selection.UI
         [SerializeField] private Sprite tankRoleIcon;
         [SerializeField] private Sprite dpsRoleIcon;
         [SerializeField] private Sprite supportRoleIcon;
+        [SerializeField] private Transform effectsContainer;
+        [SerializeField] private EffectIcon effectIconPrefab;
 
         private ICharacterStatsProvider currentStats;
+        private StatusEffectController currentController;
+        private Data.GameIconDatabase iconDatabase;
+        private readonly List<EffectIcon> activeEffectIcons = new List<EffectIcon>();
 
-        public void UpdateUI(ICharacterStatsProvider stats)
+        public void UpdateUI(ICharacterStatsProvider stats, Data.GameIconDatabase database)
         {
+            this.iconDatabase = database;
+            if (currentController != null)
+            {
+                UnsubscribeFromController();
+            }
+
             currentStats = stats;
+            currentController = stats?.StatusEffects;
+
+            if (currentController != null)
+            {
+                SubscribeToController();
+            }
+
             RefreshDisplay();
+            UpdateEffectsUI();
+        }
+
+        private void OnDisable()
+        {
+            if (currentController != null)
+            {
+                UnsubscribeFromController();
+            }
+        }
+
+        private void SubscribeToController()
+        {
+            if (currentController == null) return;
+            currentController.EffectApplied += HandleEffectChanged;
+            currentController.EffectRemoved += HandleEffectRemoved;
+        }
+
+        private void UnsubscribeFromController()
+        {
+            if (currentController == null) return;
+            currentController.EffectApplied -= HandleEffectChanged;
+            currentController.EffectRemoved -= HandleEffectRemoved;
+        }
+
+        private void HandleEffectChanged(StatusEffectController controller, ActiveStatusEffect effect)
+        {
+            UpdateEffectsUI();
+        }
+
+        private void HandleEffectRemoved(StatusEffectController controller, ActiveStatusEffect effect, StatusEffectRemovalReason reason)
+        {
+            UpdateEffectsUI();
         }
 
         public void RefreshDisplay()
@@ -116,6 +168,38 @@ namespace Selection.UI
                 {
                     characterPortraitImage.enabled = false;
                 }
+            }
+        }
+
+        private void UpdateEffectsUI()
+        {
+            if (effectsContainer == null || effectIconPrefab == null) return;
+
+            // Clear old icons (pooling would be better, but let's follow the instruction first)
+            foreach (var icon in activeEffectIcons)
+            {
+                if (icon != null) Destroy(icon.gameObject);
+            }
+            activeEffectIcons.Clear();
+
+            if (currentController == null || iconDatabase == null)
+            {
+                // Debug.Log($"[CharacterSelectionUIEntry] UpdateEffectsUI early return: controller={currentController != null}, database={iconDatabase != null}");
+                return;
+            }
+
+            // Debug.Log($"[CharacterSelectionUIEntry] Updating effects for {gameObject.name}. Active effects: {currentController.ActiveEffects.Count}");
+
+            foreach (var effect in currentController.ActiveEffects)
+            {
+                if (effect == null || effect.Definition == null) continue;
+
+                (Sprite iconSprite, Color color) = iconDatabase.GetEffectIcon(effect.Definition.EffectType);
+                if (iconSprite == null) continue;
+
+                EffectIcon newIcon = Instantiate(effectIconPrefab, effectsContainer);
+                newIcon.Initialize(iconSprite, color, effect.Definition.DurationSeconds);
+                activeEffectIcons.Add(newIcon);
             }
         }
 

@@ -12,6 +12,7 @@ namespace Selection.UI
         [SerializeField] private Transform allyUIContainer;
         [SerializeField] private Transform enemyUIContainer;
         [SerializeField] private CharacterSelectionUIEntry uiEntryPrefab;
+        [SerializeField] private Data.GameIconDatabase iconDatabase;
 
         private readonly List<CharacterSelectionUIEntry> activeEntries = new List<CharacterSelectionUIEntry>();
         private readonly Queue<CharacterSelectionUIEntry> entryPool = new Queue<CharacterSelectionUIEntry>();
@@ -47,14 +48,14 @@ namespace Selection.UI
             foreach (var ally in selectedAllies)
             {
                 CharacterSelectionUIEntry entry = GetEntryFromPool(allyUIContainer);
-                entry.UpdateUI(ally.StatsProvider);
+                entry.UpdateUI(ally.StatsProvider, iconDatabase);
                 activeEntries.Add(entry);
             }
 
             foreach (var enemy in selectedEnemies)
             {
                 CharacterSelectionUIEntry entry = GetEntryFromPool(enemyUIContainer);
-                entry.UpdateUI(enemy.StatsProvider);
+                entry.UpdateUI(enemy.StatsProvider, iconDatabase);
                 activeEntries.Add(entry);
             }
         }

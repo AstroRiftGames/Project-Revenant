@@ -14,5 +14,6 @@ namespace Selection.Interfaces
         Sprite AbilityIcon { get; }
         Sprite CharacterSprite { get; }
         UnitStatsData CoreStats { get; }
+        StatusEffectController StatusEffects { get; }
     }
 }
