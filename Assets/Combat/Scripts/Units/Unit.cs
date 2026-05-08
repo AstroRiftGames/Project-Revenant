@@ -197,7 +197,7 @@ public class Unit : Creature, IGridOccupant
 
     private bool IsValidRoomCandidate(Unit candidate, RequiredTargetRelationship relationship)
     {
-        return UnitTargetValidator.IsTargetSelectable(this, candidate, relationship, allowInvisible: false);
+        return UnitTargetValidator.IsTargetSelectable(this, candidate, TargetingPolicy.ForRelationship(relationship));
     }
 
     private IBasicAction ResolveAction()

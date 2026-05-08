@@ -92,11 +92,6 @@ public class UnitCombat : MonoBehaviour
         return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
 
-    public bool CanExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
-    {
-        return CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
-    }
-
     public bool CanExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy)
     {
         if (!IsValidBasicActionTarget(self, target, policy))
@@ -109,11 +104,6 @@ public class UnitCombat : MonoBehaviour
             return false;
 
         return IsTargetInBasicActionRange(target);
-    }
-
-    public bool IsValidBasicActionTarget(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
-    {
-        return IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
     }
 
     public bool IsValidBasicActionTarget(Unit self, Unit target, in TargetingPolicy policy)
@@ -143,11 +133,6 @@ public class UnitCombat : MonoBehaviour
             target,
             TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget: true),
             candidate => candidate.Heal(self.AttackDamage, self));
-    }
-
-    public bool TryExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget, System.Action<Unit> effect)
-    {
-        return TryExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget), effect);
     }
 
     public bool TryExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy, System.Action<Unit> effect)
