@@ -124,7 +124,7 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || _unit == null)
             return null;
 
-        if (skill.TargetMode == SkillTargetMode.Self)
+        if (ShouldResolveSelfAsPrimaryTarget(skill))
             return _unit.IsAlive ? _unit : null;
 
         if (IsPrimarySkillTargetValid(skill, combatTarget))
@@ -203,6 +203,17 @@ public class SkillCaster : MonoBehaviour
         return skill.Shape == SkillShape.Area ||
                skill.Shape == SkillShape.Splash ||
                skill.Shape == SkillShape.MultiTarget;
+    }
+
+    private static bool ShouldResolveSelfAsPrimaryTarget(SkillData skill)
+    {
+        if (skill == null)
+            return false;
+
+        if (skill.TargetMode == SkillTargetMode.Self)
+            return true;
+
+        return UnitTargetValidator.ResolveSkillTargetRequirement(skill.Requirements) == SkillTargetRequirement.Self;
     }
 
     private bool ApplySkillEffects(SkillData skill, SkillCastContext context)
@@ -332,8 +343,14 @@ public class SkillCaster : MonoBehaviour
         RequiredTargetRelationship relationship = ResolveFallbackTargetRelationship(skill);
         return relationship switch
         {
-            RequiredTargetRelationship.Ally => FindBestAllyTarget(skill),
-            RequiredTargetRelationship.Hostile => FindClosestHostileTarget(skill),
+            RequiredTargetRelationship.Ally => TargetSelectionUtility.SelectLowestHealthRatioTarget(
+                _unit,
+                _unit.GetRoomUnits(),
+                candidate => IsPrimarySkillTargetValid(skill, candidate)),
+            RequiredTargetRelationship.Hostile => TargetSelectionUtility.SelectClosestTarget(
+                _unit,
+                _unit.GetRoomUnits(),
+                candidate => IsPrimarySkillTargetValid(skill, candidate)),
             _ => null
         };
     }
@@ -341,73 +358,7 @@ public class SkillCaster : MonoBehaviour
     private static RequiredTargetRelationship ResolveFallbackTargetRelationship(SkillData skill)
     {
         SkillRequirements requirements = skill != null ? skill.Requirements : null;
-        SkillTargetRequirement targetRequirement = UnitTargetValidator.ResolveSkillTargetRequirement(requirements);
-        return targetRequirement switch
-        {
-            SkillTargetRequirement.Hostile => RequiredTargetRelationship.Hostile,
-            SkillTargetRequirement.Ally => RequiredTargetRelationship.Ally,
-            _ => RequiredTargetRelationship.Any
-        };
-    }
-
-    private Unit FindBestAllyTarget(SkillData skill)
-    {
-        List<Unit> allies = _unit.GetAlliedUnitsInScene();
-        Unit bestTarget = null;
-        float bestHealthRatio = float.MaxValue;
-        float bestSqrDistance = float.MaxValue;
-
-        for (int i = 0; i < allies.Count; i++)
-        {
-            Unit candidate = allies[i];
-            if (!IsPrimarySkillTargetValid(skill, candidate))
-                continue;
-
-            float healthRatio = candidate.MaxHealth > 0
-                ? (float)candidate.CurrentHealth / candidate.MaxHealth
-                : 1f;
-            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
-
-            if (healthRatio > bestHealthRatio)
-                continue;
-
-            if (Mathf.Approximately(healthRatio, bestHealthRatio) && sqrDistance >= bestSqrDistance)
-                continue;
-
-            bestTarget = candidate;
-            bestHealthRatio = healthRatio;
-            bestSqrDistance = sqrDistance;
-        }
-
-        return bestTarget;
-    }
-
-    private Unit FindClosestHostileTarget(SkillData skill)
-    {
-        List<Unit> hostiles = _unit.GetHostileUnitsInScene();
-        Unit bestTarget = null;
-        float bestSqrDistance = float.MaxValue;
-        int bestHealth = int.MaxValue;
-
-        for (int i = 0; i < hostiles.Count; i++)
-        {
-            Unit candidate = hostiles[i];
-            if (!IsPrimarySkillTargetValid(skill, candidate))
-                continue;
-
-            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
-            if (sqrDistance > bestSqrDistance)
-                continue;
-
-            if (Mathf.Approximately(sqrDistance, bestSqrDistance) && candidate.CurrentHealth >= bestHealth)
-                continue;
-
-            bestTarget = candidate;
-            bestSqrDistance = sqrDistance;
-            bestHealth = candidate.CurrentHealth;
-        }
-
-        return bestTarget;
+        return UnitTargetValidator.ResolveSkillRelationship(requirements);
     }
 
     private void LogDebug(string message)

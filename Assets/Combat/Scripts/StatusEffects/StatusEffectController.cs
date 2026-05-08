@@ -195,6 +195,8 @@ public class StatusEffectController : MonoBehaviour
     {
         forcedTarget = null;
 
+        // This only exposes the taunt source candidate. The targeting caller decides
+        // whether the candidate is valid for the current action/relationship.
         return TryResolveForcedTarget(out forcedTarget);
     }
 

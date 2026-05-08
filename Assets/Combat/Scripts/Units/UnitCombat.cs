@@ -22,6 +22,11 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
         return Combat != null && Combat.IsTargetInBasicActionRange(target);
     }
 
+    public bool IsValidTarget(Unit self, Unit target)
+    {
+        return Combat != null && Combat.IsValidBasicActionTarget(self, target, RequiredTargetRelationship, RequiresInjuredTarget);
+    }
+
     public bool CanExecute(Unit self, Unit target)
     {
         return Combat != null && Combat.CanExecuteBasicAction(self, target, RequiredTargetRelationship, RequiresInjuredTarget);
@@ -88,13 +93,7 @@ public class UnitCombat : MonoBehaviour
 
     public bool CanExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
     {
-        if (self == null || _unit == null)
-            return false;
-
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, relationship))
-            return false;
-
-        if (requiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
+        if (!IsValidBasicActionTarget(self, target, relationship, requiresInjuredTarget))
             return false;
 
         if (!CanOwnerUseBasicAction())
@@ -104,6 +103,20 @@ public class UnitCombat : MonoBehaviour
             return false;
 
         return IsTargetInBasicActionRange(target);
+    }
+
+    public bool IsValidBasicActionTarget(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
+    {
+        if (self == null || _unit == null)
+            return false;
+
+        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, relationship))
+            return false;
+
+        if (requiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
+            return false;
+
+        return true;
     }
 
     public bool TryExecuteAttackAction(Unit self, Unit target, RequiredTargetRelationship relationship)

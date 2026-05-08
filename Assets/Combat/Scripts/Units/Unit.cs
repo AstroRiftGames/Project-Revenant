@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -104,6 +105,16 @@ public class Unit : Creature, IGridOccupant
     {
         PopulateRoomUnits(_alliedUnitsBuffer, RequiredTargetRelationship.Ally);
         return _alliedUnitsBuffer;
+    }
+
+    public IReadOnlyList<Unit> GetRoomUnits()
+    {
+        return _roomContext != null ? _roomContext.Units : Array.Empty<Unit>();
+    }
+
+    public IReadOnlyList<Unit> GetUnitsInSameRoom()
+    {
+        return GetRoomUnits();
     }
 
     public int GetPreferredDistance(IBasicAction action)

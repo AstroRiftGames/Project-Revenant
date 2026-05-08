@@ -37,7 +37,8 @@ public static class UnitTargetValidator
         if (source == null || target == null)
             return false;
 
-        if (excludeSelf && ReferenceEquals(source, target))
+        bool isSelfTarget = ReferenceEquals(source, target);
+        if (excludeSelf && isSelfTarget)
             return false;
 
         if (!target.gameObject.activeInHierarchy || !target.IsAlive)
@@ -46,7 +47,7 @@ public static class UnitTargetValidator
         if (!IsInSameResolvedRoom(source, target))
             return false;
 
-        if (!source.CanDetect(target))
+        if (!isSelfTarget && !source.CanDetect(target))
             return false;
 
         if (!allowInvisible && target.StatusEffects != null && target.StatusEffects.HasInvisibility)

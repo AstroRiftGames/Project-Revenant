@@ -19,6 +19,11 @@ public sealed class CombatAction : IBasicAction
     public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
 
+    public bool IsValidTarget(Unit self, Unit target)
+    {
+        return _combat != null && _combat.IsValidBasicActionTarget(self, target, RequiredTargetRelationship, _supportsAllies);
+    }
+
     public bool IsInRange(Unit self, Unit target)
     {
         return _combat != null && _combat.IsTargetInBasicActionRange(target);
