@@ -83,24 +83,32 @@ public class Unit : Creature, IGridOccupant
         }
     }
 
+    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
+    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
     public List<IUnit> GetVisibleUnitsInScene()
     {
         PopulateRoomUnits(_visibleUnitsBuffer, RequiredTargetRelationship.Any);
         return _visibleUnitsBuffer;
     }
 
+    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
+    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
     public List<IUnit> GetVisibleHostileUnitsInScene()
     {
         PopulateRoomUnits(_visibleHostilesBuffer, RequiredTargetRelationship.Hostile);
         return _visibleHostilesBuffer;
     }
 
+    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
+    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
     public List<Unit> GetHostileUnitsInScene()
     {
         PopulateRoomUnits(_hostileUnitsBuffer, RequiredTargetRelationship.Hostile);
         return _hostileUnitsBuffer;
     }
 
+    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
+    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
     public List<Unit> GetAlliedUnitsInScene()
     {
         PopulateRoomUnits(_alliedUnitsBuffer, RequiredTargetRelationship.Ally);
@@ -109,9 +117,10 @@ public class Unit : Creature, IGridOccupant
 
     public IReadOnlyList<Unit> GetRoomUnits()
     {
-        return _roomContext != null ? _roomContext.Units : Array.Empty<Unit>();
+        return TargetingCandidateProvider.GetRoomCandidates(this);
     }
 
+    // Temporary compatibility wrapper. Prefer GetRoomUnits() in new code.
     public IReadOnlyList<Unit> GetUnitsInSameRoom()
     {
         return GetRoomUnits();
@@ -152,7 +161,7 @@ public class Unit : Creature, IGridOccupant
             return;
 
         results.Clear();
-        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        IReadOnlyList<Unit> roomUnits = GetRoomUnits();
         if (roomUnits == null)
             return;
 
@@ -172,7 +181,7 @@ public class Unit : Creature, IGridOccupant
             return;
 
         results.Clear();
-        IReadOnlyList<Unit> roomUnits = _roomContext != null ? _roomContext.Units : null;
+        IReadOnlyList<Unit> roomUnits = GetRoomUnits();
         if (roomUnits == null)
             return;
 

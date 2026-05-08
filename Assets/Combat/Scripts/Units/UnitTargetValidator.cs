@@ -4,12 +4,12 @@ public static class UnitTargetValidator
 {
     public static bool IsTargetSelectableForRelationship(Unit source, Unit target, RequiredTargetRelationship relationship)
     {
-        return IsTargetSelectable(source, target, relationship, allowInvisible: false, excludeSelf: relationship != RequiredTargetRelationship.Any);
+        return IsTargetSelectable(source, target, TargetingPolicy.ForRelationship(relationship, allowSelf: relationship == RequiredTargetRelationship.Any));
     }
 
     public static bool IsTargetSelectableForBasicAction(Unit source, Unit target, RequiredTargetRelationship relationship)
     {
-        return IsTargetSelectableForRelationship(source, target, relationship);
+        return IsTargetSelectable(source, target, TargetingPolicy.ForBasicAction(relationship));
     }
 
     public static bool IsTargetSelectableForSkill(Unit source, Unit target, SkillRequirements requirements)
@@ -17,16 +17,10 @@ public static class UnitTargetValidator
         if (source == null)
             return false;
 
-        if (requirements != null && !requirements.requiresTarget && target == null)
-            return true;
-
-        SkillTargetRequirement targetRequirement = ResolveSkillTargetRequirement(requirements);
-        if (targetRequirement == SkillTargetRequirement.GroundCell || targetRequirement == SkillTargetRequirement.NoTarget)
+        if (!TargetingPolicy.TryCreateForSkill(requirements, out TargetingPolicy policy))
             return false;
 
-        RequiredTargetRelationship relationship = ResolveSkillRelationship(requirements);
-        bool excludeSelf = targetRequirement != SkillTargetRequirement.Any && targetRequirement != SkillTargetRequirement.Self;
-        if (!IsTargetSelectable(source, target, relationship, allowInvisible: false, excludeSelf: excludeSelf))
+        if (!IsTargetSelectable(source, target, policy))
             return false;
 
         return requirements == null || requirements.AreMet(source, target);
@@ -34,26 +28,49 @@ public static class UnitTargetValidator
 
     public static bool IsTargetSelectable(Unit source, Unit target, RequiredTargetRelationship relationship, bool allowInvisible, bool excludeSelf = true)
     {
-        if (source == null || target == null)
+        return IsTargetSelectable(
+            source,
+            target,
+            new TargetingPolicy(
+                relationship,
+                allowSelf: !excludeSelf,
+                allowInvisible: allowInvisible));
+    }
+
+    public static bool IsTargetSelectable(Unit source, Unit target, in TargetingPolicy policy)
+    {
+        if (source == null)
             return false;
+
+        if (target == null)
+            return !policy.RequiresTarget;
 
         bool isSelfTarget = ReferenceEquals(source, target);
-        if (excludeSelf && isSelfTarget)
+        if (policy.RequireSelf && !isSelfTarget)
             return false;
 
-        if (!target.gameObject.activeInHierarchy || !target.IsAlive)
+        if (!policy.AllowSelf && isSelfTarget)
             return false;
 
-        if (!IsInSameResolvedRoom(source, target))
+        if (policy.RequireActive && !target.gameObject.activeInHierarchy)
             return false;
 
-        if (!isSelfTarget && !source.CanDetect(target))
+        if (!policy.AllowDead && !target.IsAlive)
             return false;
 
-        if (!allowInvisible && target.StatusEffects != null && target.StatusEffects.HasInvisibility)
+        if (policy.RequireSameRoom && !IsInSameResolvedRoom(source, target))
             return false;
 
-        return relationship switch
+        if (policy.RequireDetectable && !isSelfTarget && !source.CanDetect(target))
+            return false;
+
+        if (!policy.AllowInvisible && target.StatusEffects != null && target.StatusEffects.HasInvisibility)
+            return false;
+
+        if (policy.RequireInjured && target.CurrentHealth >= target.MaxHealth)
+            return false;
+
+        return policy.Relationship switch
         {
             RequiredTargetRelationship.Hostile => source.IsHostileTo(target),
             RequiredTargetRelationship.Ally => !source.IsHostileTo(target),

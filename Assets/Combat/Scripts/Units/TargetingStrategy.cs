@@ -9,16 +9,16 @@ public class TargetingStrategy : MonoBehaviour
         if (self == null)
             return null;
 
-        RequiredTargetRelationship targetRelationship = action != null
-            ? action.RequiredTargetRelationship
-            : RequiredTargetRelationship.Hostile;
+        TargetingPolicy policy = action != null
+            ? TargetingPolicy.ForBasicAction(action)
+            : TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
 
         // Taunt only overrides the shared combat target after the current basic-action contract accepts it.
-        if (TrySelectForcedTarget(self, action, targetRelationship, out Unit forcedTarget))
+        if (TrySelectForcedTarget(self, policy, out Unit forcedTarget))
             return forcedTarget;
 
-        if (targetRelationship == RequiredTargetRelationship.Ally)
-            return SelectAllyTarget(self, action, currentTarget);
+        if (policy.Relationship == RequiredTargetRelationship.Ally)
+            return SelectAllyTarget(self, policy, currentTarget);
 
         return self.TargetingMode switch
         {
@@ -27,19 +27,21 @@ public class TargetingStrategy : MonoBehaviour
         };
     }
 
-    public Unit SelectAllyTarget(Unit self, IBasicAction action, Unit currentTarget)
+    public Unit SelectAllyTarget(Unit self, in TargetingPolicy policy, Unit currentTarget)
     {
         if (self == null)
             return null;
 
-        if (IsTargetValidForSelection(self, action, currentTarget, RequiredTargetRelationship.Ally))
+        TargetingPolicy selectionPolicy = policy;
+
+        if (IsTargetValidForSelection(self, currentTarget, policy))
             return currentTarget;
 
-        IReadOnlyList<Unit> roomUnits = self.GetRoomUnits();
+        IReadOnlyList<Unit> roomUnits = TargetingCandidateProvider.GetRoomCandidates(self);
         return TargetSelectionUtility.SelectLowestHealthRatioTarget(
             self,
             roomUnits,
-            candidate => IsTargetValidForSelection(self, action, candidate, RequiredTargetRelationship.Ally));
+            candidate => IsTargetValidForSelection(self, candidate, selectionPolicy));
     }
 
     public Unit GetSpacingThreat(Unit self, Unit currentTarget)
@@ -91,7 +93,7 @@ public class TargetingStrategy : MonoBehaviour
 
     private Unit SelectRolePriorityTarget(Unit self, Unit currentTarget)
     {
-        IReadOnlyList<Unit> roomUnits = self.GetRoomUnits();
+        IReadOnlyList<Unit> roomUnits = TargetingCandidateProvider.GetRoomCandidates(self);
         UnitRole? highestPriorityRole = GetHighestPriorityAvailableRole(self, roomUnits);
         if (!highestPriorityRole.HasValue)
             return null;
@@ -109,30 +111,32 @@ public class TargetingStrategy : MonoBehaviour
 
     private bool IsTargetStillValid(Unit self, Unit target)
     {
-        return IsTargetStillValid(self, target, RequiredTargetRelationship.Hostile);
+        return IsTargetStillValid(self, target, TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile));
     }
 
     private bool IsTargetStillValid(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        return UnitTargetValidator.IsTargetSelectableForRelationship(self, target, relationship);
+        return IsTargetStillValid(self, target, TargetingPolicy.ForRelationship(relationship));
     }
 
-    private bool IsTargetValidForSelection(Unit self, IBasicAction action, Unit target, RequiredTargetRelationship relationship)
+    private bool IsTargetStillValid(Unit self, Unit target, in TargetingPolicy policy)
     {
-        if (action != null)
-            return action.IsValidTarget(self, target);
-
-        return IsTargetStillValid(self, target, relationship);
+        return UnitTargetValidator.IsTargetSelectable(self, target, policy);
     }
 
-    private bool TrySelectForcedTarget(Unit self, IBasicAction action, RequiredTargetRelationship relationship, out Unit forcedTarget)
+    private bool IsTargetValidForSelection(Unit self, Unit target, in TargetingPolicy policy)
+    {
+        return UnitTargetValidator.IsTargetSelectable(self, target, policy);
+    }
+
+    private bool TrySelectForcedTarget(Unit self, in TargetingPolicy policy, out Unit forcedTarget)
     {
         forcedTarget = null;
 
         if (self == null || self.StatusEffects == null || !self.StatusEffects.TryGetForcedTarget(out Unit candidate))
             return false;
 
-        if (!IsTargetValidForSelection(self, action, candidate, relationship))
+        if (!IsTargetValidForSelection(self, candidate, policy))
             return false;
 
         forcedTarget = candidate;
@@ -146,8 +150,11 @@ public class TargetingStrategy : MonoBehaviour
 
         return TargetSelectionUtility.SelectClosestTarget(
             self,
-            self.GetRoomUnits(),
-            candidate => UnitTargetValidator.IsTargetSelectableForRelationship(self, candidate, RequiredTargetRelationship.Hostile));
+            TargetingCandidateProvider.GetRoomCandidates(self),
+            candidate => UnitTargetValidator.IsTargetSelectable(
+                self,
+                candidate,
+                TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile)));
     }
 
     private static Unit GetLowestHealthUnit(Unit self, List<Unit> units)
@@ -208,7 +215,7 @@ public class TargetingStrategy : MonoBehaviour
             if (candidate == null || candidate.Role != role)
                 continue;
 
-            if (UnitTargetValidator.IsTargetSelectableForRelationship(self, candidate, RequiredTargetRelationship.Hostile))
+            if (UnitTargetValidator.IsTargetSelectable(self, candidate, TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile)))
                 return true;
         }
 

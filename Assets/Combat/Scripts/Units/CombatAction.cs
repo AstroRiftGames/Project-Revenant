@@ -16,12 +16,13 @@ public sealed class CombatAction : IBasicAction
     public RequiredTargetRelationship RequiredTargetRelationship => _supportsAllies
         ? RequiredTargetRelationship.Ally
         : RequiredTargetRelationship.Hostile;
+    public bool RequiresInjuredTarget => _supportsAllies;
     public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
 
     public bool IsValidTarget(Unit self, Unit target)
     {
-        return _combat != null && _combat.IsValidBasicActionTarget(self, target, RequiredTargetRelationship, _supportsAllies);
+        return _combat != null && _combat.IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(this));
     }
 
     public bool IsInRange(Unit self, Unit target)

@@ -1,6 +1,7 @@
 public interface IBasicAction
 {
     RequiredTargetRelationship RequiredTargetRelationship { get; }
+    bool RequiresInjuredTarget { get; }
     int RangeInCells { get; }
     int PreferredDistanceInCells { get; }
     bool IsValidTarget(Unit self, Unit target);

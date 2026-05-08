@@ -6,10 +6,11 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
     protected Unit Owner { get; private set; }
 
     public abstract RequiredTargetRelationship RequiredTargetRelationship { get; }
+    public bool RequiresInjuredTarget => RequiresInjuredTargetForAction;
     public int RangeInCells => Combat != null ? Combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => Owner != null ? Mathf.Max(0, Owner.PreferredDistanceInCells) : RangeInCells;
 
-    protected virtual bool RequiresInjuredTarget => false;
+    protected virtual bool RequiresInjuredTargetForAction => false;
 
     protected virtual void Awake()
     {
@@ -24,7 +25,7 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
 
     public bool IsValidTarget(Unit self, Unit target)
     {
-        return Combat != null && Combat.IsValidBasicActionTarget(self, target, RequiredTargetRelationship, RequiresInjuredTarget);
+        return Combat != null && Combat.IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(this));
     }
 
     public bool CanExecute(Unit self, Unit target)
@@ -58,7 +59,7 @@ public class AttackAction : BasicUnitAction
 public class HealAction : BasicUnitAction
 {
     public override RequiredTargetRelationship RequiredTargetRelationship => RequiredTargetRelationship.Ally;
-    protected override bool RequiresInjuredTarget => true;
+    protected override bool RequiresInjuredTargetForAction => true;
 
     protected override bool ExecuteValidated(Unit self, Unit target)
     {
@@ -85,7 +86,7 @@ public class UnitCombat : MonoBehaviour
 
     public bool IsTargetInBasicActionRange(Unit target)
     {
-        if (!UnitTargetValidator.IsTargetSelectable(_unit, target, RequiredTargetRelationship.Any, allowInvisible: false))
+        if (!UnitTargetValidator.IsTargetSelectable(_unit, target, TargetingPolicy.ForRelationship(RequiredTargetRelationship.Any)))
             return false;
 
         return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
@@ -107,13 +108,15 @@ public class UnitCombat : MonoBehaviour
 
     public bool IsValidBasicActionTarget(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
     {
+        return IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
+    }
+
+    public bool IsValidBasicActionTarget(Unit self, Unit target, in TargetingPolicy policy)
+    {
         if (self == null || _unit == null)
             return false;
 
-        if (!UnitTargetValidator.IsTargetSelectableForBasicAction(self, target, relationship))
-            return false;
-
-        if (requiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
+        if (!UnitTargetValidator.IsTargetSelectable(self, target, policy))
             return false;
 
         return true;

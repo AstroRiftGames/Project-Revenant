@@ -156,7 +156,13 @@ public class SkillCaster : MonoBehaviour
         if (IsSelfCenteredAreaSkill(skill))
             return _unit != null && _unit.IsAlive;
 
-        return UnitTargetValidator.IsTargetSelectableForSkill(_unit, primaryTarget, skill.Requirements);
+        if (!TargetingPolicy.TryCreateForSkill(skill.Requirements, out TargetingPolicy policy))
+            return false;
+
+        if (!UnitTargetValidator.IsTargetSelectable(_unit, primaryTarget, policy))
+            return false;
+
+        return skill.Requirements == null || skill.Requirements.AreMet(_unit, primaryTarget);
     }
 
     private bool IsSkillTargetInRange(SkillData skill, Unit primaryTarget)
@@ -340,25 +346,21 @@ public class SkillCaster : MonoBehaviour
         if (_unit == null || skill == null)
             return null;
 
-        RequiredTargetRelationship relationship = ResolveFallbackTargetRelationship(skill);
-        return relationship switch
+        if (!TargetingPolicy.TryCreateForSkill(skill.Requirements, out TargetingPolicy policy))
+            return null;
+
+        return policy.Relationship switch
         {
             RequiredTargetRelationship.Ally => TargetSelectionUtility.SelectLowestHealthRatioTarget(
                 _unit,
-                _unit.GetRoomUnits(),
+                TargetingCandidateProvider.GetRoomCandidates(_unit),
                 candidate => IsPrimarySkillTargetValid(skill, candidate)),
             RequiredTargetRelationship.Hostile => TargetSelectionUtility.SelectClosestTarget(
                 _unit,
-                _unit.GetRoomUnits(),
+                TargetingCandidateProvider.GetRoomCandidates(_unit),
                 candidate => IsPrimarySkillTargetValid(skill, candidate)),
             _ => null
         };
-    }
-
-    private static RequiredTargetRelationship ResolveFallbackTargetRelationship(SkillData skill)
-    {
-        SkillRequirements requirements = skill != null ? skill.Requirements : null;
-        return UnitTargetValidator.ResolveSkillRelationship(requirements);
     }
 
     private void LogDebug(string message)

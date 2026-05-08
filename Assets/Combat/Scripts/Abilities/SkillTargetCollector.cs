@@ -285,18 +285,13 @@ public static class SkillTargetCollector
             return false;
 
         SkillRequirements requirements = skill.Requirements;
-        if (skill.TargetMode == SkillTargetMode.Self)
-        {
-            SkillTargetRequirement targetRequirement = UnitTargetValidator.ResolveSkillTargetRequirement(requirements);
-            if (targetRequirement == SkillTargetRequirement.GroundCell || targetRequirement == SkillTargetRequirement.NoTarget)
-                return false;
+        if (!TargetingPolicy.TryCreateForImpact(requirements, skill.TargetMode, out TargetingPolicy policy))
+            return false;
 
-            RequiredTargetRelationship relationship = UnitTargetValidator.ResolveSkillRelationship(requirements);
-            return UnitTargetValidator.IsTargetSelectable(caster, candidate, relationship, allowInvisible: false, excludeSelf: false) &&
-                   (requirements == null || requirements.AreMet(caster, candidate));
-        }
+        if (!UnitTargetValidator.IsTargetSelectable(caster, candidate, policy))
+            return false;
 
-        return UnitTargetValidator.IsTargetSelectableForSkill(caster, candidate, requirements);
+        return requirements == null || requirements.AreMet(caster, candidate);
     }
 
     private static bool UsesCasterCenteredRadius(SkillCastContext context)
@@ -340,8 +335,7 @@ public static class SkillTargetCollector
 
     private static IReadOnlyList<Unit> GetRoomUnits(Unit caster)
     {
-        RoomContext roomContext = caster != null ? caster.RoomContext : null;
-        return roomContext != null ? roomContext.Units : null;
+        return TargetingCandidateProvider.GetRoomCandidates(caster);
     }
 
     private static RoomGrid ResolveRoomGrid(Unit caster)
