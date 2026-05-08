@@ -32,7 +32,7 @@ public sealed class CombatAction : IBasicAction
 
     public bool CanExecute(Unit self, Unit target)
     {
-        return _combat != null && _combat.CanExecuteBasicAction(self, target, RequiredTargetRelationship, _supportsAllies);
+        return _combat != null && _combat.CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(this));
     }
 
     public bool Execute(Unit self, Unit target)
@@ -40,9 +40,16 @@ public sealed class CombatAction : IBasicAction
         if (!CanExecute(self, target))
             return false;
 
-        if (_supportsAllies)
-            return _combat.TryExecuteHealAction(self, target, RequiredTargetRelationship);
-
-        return _combat.TryExecuteAttackAction(self, target, RequiredTargetRelationship);
+        return _combat.TryExecuteBasicAction(
+            self,
+            target,
+            TargetingPolicy.ForBasicAction(this),
+            candidate =>
+            {
+                if (_supportsAllies)
+                    candidate.Heal(self.AttackDamage, self);
+                else
+                    candidate.TakeDamage(self.AttackDamage, self);
+            });
     }
 }

@@ -57,7 +57,9 @@ public readonly struct TargetingPolicy
 
     public static bool TryCreateForSkill(SkillRequirements requirements, out TargetingPolicy policy)
     {
-        SkillTargetRequirement targetRequirement = UnitTargetValidator.ResolveSkillTargetRequirement(requirements);
+        SkillTargetRequirement targetRequirement = requirements != null
+            ? requirements.TargetRequirement
+            : SkillTargetRequirement.Any;
         if (targetRequirement == SkillTargetRequirement.NoTarget || targetRequirement == SkillTargetRequirement.GroundCell)
         {
             policy = default;

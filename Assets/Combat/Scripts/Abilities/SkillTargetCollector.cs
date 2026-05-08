@@ -291,7 +291,7 @@ public static class SkillTargetCollector
         if (!UnitTargetValidator.IsTargetSelectable(caster, candidate, policy))
             return false;
 
-        return requirements == null || requirements.AreMet(caster, candidate);
+        return requirements == null || requirements.AreSkillSpecificRequirementsMet(caster, candidate);
     }
 
     private static bool UsesCasterCenteredRadius(SkillCastContext context)

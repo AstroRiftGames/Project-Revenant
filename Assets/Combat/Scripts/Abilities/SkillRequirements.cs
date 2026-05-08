@@ -34,6 +34,10 @@ public class SkillRequirements
             : SkillTargetRequirement.Ally;
     }
 
+    // Legacy combined validation kept for compatibility with older callers.
+    // New targeting flows should use TargetingPolicy + UnitTargetValidator for
+    // general target eligibility and reserve AreSkillSpecificRequirementsMet for
+    // skill-specific constraints only.
     public bool AreMet(Unit caster, Unit target)
     {
         if (caster == null)
@@ -72,6 +76,14 @@ public class SkillRequirements
         if (mustTargetInjured && target.CurrentHealth >= target.MaxHealth)
             return false;
 
-        return true;
+        return AreSkillSpecificRequirementsMet(caster, target);
+    }
+
+    // Primary extension point for constraints that belong to a specific skill rather than
+    // to general target eligibility. Keep this narrow: relationship/self/alive/visibility/
+    // same-room/injured should stay in TargetingPolicy + UnitTargetValidator.
+    public bool AreSkillSpecificRequirementsMet(Unit caster, Unit target)
+    {
+        return caster != null;
     }
 }

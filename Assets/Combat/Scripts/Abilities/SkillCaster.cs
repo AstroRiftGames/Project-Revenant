@@ -162,7 +162,7 @@ public class SkillCaster : MonoBehaviour
         if (!UnitTargetValidator.IsTargetSelectable(_unit, primaryTarget, policy))
             return false;
 
-        return skill.Requirements == null || skill.Requirements.AreMet(_unit, primaryTarget);
+        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, primaryTarget);
     }
 
     private bool IsSkillTargetInRange(SkillData skill, Unit primaryTarget)
@@ -219,7 +219,7 @@ public class SkillCaster : MonoBehaviour
         if (skill.TargetMode == SkillTargetMode.Self)
             return true;
 
-        return UnitTargetValidator.ResolveSkillTargetRequirement(skill.Requirements) == SkillTargetRequirement.Self;
+        return skill.Requirements != null && skill.Requirements.TargetRequirement == SkillTargetRequirement.Self;
     }
 
     private bool ApplySkillEffects(SkillData skill, SkillCastContext context)

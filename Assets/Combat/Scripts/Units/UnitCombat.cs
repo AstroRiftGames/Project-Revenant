@@ -30,7 +30,7 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
 
     public bool CanExecute(Unit self, Unit target)
     {
-        return Combat != null && Combat.CanExecuteBasicAction(self, target, RequiredTargetRelationship, RequiresInjuredTarget);
+        return Combat != null && Combat.CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(this));
     }
 
     public bool Execute(Unit self, Unit target)
@@ -94,7 +94,12 @@ public class UnitCombat : MonoBehaviour
 
     public bool CanExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
     {
-        if (!IsValidBasicActionTarget(self, target, relationship, requiresInjuredTarget))
+        return CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
+    }
+
+    public bool CanExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy)
+    {
+        if (!IsValidBasicActionTarget(self, target, policy))
             return false;
 
         if (!CanOwnerUseBasicAction())
@@ -124,20 +129,33 @@ public class UnitCombat : MonoBehaviour
 
     public bool TryExecuteAttackAction(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        return TryExecuteBasicAction(self, target, relationship, requiresInjuredTarget: false, candidate => candidate.TakeDamage(self.AttackDamage, self));
+        return TryExecuteBasicAction(
+            self,
+            target,
+            TargetingPolicy.ForBasicAction(relationship),
+            candidate => candidate.TakeDamage(self.AttackDamage, self));
     }
 
     public bool TryExecuteHealAction(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
-        return TryExecuteBasicAction(self, target, relationship, requiresInjuredTarget: true, candidate => candidate.Heal(self.AttackDamage, self));
+        return TryExecuteBasicAction(
+            self,
+            target,
+            TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget: true),
+            candidate => candidate.Heal(self.AttackDamage, self));
     }
 
     public bool TryExecuteBasicAction(Unit self, Unit target, RequiredTargetRelationship relationship, bool requiresInjuredTarget, System.Action<Unit> effect)
     {
+        return TryExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget), effect);
+    }
+
+    public bool TryExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy, System.Action<Unit> effect)
+    {
         if (self == null || effect == null)
             return false;
 
-        if (!CanExecuteBasicAction(self, target, relationship, requiresInjuredTarget))
+        if (!CanExecuteBasicAction(self, target, policy))
             return false;
 
         ApplyBasicActionEffect(target, effect);
