@@ -147,7 +147,7 @@ public class UnitBrain : MonoBehaviour
         if (_movement.IsMoving)
             return true;
 
-        Unit nearestThreat = _targeting.GetNearestVisibleHostile(_unit);
+        Unit nearestThreat = SpacingEvaluator.GetNearestVisibleHostile(_unit);
         if (nearestThreat == null)
             return true;
 

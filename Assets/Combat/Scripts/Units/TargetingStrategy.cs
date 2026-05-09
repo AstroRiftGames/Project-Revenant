@@ -57,11 +57,6 @@ public class TargetingStrategy : MonoBehaviour
             candidate => IsTargetValidForSelection(self, candidate, selectionPolicy));
     }
 
-    public Unit GetNearestVisibleHostile(Unit self)
-    {
-        return SpacingEvaluator.GetNearestVisibleHostile(self);
-    }
-
     private bool IsTargetStillValid(Unit self, Unit target, RequiredTargetRelationship relationship)
     {
         return IsTargetStillValid(self, target, TargetingPolicy.ForRelationship(relationship));
