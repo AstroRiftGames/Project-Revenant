@@ -15,10 +15,6 @@ public class Unit : Creature, IGridOccupant
 
     private RoomContext _roomContext;
     private IBasicAction _resolvedAction;
-    private readonly List<IUnit> _visibleUnitsBuffer = new();
-    private readonly List<Unit> _alliedUnitsBuffer = new();
-    private readonly List<IUnit> _visibleHostilesBuffer = new();
-    private readonly List<Unit> _hostileUnitsBuffer = new();
     private readonly List<MonoBehaviour> _roomContextComponentsBuffer = new();
 
     protected override void Awake()
@@ -83,47 +79,9 @@ public class Unit : Creature, IGridOccupant
         }
     }
 
-    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
-    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
-    public List<IUnit> GetVisibleUnitsInScene()
-    {
-        PopulateRoomUnits(_visibleUnitsBuffer, RequiredTargetRelationship.Any);
-        return _visibleUnitsBuffer;
-    }
-
-    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
-    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
-    public List<IUnit> GetVisibleHostileUnitsInScene()
-    {
-        PopulateRoomUnits(_visibleHostilesBuffer, RequiredTargetRelationship.Hostile);
-        return _visibleHostilesBuffer;
-    }
-
-    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
-    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
-    public List<Unit> GetHostileUnitsInScene()
-    {
-        PopulateRoomUnits(_hostileUnitsBuffer, RequiredTargetRelationship.Hostile);
-        return _hostileUnitsBuffer;
-    }
-
-    // Temporary compatibility wrapper. Prefer GetRoomUnits() plus
-    // TargetingCandidateProvider/UnitTargetValidator in new targeting code.
-    public List<Unit> GetAlliedUnitsInScene()
-    {
-        PopulateRoomUnits(_alliedUnitsBuffer, RequiredTargetRelationship.Ally);
-        return _alliedUnitsBuffer;
-    }
-
     public IReadOnlyList<Unit> GetRoomUnits()
     {
         return TargetingCandidateProvider.GetRoomCandidates(this);
-    }
-
-    // Temporary compatibility wrapper. Prefer GetRoomUnits() in new code.
-    public IReadOnlyList<Unit> GetUnitsInSameRoom()
-    {
-        return GetRoomUnits();
     }
 
     public int GetPreferredDistance(IBasicAction action)
@@ -153,51 +111,6 @@ public class Unit : Creature, IGridOccupant
         }
 
         transform.position = GridNavigationUtility.ResolvePlacementWorldPosition(grid, transform.position, this);
-    }
-
-    private void PopulateRoomUnits(List<IUnit> results, RequiredTargetRelationship relationship)
-    {
-        if (results == null)
-            return;
-
-        results.Clear();
-        IReadOnlyList<Unit> roomUnits = GetRoomUnits();
-        if (roomUnits == null)
-            return;
-
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-            if (!IsValidRoomCandidate(candidate, relationship))
-                continue;
-
-            results.Add(candidate);
-        }
-    }
-
-    private void PopulateRoomUnits(List<Unit> results, RequiredTargetRelationship relationship)
-    {
-        if (results == null)
-            return;
-
-        results.Clear();
-        IReadOnlyList<Unit> roomUnits = GetRoomUnits();
-        if (roomUnits == null)
-            return;
-
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-            if (!IsValidRoomCandidate(candidate, relationship))
-                continue;
-
-            results.Add(candidate);
-        }
-    }
-
-    private bool IsValidRoomCandidate(Unit candidate, RequiredTargetRelationship relationship)
-    {
-        return UnitTargetValidator.IsTargetSelectable(this, candidate, TargetingPolicy.ForRelationship(relationship));
     }
 
     private IBasicAction ResolveAction()

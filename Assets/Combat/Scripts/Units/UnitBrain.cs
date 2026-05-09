@@ -159,7 +159,7 @@ public class UnitBrain : MonoBehaviour
     private bool TryMaintainSpacing()
     {
         int preferredDistance = _unit.GetPreferredDistance(_action);
-        Unit spacingThreat = _targeting.GetSpacingThreat(_unit, _currentTarget);
+        Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _currentTarget);
         return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
     }
 
