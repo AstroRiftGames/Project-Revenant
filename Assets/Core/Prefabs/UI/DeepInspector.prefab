@@ -433,7 +433,7 @@ MonoBehaviour:
   statsContainer: {fileID: 3825221090200439386}
   statPrefab: {fileID: 1331688206361856720, guid: f5aff3d7883f1614c83ec71862834b87, type: 3}
   closeButton: {fileID: 6317182560981658535}
-  iconDatabase: {fileID: 11400000, guid: ef13445337a73b54ea2bde42f89de657, type: 2}
+  iconDatabase: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
 --- !u!114 &3125558008129398156
 MonoBehaviour:
   m_ObjectHideFlags: 0
