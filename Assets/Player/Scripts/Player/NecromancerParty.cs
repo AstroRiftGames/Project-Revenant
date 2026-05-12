@@ -278,44 +278,6 @@ public class NecromancerParty : MonoBehaviour
         member.CurrentHealth = Mathf.Max(0, unit.CurrentHealth);
     }
 
-    private void OnGUI()
-    {
-        if (!_showDebugOverlay)
-            return;
-
-        const float panelWidth = 360f;
-        const float panelHeight = 220f;
-        float panelX = Screen.width - panelWidth - 10f;
-        float panelY = 10f;
-
-        GUILayout.BeginArea(new Rect(panelX, panelY, panelWidth, panelHeight), GUI.skin.box);
-        GUILayout.Label($"Necromancer Party {SlotsUsed}/{_maxPartyMembers}");
-
-        List<PartyMemberData> activeMembers = _members
-            .Where(member => member != null && member.IsAlive)
-            .OrderBy(member => member.FormationIndex)
-            .ToList();
-
-        if (activeMembers.Count == 0)
-        {
-            GUILayout.Label("No active party members.");
-        }
-        else
-        {
-            for (int i = 0; i < activeMembers.Count; i++)
-            {
-                PartyMemberData member = activeMembers[i];
-
-                string unitName = member.UnitDefinition != null ? member.UnitDefinition.displayName : "Missing UnitData";
-                GUILayout.Label(
-                    $"[{member.FormationIndex}] {unitName} | HP {member.CurrentHealth} | " +
-                    $"{(member.IsDeployed ? "Deployed" : "Idle")}");
-            }
-        }
-
-        GUILayout.EndArea();
-    }
-
     private int GetNextFormationIndex()
     {
         return _members.Count;

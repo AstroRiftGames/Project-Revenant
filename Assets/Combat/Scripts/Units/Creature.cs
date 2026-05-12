@@ -14,7 +14,6 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(StatusEffectController))]
 [RequireComponent(typeof(UnitVisualMaterialController))]
 [RequireComponent(typeof(StatusEffectVisualFeedback))]
-[RequireComponent(typeof(StatusEffectDebugPopupPresenter))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public static event Action<Creature> OnCreatureEnabled;
@@ -101,15 +100,6 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
                 "Update the prefab setup to include it explicitly if this unit should use unified material feedback.",
                 this);
             gameObject.AddComponent<UnitVisualMaterialController>();
-        }
-
-        if (GetComponent<StatusEffectDebugPopupPresenter>() == null)
-        {
-            Debug.LogWarning(
-                $"[{nameof(Creature)}] '{name}' was missing {nameof(StatusEffectDebugPopupPresenter)} at runtime and it was auto-added. " +
-                "Update the prefab setup to include it explicitly while persistent status debug is enabled.",
-                this);
-            gameObject.AddComponent<StatusEffectDebugPopupPresenter>();
         }
 
         _selectionFeedbackView = GetComponent<UnitSelectionFeedbackView>();

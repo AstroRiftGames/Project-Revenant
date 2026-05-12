@@ -120,8 +120,7 @@ public class UnitDeathHandler : MonoBehaviour
             GetComponent<SkillCaster>(),
             GetComponent<TargetingStrategy>(),
             GetComponent<BasicUnitAction>(),
-            GetComponent<StatusEffectController>(),
-            GetComponent<StatusEffectDebugPopupPresenter>()
+            GetComponent<StatusEffectController>()
         };
     }
 

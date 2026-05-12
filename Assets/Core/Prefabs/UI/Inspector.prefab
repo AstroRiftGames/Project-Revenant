@@ -408,7 +408,7 @@ MonoBehaviour:
   allyUIContainer: {fileID: 7420559342304276123}
   enemyUIContainer: {fileID: 862133248589798860}
   uiEntryPrefab: {fileID: -2935357074270545806, guid: 286299fe6578cde48a91e4515c42dcaa, type: 3}
-  iconDatabase: {fileID: 11400000, guid: ef13445337a73b54ea2bde42f89de657, type: 2}
+  iconDatabase: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
 --- !u!1 &7814491465490424190
 GameObject:
   m_ObjectHideFlags: 0

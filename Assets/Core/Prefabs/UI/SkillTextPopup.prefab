@@ -99,7 +99,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _label: {fileID: 100013}
   _lifetime: 0.7
-  _riseDistance: 0.45
   _debugLogs: 0
 --- !u!1 &100010
 GameObject:
@@ -193,17 +192,18 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 42
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 700
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 14
   m_fontSizeMax: 48
-  m_fontStyle: 1
+  m_fontStyle: 17
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

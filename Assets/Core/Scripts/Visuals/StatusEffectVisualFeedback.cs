@@ -8,10 +8,6 @@ using UnityEngine;
 [RequireComponent(typeof(UnitVisualMaterialController))]
 public class StatusEffectVisualFeedback : MonoBehaviour
 {
-    [Header("Popup")]
-    [SerializeField] private SkillTextPopup _popupPrefab;
-    [SerializeField] private Vector3 _popupOffset = new(0f, 0.95f, 0f);
-
     [Header("Debug")]
     [SerializeField] private bool _debugLogs;
 
@@ -68,7 +64,6 @@ public class StatusEffectVisualFeedback : MonoBehaviour
             return;
 
         ForceRefreshVisualState();
-        ShowPopup(ResolveApplyPopupText(activeEffect), ResolveEffectColor(activeEffect));
     }
 
     private void HandleEffectChanged(StatusEffectController controller, ActiveStatusEffect activeEffect)
@@ -83,14 +78,6 @@ public class StatusEffectVisualFeedback : MonoBehaviour
     {
         if (!ReferenceEquals(controller, _statusEffectController))
             return;
-
-        if (removalReason == StatusEffectRemovalReason.Expired &&
-            activeEffect != null &&
-            activeEffect.Definition != null &&
-            activeEffect.Definition.ShowExpirePopup)
-        {
-            ShowPopup(activeEffect.Definition.ExpirePopupText, ResolveEffectColor(activeEffect));
-        }
 
         ForceRefreshVisualState();
     }
@@ -218,32 +205,6 @@ return definition.EffectType switch
         };
     }
 
-private static string ResolveApplyPopupText(ActiveStatusEffect activeEffect)
-    {
-        StatusEffectDefinition definition = activeEffect != null ? activeEffect.Definition : null;
-        if (definition == null)
-            return null;
-
-        string popupText = definition.ApplyPopupText;
-        if (string.IsNullOrWhiteSpace(popupText))
-            popupText = definition.DisplayName;
-
-        string result = popupText;
-
-        int stacks = activeEffect.StackCount;
-        if (stacks > 1)
-            result += $" x{stacks}";
-
-        if (definition.HasTimedDuration && activeEffect.ExpiresAt > 0)
-        {
-            float remaining = activeEffect.ExpiresAt - Time.time;
-            if (remaining > 0)
-                result += $" ({remaining:0.0}s)";
-        }
-
-        return result;
-    }
-
     private static int ResolveVisualPriority(UnitVisualMaterialState state)
     {
         return state switch
@@ -261,44 +222,9 @@ private static string ResolveApplyPopupText(ActiveStatusEffect activeEffect)
         };
     }
 
-    private Color ResolveEffectColor(ActiveStatusEffect activeEffect)
-    {
-        StatusVisualStyle style = activeEffect != null && activeEffect.Definition != null
-            ? ResolveRepresentableVisualStyle(activeEffect.Definition)
-            : StatusVisualStyle.None;
-
-        return ResolvePopupColor(MapVisualStyleToState(style));
-    }
-
-    private void ShowPopup(string message, Color color)
-    {
-        if (string.IsNullOrWhiteSpace(message) || _popupPrefab == null)
-            return;
-
-        SkillTextPopup popup = Instantiate(_popupPrefab, transform);
-        popup.name = $"Status Popup - {message}";
-        popup.transform.localPosition = _popupOffset;
-        popup.transform.localRotation = Quaternion.identity;
-        popup.Initialize(message, color);
-    }
-
     private void LogDebug(string message)
     {
         if (_debugLogs)
             Debug.Log(message, this);
-    }
-
-    private static Color ResolvePopupColor(UnitVisualMaterialState state)
-    {
-        return state switch
-        {
-            UnitVisualMaterialState.Stun => new Color(1f, 0.9f, 0.25f, 1f),
-            UnitVisualMaterialState.DamageOverTimePermanent => new Color(0.62f, 0.2f, 0.9f, 1f),
-            UnitVisualMaterialState.DamageOverTime => new Color(1f, 0.38f, 0.38f, 1f),
-            UnitVisualMaterialState.Debuff => new Color(0.95f, 0.45f, 0.78f, 1f),
-            UnitVisualMaterialState.HealOverTime => new Color(0.35f, 1f, 0.55f, 1f),
-            UnitVisualMaterialState.Buff => new Color(0.35f, 0.85f, 1f, 1f),
-            _ => Color.white
-        };
     }
 }
