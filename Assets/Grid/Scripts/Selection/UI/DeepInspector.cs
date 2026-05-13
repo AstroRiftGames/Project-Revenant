@@ -62,10 +62,10 @@ namespace Selection.UI
             if (characterPortrait != null) characterPortrait.sprite = stats.CharacterSprite;
             if (characterNameText != null) characterNameText.text = stats.DisplayName;
             
-            if (roleIcon != null && iconDatabase != null) roleIcon.sprite = iconDatabase.GetRoleIcon(stats.Role);
+            if (roleIcon != null && iconDatabase != null) (roleIcon.sprite, roleIcon.color) = iconDatabase.GetRoleIcon(stats.Role);
             if (roleNameText != null) roleNameText.text = stats.Role.ToString();
             
-            if (factionIcon != null && iconDatabase != null) factionIcon.sprite = iconDatabase.GetFactionIcon(stats.Faction);
+            if (factionIcon != null && iconDatabase != null) (factionIcon.sprite, factionIcon.color) = iconDatabase.GetFactionIcon(stats.Faction);
             if (factionNameText != null) factionNameText.text = stats.Faction.ToString();
 
             // 2. Ability Card

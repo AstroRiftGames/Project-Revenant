@@ -12,6 +12,7 @@ namespace Data
         {
             public UnitFaction faction;
             public Sprite icon;
+            public Color color;
         }
 
         [Serializable]
@@ -19,6 +20,7 @@ namespace Data
         {
             public UnitRole role;
             public Sprite icon;
+            public Color color;
         }
 
         [Serializable]
@@ -26,6 +28,7 @@ namespace Data
         {
             public StatType stat;
             public Sprite icon;
+            public Color color;
         }
 
         [Serializable]
@@ -33,6 +36,7 @@ namespace Data
         {
             public PrefabDungeonGeneration.PDRoomType roomType;
             public Sprite icon;
+            public Color color;
         }
 
         [Serializable]
@@ -71,32 +75,32 @@ namespace Data
             return _instance;
         }
 
-        public Sprite GetFactionIcon(UnitFaction faction)
+        public (Sprite, Color) GetFactionIcon(UnitFaction faction)
         {
             foreach (var entry in factionIcons)
-                if (entry.faction == faction) return entry.icon;
-            return null;
+                if (entry.faction == faction) return (entry.icon, entry.color);
+            return (null, Color.white);
         }
 
-        public Sprite GetRoleIcon(UnitRole role)
+        public (Sprite, Color) GetRoleIcon(UnitRole role)
         {
             foreach (var entry in roleIcons)
-                if (entry.role == role) return entry.icon;
-            return null;
+                if (entry.role == role) return (entry.icon, entry.color);
+            return (null, Color.white);
         }
 
-        public Sprite GetStatIcon(StatType stat)
+        public (Sprite, Color) GetStatIcon(StatType stat)
         {
             foreach (var entry in statIcons)
-                if (entry.stat == stat) return entry.icon;
-            return null;
+                if (entry.stat == stat) return (entry.icon, entry.color);
+            return (null, Color.white);
         }
 
-        public Sprite GetRoomIcon(PrefabDungeonGeneration.PDRoomType roomType)
+        public (Sprite, Color) GetRoomIcon(PrefabDungeonGeneration.PDRoomType roomType)
         {
             foreach (var entry in roomIcons)
-                if (entry.roomType == roomType) return entry.icon;
-            return null;
+                if (entry.roomType == roomType) return (entry.icon, entry.color);
+            return (null, Color.white);
         }
 
         public (Sprite, Color) GetEffectIcon(StatusEffectType effectType)

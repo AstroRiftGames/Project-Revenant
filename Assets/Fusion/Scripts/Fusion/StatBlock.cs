@@ -10,6 +10,7 @@ public enum StatType
     PreferredDistance,
     Accuracy,
     Evasion,
+    Defense,
     MovementSpeed,
     VisionRange
 }

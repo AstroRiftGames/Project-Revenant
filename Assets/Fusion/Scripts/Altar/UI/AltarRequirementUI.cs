@@ -67,7 +67,7 @@ namespace Altar.UI
                     {
                         _factionIcon.gameObject.SetActive(true);
                         if (iconDb != null)
-                            _factionIcon.sprite = iconDb.GetFactionIcon(RequirementData.requiredFaction);
+                            (_factionIcon.sprite, _factionIcon.color) = iconDb.GetFactionIcon(RequirementData.requiredFaction);
                     }
                 }
 
@@ -81,7 +81,7 @@ namespace Altar.UI
                     {
                         _roleIcon.gameObject.SetActive(true);
                         if (iconDb != null)
-                            _roleIcon.sprite = iconDb.GetRoleIcon(RequirementData.requiredRole);
+                            (_roleIcon.sprite, _roleIcon.color) = iconDb.GetRoleIcon(RequirementData.requiredRole);
                     }
                 }
             }

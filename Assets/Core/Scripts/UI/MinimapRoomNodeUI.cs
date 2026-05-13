@@ -23,10 +23,11 @@ namespace ProjectRevenant.UI
 
             if (RoomIconImage != null && iconDatabase != null)
             {
-                Sprite icon = iconDatabase.GetRoomIcon(roomNode.RoomType);
+                (Sprite icon, Color color) = iconDatabase.GetRoomIcon(roomNode.RoomType);
                 if (icon != null)
                 {
                     RoomIconImage.sprite = icon;
+                    RoomIconImage.color = color;
                     RoomIconImage.enabled = true;
                 }
                 else

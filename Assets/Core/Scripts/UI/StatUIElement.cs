@@ -16,7 +16,7 @@ public class StatUIElement : MonoBehaviour
     {
         if (_statIcon != null && iconDb != null)
         {
-            _statIcon.sprite = iconDb.GetStatIcon(statType);
+            (_statIcon.sprite, _statIcon.color) = iconDb.GetStatIcon(statType);
         }
 
         if (_statValueText != null)
