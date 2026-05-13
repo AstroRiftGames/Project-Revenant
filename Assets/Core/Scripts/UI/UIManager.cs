@@ -13,6 +13,7 @@ public enum UIType
     Shop,
     Mana,
     DeepInspector,
+    Profile,
 }
 
 public class UIManager : MonoBehaviour
