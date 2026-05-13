@@ -52,7 +52,7 @@ MonoBehaviour:
   _maxLogsLimit: 4
   _timeBeforeFade: 3
   _fadeDuration: 1
-  _defaultAttackIcon: {fileID: 21300000, guid: b0325800c9b52704ab3193529a278ab6, type: 3}
+  _defaultAttackIcon: {fileID: -1153225444930126518, guid: 9261047a519382247ac114da7201badf, type: 3}
   _logEntryPrefab: {fileID: 8916966898191360933, guid: f446932bd6d35f14b83cb6c2bec315ce, type: 3}
   _logContainer: {fileID: 5555849134409654149}
 --- !u!114 &8572602171014570796

@@ -42,14 +42,14 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: c33c6ae4ffbbdc8439f47c9811ec4064, type: 3}
     color: {r: 0.24313726, g: 0.4862745, b: 0.69411767, a: 1}
   - role: 1
-    icon: {fileID: 21300000, guid: a67d80a1e6dd824409cb30f62dc28448, type: 3}
+    icon: {fileID: 8606772957828517546, guid: 4e729847f877fce40abf45047f0ccde3, type: 3}
     color: {r: 0.8392157, g: 0.27058825, b: 0.27058825, a: 1}
   - role: 2
-    icon: {fileID: 21300000, guid: 4b8ac79055b2af4408f7a8ffd3b7610d, type: 3}
+    icon: {fileID: 3423954634943380333, guid: b2f6bd360f67f2f4da25dd382c28b5fc, type: 3}
     color: {r: 0.28627452, g: 0.7137255, b: 0.45882353, a: 1}
   statIcons:
   - stat: 0
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 1512316786106143848, guid: 89e7f0c986d026b43bf4f58d07963728, type: 3}
     color: {r: 0.6509804, g: 0.22745098, b: 0.22745098, a: 1}
   - stat: 1
     icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
@@ -67,16 +67,16 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
     color: {r: 0.40392157, g: 0.6117647, b: 0.18039216, a: 1}
   - stat: 6
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 4289201707420406139, guid: b207119c16d1bb44a83160c9d5ecd6eb, type: 3}
     color: {r: 0.4392157, g: 0.2509804, b: 0.54901963, a: 1}
   - stat: 7
     icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
     color: {r: 0.30588236, g: 0.34901962, b: 0.4, a: 1}
   - stat: 8
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 6057387042745037111, guid: 21c14782a84b24742ae8e829a4d029d6, type: 3}
     color: {r: 0.17254902, g: 0.6039216, b: 0.4862745, a: 1}
   - stat: 9
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 778664977074735268, guid: 832ac64fd51e86746be987915a1f2e94, type: 3}
     color: {r: 0.25490198, g: 0.49803922, b: 0.72156864, a: 1}
   roomIcons:
   - roomType: 0
