@@ -28,6 +28,8 @@ GameObject:
   - component: {fileID: 144917931282359085}
   - component: {fileID: -1422460897313959945}
   - component: {fileID: -3343213349234449157}
+  - component: {fileID: 529244890868294888}
+  - component: {fileID: 5313474124457109783}
   m_Layer: 10
   m_Name: Enemy Support
   m_TagString: Untagged
@@ -434,6 +436,43 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0.3}
   m_Size: {x: 0.25, y: 0.5}
   m_Direction: 0
+--- !u!114 &529244890868294888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168480000053724679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07dc0a780044eccbcbafcecc63fe404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targetRenderers:
+  - {fileID: 6917167946172172191}
+  - {fileID: 595677691054945617}
+  _autoCollectChildRenderers: 1
+  _includeInactiveChildren: 1
+  _outlineMaterial: {fileID: 2100000, guid: 9ca759d24481836479c7f7ffdf7d1e84, type: 2}
+  _outlineColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  _outlineThickness: 1
+  _highlightedOnEnable: 0
+  _sortingOrderOffset: 1
+--- !u!114 &5313474124457109783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168480000053724679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 630275c999e63b345a31fb327fd8dc01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _allyColor: {r: 0.18, g: 0.52, b: 1, a: 1}
+  _enemyColor: {r: 1, g: 0.22, b: 0.22, a: 1}
+  _thickness: 1
 --- !u!1 &4445016258265036483
 GameObject:
   m_ObjectHideFlags: 0

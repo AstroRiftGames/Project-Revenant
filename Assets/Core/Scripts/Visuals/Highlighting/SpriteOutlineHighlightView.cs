@@ -7,6 +7,9 @@ public class SpriteOutlineHighlightView : MonoBehaviour
     private static readonly int HighlightEnabledId = Shader.PropertyToID("_HighlightEnabled");
     private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
     private static readonly int OutlineThicknessId = Shader.PropertyToID("_OutlineThickness");
+    private static readonly int OverlayScaleId = Shader.PropertyToID("_OverlayScale");
+    private static readonly int UvCenterId = Shader.PropertyToID("_UvCenter");
+    private static readonly int UvRectId = Shader.PropertyToID("_UvRect");
     private const string OverlayObjectSuffix = "_HighlightOverlay";
 
     private sealed class OverlayEntry
@@ -14,6 +17,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         public SpriteRenderer SourceRenderer;
         public SpriteRenderer OverlayRenderer;
         public Transform OverlayTransform;
+        public Material InstanceMaterial;
     }
 
     [Header("Targets")]
@@ -146,13 +150,16 @@ public class SpriteOutlineHighlightView : MonoBehaviour
 
             SpriteRenderer overlayRenderer = overlayObject.AddComponent<SpriteRenderer>();
             overlayRenderer.enabled = false;
-            overlayRenderer.sharedMaterial = _outlineMaterial;
+
+            Material instanceMaterial = _outlineMaterial != null ? new Material(_outlineMaterial) : null;
+            overlayRenderer.sharedMaterial = instanceMaterial;
 
             _overlayEntries.Add(new OverlayEntry
             {
                 SourceRenderer = sourceRenderer,
                 OverlayRenderer = overlayRenderer,
-                OverlayTransform = overlayObject.transform
+                OverlayTransform = overlayObject.transform,
+                InstanceMaterial = instanceMaterial
             });
         }
     }
@@ -162,8 +169,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         if (_overlayEntries.Count == 0)
             return;
 
-        EnsurePropertyBlock();
-        float highlightEnabled = forceHighlighted ?? _isHighlighted ? 1f : 0f;
+        bool highlighted = forceHighlighted.HasValue ? forceHighlighted.Value : _isHighlighted;
 
         for (int i = _overlayEntries.Count - 1; i >= 0; i--)
         {
@@ -171,22 +177,19 @@ public class SpriteOutlineHighlightView : MonoBehaviour
             if (entry.SourceRenderer == null || entry.OverlayRenderer == null)
                 continue;
 
-            SpriteRenderer overlayRenderer = entry.OverlayRenderer;
             bool shouldRender =
-                highlightEnabled > 0.5f &&
-                _outlineMaterial != null &&
+                highlighted &&
+                entry.InstanceMaterial != null &&
                 entry.SourceRenderer.enabled &&
                 entry.SourceRenderer.sprite != null;
 
-            overlayRenderer.enabled = shouldRender;
+            entry.OverlayRenderer.enabled = shouldRender;
             if (!shouldRender)
                 continue;
 
-            overlayRenderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetFloat(HighlightEnabledId, highlightEnabled);
-            _propertyBlock.SetColor(OutlineColorId, _outlineColor);
-            _propertyBlock.SetFloat(OutlineThicknessId, _outlineThickness);
-            overlayRenderer.SetPropertyBlock(_propertyBlock);
+            // Write directly to the per-instance material — works with SRP Batcher.
+            entry.InstanceMaterial.SetColor(OutlineColorId, _outlineColor);
+            entry.InstanceMaterial.SetFloat(OutlineThicknessId, _outlineThickness);
         }
     }
 
@@ -225,7 +228,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         SpriteRenderer sourceRenderer = entry.SourceRenderer;
         SpriteRenderer overlayRenderer = entry.OverlayRenderer;
 
-        overlayRenderer.sharedMaterial = _outlineMaterial;
+        // Keep using the instance material — don't override back to shared.
         overlayRenderer.sprite = sourceRenderer.sprite;
         overlayRenderer.drawMode = sourceRenderer.drawMode;
         overlayRenderer.size = sourceRenderer.size;
@@ -236,8 +239,23 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         overlayRenderer.maskInteraction = sourceRenderer.maskInteraction;
         overlayRenderer.spriteSortPoint = sourceRenderer.spriteSortPoint;
         overlayRenderer.sortingLayerID = sourceRenderer.sortingLayerID;
-        overlayRenderer.sortingOrder = sourceRenderer.sortingOrder - _sortingOrderOffset;
+        overlayRenderer.sortingOrder = sourceRenderer.sortingOrder + _sortingOrderOffset;
         overlayRenderer.color = new Color(1f, 1f, 1f, sourceRenderer.color.a);
+        
+        // Pass UV and scaling data to the material to generate synthetic padding without stretching the art
+        if (entry.InstanceMaterial != null && sourceRenderer.sprite != null)
+        {
+            Vector4 uvRect = UnityEngine.Sprites.DataUtility.GetOuterUV(sourceRenderer.sprite);
+            // uvRect is (xMin, yMin, xMax, yMax)
+            Vector4 uvCenter = new Vector4((uvRect.x + uvRect.z) * 0.5f, (uvRect.y + uvRect.w) * 0.5f, 0, 0);
+            
+            Vector3 scale = ResolveOverlayScale(sourceRenderer);
+            Vector4 shaderScale = new Vector4(scale.x, scale.y, 0, 0);
+
+            entry.InstanceMaterial.SetVector(OverlayScaleId, shaderScale);
+            entry.InstanceMaterial.SetVector(UvCenterId, uvCenter);
+            entry.InstanceMaterial.SetVector(UvRectId, uvRect);
+        }
 
         entry.OverlayTransform.localPosition = Vector3.zero;
         entry.OverlayTransform.localRotation = Quaternion.identity;
@@ -251,9 +269,11 @@ public class SpriteOutlineHighlightView : MonoBehaviour
             return Vector3.one;
 
         float pixelsPerUnit = sourceRenderer.sprite != null ? sourceRenderer.sprite.pixelsPerUnit : 100f;
-        float expansionUnits = _outlineThickness / pixelsPerUnit;
-        float scaleX = (sourceSize.x + (expansionUnits * 2f)) / sourceSize.x;
-        float scaleY = (sourceSize.y + (expansionUnits * 2f)) / sourceSize.y;
+        // Expand by double the outline thickness (padding on both sides)
+        float expansionUnits = (_outlineThickness * 2f) / pixelsPerUnit;
+        
+        float scaleX = (sourceSize.x + expansionUnits) / sourceSize.x;
+        float scaleY = (sourceSize.y + expansionUnits) / sourceSize.y;
         return new Vector3(scaleX, scaleY, 1f);
     }
 
@@ -291,6 +311,14 @@ public class SpriteOutlineHighlightView : MonoBehaviour
     {
         if (entry?.OverlayTransform == null)
             return;
+
+        if (entry.InstanceMaterial != null)
+        {
+            if (Application.isPlaying)
+                Destroy(entry.InstanceMaterial);
+            else
+                DestroyImmediate(entry.InstanceMaterial);
+        }
 
         if (Application.isPlaying)
             Destroy(entry.OverlayTransform.gameObject);

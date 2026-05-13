@@ -200,6 +200,8 @@ GameObject:
   - component: {fileID: 3049668297052015301}
   - component: {fileID: 8216608464728294115}
   - component: {fileID: 5172593299683393178}
+  - component: {fileID: 1951746085609356077}
+  - component: {fileID: 1057005988179580197}
   m_Layer: 8
   m_Name: Ally
   m_TagString: Untagged
@@ -568,6 +570,44 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _debugLogs: 0
+--- !u!114 &1951746085609356077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8823206920075786061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07dc0a780044eccbcbafcecc63fe404, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targetRenderers:
+  - {fileID: 1890298273730405526}
+  - {fileID: 3492396671325194499}
+  - {fileID: 6287769482321477847}
+  _autoCollectChildRenderers: 1
+  _includeInactiveChildren: 1
+  _outlineMaterial: {fileID: 2100000, guid: 9ca759d24481836479c7f7ffdf7d1e84, type: 2}
+  _outlineColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  _outlineThickness: 1
+  _highlightedOnEnable: 0
+  _sortingOrderOffset: 1
+--- !u!114 &1057005988179580197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8823206920075786061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 630275c999e63b345a31fb327fd8dc01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _allyColor: {r: 0.18, g: 0.52, b: 1, a: 1}
+  _enemyColor: {r: 1, g: 0.22, b: 0.22, a: 1}
+  _thickness: 1
 --- !u!1001 &2821640099919802650
 PrefabInstance:
   m_ObjectHideFlags: 0

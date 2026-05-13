@@ -1,3 +1,4 @@
+using PrefabDungeonGeneration;
 using ProceduralDungeon;
 using UnityEngine;
 
@@ -35,11 +36,23 @@ public sealed class RoomCameraAdapter : MonoBehaviour
     private void OnEnable()
     {
         FloorManager.OnRoomEntered += HandleRoomEntered;
+        PrefabDungeonGenerator.OnFloorGenerated += HandleFloorGenerated;
     }
 
     private void OnDisable()
     {
         FloorManager.OnRoomEntered -= HandleRoomEntered;
+        PrefabDungeonGenerator.OnFloorGenerated -= HandleFloorGenerated;
+    }
+
+    private void Start()
+    {
+        // Attempt to frame the room if it was already set (e.g. static scene or generated before Start)
+        FloorManager floorManager = FindFirstObjectByType<FloorManager>();
+        if (floorManager != null && floorManager.CurrentRoom != null)
+        {
+            FitToRoom(floorManager.CurrentRoom);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -90,6 +103,16 @@ public sealed class RoomCameraAdapter : MonoBehaviour
     private void HandleRoomEntered(RoomDoor door, GameObject nextRoom)
     {
         FitToRoom(nextRoom);
+    }
+
+    private void HandleFloorGenerated(PDFloorData floorData)
+    {
+        // When the dungeon is generated, the FloorManager sets the initial room. Frame it.
+        FloorManager floorManager = FindFirstObjectByType<FloorManager>();
+        if (floorManager != null && floorManager.CurrentRoom != null)
+        {
+            FitToRoom(floorManager.CurrentRoom);
+        }
     }
 
     private void DisableCameraFollow()
