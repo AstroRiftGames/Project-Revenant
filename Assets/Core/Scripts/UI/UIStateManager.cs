@@ -14,6 +14,7 @@ public class UIStateManager : MonoBehaviour
             GameManager.Instance.RequestHideUI(UIType.Minimap);
             GameManager.Instance.RequestHideUI(UIType.LOG);
             GameManager.Instance.RequestHideUI(UIType.DeepInspector);
+            GameManager.Instance.RequestHideUI(UIType.CombatStatus);
         }
 
         CheckCurrentScene(SceneManager.GetActiveScene());
@@ -77,14 +78,22 @@ public class UIStateManager : MonoBehaviour
                 {
                     OnCombatResolved(_currentCombatRoom, _currentCombatRoom.Outcome);
                 }
+                else
+                {
+                    // Deployment state or similar: hide combat UI, show navigation UI
+                    GameManager.Instance.RequestShowUI(UIType.Minimap);
+                    GameManager.Instance.RequestHideUI(UIType.LOG);
+                    GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                }
             }
             else
             {
-                // Si entra a una room normal, asegurar que el Minimap esté visible y el LOG oculto
+                // Si entra a una room normal, asegurar que el Minimap esté visible, el LOG oculto y el CombatStatus oculto
                 if (GameManager.Instance != null && SceneManager.GetActiveScene().name == "Dungeon")
                 {
                     GameManager.Instance.RequestShowUI(UIType.Minimap);
                     GameManager.Instance.RequestHideUI(UIType.LOG);
+                    GameManager.Instance.RequestHideUI(UIType.CombatStatus);
                 }
             }
         }
@@ -96,6 +105,7 @@ public class UIStateManager : MonoBehaviour
         {
             GameManager.Instance.RequestHideUI(UIType.Minimap);
             GameManager.Instance.RequestShowUI(UIType.LOG);
+            GameManager.Instance.RequestShowUI(UIType.CombatStatus);
         }
     }
 
@@ -105,6 +115,7 @@ public class UIStateManager : MonoBehaviour
         {
             GameManager.Instance.RequestShowUI(UIType.Minimap);
             GameManager.Instance.RequestHideUI(UIType.LOG);
+            GameManager.Instance.RequestHideUI(UIType.CombatStatus);
         }
     }
 
