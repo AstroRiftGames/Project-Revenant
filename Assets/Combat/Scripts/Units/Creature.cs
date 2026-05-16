@@ -28,7 +28,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public UnitFaction Faction => _affiliationState.Faction;
     public Vector3 Position => transform.position;
     public bool IsEnemy => Team == UnitTeam.Enemy;
-    public bool IsAlly => Team == UnitTeam.NecromancerAlly;
+    public bool IsAlly => Team == UnitTeam.Ally;
     public UnitLifecycleState LifecycleState => _recruitableState.CurrentState;
     public bool IsRecruitable => _recruitableState.IsRecruitable;
 

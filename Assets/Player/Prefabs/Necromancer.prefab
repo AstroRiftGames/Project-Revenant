@@ -431,8 +431,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f967912b83180e4b8f2e9c01adb86fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: 179cda59bf1edba47842adcd98a6ecfe, type: 2}
   _grid: {fileID: 0}
   _moveSpeed: 5
+  _spriteRenderer: {fileID: 4319667460501799238}
   _movementTileFeedback: {fileID: 8099833755549800280}
   _startCombatKey: 102
   _debugCombatStartLogs: 1

@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Renders a 1-pixel team-colored outline on a creature sprite:
-/// blue for allies (NecromancerAlly), red for enemies.
+/// blue for allies, red for enemies.
 /// The outline is shown while the creature is alive and hidden on death.
 /// Reacts to affiliation changes at runtime (e.g. recruitment).
 /// </summary>

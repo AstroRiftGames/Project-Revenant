@@ -113,7 +113,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (!CanDeployUnits || unit == null || _roomContext == null)
             return false;
 
-        if (!ReferenceEquals(unit.RoomContext, _roomContext) || unit.Team != UnitTeam.NecromancerAlly)
+        if (!ReferenceEquals(unit.RoomContext, _roomContext) || unit.Team != UnitTeam.Ally)
             return false;
 
         RoomGrid grid = _roomContext.RoomGrid;
@@ -182,7 +182,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             if (!IsValidCombatant(unit))
                 continue;
 
-            if (unit.Team == UnitTeam.NecromancerAlly)
+            if (unit.Team == UnitTeam.Ally)
                 hasAliveAllies = true;
             else if (unit.Team == UnitTeam.Enemy)
                 hasAliveEnemies = true;

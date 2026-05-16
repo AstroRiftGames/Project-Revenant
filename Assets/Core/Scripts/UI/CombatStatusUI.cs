@@ -76,7 +76,7 @@ public class CombatStatusUI : MonoBehaviour
                 if (unit == null || !unit.gameObject.activeInHierarchy || !unit.IsAlive)
                     continue;
 
-                if (unit.Team == UnitTeam.NecromancerAlly)
+                if (unit.Team == UnitTeam.Ally)
                     allies++;
                 else if (unit.Team == UnitTeam.Enemy)
                     enemies++;

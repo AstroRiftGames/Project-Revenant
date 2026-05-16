@@ -106,7 +106,7 @@ public class FusionController : StationController
             newUnitData.displayName = $"Fused {result.ResultCreature.UnitFaction}";
             newUnitData.isFusion = true;
             newUnitData.sprite = result.ResultCreature.Visual;
-            newUnitData.team = UnitTeam.NecromancerAlly;
+            newUnitData.team = UnitTeam.Ally;
             newUnitData.faction = result.ResultCreature.UnitFaction;
             newUnitData.role = result.ResultCreature.Role;
             newUnitData.unitPrefab = _neutralCreaturePrefab;

@@ -162,7 +162,7 @@ public class NecromancerParty : MonoBehaviour
             return true;
 
         int currentHealth = Mathf.Max(1, unit.BaseMaxHealth);
-        member = CreateMember(unitData, GetNextFormationIndex(), UnitTeam.NecromancerAlly, unit.Faction, currentHealth);
+        member = CreateMember(unitData, GetNextFormationIndex(), UnitTeam.Ally, unit.Faction, currentHealth);
         member.IsDeployed = true;
         _members.Add(member);
         NormalizeFormationIndices();
