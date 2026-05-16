@@ -32,8 +32,8 @@ public static class SpacingEvaluator
             return null;
 
         TargetingPolicy hostilePolicy = TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
-        IReadOnlyList<Unit> roomUnits = TargetingCandidateProvider.GetRoomCandidates(self);
-        return TargetSelectionUtility.SelectClosestTarget(
+        IReadOnlyList<Unit> roomUnits = self.GetRoomUnits();
+        return TargetingStrategy.SelectClosestTarget(
             self,
             roomUnits,
             candidate => UnitTargetValidator.IsTargetSelectable(self, candidate, hostilePolicy));

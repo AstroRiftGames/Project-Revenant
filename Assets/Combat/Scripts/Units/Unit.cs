@@ -81,7 +81,9 @@ public class Unit : Creature, IGridOccupant
 
     public IReadOnlyList<Unit> GetRoomUnits()
     {
-        return TargetingCandidateProvider.GetRoomCandidates(this);
+        return RoomContext != null
+            ? RoomContext.Units
+            : Array.Empty<Unit>();
     }
 
     public int GetPreferredDistance(IBasicAction action)

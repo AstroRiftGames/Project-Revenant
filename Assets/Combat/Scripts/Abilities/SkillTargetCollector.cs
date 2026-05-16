@@ -335,7 +335,9 @@ public static class SkillTargetCollector
 
     private static IReadOnlyList<Unit> GetRoomUnits(Unit caster)
     {
-        return TargetingCandidateProvider.GetRoomCandidates(caster);
+        return caster != null
+            ? caster.GetRoomUnits()
+            : Array.Empty<Unit>();
     }
 
     private static RoomGrid ResolveRoomGrid(Unit caster)

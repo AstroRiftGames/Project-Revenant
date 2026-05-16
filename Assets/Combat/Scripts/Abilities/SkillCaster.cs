@@ -351,13 +351,13 @@ public class SkillCaster : MonoBehaviour
 
         return policy.Relationship switch
         {
-            RequiredTargetRelationship.Ally => TargetSelectionUtility.SelectLowestHealthRatioTarget(
+            RequiredTargetRelationship.Ally => TargetingStrategy.SelectLowestHealthRatioTarget(
                 _unit,
-                TargetingCandidateProvider.GetRoomCandidates(_unit),
+                _unit.GetRoomUnits(),
                 candidate => IsPrimarySkillTargetValid(skill, candidate)),
-            RequiredTargetRelationship.Hostile => TargetSelectionUtility.SelectClosestTarget(
+            RequiredTargetRelationship.Hostile => TargetingStrategy.SelectClosestTarget(
                 _unit,
-                TargetingCandidateProvider.GetRoomCandidates(_unit),
+                _unit.GetRoomUnits(),
                 candidate => IsPrimarySkillTargetValid(skill, candidate)),
             _ => null
         };
