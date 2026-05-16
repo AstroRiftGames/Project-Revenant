@@ -38,8 +38,8 @@ public class NecromancerPartyContext : MonoBehaviour
         return _party.TryRecruitUnit(unit, out member);
     }
 
-    public void RegisterDeployedUnit(GameObject instance, string partyMemberId)
+    public void TrackDeployedUnit(GameObject instance, string partyMemberId)
     {
-        _partySpawner?.TrackDeployment(instance, partyMemberId);
+        _partySpawner?.TrackDeployedUnit(instance, partyMemberId);
     }
 }

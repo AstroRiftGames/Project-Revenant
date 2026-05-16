@@ -1,37 +1,30 @@
-using System;
 using UnityEngine;
-
-public enum RecruitableCorpseResolutionOption
-{
-    Recruit,
-    AbsorbSoul
-}
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(RecruitableUnitState))]
 [RequireComponent(typeof(RecruitableUnitInteraction))]
-[RequireComponent(typeof(UnitRecruitmentHandler))]
 [RequireComponent(typeof(UnitDeathHandler))]
-public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
+[RequireComponent(typeof(PartyMemberLink))]
+public class RecruitableCorpseHandler : MonoBehaviour
 {
+    [SerializeField] private int _minimumRecruitHealth = 1;
+
     private Unit _unit;
     private RecruitableUnitState _state;
-    private RecruitableUnitInteraction _interaction;
-    private UnitRecruitmentHandler _recruitmentHandler;
     private UnitDeathHandler _deathHandler;
+    private PartyMemberLink _partyLink;
     private NecromancerPartyContext _partyContext;
     private ManaContext _manaContext;
     private SoulContext _soulContext;
-    private bool _hasBeenResolved;
+    private bool _hasHandledCorpse;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
         _state = GetComponent<RecruitableUnitState>();
-        _interaction = GetComponent<RecruitableUnitInteraction>();
-        _recruitmentHandler = GetComponent<UnitRecruitmentHandler>();
         _deathHandler = GetComponent<UnitDeathHandler>();
+        _partyLink = GetComponent<PartyMemberLink>();
         _partyContext = NecromancerPartyContext.Current;
         _manaContext = ManaContext.Current;
         _soulContext = SoulContext.Current;
@@ -39,139 +32,91 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
     private void OnEnable()
     {
-        if (_interaction != null)
-            _interaction.OnInteractionRequested += HandleInteractionRequested;
-
-        if (_state != null)
-            _state.OnStateChanged += HandleStateChanged;
+        _state.OnStateChanged += HandleStateChanged;
     }
 
     private void OnDisable()
     {
-        if (_interaction != null)
-            _interaction.OnInteractionRequested -= HandleInteractionRequested;
-
-        if (_state != null)
-            _state.OnStateChanged -= HandleStateChanged;
-    }
-
-    public void Configure(NecromancerPartyContext partyContext, SoulContext soulContext, ManaContext manaContext)
-    {
-        _partyContext = partyContext;
-        _soulContext = soulContext;
-        _manaContext = manaContext;
-        _recruitmentHandler?.Configure(partyContext);
-    }
-
-    public void IntegrateWithRoom(RoomContext roomContext)
-    {
-        Configure(NecromancerPartyContext.Current, SoulContext.Current, ManaContext.Current);
-    }
-
-    public bool TryResolve(RecruitableCorpseResolutionOption option)
-    {
-        if (!CanResolveRequestedOption(option))
-            return false;
-
-        bool resolved = ResolveInteraction(option);
-
-        if (resolved)
-            _hasBeenResolved = true;
-
-        return resolved;
-    }
-
-    private void HandleInteractionRequested(RecruitableCorpseResolutionOption option)
-    {
-        TryResolve(option);
+        _state.OnStateChanged -= HandleStateChanged;
     }
 
     public bool TryRecruit()
     {
-        if (!CanResolveRequestedOption(RecruitableCorpseResolutionOption.Recruit))
+        if (!CanHandleCorpse())
             return false;
 
-        int manaCost = ResolveRecruitManaCost();
-        if (!TrySpendMana(manaCost, RecruitableCorpseResolutionOption.Recruit))
+        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
+        int manaCost = Mathf.Max(0, unitData != null ? unitData.manaCostToRecruit : 0);
+        if (!TrySpendMana(manaCost, "recruit"))
             return false;
 
-        bool recruited = _recruitmentHandler != null && _recruitmentHandler.AttemptRecruitment();
-        if (!recruited)
+        if (!TryRecruitIntoParty(out PartyMemberData member))
+        {
             RefundMana(manaCost);
+            return false;
+        }
 
-        return recruited;
+        ReviveRecruitedUnit(member);
+        _partyContext ??= NecromancerPartyContext.Current;
+        _partyContext?.TrackDeployedUnit(gameObject, member.PartyMemberId);
+        _hasHandledCorpse = true;
+        return true;
     }
 
     public bool TryAbsorbSoul()
     {
-        if (!CanResolveRequestedOption(RecruitableCorpseResolutionOption.AbsorbSoul))
+        if (!CanHandleCorpse())
             return false;
 
         _soulContext ??= SoulContext.Current;
         if (_soulContext == null)
             return false;
 
-        int soulReward = ResolveSoulReward();
+        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
+        int soulReward = Mathf.Max(0, unitData != null ? unitData.softCurrencyRewardOnSoulAbsorb : 0);
         if (soulReward <= 0)
             return false;
 
-        int manaCost = ResolveAbsorbSoulManaCost();
-        if (!TrySpendMana(manaCost, RecruitableCorpseResolutionOption.AbsorbSoul))
+        int manaCost = Mathf.Max(0, unitData != null ? unitData.manaCostToAbsorbSoul : 0);
+        if (!TrySpendMana(manaCost, "absorb soul"))
             return false;
 
         _soulContext.AwardSouls(soulReward);
-        _deathHandler.FinalizeSoulAbsorbedCorpse();
+        _deathHandler.FinishSoulAbsorb();
+        _hasHandledCorpse = true;
         return true;
     }
 
-    private bool CanResolveRequestedOption(RecruitableCorpseResolutionOption option)
+    private bool CanHandleCorpse()
     {
-        return CanResolveCorpse() && IsSupportedResolution(option);
+        return !_hasHandledCorpse && _state.CanInteractWithCorpse;
     }
 
-    private bool CanResolveCorpse()
+    private bool TryRecruitIntoParty(out PartyMemberData member)
     {
-        return _unit != null &&
-               _state != null &&
-               _deathHandler != null &&
-               !_hasBeenResolved &&
-               _state.CanResolveRecruitableCorpse;
+        member = null;
+
+        _partyContext ??= NecromancerPartyContext.Current;
+        return _partyContext != null && _partyContext.TryRecruitUnit(_unit, out member);
     }
 
-    private static bool IsSupportedResolution(RecruitableCorpseResolutionOption option)
+    private void ReviveRecruitedUnit(PartyMemberData member)
     {
-        return option == RecruitableCorpseResolutionOption.Recruit ||
-               option == RecruitableCorpseResolutionOption.AbsorbSoul;
+        if (member == null)
+            return;
+
+        _partyLink.Initialize(member.PartyMemberId, true);
+        _unit.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
+
+        int restoredHealth = Mathf.Clamp(
+            member.CurrentHealth,
+            Mathf.Max(1, _minimumRecruitHealth),
+            _unit.MaxHealth);
+
+        _deathHandler.ReviveUnit(restoredHealth);
     }
 
-    private bool ResolveInteraction(RecruitableCorpseResolutionOption option)
-    {
-        return option switch
-        {
-            RecruitableCorpseResolutionOption.AbsorbSoul => TryAbsorbSoul(),
-            _ => TryRecruit()
-        };
-    }
-
-    private int ResolveSoulReward()
-    {
-        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
-        return Mathf.Max(0, unitData != null ? unitData.softCurrencyRewardOnSoulAbsorb : 0);
-    }
-
-    private int ResolveRecruitManaCost()
-    {
-        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
-        return Mathf.Max(0, unitData != null ? unitData.manaCostToRecruit : 0);
-    }
-
-    private int ResolveAbsorbSoulManaCost()
-    {
-        UnitData unitData = _unit != null ? _unit.GetUnitData() : null;
-        return Mathf.Max(0, unitData != null ? unitData.manaCostToAbsorbSoul : 0);
-    }
-
-    private bool TrySpendMana(int amount, RecruitableCorpseResolutionOption option)
+    private bool TrySpendMana(int amount, string actionName)
     {
         if (amount <= 0)
             return true;
@@ -179,7 +124,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
         _manaContext ??= ManaContext.Current;
         if (_manaContext == null)
         {
-            Debug.LogWarning($"[{nameof(RecruitableCorpseHandler)}] Missing {nameof(ManaContext)} while resolving '{option}' on '{name}'.", this);
+            Debug.LogWarning($"[{nameof(RecruitableCorpseHandler)}] Missing {nameof(ManaContext)} while trying to {actionName} on '{name}'.", this);
             return false;
         }
 
@@ -187,7 +132,7 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
             return true;
 
         Debug.LogWarning(
-            $"[{nameof(RecruitableCorpseHandler)}] Not enough mana to resolve '{option}' on '{name}'. " +
+            $"[{nameof(RecruitableCorpseHandler)}] Not enough mana to {actionName} on '{name}'. " +
             $"Required: {amount}, current: {(_manaContext.ManaBank != null ? _manaContext.ManaBank.StoredMana : 0)}.",
             this);
         return false;
@@ -204,6 +149,6 @@ public class RecruitableCorpseHandler : MonoBehaviour, IRoomContextUnitComponent
 
     private void HandleStateChanged(UnitLifecycleState state)
     {
-        _hasBeenResolved = state != UnitLifecycleState.Recruitable;
+        _hasHandledCorpse = state != UnitLifecycleState.Recruitable;
     }
 }

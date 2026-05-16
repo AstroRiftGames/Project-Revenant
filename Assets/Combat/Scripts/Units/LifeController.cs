@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(RecruitableUnitState))]
+[RequireComponent(typeof(UnitDeathHandler))]
 public class LifeController : MonoBehaviour, IDamageable
 {
     [SerializeField] private bool _debugDamage;
@@ -34,12 +35,12 @@ public class LifeController : MonoBehaviour, IDamageable
     {
         _unit = GetComponent<Unit>();
         _recruitableState = GetComponent<RecruitableUnitState>();
-        _deathHandler = GetComponent<UnitDeathHandler>() ?? gameObject.AddComponent<UnitDeathHandler>();
+        _deathHandler = GetComponent<UnitDeathHandler>();
         _statusEffectController = GetComponent<StatusEffectController>();
         _unitMovement = GetComponent<UnitMovement>();
 
-        if (_recruitableState == null)
-            throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required {nameof(RecruitableUnitState)} on '{name}'.");
+        if (_recruitableState == null || _deathHandler == null)
+            throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required death components on '{name}'.");
     }
 
     public void Initialize(int maxHealth)

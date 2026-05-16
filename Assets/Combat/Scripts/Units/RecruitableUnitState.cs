@@ -8,8 +8,7 @@ public class RecruitableUnitState : MonoBehaviour
     public bool IsAlive => CurrentState == UnitLifecycleState.Alive;
     public bool IsRecruitable => CurrentState == UnitLifecycleState.Recruitable;
     public bool IsDead => CurrentState == UnitLifecycleState.Dead;
-    public bool HasNonInteractableCorpseState => IsDead;
-    public bool CanResolveRecruitableCorpse => IsRecruitable;
+    public bool CanInteractWithCorpse => IsRecruitable;
 
     public event Action<UnitLifecycleState> OnStateChanged;
     public event Action<bool> OnRecruitableStateChanged;
