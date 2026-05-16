@@ -5,7 +5,7 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
     protected UnitCombat Combat { get; private set; }
     protected Unit Owner { get; private set; }
 
-    public abstract RequiredTargetRelationship RequiredTargetRelationship { get; }
+    public abstract TargetRelation TargetRelation { get; }
     public bool RequiresInjuredTarget => RequiresInjuredTargetForAction;
     public int RangeInCells => Combat != null ? Combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => Owner != null ? Mathf.Max(0, Owner.PreferredDistanceInCells) : RangeInCells;
@@ -20,17 +20,17 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
 
     public bool IsInRange(Unit self, Unit target)
     {
-        return Combat != null && Combat.IsTargetInBasicActionRange(target);
+        return Combat != null && Combat.IsBasicActionTargetInRange(target);
     }
 
     public bool IsValidTarget(Unit self, Unit target)
     {
-        return Combat != null && Combat.IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(this));
+        return Combat != null && Combat.CanPickBasicActionTarget(self, target, TargetRelation, RequiresInjuredTarget);
     }
 
     public bool CanExecute(Unit self, Unit target)
     {
-        return Combat != null && Combat.CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(this));
+        return Combat != null && Combat.CanUseBasicActionOn(self, target, TargetRelation, RequiresInjuredTarget);
     }
 
     public bool Execute(Unit self, Unit target)
@@ -47,23 +47,23 @@ public abstract class BasicUnitAction : MonoBehaviour, IBasicAction
 [RequireComponent(typeof(UnitCombat))]
 public class AttackAction : BasicUnitAction
 {
-    public override RequiredTargetRelationship RequiredTargetRelationship => RequiredTargetRelationship.Hostile;
+    public override TargetRelation TargetRelation => TargetRelation.Hostile;
 
     protected override bool ExecuteValidated(Unit self, Unit target)
     {
-        return Combat != null && Combat.TryExecuteAttackAction(self, target, RequiredTargetRelationship);
+        return Combat != null && Combat.TryUseAttack(self, target, TargetRelation);
     }
 }
 
 [RequireComponent(typeof(UnitCombat))]
 public class HealAction : BasicUnitAction
 {
-    public override RequiredTargetRelationship RequiredTargetRelationship => RequiredTargetRelationship.Ally;
+    public override TargetRelation TargetRelation => TargetRelation.Ally;
     protected override bool RequiresInjuredTargetForAction => true;
 
     protected override bool ExecuteValidated(Unit self, Unit target)
     {
-        return Combat != null && Combat.TryExecuteHealAction(self, target, RequiredTargetRelationship);
+        return Combat != null && Combat.TryUseHeal(self, target, TargetRelation);
     }
 }
 
@@ -84,69 +84,108 @@ public class UnitCombat : MonoBehaviour
         _unit = GetComponent<Unit>();
     }
 
-    public bool IsTargetInBasicActionRange(Unit target)
+    public bool IsBasicActionTargetInRange(Unit target)
     {
-        if (!UnitTargetValidator.IsTargetSelectable(_unit, target, TargetingPolicy.ForRelationship(RequiredTargetRelationship.Any)))
+        if (_unit == null || target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
             return false;
 
         return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
 
-    public bool CanExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy)
+    public bool CanUseBasicActionOn(Unit self, Unit target, TargetRelation targetRelation, bool needsInjuredTarget)
     {
-        if (!IsValidBasicActionTarget(self, target, policy))
+        if (!CanPickBasicActionTarget(self, target, targetRelation, needsInjuredTarget))
             return false;
 
         if (!CanOwnerUseBasicAction())
             return false;
 
-        if (!IsBasicActionOffCooldown())
+        if (!IsBasicActionReady())
             return false;
 
-        return IsTargetInBasicActionRange(target);
+        return IsBasicActionTargetInRange(target);
     }
 
-    public bool IsValidBasicActionTarget(Unit self, Unit target, in TargetingPolicy policy)
+    public bool CanPickBasicActionTarget(Unit self, Unit target, TargetRelation targetRelation, bool needsInjuredTarget)
     {
         if (self == null || _unit == null)
             return false;
 
-        if (!UnitTargetValidator.IsTargetSelectable(self, target, policy))
+        if (target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
+            return false;
+
+        if (!IsInSameRoom(self, target))
+            return false;
+
+        if (ReferenceEquals(self, target))
+            return false;
+
+        if (!self.CanDetect(target))
+            return false;
+
+        if (target.StatusEffects != null && target.StatusEffects.HasInvisibility)
+            return false;
+
+        if (targetRelation == TargetRelation.Hostile && !self.IsHostileTo(target))
+            return false;
+
+        if (targetRelation == TargetRelation.Ally && self.IsHostileTo(target))
+            return false;
+
+        if (needsInjuredTarget && target.CurrentHealth >= target.MaxHealth)
             return false;
 
         return true;
     }
 
-    public bool TryExecuteAttackAction(Unit self, Unit target, RequiredTargetRelationship relationship)
+    public bool TryUseAttack(Unit self, Unit target, TargetRelation targetRelation)
     {
-        return TryExecuteBasicAction(
+        return TryUseBasicActionOn(
             self,
             target,
-            TargetingPolicy.ForBasicAction(relationship),
+            targetRelation,
+            needsInjuredTarget: false,
             candidate => candidate.TakeDamage(self.AttackDamage, self));
     }
 
-    public bool TryExecuteHealAction(Unit self, Unit target, RequiredTargetRelationship relationship)
+    public bool TryUseHeal(Unit self, Unit target, TargetRelation targetRelation)
     {
-        return TryExecuteBasicAction(
+        return TryUseBasicActionOn(
             self,
             target,
-            TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget: true),
+            targetRelation,
+            needsInjuredTarget: true,
             candidate => candidate.Heal(self.AttackDamage, self));
     }
 
-    public bool TryExecuteBasicAction(Unit self, Unit target, in TargetingPolicy policy, System.Action<Unit> effect)
+    public bool TryUseBasicActionOn(
+        Unit self,
+        Unit target,
+        TargetRelation targetRelation,
+        bool needsInjuredTarget,
+        System.Action<Unit> effect)
     {
         if (self == null || effect == null)
             return false;
 
-        if (!CanExecuteBasicAction(self, target, policy))
+        if (!CanUseBasicActionOn(self, target, targetRelation, needsInjuredTarget))
             return false;
 
-        ApplyBasicActionEffect(target, effect);
+        ApplyBasicActionToTarget(target, effect);
         ConsumeBasicActionCooldown();
-        TriggerBasicActionPresentation(target);
+        ShowBasicActionPresentation(target);
         return true;
+    }
+
+    private static bool IsInSameRoom(Unit self, Unit target)
+    {
+        RoomContext selfRoom = self != null ? self.RoomContext : null;
+        RoomContext targetRoom = target != null ? target.RoomContext : null;
+
+        if (selfRoom == null && targetRoom == null)
+            return true;
+
+        return ReferenceEquals(selfRoom, targetRoom);
     }
 
     private bool CanOwnerUseBasicAction()
@@ -154,12 +193,12 @@ public class UnitCombat : MonoBehaviour
         return _unit == null || _unit.StatusEffects == null || _unit.StatusEffects.CanAttack;
     }
 
-    private bool IsBasicActionOffCooldown()
+    private bool IsBasicActionReady()
     {
         return Time.time >= _nextAttackTime;
     }
 
-    private static void ApplyBasicActionEffect(Unit target, System.Action<Unit> effect)
+    private static void ApplyBasicActionToTarget(Unit target, System.Action<Unit> effect)
     {
         effect(target);
     }
@@ -172,7 +211,7 @@ public class UnitCombat : MonoBehaviour
         _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackCooldown);
     }
 
-    private void TriggerBasicActionPresentation(Unit target)
+    private void ShowBasicActionPresentation(Unit target)
     {
         if (_unit == null || target == null)
             return;

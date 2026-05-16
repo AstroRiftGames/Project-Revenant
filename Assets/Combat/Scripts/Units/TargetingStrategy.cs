@@ -5,27 +5,20 @@ using UnityEngine;
 [RequireComponent(typeof(Unit))]
 public class TargetingStrategy : MonoBehaviour
 {
-    // Keep the combat target selection story in one place so behavior changes do not
-    // require hopping through multiple small helper files.
-    public Unit SelectTarget(Unit self, IBasicAction action, Unit currentTarget)
+    public Unit SelectBasicActionTarget(Unit self, IBasicAction basicAction, Unit currentTarget)
     {
         if (self == null)
             return null;
 
-        TargetingPolicy policy = action != null
-            ? TargetingPolicy.ForBasicAction(action)
-            : TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
+        Func<Unit, bool> canPickTarget = candidate => CanPickBasicActionTarget(self, basicAction, candidate);
 
-        // Taunt only overrides the shared combat target after the current basic-action contract accepts it.
-        if (TrySelectForcedTarget(self, policy, out Unit forcedTarget))
+        if (TrySelectForcedTarget(self, canPickTarget, out Unit forcedTarget))
             return forcedTarget;
 
-        if (policy.Relationship == RequiredTargetRelationship.Ally)
-            return SelectAllyTarget(self, policy, currentTarget);
+        if (basicAction != null && basicAction.TargetRelation == TargetRelation.Ally)
+            return SelectAllyTarget(self, currentTarget, canPickTarget);
 
         IReadOnlyList<Unit> roomUnits = GetRoomCandidates(self);
-        TargetingPolicy hostilePolicy = TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
-        TargetingPolicy selectionPolicy = hostilePolicy;
 
         return self.TargetingMode switch
         {
@@ -34,59 +27,64 @@ public class TargetingStrategy : MonoBehaviour
                 currentTarget,
                 roomUnits,
                 self.GetAliveAggressors(),
-                candidate => IsTargetStillValid(self, candidate, selectionPolicy)),
+                canPickTarget),
             _ => SelectRolePriorityTarget(
                 self,
                 currentTarget,
                 roomUnits,
-                candidate => IsTargetStillValid(self, candidate, selectionPolicy))
+                canPickTarget)
         };
     }
 
-    public Unit SelectAllyTarget(Unit self, in TargetingPolicy policy, Unit currentTarget)
+    public Unit SelectAllyTarget(Unit self, Unit currentTarget, Func<Unit, bool> canChooseTarget)
     {
-        if (self == null)
+        if (self == null || canChooseTarget == null)
             return null;
 
-        TargetingPolicy selectionPolicy = policy;
-
-        if (IsTargetValidForSelection(self, currentTarget, policy))
+        if (canChooseTarget(currentTarget))
             return currentTarget;
 
         IReadOnlyList<Unit> roomUnits = GetRoomCandidates(self);
         return SelectLowestHealthRatioTarget(
             self,
             roomUnits,
-            candidate => IsTargetValidForSelection(self, candidate, selectionPolicy));
+            canChooseTarget);
     }
 
-    private bool IsTargetStillValid(Unit self, Unit target, RequiredTargetRelationship relationship)
-    {
-        return IsTargetStillValid(self, target, TargetingPolicy.ForRelationship(relationship));
-    }
-
-    private bool IsTargetStillValid(Unit self, Unit target, in TargetingPolicy policy)
-    {
-        return UnitTargetValidator.IsTargetSelectable(self, target, policy);
-    }
-
-    private bool IsTargetValidForSelection(Unit self, Unit target, in TargetingPolicy policy)
-    {
-        return UnitTargetValidator.IsTargetSelectable(self, target, policy);
-    }
-
-    private bool TrySelectForcedTarget(Unit self, in TargetingPolicy policy, out Unit forcedTarget)
+    private bool TrySelectForcedTarget(Unit self, Func<Unit, bool> canChooseTarget, out Unit forcedTarget)
     {
         forcedTarget = null;
 
         if (self == null || self.StatusEffects == null || !self.StatusEffects.TryGetForcedTarget(out Unit candidate))
             return false;
 
-        if (!IsTargetValidForSelection(self, candidate, policy))
+        if (canChooseTarget == null || !canChooseTarget(candidate))
             return false;
 
         forcedTarget = candidate;
         return true;
+    }
+
+    private bool CanPickBasicActionTarget(Unit self, IBasicAction basicAction, Unit candidate)
+    {
+        if (self == null)
+            return false;
+
+        if (basicAction != null)
+            return basicAction.IsValidTarget(self, candidate);
+
+        return CanPickVisibleHostile(self, candidate);
+    }
+
+    public static bool CanPickVisibleHostile(Unit self, Unit candidate)
+    {
+        return self != null &&
+               candidate != null &&
+               candidate.gameObject.activeInHierarchy &&
+               candidate.IsAlive &&
+               self.IsHostileTo(candidate) &&
+               self.CanDetect(candidate) &&
+               (candidate.StatusEffects == null || !candidate.StatusEffects.HasInvisibility);
     }
 
     public static IReadOnlyList<Unit> GetRoomCandidates(Unit self)
@@ -298,7 +296,7 @@ public class TargetingStrategy : MonoBehaviour
     }
 }
 
-public enum RequiredTargetRelationship
+public enum TargetRelation
 {
     Any,
     Hostile,

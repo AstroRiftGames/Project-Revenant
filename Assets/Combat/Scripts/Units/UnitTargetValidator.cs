@@ -37,8 +37,8 @@ public static class UnitTargetValidator
 
         return policy.Relationship switch
         {
-            RequiredTargetRelationship.Hostile => source.IsHostileTo(target),
-            RequiredTargetRelationship.Ally => !source.IsHostileTo(target),
+            TargetRelation.Hostile => source.IsHostileTo(target),
+            TargetRelation.Ally => !source.IsHostileTo(target),
             _ => true
         };
     }

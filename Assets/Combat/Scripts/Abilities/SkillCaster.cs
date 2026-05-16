@@ -12,7 +12,7 @@ public class SkillCaster : MonoBehaviour
     private Unit _unit;
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
-    private readonly List<Unit> _targetsHitBuffer = new();
+    private readonly List<Unit> _unitsHit = new();
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
 
@@ -44,30 +44,30 @@ public class SkillCaster : MonoBehaviour
         if (!CanTryUseSkill(skill))
             return false;
 
-        Unit chosenTarget = ChooseSkillTarget(skill, combatTarget);
-        if (!TryValidateChosenTarget(skill, chosenTarget))
+        Unit selectedTarget = ChooseSkillTarget(skill, combatTarget);
+        if (!TryValidateChosenTarget(skill, selectedTarget))
             return false;
 
-        if (!IsTargetCloseEnough(skill, chosenTarget))
+        if (!IsTargetCloseEnough(skill, selectedTarget))
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(chosenTarget)} is out of range.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(selectedTarget)} is out of range.");
             return false;
         }
 
-        if (!TryFindTargetsHitBySkill(skill, chosenTarget))
+        if (!TryCollectUnitsHit(skill, selectedTarget))
             return false;
 
         LogDebug(
-            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved target {FormatUnitName(chosenTarget)} " +
-            $"and {_targetsHitBuffer.Count} target(s) hit: {FormatUnits(_targetsHitBuffer)}.");
+            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved target {FormatUnitName(selectedTarget)} " +
+            $"and {_unitsHit.Count} target(s) hit: {FormatUnits(_unitsHit)}.");
 
-        if (!ApplySkillToTargets(skill, chosenTarget))
+        if (!ApplySkillToUnitsHit(skill, selectedTarget))
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
             return false;
         }
 
-        OnSkillCastSucceeded(skill, chosenTarget);
+        OnSkillCastSucceeded(skill, selectedTarget);
         return true;
     }
 
@@ -135,18 +135,18 @@ public class SkillCaster : MonoBehaviour
         return FindFallbackTarget(skill);
     }
 
-    private bool TryValidateChosenTarget(SkillData skill, Unit chosenTarget)
+    private bool TryValidateChosenTarget(SkillData skill, Unit selectedTarget)
     {
-        if (chosenTarget == null)
+        if (selectedTarget == null)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' resolved no valid target.");
             return false;
         }
 
-        if (CanChooseTarget(skill, chosenTarget))
+        if (CanChooseTarget(skill, selectedTarget))
             return true;
 
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(chosenTarget)} failed skill rules.");
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(selectedTarget)} failed skill rules.");
         return false;
     }
 
@@ -161,12 +161,12 @@ public class SkillCaster : MonoBehaviour
         return SkillTargetCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
     }
 
-    private bool IsTargetCloseEnough(SkillData skill, Unit chosenTarget)
+    private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
     {
         if (_unit == null || skill == null)
             return false;
 
-        if (chosenTarget == null)
+        if (selectedTarget == null)
             return !skill.RequiresTarget;
 
         if (skill.ResolvesPrimaryTargetToCaster)
@@ -174,70 +174,82 @@ public class SkillCaster : MonoBehaviour
 
         RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
         if (grid == null)
-            return Vector3.Distance(_unit.Position, chosenTarget.Position) <= skill.RangeInCells;
+            return Vector3.Distance(_unit.Position, selectedTarget.Position) <= skill.RangeInCells;
 
         Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(grid, _unit);
-        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(grid, chosenTarget);
+        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(grid, selectedTarget);
         return GridNavigationUtility.IsWithinCellRange(casterCell, targetCell, skill.RangeInCells);
     }
 
-    private bool TryFindTargetsHitBySkill(SkillData skill, Unit chosenTarget)
+    private bool TryCollectUnitsHit(SkillData skill, Unit selectedTarget)
     {
-        _targetsHitBuffer.Clear();
-        if (SkillTargetCollector.TryCollectTargets(_unit, skill, chosenTarget, _targetsHitBuffer, LogDebug))
+        _unitsHit.Clear();
+        if (SkillTargetCollector.TryCollectTargets(_unit, skill, selectedTarget, _unitsHit, LogDebug))
             return true;
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' shape '{skill.Shape}' produced no targets.");
         return false;
     }
 
-    private bool ApplySkillToTargets(SkillData skill, Unit chosenTarget)
+    private bool ApplySkillToUnitsHit(SkillData skill, Unit selectedTarget)
     {
-        if (skill == null || _unit == null || _targetsHitBuffer.Count == 0)
+        if (skill == null || _unit == null || _unitsHit.Count == 0)
+            return false;
+
+        bool anyEffectApplied = ApplySkillEffects(skill, selectedTarget);
+        bool anyStatusApplied = ApplySkillStatuses(skill);
+        return anyEffectApplied || anyStatusApplied;
+    }
+
+    private bool ApplySkillEffects(SkillData skill, Unit selectedTarget)
+    {
+        SkillEffect[] effects = skill.Effects;
+        if (effects == null || effects.Length == 0)
             return false;
 
         bool anyApplied = false;
-
-        SkillEffect[] effects = skill.Effects;
-        if (effects != null)
+        for (int effectIndex = 0; effectIndex < effects.Length; effectIndex++)
         {
-            for (int effectIndex = 0; effectIndex < effects.Length; effectIndex++)
+            SkillEffect effect = effects[effectIndex];
+            if (effect == null)
+                continue;
+
+            for (int targetIndex = 0; targetIndex < _unitsHit.Count; targetIndex++)
             {
-                SkillEffect effect = effects[effectIndex];
-                if (effect == null)
+                Unit hitUnit = _unitsHit[targetIndex];
+                if (hitUnit == null)
                     continue;
 
-                for (int targetIndex = 0; targetIndex < _targetsHitBuffer.Count; targetIndex++)
-                {
-                    Unit target = _targetsHitBuffer[targetIndex];
-                    if (target == null)
-                        continue;
-
-                    anyApplied |= effect.Apply(_unit, skill, chosenTarget, target);
-                }
+                anyApplied |= effect.Apply(_unit, skill, selectedTarget, hitUnit);
             }
         }
 
+        return anyApplied;
+    }
+
+    private bool ApplySkillStatuses(SkillData skill)
+    {
         AppliedStatusEffectSpec[] statusEffects = skill.AppliedStatusEffects;
-        if (statusEffects != null)
+        if (statusEffects == null || statusEffects.Length == 0)
+            return false;
+
+        bool anyApplied = false;
+        for (int effectIndex = 0; effectIndex < statusEffects.Length; effectIndex++)
         {
-            for (int effectIndex = 0; effectIndex < statusEffects.Length; effectIndex++)
+            AppliedStatusEffectSpec effect = statusEffects[effectIndex];
+            StatusEffectDefinition definition = effect.Definition;
+            if (definition == null)
+                continue;
+
+            for (int targetIndex = 0; targetIndex < _unitsHit.Count; targetIndex++)
             {
-                AppliedStatusEffectSpec effect = statusEffects[effectIndex];
-                StatusEffectDefinition definition = effect.Definition;
-                if (definition == null)
+                Unit hitUnit = _unitsHit[targetIndex];
+                if (hitUnit == null || hitUnit.StatusEffects == null)
                     continue;
 
-                for (int targetIndex = 0; targetIndex < _targetsHitBuffer.Count; targetIndex++)
-                {
-                    Unit target = _targetsHitBuffer[targetIndex];
-                    if (target == null || target.StatusEffects == null)
-                        continue;
-
-                    bool showBlockedPopup = effect.RequireAllyTarget && target.Team != _unit.Team;
-                    StatusEffectApplication application = new(target, _unit, skill, definition);
-                    anyApplied |= target.StatusEffects.TryApply(application, showBlockedPopup);
-                }
+                bool showBlockedPopup = effect.RequireAllyTarget && hitUnit.Team != _unit.Team;
+                StatusEffectApplication application = new(hitUnit, _unit, skill, definition);
+                anyApplied |= hitUnit.StatusEffects.TryApply(application, showBlockedPopup);
             }
         }
 
@@ -321,11 +333,11 @@ public class SkillCaster : MonoBehaviour
         return bestTarget;
     }
 
-    private void OnSkillCastSucceeded(SkillData skill, Unit chosenTarget)
+    private void OnSkillCastSucceeded(SkillData skill, Unit selectedTarget)
     {
         BreakInvisibilityAfterSkillUse();
         ConsumeSkillCooldown(skill);
-        NotifySkillUsed(skill, ResolvePopupAnchor(skill, chosenTarget));
+        NotifySkillUsed(skill, ResolvePopupAnchor(skill, selectedTarget));
     }
 
     private void BreakInvisibilityAfterSkillUse()
@@ -343,15 +355,15 @@ public class SkillCaster : MonoBehaviour
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} started cooldown for '{skill.DisplayName}': {skill.Cooldown:F2}s.");
     }
 
-    private Unit ResolvePopupAnchor(SkillData skill, Unit chosenTarget)
+    private Unit ResolvePopupAnchor(SkillData skill, Unit selectedTarget)
     {
         if (skill != null && skill.UsesCasterAsPresentationAnchor)
             return _unit;
 
-        if (chosenTarget != null)
-            return chosenTarget;
+        if (selectedTarget != null)
+            return selectedTarget;
 
-        return _targetsHitBuffer.Count > 0 ? _targetsHitBuffer[0] : null;
+        return _unitsHit.Count > 0 ? _unitsHit[0] : null;
     }
 
     private void NotifySkillUsed(SkillData skill, Unit popupAnchor)
@@ -360,7 +372,7 @@ public class SkillCaster : MonoBehaviour
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} emitting SkillUsed for '{skill.DisplayName}' with {listenerCount} listener(s).");
         SkillUsed?.Invoke(_unit, skill, popupAnchor);
         LogDebug(
-            $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_targetsHitBuffer.Count} target(s) hit.");
+            $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_unitsHit.Count} target(s) hit.");
     }
 
     private void LogDebug(string message)

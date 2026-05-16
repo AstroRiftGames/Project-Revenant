@@ -6,12 +6,12 @@ public class KnockbackSkillEffect : SkillEffect
     [SerializeField] private int _knockbackCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(Unit caster, SkillData skill, Unit chosenTarget, Unit target)
+    public override bool Apply(Unit caster, SkillData skill, Unit selectedTarget, Unit hitUnit)
     {
-        if (caster == null || target == null || !target.IsAlive)
+        if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;
 
-        ApplyKnockback(target, caster);
+        ApplyKnockback(hitUnit, caster);
         return true;
     }
 

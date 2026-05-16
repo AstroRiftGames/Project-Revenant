@@ -19,8 +19,7 @@ public static class SpacingEvaluator
         if (self.Role == UnitRole.Support)
             return GetNearestVisibleHostile(self);
 
-        TargetingPolicy hostilePolicy = TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
-        if (UnitTargetValidator.IsTargetSelectable(self, currentTarget, hostilePolicy))
+        if (TargetingStrategy.CanPickVisibleHostile(self, currentTarget))
             return currentTarget;
 
         return GetNearestVisibleHostile(self);
@@ -31,11 +30,10 @@ public static class SpacingEvaluator
         if (self == null)
             return null;
 
-        TargetingPolicy hostilePolicy = TargetingPolicy.ForRelationship(RequiredTargetRelationship.Hostile);
         IReadOnlyList<Unit> roomUnits = self.GetRoomUnits();
         return TargetingStrategy.SelectClosestTarget(
             self,
             roomUnits,
-            candidate => UnitTargetValidator.IsTargetSelectable(self, candidate, hostilePolicy));
+            candidate => TargetingStrategy.CanPickVisibleHostile(self, candidate));
     }
 }

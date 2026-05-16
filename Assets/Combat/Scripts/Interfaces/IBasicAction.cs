@@ -1,6 +1,6 @@
 public interface IBasicAction
 {
-    RequiredTargetRelationship RequiredTargetRelationship { get; }
+    TargetRelation TargetRelation { get; }
     bool RequiresInjuredTarget { get; }
     int RangeInCells { get; }
     int PreferredDistanceInCells { get; }

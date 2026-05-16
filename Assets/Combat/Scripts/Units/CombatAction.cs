@@ -13,26 +13,26 @@ public sealed class CombatAction : IBasicAction
         _supportsAllies = supportsAllies;
     }
 
-    public RequiredTargetRelationship RequiredTargetRelationship => _supportsAllies
-        ? RequiredTargetRelationship.Ally
-        : RequiredTargetRelationship.Hostile;
+    public TargetRelation TargetRelation => _supportsAllies
+        ? TargetRelation.Ally
+        : TargetRelation.Hostile;
     public bool RequiresInjuredTarget => _supportsAllies;
     public int RangeInCells => _combat != null ? _combat.AttackRangeInCells : 0;
     public int PreferredDistanceInCells => _owner != null ? Mathf.Max(0, _owner.PreferredDistanceInCells) : RangeInCells;
 
     public bool IsValidTarget(Unit self, Unit target)
     {
-        return _combat != null && _combat.IsValidBasicActionTarget(self, target, TargetingPolicy.ForBasicAction(this));
+        return _combat != null && _combat.CanPickBasicActionTarget(self, target, TargetRelation, RequiresInjuredTarget);
     }
 
     public bool IsInRange(Unit self, Unit target)
     {
-        return _combat != null && _combat.IsTargetInBasicActionRange(target);
+        return _combat != null && _combat.IsBasicActionTargetInRange(target);
     }
 
     public bool CanExecute(Unit self, Unit target)
     {
-        return _combat != null && _combat.CanExecuteBasicAction(self, target, TargetingPolicy.ForBasicAction(this));
+        return _combat != null && _combat.CanUseBasicActionOn(self, target, TargetRelation, RequiresInjuredTarget);
     }
 
     public bool Execute(Unit self, Unit target)
@@ -40,10 +40,11 @@ public sealed class CombatAction : IBasicAction
         if (!CanExecute(self, target))
             return false;
 
-        return _combat.TryExecuteBasicAction(
+        return _combat.TryUseBasicActionOn(
             self,
             target,
-            TargetingPolicy.ForBasicAction(this),
+            TargetRelation,
+            RequiresInjuredTarget,
             candidate =>
             {
                 if (_supportsAllies)

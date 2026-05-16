@@ -67,7 +67,7 @@ public class UnitBrain : MonoBehaviour
 
     private void UpdateDecisionState()
     {
-        _currentTarget = _targeting.SelectTarget(_unit, _action, _currentTarget);
+        _currentTarget = _targeting.SelectBasicActionTarget(_unit, _action, _currentTarget);
     }
 
     private void ExecuteDecision()

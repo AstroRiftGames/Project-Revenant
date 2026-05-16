@@ -1,7 +1,7 @@
 public readonly struct TargetingPolicy
 {
     public TargetingPolicy(
-        RequiredTargetRelationship relationship,
+        TargetRelation relationship,
         bool requiresTarget = true,
         bool allowSelf = false,
         bool requireSelf = false,
@@ -24,7 +24,7 @@ public readonly struct TargetingPolicy
         RequireDetectable = requireDetectable;
     }
 
-    public RequiredTargetRelationship Relationship { get; }
+    public TargetRelation Relationship { get; }
     public bool RequiresTarget { get; }
     public bool AllowSelf { get; }
     public bool RequireSelf { get; }
@@ -35,7 +35,7 @@ public readonly struct TargetingPolicy
     public bool RequireActive { get; }
     public bool RequireDetectable { get; }
 
-    public static TargetingPolicy ForRelationship(RequiredTargetRelationship relationship, bool allowSelf = false)
+    public static TargetingPolicy ForRelationship(TargetRelation relationship, bool allowSelf = false)
     {
         return new TargetingPolicy(relationship, allowSelf: allowSelf);
     }
@@ -43,11 +43,11 @@ public readonly struct TargetingPolicy
     public static TargetingPolicy ForBasicAction(IBasicAction action)
     {
         return action != null
-            ? ForBasicAction(action.RequiredTargetRelationship, action.RequiresInjuredTarget)
-            : ForRelationship(RequiredTargetRelationship.Hostile);
+            ? ForBasicAction(action.TargetRelation, action.RequiresInjuredTarget)
+            : ForRelationship(TargetRelation.Hostile);
     }
 
-    public static TargetingPolicy ForBasicAction(RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
+    public static TargetingPolicy ForBasicAction(TargetRelation relationship, bool requiresInjuredTarget = false)
     {
         return new TargetingPolicy(
             relationship,
@@ -98,13 +98,13 @@ public readonly struct TargetingPolicy
         return true;
     }
 
-    private static RequiredTargetRelationship ResolveRelationship(SkillTargetRequirement targetRequirement)
+    private static TargetRelation ResolveRelationship(SkillTargetRequirement targetRequirement)
     {
         return targetRequirement switch
         {
-            SkillTargetRequirement.Hostile => RequiredTargetRelationship.Hostile,
-            SkillTargetRequirement.Ally => RequiredTargetRelationship.Ally,
-            _ => RequiredTargetRelationship.Any
+            SkillTargetRequirement.Hostile => TargetRelation.Hostile,
+            SkillTargetRequirement.Ally => TargetRelation.Ally,
+            _ => TargetRelation.Any
         };
     }
 }
