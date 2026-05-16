@@ -6,19 +6,12 @@ public class KnockbackSkillEffect : SkillEffect
     [SerializeField] private int _knockbackCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public override bool Apply(Unit caster, SkillData skill, Unit chosenTarget, Unit target)
     {
-        if (context == null || context.Caster == null || target == null || !target.IsAlive)
+        if (caster == null || target == null || !target.IsAlive)
             return false;
 
-        Unit sourceUnit = context.Caster;
-        if (sourceUnit == null)
-        {
-            LogDebug("[KnockbackSkillEffect] No source unit, aborting knockback.");
-            return false;
-        }
-
-        ApplyKnockback(target, sourceUnit);
+        ApplyKnockback(target, caster);
         return true;
     }
 

@@ -7,36 +7,36 @@ public class SummonUnitSkillEffect : SkillEffect
     [SerializeField] private int _spawnRangeInCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public override bool Apply(Unit caster, SkillData skill, Unit chosenTarget, Unit target)
     {
-        if (context == null || context.Caster == null)
+        if (caster == null)
         {
-            LogDebug("[SummonUnitSkillEffect] Aborted: missing cast context or caster.");
+            LogDebug("[SummonUnitSkillEffect] Aborted: missing caster.");
             return false;
         }
 
         if (_summonedUnit == null || _summonedUnit.unitPrefab == null)
         {
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: no summoned unit prefab was assigned.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: no summoned unit prefab was assigned.");
             return false;
         }
 
-        RoomContext roomContext = context.Caster.RoomContext;
+        RoomContext roomContext = caster.RoomContext;
         RoomGrid grid = roomContext != null ? roomContext.RoomGrid : null;
         if (roomContext == null || grid == null)
         {
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: caster has no room context or room grid.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: caster has no room context or room grid.");
             return false;
         }
 
-        Vector3Int casterCell = ResolveUnitCell(grid, context.Caster);
-        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, context.Caster, context.PrimaryTarget);
+        Vector3Int casterCell = ResolveUnitCell(grid, caster);
+        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, caster, chosenTarget);
         int spawnRangeInCells = Mathf.Max(0, _spawnRangeInCells);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
         {
             LogDebug(
-                $"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: no valid summon cell was found near {FormatCell(desiredCell)} " +
+                $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: no valid summon cell was found near {FormatCell(desiredCell)} " +
                 $"within range {spawnRangeInCells}.");
             return false;
         }
@@ -46,7 +46,7 @@ public class SummonUnitSkillEffect : SkillEffect
         if (!instance.TryGetComponent(out Unit summonedUnit))
         {
             Object.Destroy(instance);
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: summoned prefab '{_summonedUnit.unitPrefab.name}' has no Unit component.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: summoned prefab '{_summonedUnit.unitPrefab.name}' has no Unit component.");
             return false;
         }
 
@@ -54,7 +54,7 @@ public class SummonUnitSkillEffect : SkillEffect
         if (runtimeMarker == null)
             runtimeMarker = instance.AddComponent<CombatSummonedUnitRuntimeMarker>();
 
-        summonedUnit.SetAffiliation(context.Caster.Team, context.Caster.Faction);
+        summonedUnit.SetAffiliation(caster.Team, caster.Faction);
 
         if (instance.TryGetComponent(out UnitMovement movement))
         {
@@ -82,8 +82,8 @@ public class SummonUnitSkillEffect : SkillEffect
         }
 
         LogDebug(
-            $"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
-            $"from desired {FormatCell(desiredCell)} using skill '{context.Skill.DisplayName}'.");
+            $"[SummonUnitSkillEffect] {FormatUnit(caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
+            $"from desired {FormatCell(desiredCell)} using skill '{skill?.DisplayName ?? "Unknown"}'.");
         return true;
     }
 

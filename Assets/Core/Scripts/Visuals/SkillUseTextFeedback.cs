@@ -16,10 +16,12 @@ public class SkillUseTextFeedback : MonoBehaviour
     [SerializeField] private bool _debugLogs;
 
     private SkillCaster _skillCaster;
+    private Unit _unit;
 
     private void Awake()
     {
         _skillCaster = GetComponent<SkillCaster>();
+        _unit = GetComponent<Unit>();
         LogDebug($"[SkillUseTextFeedback] {FormatOwnerIdentity()} Awake. SkillCaster resolved: {_skillCaster != null}.");
     }
 
@@ -45,43 +47,27 @@ public class SkillUseTextFeedback : MonoBehaviour
         }
     }
 
-    private void HandleSkillUsed(SkillCastContext context, Unit resolvedTarget)
+    private void HandleSkillUsed(Unit caster, SkillData skill, Unit popupAnchor)
     {
-        LogDebug($"[SkillUseTextFeedback] {FormatOwnerIdentity()} received SkillUsed for '{context?.Skill?.DisplayName ?? "Unknown"}'.");
+        LogDebug($"[SkillUseTextFeedback] {FormatOwnerIdentity()} received SkillUsed for '{skill?.DisplayName ?? "Unknown"}'.");
 
-        if (context == null || context.Skill == null)
+        if (skill == null)
             return;
 
-        Unit anchorUnit = ResolveAnchorUnit(context, resolvedTarget);
-        if (anchorUnit == null)
+        if (popupAnchor == null)
         {
             LogDebug($"[SkillUseTextFeedback] {FormatOwnerIdentity()} aborted popup: no anchor unit resolved.");
             return;
         }
 
-        CreatePopup(anchorUnit, context.Skill.DisplayName, ResolvePopupColor(context, anchorUnit));
+        CreatePopup(popupAnchor, skill.DisplayName, ResolvePopupColor(caster, popupAnchor));
     }
 
-    private Unit ResolveAnchorUnit(SkillCastContext context, Unit resolvedTarget)
+    private Color ResolvePopupColor(Unit caster, Unit popupAnchor)
     {
-        if (context == null)
-            return null;
-
-        if (context.Skill != null && context.Skill.Shape == SkillShape.SpawnMinions)
-            return context.Caster;
-
-        if (context.Skill != null && context.Skill.TargetMode == SkillTargetMode.Self)
-            return context.Caster;
-
-        return resolvedTarget != null ? resolvedTarget : context.PrimaryTarget;
-    }
-
-    private Color ResolvePopupColor(SkillCastContext context, Unit anchorUnit)
-    {
-        if (context != null && anchorUnit != null && ReferenceEquals(anchorUnit, context.Caster))
-            return _selfSkillColor;
-
-        return _impactSkillColor;
+        return popupAnchor != null && ReferenceEquals(popupAnchor, caster)
+            ? _selfSkillColor
+            : _impactSkillColor;
     }
 
     private void CreatePopup(Unit anchorUnit, string message, Color color)
@@ -117,7 +103,7 @@ public class SkillUseTextFeedback : MonoBehaviour
 
     private string FormatOwnerIdentity()
     {
-        Unit unit = GetComponent<Unit>();
+        Unit unit = _unit;
         if (unit == null)
             return $"[{name}#{GetInstanceID()}|NoUnit]";
 

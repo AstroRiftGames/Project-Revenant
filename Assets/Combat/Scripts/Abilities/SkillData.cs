@@ -33,4 +33,13 @@ public class SkillData : ScriptableObject
     public SkillRequirements Requirements => _requirements;
     public SkillEffect[] Effects => _effects;
     public AppliedStatusEffectSpec[] AppliedStatusEffects => _appliedStatusEffects;
+    public bool ResolvesPrimaryTargetToCaster =>
+        TargetMode == SkillTargetMode.Self ||
+        (Requirements != null && Requirements.TargetRequirement == SkillTargetRequirement.Self);
+    public bool UsesCasterAsImpactCenter =>
+        TargetMode == SkillTargetMode.Self &&
+        (Shape == SkillShape.Area || Shape == SkillShape.Splash || Shape == SkillShape.MultiTarget);
+    public bool UsesCasterAsPresentationAnchor =>
+        Shape == SkillShape.SpawnMinions || TargetMode == SkillTargetMode.Self;
+    public bool RequiresTarget => Requirements == null || Requirements.requiresTarget;
 }

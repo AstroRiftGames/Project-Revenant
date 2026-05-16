@@ -35,9 +35,8 @@ public class SkillRequirements
     }
 
     // Legacy combined validation kept for compatibility with older callers.
-    // New targeting flows should use TargetingPolicy + UnitTargetValidator for
-    // general target eligibility and reserve AreSkillSpecificRequirementsMet for
-    // skill-specific constraints only.
+    // Current skill targeting uses the skill-specific rules in the abilities
+    // flow and reserves AreSkillSpecificRequirementsMet for special cases.
     public bool AreMet(Unit caster, Unit target)
     {
         if (caster == null)
@@ -79,9 +78,9 @@ public class SkillRequirements
         return AreSkillSpecificRequirementsMet(caster, target);
     }
 
-    // Primary extension point for constraints that belong to a specific skill rather than
-    // to general target eligibility. Keep this narrow: relationship/self/alive/visibility/
-    // same-room/injured should stay in TargetingPolicy + UnitTargetValidator.
+    // Use this only for rules that belong to one specific skill.
+    // Generic checks like self/friend/enemy/alive/injured are handled by the
+    // skill targeting flow itself.
     public bool AreSkillSpecificRequirementsMet(Unit caster, Unit target)
     {
         return caster != null;

@@ -4,62 +4,130 @@ using UnityEngine;
 
 public static class SkillTargetCollector
 {
-    public static bool TryCollectTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog = null)
+    public static bool CanSkillHitUnit(Unit caster, SkillData skill, Unit target, bool allowCasterForSelfCenteredSkill = false)
+    {
+        if (caster == null || skill == null)
+            return false;
+
+        if (skill.UsesCasterAsImpactCenter && allowCasterForSelfCenteredSkill)
+            return ReferenceEquals(caster, target) && caster.IsAlive;
+
+        if (target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
+            return false;
+
+        if (!IsInSameRoom(caster, target))
+            return false;
+
+        bool isCaster = ReferenceEquals(caster, target);
+        if (!isCaster && !caster.CanDetect(target))
+            return false;
+
+        if (!isCaster && target.StatusEffects != null && target.StatusEffects.HasInvisibility)
+            return false;
+
+        SkillTargetRequirement targetType = skill.Requirements != null
+            ? skill.Requirements.TargetRequirement
+            : SkillTargetRequirement.Any;
+
+        switch (targetType)
+        {
+            case SkillTargetRequirement.Self:
+                if (!isCaster)
+                    return false;
+                break;
+
+            case SkillTargetRequirement.Ally:
+                if (isCaster || caster.Team != target.Team)
+                    return false;
+                break;
+
+            case SkillTargetRequirement.Hostile:
+                if (!caster.IsHostileTo(target))
+                    return false;
+                break;
+
+            case SkillTargetRequirement.NoTarget:
+            case SkillTargetRequirement.GroundCell:
+                return false;
+        }
+
+        if (skill.Requirements != null && skill.Requirements.mustTargetInjured && target.CurrentHealth >= target.MaxHealth)
+            return false;
+
+        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(caster, target);
+    }
+
+    private readonly struct SkillTargetRequest
+    {
+        public SkillTargetRequest(Unit caster, SkillData skill, Unit primaryTarget)
+        {
+            Caster = caster;
+            Skill = skill;
+            PrimaryTarget = primaryTarget;
+        }
+
+        public Unit Caster { get; }
+        public SkillData Skill { get; }
+        public Unit PrimaryTarget { get; }
+    }
+
+    public static bool TryCollectTargets(Unit caster, SkillData skill, Unit primaryTarget, List<Unit> results, Action<string> debugLog = null)
     {
         if (results == null)
             return false;
 
         results.Clear();
 
-        if (context == null || context.Skill == null || context.Caster == null)
+        if (caster == null || skill == null)
             return false;
 
-        return context.Skill.Shape switch
+        SkillTargetRequest request = new(caster, skill, primaryTarget);
+        return skill.Shape switch
         {
-            SkillShape.SingleTarget => TryCollectSingleTarget(context, results, debugLog),
-            SkillShape.Splash => TryCollectSplashTargets(context, results, debugLog),
-            SkillShape.Area => TryCollectAreaTargets(context, results, debugLog),
-            SkillShape.PiercingLine => TryCollectPiercingLineTargets(context, results, debugLog),
-            SkillShape.Line => TryCollectLineTargets(context, results, debugLog),
-            SkillShape.MultiTarget => TryCollectMultiTarget(context, results, debugLog),
-            SkillShape.SpawnMinions => TryCollectSpawnMinionAnchor(context, results, debugLog),
+            SkillShape.SingleTarget => TryCollectSingleTarget(request, results, debugLog),
+            SkillShape.Splash => TryCollectSplashTargets(request, results, debugLog),
+            SkillShape.Area => TryCollectAreaTargets(request, results, debugLog),
+            SkillShape.PiercingLine => TryCollectPiercingLineTargets(request, results, debugLog),
+            SkillShape.Line => TryCollectLineTargets(request, results, debugLog),
+            SkillShape.MultiTarget => TryCollectMultiTarget(request, results, debugLog),
+            SkillShape.SpawnMinions => TryCollectSpawnMinionAnchor(request, results, debugLog),
             _ => false
         };
     }
 
-    private static bool TryGetContextData(SkillCastContext context, out Unit caster, out SkillData skill)
+    private static bool TryGetRequestData(SkillTargetRequest request, out Unit caster, out SkillData skill)
     {
-        caster = context != null ? context.Caster : null;
-        skill = context != null ? context.Skill : null;
+        caster = request.Caster;
+        skill = request.Skill;
         return caster != null && skill != null;
     }
 
-    private static bool TryCollectSingleTarget(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectSingleTarget(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+        Unit primaryTarget = request.PrimaryTarget;
+        if (primaryTarget == null || !IsValidImpactTarget(request, primaryTarget))
             return false;
 
         results.Add(primaryTarget);
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved primary target " +
+            $"[SkillTargetCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved primary target " +
             $"{FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
         return true;
     }
 
-    private static bool TryCollectSplashTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectSplashTargets(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        return TryCollectTargetsInRadius(context, results, debugLog, includePrimaryTargetFirst: true, "splash");
+        return TryCollectTargetsInRadius(request, results, debugLog, includePrimaryTargetFirst: true, "splash");
     }
 
-    private static bool TryCollectAreaTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectAreaTargets(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        return TryCollectTargetsInRadius(context, results, debugLog, includePrimaryTargetFirst: false, "area");
+        return TryCollectTargetsInRadius(request, results, debugLog, includePrimaryTargetFirst: false, "area");
     }
 
-    private static bool TryCollectPiercingLineTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectPiercingLineTargets(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        if (!TryBuildLineResolution(context, out LineResolution resolution))
+        if (!TryBuildLineResolution(request, out LineResolution resolution))
             return false;
 
         for (int i = 0; i < resolution.Projections.Count; i++)
@@ -77,9 +145,9 @@ public static class SkillTargetCollector
         return results.Count > 0;
     }
 
-    private static bool TryCollectLineTargets(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectLineTargets(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        if (!TryBuildLineResolution(context, out LineResolution resolution))
+        if (!TryBuildLineResolution(request, out LineResolution resolution))
             return false;
 
         if (resolution.Projections.Count > 0)
@@ -97,15 +165,15 @@ public static class SkillTargetCollector
         return results.Count > 0;
     }
 
-    private static bool TryCollectMultiTarget(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectMultiTarget(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        if (!TryResolveImpactCenter(context, out Unit primaryTarget, out Unit centerUnit, out bool useCasterAsCenter))
+        if (!TryResolveImpactCenter(request, out Unit primaryTarget, out Unit centerUnit, out bool useCasterAsCenter))
             return false;
 
         if (!useCasterAsCenter)
             results.Add(primaryTarget);
 
-        if (!TryGetContextData(context, out Unit caster, out SkillData skill))
+        if (!TryGetRequestData(request, out Unit caster, out SkillData skill))
             return false;
 
         IReadOnlyList<Unit> roomUnits = GetRoomUnits(caster);
@@ -128,19 +196,19 @@ public static class SkillTargetCollector
                     continue;
                 }
 
-                if (!IsValidImpactTarget(context, candidate))
+                if (!IsValidImpactTarget(request, candidate))
                 {
                     skippedInvalid++;
                     continue;
                 }
 
-                if (!IsWithinImpactRadius(context, centerUnit, candidate))
+                if (!IsWithinImpactRadius(request, centerUnit, candidate))
                 {
                     skippedOutOfRadius++;
                     continue;
                 }
 
-                candidates.Add(new DistanceCandidate(candidate, ResolveDistanceFromPrimary(context, centerUnit, candidate)));
+                candidates.Add(new DistanceCandidate(candidate, ResolveDistanceFromPrimary(request, centerUnit, candidate)));
             }
 
             candidates.Sort(static (left, right) =>
@@ -177,27 +245,27 @@ public static class SkillTargetCollector
         return results.Count > 0;
     }
 
-    private static bool TryCollectSpawnMinionAnchor(SkillCastContext context, List<Unit> results, Action<string> debugLog)
+    private static bool TryCollectSpawnMinionAnchor(SkillTargetRequest request, List<Unit> results, Action<string> debugLog)
     {
-        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        if (primaryTarget == null || !IsValidImpactTarget(context, primaryTarget))
+        Unit primaryTarget = request.PrimaryTarget;
+        if (primaryTarget == null || !IsValidImpactTarget(request, primaryTarget))
             return false;
 
         results.Add(primaryTarget);
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(context.Caster)} shape '{context.Skill.Shape}' resolved summon anchor. " +
+            $"[SkillTargetCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved summon anchor. " +
             $"Primary: {FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
         return true;
     }
 
     private static bool TryCollectTargetsInRadius(
-        SkillCastContext context,
+        SkillTargetRequest request,
         List<Unit> results,
         Action<string> debugLog,
         bool includePrimaryTargetFirst,
         string shapeName)
     {
-        if (!TryResolveImpactCenter(context, out Unit primaryTarget, out Unit centerUnit, out bool useCasterAsCenter))
+        if (!TryResolveImpactCenter(request, out Unit primaryTarget, out Unit centerUnit, out bool useCasterAsCenter))
             return false;
 
         if (includePrimaryTargetFirst && !useCasterAsCenter)
@@ -207,7 +275,7 @@ public static class SkillTargetCollector
         int skippedInvalid = 0;
         int skippedOutOfRadius = 0;
 
-        if (!TryGetContextData(context, out Unit caster, out SkillData skill))
+        if (!TryGetRequestData(request, out Unit caster, out SkillData skill))
             return false;
 
         IReadOnlyList<Unit> roomUnits = GetRoomUnits(caster);
@@ -231,13 +299,13 @@ public static class SkillTargetCollector
                 continue;
             }
 
-            if (!IsValidImpactTarget(context, candidate))
+            if (!IsValidImpactTarget(request, candidate))
             {
                 skippedInvalid++;
                 continue;
             }
 
-            if (!IsWithinImpactRadius(context, centerUnit, candidate))
+            if (!IsWithinImpactRadius(request, centerUnit, candidate))
             {
                 skippedOutOfRadius++;
                 continue;
@@ -258,64 +326,46 @@ public static class SkillTargetCollector
     }
 
     private static bool TryResolveImpactCenter(
-        SkillCastContext context,
+        SkillTargetRequest request,
         out Unit primaryTarget,
         out Unit centerUnit,
         out bool useCasterAsCenter)
     {
-        primaryTarget = context != null ? context.PrimaryTarget : null;
-        useCasterAsCenter = UsesCasterCenteredRadius(context);
-        centerUnit = useCasterAsCenter ? context?.Caster : primaryTarget;
+        primaryTarget = request.PrimaryTarget;
+        useCasterAsCenter = UsesCasterCenteredRadius(request.Skill);
+        centerUnit = useCasterAsCenter ? request.Caster : primaryTarget;
 
         if (centerUnit == null || (primaryTarget == null && !useCasterAsCenter))
             return false;
 
-        if (!useCasterAsCenter && !IsValidImpactTarget(context, primaryTarget))
+        if (!useCasterAsCenter && !IsValidImpactTarget(request, primaryTarget))
             return false;
 
         return true;
     }
 
-    private static bool IsValidImpactTarget(SkillCastContext context, Unit candidate)
+    private static bool IsValidImpactTarget(SkillTargetRequest request, Unit candidate)
     {
-        if (context == null || candidate == null)
-            return false;
-
-        if (!TryGetContextData(context, out Unit caster, out SkillData skill))
-            return false;
-
-        SkillRequirements requirements = skill.Requirements;
-        if (!TargetingPolicy.TryCreateForImpact(requirements, skill.TargetMode, out TargetingPolicy policy))
-            return false;
-
-        if (!UnitTargetValidator.IsTargetSelectable(caster, candidate, policy))
-            return false;
-
-        return requirements == null || requirements.AreSkillSpecificRequirementsMet(caster, candidate);
+        return TryGetRequestData(request, out Unit caster, out SkillData skill) &&
+               CanSkillHitUnit(caster, skill, candidate);
     }
 
-    private static bool UsesCasterCenteredRadius(SkillCastContext context)
+    private static bool UsesCasterCenteredRadius(SkillData skill)
     {
-        SkillData skill = context != null ? context.Skill : null;
-        if (skill == null || skill.TargetMode != SkillTargetMode.Self)
-            return false;
-
-        return skill.Shape == SkillShape.Area ||
-               skill.Shape == SkillShape.Splash ||
-               skill.Shape == SkillShape.MultiTarget;
+        return skill != null && skill.UsesCasterAsImpactCenter;
     }
 
-    private static bool IsWithinImpactRadius(SkillCastContext context, Unit centerUnit, Unit candidate)
+    private static bool IsWithinImpactRadius(SkillTargetRequest request, Unit centerUnit, Unit candidate)
     {
-        if (context == null || centerUnit == null || candidate == null)
+        if (centerUnit == null || candidate == null)
             return false;
 
-        SkillData skill = context.Skill;
+        SkillData skill = request.Skill;
         int radiusInCells = skill != null ? skill.ImpactRadiusInCells : 0;
         if (radiusInCells <= 0)
             return false;
 
-        RoomGrid grid = ResolveRoomGrid(context.Caster);
+        RoomGrid grid = ResolveRoomGrid(request.Caster);
 
         if (grid == null)
         {
@@ -347,6 +397,17 @@ public static class SkillTargetCollector
             : null;
     }
 
+    private static bool IsInSameRoom(Unit caster, Unit target)
+    {
+        RoomContext casterRoom = caster != null ? caster.RoomContext : null;
+        RoomContext targetRoom = target != null ? target.RoomContext : null;
+
+        if (casterRoom == null && targetRoom == null)
+            return true;
+
+        return ReferenceEquals(casterRoom, targetRoom);
+    }
+
     private static bool TryResolveLineProjection(
         Vector3 lineOrigin,
         Vector3 lineDirection,
@@ -373,32 +434,32 @@ public static class SkillTargetCollector
         return true;
     }
 
-    private static float ResolveLineLengthWorld(SkillCastContext context, int lineLengthInCells)
+    private static float ResolveLineLengthWorld(SkillTargetRequest request, int lineLengthInCells)
     {
-        if (context == null || context.Caster == null || context.Caster.RoomContext == null || context.Caster.RoomContext.RoomGrid == null)
+        if (request.Caster == null || request.Caster.RoomContext == null || request.Caster.RoomContext.RoomGrid == null)
             return Mathf.Max(0f, lineLengthInCells);
 
-        Vector2 cellWorldSize = context.Caster.RoomContext.RoomGrid.CellWorldSize;
+        Vector2 cellWorldSize = request.Caster.RoomContext.RoomGrid.CellWorldSize;
         float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
         return Mathf.Max(0f, lineLengthInCells) * Mathf.Max(0.01f, cellStep);
     }
 
-    private static float ResolveLineTolerance(SkillCastContext context)
+    private static float ResolveLineTolerance(SkillTargetRequest request)
     {
-        if (context == null || context.Caster == null || context.Caster.RoomContext == null || context.Caster.RoomContext.RoomGrid == null)
+        if (request.Caster == null || request.Caster.RoomContext == null || request.Caster.RoomContext.RoomGrid == null)
             return 0.5f;
 
-        Vector2 cellWorldSize = context.Caster.RoomContext.RoomGrid.CellWorldSize;
+        Vector2 cellWorldSize = request.Caster.RoomContext.RoomGrid.CellWorldSize;
         float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
         return Mathf.Max(0.1f, cellStep * 0.35f);
     }
 
-    private static float ResolveDistanceFromPrimary(SkillCastContext context, Unit centerUnit, Unit candidate)
+    private static float ResolveDistanceFromPrimary(SkillTargetRequest request, Unit centerUnit, Unit candidate)
     {
-        if (context == null || centerUnit == null || candidate == null)
+        if (centerUnit == null || candidate == null)
             return float.MaxValue;
 
-        RoomGrid grid = ResolveRoomGrid(context.Caster);
+        RoomGrid grid = ResolveRoomGrid(request.Caster);
 
         if (grid == null)
             return Vector3.Distance(centerUnit.Position, candidate.Position);
@@ -408,14 +469,14 @@ public static class SkillTargetCollector
         return GridNavigationUtility.GetCellDistance(primaryCell, candidateCell);
     }
 
-    private static bool TryBuildLineResolution(SkillCastContext context, out LineResolution resolution)
+    private static bool TryBuildLineResolution(SkillTargetRequest request, out LineResolution resolution)
     {
         resolution = default;
 
-        Unit caster = context != null ? context.Caster : null;
-        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
-        SkillData skill = context != null ? context.Skill : null;
-        if (caster == null || primaryTarget == null || skill == null || !IsValidImpactTarget(context, primaryTarget))
+        Unit caster = request.Caster;
+        Unit primaryTarget = request.PrimaryTarget;
+        SkillData skill = request.Skill;
+        if (caster == null || primaryTarget == null || skill == null || !IsValidImpactTarget(request, primaryTarget))
             return false;
 
         int lineLengthInCells = skill.LineLengthInCells;
@@ -435,8 +496,8 @@ public static class SkillTargetCollector
 
         lineDirection.Normalize();
 
-        float lineLengthWorld = ResolveLineLengthWorld(context, lineLengthInCells);
-        float lineTolerance = ResolveLineTolerance(context);
+        float lineLengthWorld = ResolveLineLengthWorld(request, lineLengthInCells);
+        float lineTolerance = ResolveLineTolerance(request);
         int skippedInvalid = 0;
         int skippedBehindCaster = 0;
         int skippedPastLength = 0;
@@ -447,7 +508,7 @@ public static class SkillTargetCollector
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (!IsValidImpactTarget(context, candidate))
+            if (!IsValidImpactTarget(request, candidate))
             {
                 skippedInvalid++;
                 continue;

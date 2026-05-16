@@ -12,9 +12,9 @@ public class SkillCaster : MonoBehaviour
     private Unit _unit;
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
-    private readonly List<Unit> _impactedUnitsBuffer = new();
+    private readonly List<Unit> _targetsHitBuffer = new();
 
-    public event Action<SkillCastContext, Unit> SkillUsed;
+    public event Action<Unit, SkillData, Unit> SkillUsed;
 
     public SkillData Skill => ResolveSkill();
     public bool HasSkill => Skill != null;
@@ -44,28 +44,30 @@ public class SkillCaster : MonoBehaviour
         if (!CanTryUseSkill(skill))
             return false;
 
-        Unit primaryTarget = ResolvePrimarySkillTarget(skill, combatTarget);
-        if (!TryValidatePrimarySkillTarget(skill, primaryTarget))
+        Unit chosenTarget = ChooseSkillTarget(skill, combatTarget);
+        if (!TryValidateChosenTarget(skill, chosenTarget))
             return false;
 
-        if (!IsSkillTargetInRange(skill, primaryTarget))
+        if (!IsTargetCloseEnough(skill, chosenTarget))
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(primaryTarget)} is out of range.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(chosenTarget)} is out of range.");
             return false;
         }
 
-        SkillCastContext context = BuildSkillCastContext(skill, primaryTarget);
-        if (!CollectSkillTargets(context))
+        if (!TryFindTargetsHitBySkill(skill, chosenTarget))
             return false;
 
         LogDebug(
-            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved primary target {FormatUnitName(primaryTarget)} " +
-            $"and {_impactedUnitsBuffer.Count} impacted unit(s): {FormatUnits(_impactedUnitsBuffer)}.");
+            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved target {FormatUnitName(chosenTarget)} " +
+            $"and {_targetsHitBuffer.Count} target(s) hit: {FormatUnits(_targetsHitBuffer)}.");
 
-        if (!ApplySkillEffects(skill, context))
+        if (!ApplySkillToTargets(skill, chosenTarget))
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
             return false;
+        }
 
-        OnSkillCastSucceeded(skill, context, primaryTarget);
+        OnSkillCastSucceeded(skill, chosenTarget);
         return true;
     }
 
@@ -119,123 +121,211 @@ public class SkillCaster : MonoBehaviour
         return _resolvedSkill;
     }
 
-    private Unit ResolvePrimarySkillTarget(SkillData skill, Unit combatTarget)
+    private Unit ChooseSkillTarget(SkillData skill, Unit combatTarget)
     {
         if (skill == null || _unit == null)
             return null;
 
-        if (ShouldResolveSelfAsPrimaryTarget(skill))
+        if (skill.ResolvesPrimaryTargetToCaster)
             return _unit.IsAlive ? _unit : null;
 
-        if (IsPrimarySkillTargetValid(skill, combatTarget))
+        if (CanChooseTarget(skill, combatTarget))
             return combatTarget;
 
         return FindFallbackTarget(skill);
     }
 
-    private bool TryValidatePrimarySkillTarget(SkillData skill, Unit primaryTarget)
+    private bool TryValidateChosenTarget(SkillData skill, Unit chosenTarget)
     {
-        if (primaryTarget == null)
+        if (chosenTarget == null)
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' resolved no target for mode {skill.TargetMode}.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' resolved no valid target.");
             return false;
         }
 
-        if (IsPrimarySkillTargetValid(skill, primaryTarget))
+        if (CanChooseTarget(skill, chosenTarget))
             return true;
 
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(primaryTarget)} failed requirements.");
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(chosenTarget)} failed skill rules.");
         return false;
     }
 
-    private bool IsPrimarySkillTargetValid(SkillData skill, Unit primaryTarget)
+    private bool CanChooseTarget(SkillData skill, Unit target)
     {
-        if (skill == null)
+        if (skill == null || _unit == null)
             return false;
 
-        if (IsSelfCenteredAreaSkill(skill))
-            return _unit != null && _unit.IsAlive;
+        if (skill.UsesCasterAsImpactCenter)
+            return _unit.IsAlive;
 
-        if (!TargetingPolicy.TryCreateForSkill(skill.Requirements, out TargetingPolicy policy))
-            return false;
-
-        if (!UnitTargetValidator.IsTargetSelectable(_unit, primaryTarget, policy))
-            return false;
-
-        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, primaryTarget);
+        return SkillTargetCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
     }
 
-    private bool IsSkillTargetInRange(SkillData skill, Unit primaryTarget)
+    private bool IsTargetCloseEnough(SkillData skill, Unit chosenTarget)
     {
         if (_unit == null || skill == null)
             return false;
 
-        if (primaryTarget == null)
-            return !ResolveRequiresRangeCheck(skill);
+        if (chosenTarget == null)
+            return !skill.RequiresTarget;
 
-        int rangeInCells = skill.RangeInCells;
-        if (skill.TargetMode == SkillTargetMode.Self)
+        if (skill.ResolvesPrimaryTargetToCaster)
             return true;
 
-        return UnitTargetValidator.IsTargetInRange(_unit, primaryTarget, rangeInCells);
+        RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
+        if (grid == null)
+            return Vector3.Distance(_unit.Position, chosenTarget.Position) <= skill.RangeInCells;
+
+        Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(grid, _unit);
+        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(grid, chosenTarget);
+        return GridNavigationUtility.IsWithinCellRange(casterCell, targetCell, skill.RangeInCells);
     }
 
-    private SkillCastContext BuildSkillCastContext(SkillData skill, Unit primaryTarget)
+    private bool TryFindTargetsHitBySkill(SkillData skill, Unit chosenTarget)
     {
-        return new SkillCastContext(_unit, skill, primaryTarget);
-    }
-
-    private bool CollectSkillTargets(SkillCastContext context)
-    {
-        _impactedUnitsBuffer.Clear();
-        if (SkillTargetCollector.TryCollectTargets(context, _impactedUnitsBuffer, LogDebug))
+        _targetsHitBuffer.Clear();
+        if (SkillTargetCollector.TryCollectTargets(_unit, skill, chosenTarget, _targetsHitBuffer, LogDebug))
             return true;
 
-        SkillData skill = context != null ? context.Skill : null;
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName}' shape '{skill?.Shape}' produced no impacted targets.");
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' shape '{skill.Shape}' produced no targets.");
         return false;
     }
 
-    private static bool ResolveRequiresRangeCheck(SkillData skill)
+    private bool ApplySkillToTargets(SkillData skill, Unit chosenTarget)
     {
-        return skill != null && skill.Requirements != null && skill.Requirements.requiresTarget;
-    }
-
-    private static bool IsSelfCenteredAreaSkill(SkillData skill)
-    {
-        if (skill == null || skill.TargetMode != SkillTargetMode.Self)
+        if (skill == null || _unit == null || _targetsHitBuffer.Count == 0)
             return false;
 
-        return skill.Shape == SkillShape.Area ||
-               skill.Shape == SkillShape.Splash ||
-               skill.Shape == SkillShape.MultiTarget;
+        bool anyApplied = false;
+
+        SkillEffect[] effects = skill.Effects;
+        if (effects != null)
+        {
+            for (int effectIndex = 0; effectIndex < effects.Length; effectIndex++)
+            {
+                SkillEffect effect = effects[effectIndex];
+                if (effect == null)
+                    continue;
+
+                for (int targetIndex = 0; targetIndex < _targetsHitBuffer.Count; targetIndex++)
+                {
+                    Unit target = _targetsHitBuffer[targetIndex];
+                    if (target == null)
+                        continue;
+
+                    anyApplied |= effect.Apply(_unit, skill, chosenTarget, target);
+                }
+            }
+        }
+
+        AppliedStatusEffectSpec[] statusEffects = skill.AppliedStatusEffects;
+        if (statusEffects != null)
+        {
+            for (int effectIndex = 0; effectIndex < statusEffects.Length; effectIndex++)
+            {
+                AppliedStatusEffectSpec effect = statusEffects[effectIndex];
+                StatusEffectDefinition definition = effect.Definition;
+                if (definition == null)
+                    continue;
+
+                for (int targetIndex = 0; targetIndex < _targetsHitBuffer.Count; targetIndex++)
+                {
+                    Unit target = _targetsHitBuffer[targetIndex];
+                    if (target == null || target.StatusEffects == null)
+                        continue;
+
+                    bool showBlockedPopup = effect.RequireAllyTarget && target.Team != _unit.Team;
+                    StatusEffectApplication application = new(target, _unit, skill, definition);
+                    anyApplied |= target.StatusEffects.TryApply(application, showBlockedPopup);
+                }
+            }
+        }
+
+        return anyApplied;
     }
 
-    private static bool ShouldResolveSelfAsPrimaryTarget(SkillData skill)
+    private Unit FindFallbackTarget(SkillData skill)
     {
-        if (skill == null)
-            return false;
+        if (_unit == null || skill == null)
+            return null;
 
-        if (skill.TargetMode == SkillTargetMode.Self)
-            return true;
+        SkillTargetRequirement targetType = skill.Requirements != null
+            ? skill.Requirements.TargetRequirement
+            : SkillTargetRequirement.Any;
 
-        return skill.Requirements != null && skill.Requirements.TargetRequirement == SkillTargetRequirement.Self;
+        return targetType switch
+        {
+            SkillTargetRequirement.Self => CanChooseTarget(skill, _unit) ? _unit : null,
+            SkillTargetRequirement.Ally => FindMostInjuredTarget(skill),
+            _ => FindClosestTarget(skill)
+        };
     }
 
-    private bool ApplySkillEffects(SkillData skill, SkillCastContext context)
+    private Unit FindClosestTarget(SkillData skill)
     {
-        if (ApplyResolvedEffects(skill, context, _impactedUnitsBuffer))
-            return true;
+        IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
+        Unit bestTarget = null;
+        float bestDistance = float.MaxValue;
+        int bestHealth = int.MaxValue;
 
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
-        return false;
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!CanChooseTarget(skill, candidate))
+                continue;
+
+            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
+            if (sqrDistance > bestDistance)
+                continue;
+
+            if (Mathf.Approximately(sqrDistance, bestDistance) && candidate.CurrentHealth >= bestHealth)
+                continue;
+
+            bestTarget = candidate;
+            bestDistance = sqrDistance;
+            bestHealth = candidate.CurrentHealth;
+        }
+
+        return bestTarget;
     }
 
-    private void OnSkillCastSucceeded(SkillData skill, SkillCastContext context, Unit primaryTarget)
+    private Unit FindMostInjuredTarget(SkillData skill)
+    {
+        IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
+        Unit bestTarget = null;
+        float bestHealthRatio = float.MaxValue;
+        float bestDistance = float.MaxValue;
+
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit candidate = roomUnits[i];
+            if (!CanChooseTarget(skill, candidate))
+                continue;
+
+            float healthRatio = candidate.MaxHealth > 0
+                ? (float)candidate.CurrentHealth / candidate.MaxHealth
+                : 1f;
+            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
+
+            if (healthRatio > bestHealthRatio)
+                continue;
+
+            if (Mathf.Approximately(healthRatio, bestHealthRatio) && sqrDistance >= bestDistance)
+                continue;
+
+            bestTarget = candidate;
+            bestHealthRatio = healthRatio;
+            bestDistance = sqrDistance;
+        }
+
+        return bestTarget;
+    }
+
+    private void OnSkillCastSucceeded(SkillData skill, Unit chosenTarget)
     {
         BreakInvisibilityAfterSkillUse();
         ConsumeSkillCooldown(skill);
-        NotifySkillUsed(skill, context, primaryTarget);
+        NotifySkillUsed(skill, ResolvePopupAnchor(skill, chosenTarget));
     }
 
     private void BreakInvisibilityAfterSkillUse()
@@ -253,114 +343,24 @@ public class SkillCaster : MonoBehaviour
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} started cooldown for '{skill.DisplayName}': {skill.Cooldown:F2}s.");
     }
 
-    private void NotifySkillUsed(SkillData skill, SkillCastContext context, Unit primaryTarget)
+    private Unit ResolvePopupAnchor(SkillData skill, Unit chosenTarget)
+    {
+        if (skill != null && skill.UsesCasterAsPresentationAnchor)
+            return _unit;
+
+        if (chosenTarget != null)
+            return chosenTarget;
+
+        return _targetsHitBuffer.Count > 0 ? _targetsHitBuffer[0] : null;
+    }
+
+    private void NotifySkillUsed(SkillData skill, Unit popupAnchor)
     {
         int listenerCount = SkillUsed?.GetInvocationList().Length ?? 0;
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} emitting SkillUsed for '{skill.DisplayName}' with {listenerCount} listener(s).");
-        SkillUsed?.Invoke(context, primaryTarget);
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_impactedUnitsBuffer.Count} impacted unit(s). Primary target: {FormatUnitName(primaryTarget)}.");
-    }
-
-    private static bool ApplyResolvedEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
-    {
-        if (skill == null || context == null || impactedUnits == null || impactedUnits.Count == 0)
-            return false;
-
-        bool anyApplied = false;
-        anyApplied |= ApplySkillEffects(skill, context, impactedUnits);
-        anyApplied |= ApplyStatusEffects(skill, context, impactedUnits);
-        return anyApplied;
-    }
-
-    private static bool ApplySkillEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
-    {
-        SkillEffect[] effects = skill.Effects;
-        if (effects == null || effects.Length == 0)
-            return false;
-
-        bool anyApplied = false;
-
-        for (int i = 0; i < effects.Length; i++)
-        {
-            SkillEffect effect = effects[i];
-            if (effect == null)
-                continue;
-
-            for (int targetIndex = 0; targetIndex < impactedUnits.Count; targetIndex++)
-            {
-                Unit impactedUnit = impactedUnits[targetIndex];
-                if (impactedUnit == null)
-                    continue;
-
-                anyApplied |= effect.Apply(context, impactedUnit);
-            }
-        }
-
-        return anyApplied;
-    }
-
-    private static bool ApplyStatusEffects(SkillData skill, SkillCastContext context, List<Unit> impactedUnits)
-    {
-        AppliedStatusEffectSpec[] statusEffects = skill.AppliedStatusEffects;
-        if (statusEffects == null || statusEffects.Length == 0)
-            return false;
-
-        bool anyApplied = false;
-
-        for (int i = 0; i < statusEffects.Length; i++)
-        {
-            AppliedStatusEffectSpec spec = statusEffects[i];
-            StatusEffectDefinition definition = spec.Definition;
-            if (definition == null)
-                continue;
-
-            bool requireAlly = spec.RequireAllyTarget;
-
-            for (int targetIndex = 0; targetIndex < impactedUnits.Count; targetIndex++)
-            {
-                Unit impactedUnit = impactedUnits[targetIndex];
-                if (impactedUnit == null || impactedUnit.StatusEffects == null)
-                    continue;
-
-                bool isAlly = IsAllyOf(context.Caster, impactedUnit);
-                bool showPopupEvenIfBlocked = requireAlly && !isAlly;
-
-                StatusEffectApplication application = new(impactedUnit, context.Caster, context.Skill, definition);
-                bool applied = impactedUnit.StatusEffects.TryApply(application, showPopupEvenIfBlocked);
-                
-                if (applied)
-                    anyApplied = true;
-            }
-        }
-
-        return anyApplied;
-    }
-
-    private static bool IsAllyOf(Unit caster, Unit target)
-    {
-        return ReferenceEquals(caster, target) || caster.Team == target.Team;
-    }
-
-    private Unit FindFallbackTarget(SkillData skill)
-    {
-        if (_unit == null || skill == null)
-            return null;
-
-        if (!TargetingPolicy.TryCreateForSkill(skill.Requirements, out TargetingPolicy policy))
-            return null;
-
-        return policy.Relationship switch
-        {
-            RequiredTargetRelationship.Ally => TargetingStrategy.SelectLowestHealthRatioTarget(
-                _unit,
-                _unit.GetRoomUnits(),
-                candidate => IsPrimarySkillTargetValid(skill, candidate)),
-            RequiredTargetRelationship.Hostile => TargetingStrategy.SelectClosestTarget(
-                _unit,
-                _unit.GetRoomUnits(),
-                candidate => IsPrimarySkillTargetValid(skill, candidate)),
-            _ => null
-        };
+        SkillUsed?.Invoke(_unit, skill, popupAnchor);
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_targetsHitBuffer.Count} target(s) hit.");
     }
 
     private void LogDebug(string message)
@@ -387,7 +387,7 @@ public class SkillCaster : MonoBehaviour
         return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
     }
 
-    private static string FormatUnits(List<Unit> units)
+    private static string FormatUnits(IReadOnlyList<Unit> units)
     {
         if (units == null || units.Count == 0)
             return "[None]";

@@ -5,18 +5,18 @@ public class DamageSkillEffect : SkillEffect
 {
     [SerializeField] private int _damage = 1;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public override bool Apply(Unit caster, SkillData skill, Unit chosenTarget, Unit target)
     {
-        if (context == null || context.Caster == null || target == null || !target.IsAlive)
+        if (caster == null || target == null || !target.IsAlive)
             return false;
 
-        target.TakeDamage(Mathf.Max(0, _damage), context.Caster);
+        target.TakeDamage(Mathf.Max(0, _damage), caster);
 
-        if (context.Caster.StatusEffects != null && context.Caster.StatusEffects.HasLifeSteal)
+        if (caster.StatusEffects != null && caster.StatusEffects.HasLifeSteal)
         {
-            float healPercent = context.Caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
+            float healPercent = caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
             int healAmount = Mathf.RoundToInt(_damage * healPercent);
-            LifeController casterLife = context.Caster.GetComponent<LifeController>();
+            LifeController casterLife = caster.GetComponent<LifeController>();
             if (healAmount > 0 && casterLife != null)
                 casterLife.Heal(healAmount, target);
         }
