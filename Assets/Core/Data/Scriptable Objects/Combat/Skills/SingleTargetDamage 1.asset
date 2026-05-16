@@ -32,4 +32,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8349c801ef624b019c831c79f52a130a, type: 2}
   _appliedStatusEffects:
   - _definition: {fileID: 11400000, guid: f69ea3a1e4e5875bfa2836051bfc2606, type: 2}
-    _requireAllyTarget: 1
+    _targetRelation: 1

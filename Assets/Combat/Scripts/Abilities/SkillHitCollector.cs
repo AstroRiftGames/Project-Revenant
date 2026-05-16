@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class SkillTargetCollector
+public static class SkillHitCollector
 {
     public static bool CanSkillHitUnit(Unit caster, SkillData skill, Unit target, bool allowCasterForSelfCenteredSkill = false)
     {
@@ -110,7 +110,7 @@ public static class SkillTargetCollector
 
         results.Add(primaryTarget);
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved primary target " +
+            $"[SkillHitCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved primary target " +
             $"{FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
         return true;
     }
@@ -134,7 +134,7 @@ public static class SkillTargetCollector
             TryAddUniqueTarget(results, resolution.Projections[i].Target);
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved piercing line. " +
+            $"[SkillHitCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved piercing line. " +
             $"Primary: {FormatUnit(resolution.PrimaryTarget)}. Origin: {FormatWorldPosition(resolution.LineOrigin)}. " +
             $"Direction: {FormatWorldDirection(resolution.LineDirection)}. Length: {resolution.LineLengthInCells} cells ({resolution.LineLengthWorld:F2} world). " +
             $"Tolerance: {resolution.LineTolerance:F2}. Impacted ({results.Count}): {FormatUnits(results)}. " +
@@ -154,7 +154,7 @@ public static class SkillTargetCollector
             TryAddUniqueTarget(results, resolution.Projections[0].Target);
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved line. " +
+            $"[SkillHitCollector] {FormatUnit(resolution.Caster)} shape '{resolution.Skill.Shape}' resolved line. " +
             $"Primary: {FormatUnit(resolution.PrimaryTarget)}. Origin: {FormatWorldPosition(resolution.LineOrigin)}. " +
             $"Direction: {FormatWorldDirection(resolution.LineDirection)}. Length: {resolution.LineLengthInCells} cells ({resolution.LineLengthWorld:F2} world). " +
             $"Tolerance: {resolution.LineTolerance:F2}. First impact: {FormatUnit(results.Count > 0 ? results[0] : null)}. " +
@@ -234,7 +234,7 @@ public static class SkillTargetCollector
         }
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved multi target. " +
+            $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved multi target. " +
             $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(centerUnit.Position)}. " +
             $"Radius: {skill.ImpactRadiusInCells}. Max targets: {maxTargets}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
@@ -253,7 +253,7 @@ public static class SkillTargetCollector
 
         results.Add(primaryTarget);
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved summon anchor. " +
+            $"[SkillHitCollector] {FormatUnit(request.Caster)} shape '{request.Skill.Shape}' resolved summon anchor. " +
             $"Primary: {FormatUnit(primaryTarget)}. Impacted: {FormatUnits(results)}.");
         return true;
     }
@@ -285,7 +285,7 @@ public static class SkillTargetCollector
                 results.Add(primaryTarget);
 
             debugLog?.Invoke(
-                $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName} with only " +
+                $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName} with only " +
                 $"primary target {FormatUnit(useCasterAsCenter ? centerUnit : primaryTarget)} because no room unit list was available.");
             return results.Count > 0;
         }
@@ -315,7 +315,7 @@ public static class SkillTargetCollector
         }
 
         debugLog?.Invoke(
-            $"[SkillTargetCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName}. " +
+            $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName}. " +
             $"Primary: {FormatUnit(primaryTarget)}. Center: {FormatWorldPosition(centerUnit.Position)}. " +
             $"Radius: {skill.ImpactRadiusInCells}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +

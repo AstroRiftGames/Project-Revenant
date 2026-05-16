@@ -158,7 +158,7 @@ public class SkillCaster : MonoBehaviour
         if (skill.UsesCasterAsImpactCenter)
             return _unit.IsAlive;
 
-        return SkillTargetCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
+        return SkillHitCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
     }
 
     private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
@@ -184,7 +184,7 @@ public class SkillCaster : MonoBehaviour
     private bool TryCollectUnitsHit(SkillData skill, Unit selectedTarget)
     {
         _unitsHit.Clear();
-        if (SkillTargetCollector.TryCollectTargets(_unit, skill, selectedTarget, _unitsHit, LogDebug))
+        if (SkillHitCollector.TryCollectTargets(_unit, skill, selectedTarget, _unitsHit, LogDebug))
             return true;
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' shape '{skill.Shape}' produced no targets.");
@@ -196,12 +196,32 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || _unit == null || _unitsHit.Count == 0)
             return false;
 
-        bool anyEffectApplied = ApplySkillEffects(skill, selectedTarget);
-        bool anyStatusApplied = ApplySkillStatuses(skill);
-        return anyEffectApplied || anyStatusApplied;
+        bool anyApplied = false;
+        for (int targetIndex = 0; targetIndex < _unitsHit.Count; targetIndex++)
+        {
+            Unit hitUnit = _unitsHit[targetIndex];
+            if (hitUnit == null)
+                continue;
+
+            anyApplied |= ApplySkillToUnit(skill, selectedTarget, hitUnit);
+        }
+
+        return anyApplied;
     }
 
-    private bool ApplySkillEffects(SkillData skill, Unit selectedTarget)
+    private bool ApplySkillToUnit(SkillData skill, Unit selectedTarget, Unit hitUnit)
+    {
+        if (skill == null || hitUnit == null)
+            return false;
+
+        bool anyApplied = false;
+
+        anyApplied |= ApplySkillEffectsToUnit(skill, selectedTarget, hitUnit);
+        anyApplied |= ApplySkillStatusesToUnit(skill, hitUnit);
+        return anyApplied;
+    }
+
+    private bool ApplySkillEffectsToUnit(SkillData skill, Unit selectedTarget, Unit hitUnit)
     {
         SkillEffect[] effects = skill.Effects;
         if (effects == null || effects.Length == 0)
@@ -214,46 +234,44 @@ public class SkillCaster : MonoBehaviour
             if (effect == null)
                 continue;
 
-            for (int targetIndex = 0; targetIndex < _unitsHit.Count; targetIndex++)
-            {
-                Unit hitUnit = _unitsHit[targetIndex];
-                if (hitUnit == null)
-                    continue;
-
-                anyApplied |= effect.Apply(_unit, skill, selectedTarget, hitUnit);
-            }
+            anyApplied |= effect.Apply(_unit, skill, selectedTarget, hitUnit);
         }
 
         return anyApplied;
     }
 
-    private bool ApplySkillStatuses(SkillData skill)
+    private bool ApplySkillStatusesToUnit(SkillData skill, Unit hitUnit)
     {
-        AppliedStatusEffectSpec[] statusEffects = skill.AppliedStatusEffects;
-        if (statusEffects == null || statusEffects.Length == 0)
+        SkillStatusEffect[] statusEffects = skill.StatusEffects;
+        if (statusEffects == null || statusEffects.Length == 0 || hitUnit == null || hitUnit.StatusEffects == null)
             return false;
 
         bool anyApplied = false;
         for (int effectIndex = 0; effectIndex < statusEffects.Length; effectIndex++)
         {
-            AppliedStatusEffectSpec effect = statusEffects[effectIndex];
-            StatusEffectDefinition definition = effect.Definition;
-            if (definition == null)
+            SkillStatusEffect statusEffect = statusEffects[effectIndex];
+            StatusEffectDefinition definition = statusEffect.Definition;
+            if (definition == null || !CanApplyStatusToUnit(statusEffect.TargetRelation, hitUnit))
                 continue;
 
-            for (int targetIndex = 0; targetIndex < _unitsHit.Count; targetIndex++)
-            {
-                Unit hitUnit = _unitsHit[targetIndex];
-                if (hitUnit == null || hitUnit.StatusEffects == null)
-                    continue;
-
-                bool showBlockedPopup = effect.RequireAllyTarget && hitUnit.Team != _unit.Team;
-                StatusEffectApplication application = new(hitUnit, _unit, skill, definition);
-                anyApplied |= hitUnit.StatusEffects.TryApply(application, showBlockedPopup);
-            }
+            StatusEffectApplication application = new(hitUnit, _unit, skill, definition);
+            anyApplied |= hitUnit.StatusEffects.TryApply(application);
         }
 
         return anyApplied;
+    }
+
+    private bool CanApplyStatusToUnit(TargetRelation targetRelation, Unit hitUnit)
+    {
+        if (_unit == null || hitUnit == null)
+            return false;
+
+        return targetRelation switch
+        {
+            TargetRelation.Hostile => _unit.IsHostileTo(hitUnit),
+            TargetRelation.Ally => !_unit.IsHostileTo(hitUnit),
+            _ => true
+        };
     }
 
     private Unit FindFallbackTarget(SkillData skill)

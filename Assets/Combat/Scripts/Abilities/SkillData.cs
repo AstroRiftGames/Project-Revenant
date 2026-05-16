@@ -1,4 +1,15 @@
 using UnityEngine;
+using UnityEngine.Serialization;
+
+[System.Serializable]
+public struct SkillStatusEffect
+{
+    [SerializeField] private StatusEffectDefinition _definition;
+    [SerializeField] private TargetRelation _targetRelation;
+
+    public StatusEffectDefinition Definition => _definition;
+    public TargetRelation TargetRelation => _targetRelation;
+}
 
 [CreateAssetMenu(fileName = "SkillData", menuName = "Combat/Skills/Skill Data")]
 public class SkillData : ScriptableObject
@@ -16,7 +27,8 @@ public class SkillData : ScriptableObject
     [SerializeField] private SkillShape _shape = SkillShape.SingleTarget;
     [SerializeField] private SkillRequirements _requirements = new();
     [SerializeField] private SkillEffect[] _effects;
-    [SerializeField] private AppliedStatusEffectSpec[] _appliedStatusEffects;
+    [FormerlySerializedAs("_appliedStatusEffects")]
+    [SerializeField] private SkillStatusEffect[] _statusEffects;
 
     public string SkillId => _skillId;
     public string DisplayName => _displayName;
@@ -32,7 +44,7 @@ public class SkillData : ScriptableObject
     public SkillShape Shape => _shape;
     public SkillRequirements Requirements => _requirements;
     public SkillEffect[] Effects => _effects;
-    public AppliedStatusEffectSpec[] AppliedStatusEffects => _appliedStatusEffects;
+    public SkillStatusEffect[] StatusEffects => _statusEffects;
     public bool ResolvesPrimaryTargetToCaster =>
         TargetMode == SkillTargetMode.Self ||
         (Requirements != null && Requirements.TargetRequirement == SkillTargetRequirement.Self);

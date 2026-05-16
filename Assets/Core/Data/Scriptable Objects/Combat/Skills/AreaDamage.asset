@@ -30,3 +30,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4a9ba9f81f6d430b85c219ec98edce5a, type: 2}
   _appliedStatusEffects:
   - _definition: {fileID: 11400000, guid: 7c21a43216654727aef99b24e1d97e66, type: 2}
+    _targetRelation: 1
