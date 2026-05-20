@@ -48,8 +48,7 @@ public class SkillData : ScriptableObject
     public SkillEffect[] Effects => _effects;
     public SkillStatusEffect[] StatusEffects => _statusEffects;
     public bool ResolvesPrimaryTargetToCaster =>
-        TargetMode == SkillTargetMode.Self ||
-        (Requirements != null && Requirements.TargetRequirement == SkillTargetRequirement.Self);
+        Requirements != null && Requirements.TargetRequirement == SkillTargetRequirement.Self;
     public bool UsesCasterAsImpactCenter =>
         TargetMode == SkillTargetMode.Self &&
         (Shape == SkillShape.Area || Shape == SkillShape.Splash || Shape == SkillShape.MultiTarget);

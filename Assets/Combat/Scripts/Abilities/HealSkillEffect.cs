@@ -5,8 +5,9 @@ public class HealSkillEffect : SkillEffect
 {
     [SerializeField] private int _heal = 1;
 
-    public override bool Apply(Unit caster, SkillData skill, Unit selectedTarget, Unit hitUnit)
+    public override bool Apply(SkillContext context, Unit hitUnit)
     {
+        Unit caster = context != null ? context.Caster : null;
         if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;
 

@@ -7,8 +7,11 @@ public class SummonUnitSkillEffect : SkillEffect
     [SerializeField] private int _spawnRangeInCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(Unit caster, SkillData skill, Unit selectedTarget, Unit hitUnit)
+    public override bool Apply(SkillContext context, Unit hitUnit)
     {
+        Unit caster = context != null ? context.Caster : null;
+        SkillData skill = context != null ? context.Skill : null;
+        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
         if (caster == null)
         {
             LogDebug("[SummonUnitSkillEffect] Aborted: missing caster.");
@@ -30,7 +33,7 @@ public class SummonUnitSkillEffect : SkillEffect
         }
 
         Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, caster, selectedTarget);
+        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, caster, primaryTarget);
         int spawnRangeInCells = Mathf.Max(0, _spawnRangeInCells);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
