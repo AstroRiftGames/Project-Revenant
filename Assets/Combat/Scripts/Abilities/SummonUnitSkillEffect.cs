@@ -11,7 +11,6 @@ public class SummonUnitSkillEffect : SkillEffect
     {
         Unit caster = context != null ? context.Caster : null;
         SkillData skill = context != null ? context.Skill : null;
-        Unit primaryTarget = context != null ? context.PrimaryTarget : null;
         if (caster == null)
         {
             LogDebug("[SummonUnitSkillEffect] Aborted: missing caster.");
@@ -24,8 +23,8 @@ public class SummonUnitSkillEffect : SkillEffect
             return false;
         }
 
-        RoomContext roomContext = caster.RoomContext;
-        RoomGrid grid = roomContext != null ? roomContext.RoomGrid : null;
+        RoomContext roomContext = ResolveRoomContext(context, caster);
+        RoomGrid grid = ResolveRoomGrid(context, roomContext);
         if (roomContext == null || grid == null)
         {
             LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: caster has no room context or room grid.");
@@ -33,7 +32,7 @@ public class SummonUnitSkillEffect : SkillEffect
         }
 
         Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, caster, primaryTarget);
+        Vector3Int desiredCell = ResolveDesiredSpawnCell(context, grid, caster);
         int spawnRangeInCells = Mathf.Max(0, _spawnRangeInCells);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
@@ -90,17 +89,38 @@ public class SummonUnitSkillEffect : SkillEffect
         return true;
     }
 
-    private static Vector3Int ResolveDesiredSpawnCell(RoomGrid grid, Unit caster, Unit primaryTarget)
+    private static RoomContext ResolveRoomContext(SkillContext context, Unit caster)
+    {
+        if (context != null && context.RoomContext != null)
+            return context.RoomContext;
+
+        return caster != null ? caster.RoomContext : null;
+    }
+
+    private static RoomGrid ResolveRoomGrid(SkillContext context, RoomContext roomContext)
+    {
+        if (context != null && context.RoomGrid != null)
+            return context.RoomGrid;
+
+        return roomContext != null ? roomContext.RoomGrid : null;
+    }
+
+    private static Vector3Int ResolveDesiredSpawnCell(SkillContext context, RoomGrid grid, Unit caster)
     {
         Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        if (grid == null || caster == null || primaryTarget == null)
+        if (context == null || grid == null)
             return casterCell;
 
-        Vector3Int targetCell = ResolveUnitCell(grid, primaryTarget);
-        Vector3Int delta = targetCell - casterCell;
-        int stepX = delta.x == 0 ? 0 : (delta.x > 0 ? 1 : -1);
-        int stepY = delta.y == 0 ? 0 : (delta.y > 0 ? 1 : -1);
-        return casterCell + new Vector3Int(stepX, stepY, 0);
+        if (context.HasTargetCell)
+            return new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0);
+
+        if (context.HasPrimaryTarget)
+            return ResolveUnitCell(grid, context.PrimaryTarget);
+
+        if (context.HasImpactCenterUnit)
+            return ResolveUnitCell(grid, context.ImpactCenterUnit);
+
+        return casterCell;
     }
 
     private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)

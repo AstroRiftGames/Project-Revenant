@@ -12,20 +12,23 @@ public class KnockbackSkillEffect : SkillEffect
         if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;
 
-        ApplyKnockback(hitUnit, caster);
-        return true;
+        return ApplyKnockback(context, hitUnit, caster);
     }
 
-    private void ApplyKnockback(Unit target, Unit sourceUnit)
+    private bool ApplyKnockback(SkillContext context, Unit target, Unit sourceUnit)
     {
-        RoomGrid grid = target.RoomContext?.RoomGrid;
+        RoomGrid grid = ResolveRoomGrid(context, target, sourceUnit);
         UnitMovement movement = target.GetComponent<UnitMovement>();
+        Unit referenceUnit = ResolveReferenceUnit(context, sourceUnit);
 
-        Vector3 knockbackDirection = (target.Position - sourceUnit.Position).normalized;
+        Vector3 knockbackDirection = ResolveKnockbackDirection(target, referenceUnit);
         knockbackDirection.z = 0f;
 
         if (knockbackDirection.sqrMagnitude < Mathf.Epsilon)
-            knockbackDirection = Vector3.left;
+        {
+            LogDebug($"[KnockbackSkillEffect] {target.name} knockback aborted: zero direction.");
+            return false;
+        }
 
         int knockbackCells = Mathf.Max(0, _knockbackCells);
 
@@ -60,7 +63,7 @@ public class KnockbackSkillEffect : SkillEffect
                 if (!movement.ForceRelocateToCell(resolvedCell))
                 {
                     LogDebug($"[KnockbackSkillEffect] {target.name} knockback relocation failed at cell {resolvedCell}.");
-                    return;
+                    return false;
                 }
             }
             else
@@ -72,7 +75,7 @@ public class KnockbackSkillEffect : SkillEffect
                 LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {resolvedCell} (blocked at {blockedCell}).");
             else
                 LogDebug($"[KnockbackSkillEffect] {target.name} knocked back to cell {resolvedCell}.");
-            return;
+            return true;
         }
 
         float worldDistance = knockbackCells;
@@ -83,6 +86,47 @@ public class KnockbackSkillEffect : SkillEffect
             target.transform.position = newPosition;
 
         LogDebug($"[KnockbackSkillEffect] {target.name} knocked back {worldDistance:F2} units (no grid).");
+        return true;
+    }
+
+    private static RoomGrid ResolveRoomGrid(SkillContext context, Unit target, Unit sourceUnit)
+    {
+        if (context != null && context.RoomGrid != null)
+            return context.RoomGrid;
+
+        RoomGrid targetGrid = target != null ? target.RoomContext?.RoomGrid : null;
+        if (targetGrid != null)
+            return targetGrid;
+
+        return sourceUnit != null ? sourceUnit.RoomContext?.RoomGrid : null;
+    }
+
+    private static Unit ResolveReferenceUnit(SkillContext context, Unit sourceUnit)
+    {
+        if (context == null)
+            return sourceUnit;
+
+        if (context.HasPrimaryTarget)
+            return sourceUnit;
+
+        if (context.HasImpactCenterUnit)
+            return context.ImpactCenterUnit;
+
+        return sourceUnit;
+    }
+
+    private static Vector3 ResolveKnockbackDirection(Unit target, Unit referenceUnit)
+    {
+        if (target == null || referenceUnit == null)
+            return Vector3.zero;
+
+        Vector3 direction = target.Position - referenceUnit.Position;
+        direction.z = 0f;
+
+        if (direction.sqrMagnitude < Mathf.Epsilon)
+            return Vector3.zero;
+
+        return direction.normalized;
     }
 
     private void LogDebug(string message)
