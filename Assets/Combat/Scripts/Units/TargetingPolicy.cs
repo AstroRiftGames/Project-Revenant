@@ -71,22 +71,6 @@ public readonly struct TargetingPolicy
         return TryCreateForPrimarySkillTarget(requirements, out policy);
     }
 
-    // Compatibility policy for impact-unit validation when callers still derive
-    // the affected-unit rules from the primary target contract plus target mode.
-    // Explicit shape impact rules now belong semantically to SkillData through
-    // ImpactTargetRequirement and may bypass this helper entirely.
-    public static bool TryCreateForImpact(SkillRequirements requirements, SkillTargetMode targetMode, out TargetingPolicy policy)
-    {
-        if (!TryCreateForPrimarySkillTarget(requirements, out policy))
-            return false;
-
-        if (targetMode != SkillTargetMode.Self)
-            return true;
-
-        policy = WithAllowSelf(policy);
-        return true;
-    }
-
     #endregion
 
     #region Private Helpers
@@ -105,26 +89,11 @@ public readonly struct TargetingPolicy
 
         policy = new TargetingPolicy(
             ResolveRelationship(primaryTargetRequirement),
-            requiresTarget: requirements == null || requirements.RequiresTarget,
+            requiresTarget: true,
             allowSelf: primaryTargetRequirement == SkillTargetRequirement.Any || primaryTargetRequirement == SkillTargetRequirement.Self,
             requireSelf: primaryTargetRequirement == SkillTargetRequirement.Self,
             requireInjured: requirements != null && requirements.RequiresInjuredTarget);
         return true;
-    }
-
-    private static TargetingPolicy WithAllowSelf(TargetingPolicy policy)
-    {
-        return new TargetingPolicy(
-            policy.Relationship,
-            policy.RequiresTarget,
-            allowSelf: true,
-            policy.RequireSelf,
-            policy.AllowDead,
-            policy.AllowInvisible,
-            policy.RequireInjured,
-            policy.RequireSameRoom,
-            policy.RequireActive,
-            policy.RequireDetectable);
     }
 
     private static TargetRelation ResolveRelationship(SkillTargetRequirement targetRequirement)

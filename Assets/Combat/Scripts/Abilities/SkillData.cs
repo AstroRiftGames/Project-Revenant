@@ -28,12 +28,11 @@ public class SkillData : ScriptableObject
     // Documented skill type contract:
     // how the skill is applied, target selection, impact pattern, execution,
     // and valid target rules.
-    [SerializeField] private SkillTargetMode _targetMode = SkillTargetMode.CurrentTarget;
+    [FormerlySerializedAs("_targetMode")]
+    [SerializeField] private ImpactCenterMode _impactCenterMode = ImpactCenterMode.PrimaryTarget;
     [SerializeField] private SkillShape _shape = SkillShape.SingleTarget;
     [SerializeField] private SkillRequirements _requirements = new();
-    // Explicit impact target contract for shapes that do not rely on a
-    // primary unit target. GroundCell remains technical support only.
-    [SerializeField] private SkillTargetRequirement _impactTargetRequirement = SkillTargetRequirement.Legacy;
+    [SerializeField] private SkillTargetRequirement _impactTargetRequirement = SkillTargetRequirement.Any;
 
     #endregion
 
@@ -85,9 +84,11 @@ public class SkillData : ScriptableObject
 
     #region Tipo Properties
 
-    public SkillTargetMode TargetMode => _targetMode;
-    public SkillTargetRequirement TargetRequirement => ResolveTargetRequirement();
-    public SkillTargetRequirement ImpactTargetRequirement => ResolveImpactTargetRequirement();
+    public ImpactCenterMode ImpactCenterMode => _impactCenterMode;
+    public SkillTargetRequirement TargetRequirement => _requirements != null
+        ? _requirements.TargetRequirement
+        : SkillTargetRequirement.Any;
+    public SkillTargetRequirement ImpactTargetRequirement => NormalizeImpactTargetRequirement(_impactTargetRequirement);
     public SkillShape Shape => _shape;
     public SkillRequirements Requirements => _requirements;
 
@@ -110,94 +111,13 @@ public class SkillData : ScriptableObject
 
     #endregion
 
-    #region Legacy y compatibilidad
+    #region Legacy y deuda
 
     public float Cooldown => Mathf.Max(0f, _cooldown);
-    // Legacy alias kept because runtime collectors still read the older
-    // impact radius name even though the documented parameter is splash radius.
-    public int ImpactRadiusInCells => SplashRadiusInCells;
-    // Compatibility helper kept for existing validators and callers that still
-    // inspect the raw serialized requirements object.
-    public bool RequiresTarget => Requirements == null || Requirements.requiresTarget;
-    // Compatibility helper derived from documented target requirements.
-    public bool ResolvesPrimaryTargetToCaster =>
-        TargetRequirement == SkillTargetRequirement.Self;
-    // Compatibility helper for current area/self-centered runtime paths.
-    public bool UsesCasterAsImpactCenter =>
-        TargetMode == SkillTargetMode.Self &&
-        (Shape == SkillShape.Area || Shape == SkillShape.Splash || Shape == SkillShape.MultiTarget);
-    // Compatibility helper for current visual popup anchoring rules.
-    public bool UsesCasterAsPresentationAnchor =>
-        Shape == SkillShape.SpawnMinions || TargetMode == SkillTargetMode.Self;
 
     #endregion
 
     #region Resolution Helpers
-
-    private SkillTargetRequirement ResolveTargetRequirement()
-    {
-        return Requirements != null
-            ? Requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
-    }
-
-    private SkillTargetRequirement ResolveImpactTargetRequirement()
-    {
-        if (_impactTargetRequirement != SkillTargetRequirement.Legacy)
-            return NormalizeImpactTargetRequirement(_impactTargetRequirement);
-
-        SkillTargetRequirement targetRequirement = TargetRequirement;
-
-        switch (targetRequirement)
-        {
-            case SkillTargetRequirement.Hostile:
-            case SkillTargetRequirement.Ally:
-            case SkillTargetRequirement.Self:
-            case SkillTargetRequirement.Any:
-                return targetRequirement;
-            case SkillTargetRequirement.NoTarget:
-            case SkillTargetRequirement.GroundCell:
-                return ResolveNoPrimaryImpactTargetRequirement();
-            default:
-                return SkillTargetRequirement.Any;
-        }
-    }
-
-    private SkillTargetRequirement ResolveNoPrimaryImpactTargetRequirement()
-    {
-        // Temporary compatibility fallback for older assets that still rely on
-        // status configuration to imply impact relationship. New NoTarget and
-        // GroundCell skills should set _impactTargetRequirement explicitly.
-        if (_statusEffects == null || _statusEffects.Length == 0)
-            return SkillTargetRequirement.Any;
-
-        bool foundRelation = false;
-        TargetRelation resolvedRelation = TargetRelation.Any;
-
-        for (int i = 0; i < _statusEffects.Length; i++)
-        {
-            TargetRelation statusRelation = _statusEffects[i].TargetRelation;
-            if (!foundRelation)
-            {
-                resolvedRelation = statusRelation;
-                foundRelation = true;
-                continue;
-            }
-
-            if (resolvedRelation != statusRelation)
-                return SkillTargetRequirement.Any;
-        }
-
-        if (!foundRelation)
-            return SkillTargetRequirement.Any;
-
-        return resolvedRelation switch
-        {
-            TargetRelation.Hostile => SkillTargetRequirement.Hostile,
-            TargetRelation.Ally => SkillTargetRequirement.Ally,
-            _ => SkillTargetRequirement.Any
-        };
-    }
 
     private static SkillTargetRequirement NormalizeImpactTargetRequirement(SkillTargetRequirement targetRequirement)
     {

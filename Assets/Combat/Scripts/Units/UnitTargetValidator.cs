@@ -21,16 +21,6 @@ public static class UnitTargetValidator
         return IsTargetSelectable(source, target, policy);
     }
 
-    // Compatibility validation for impact candidates when the affected-unit
-    // policy is still derived from the primary target contract plus target mode.
-    public static bool IsSkillImpactTargetSelectable(Unit source, Unit target, SkillRequirements requirements, SkillTargetMode targetMode)
-    {
-        if (!TargetingPolicy.TryCreateForImpact(requirements, targetMode, out TargetingPolicy policy))
-            return false;
-
-        return IsTargetSelectable(source, target, policy);
-    }
-
     #endregion
 
     #region Policy Application
@@ -88,10 +78,14 @@ public static class UnitTargetValidator
         if (source == null || skill == null)
             return false;
 
+        SkillTargetRequirement primaryTargetRequirement = skill.TargetRequirement;
         if (target == null)
-            return !skill.RequiresTarget;
+        {
+            return primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
+                   primaryTargetRequirement == SkillTargetRequirement.GroundCell;
+        }
 
-        if (skill.ResolvesPrimaryTargetToCaster)
+        if (primaryTargetRequirement == SkillTargetRequirement.Self)
             return true;
 
         return IsTargetInRange(source, target, skill.RangeInCells);

@@ -557,7 +557,7 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || _unit == null)
             return null;
 
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        SkillTargetRequirement primaryTargetRequirement = skill.TargetRequirement;
         if (primaryTargetRequirement == SkillTargetRequirement.Self)
             return _unit.IsAlive ? _unit : null;
 
@@ -646,17 +646,12 @@ public class SkillCaster : MonoBehaviour
         if (hasTargetCell)
             return null;
 
-        if (skill.UsesCasterAsImpactCenter)
-            return _unit;
-
-        if (primaryTarget != null)
-            return primaryTarget;
-
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
-        if (primaryTargetRequirement == SkillTargetRequirement.Self)
-            return _unit;
-
-        return null;
+        return skill.ImpactCenterMode switch
+        {
+            ImpactCenterMode.Caster => _unit,
+            ImpactCenterMode.PrimaryTarget => primaryTarget,
+            _ => null
+        };
     }
 
     private Vector3 ResolveImpactCenterWorld(RoomGrid roomGrid, Unit impactCenterUnit, bool hasTargetCell, Vector2Int targetCell)
@@ -675,8 +670,8 @@ public class SkillCaster : MonoBehaviour
         if (!hasTargetCell || skill == null)
             return false;
 
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
-        return primaryTargetRequirement == SkillTargetRequirement.GroundCell;
+        return skill.TargetRequirement == SkillTargetRequirement.GroundCell ||
+               skill.ImpactCenterMode == ImpactCenterMode.TargetCell;
     }
 
     // Validates the current primary-target contract plus the resolved impact
@@ -696,7 +691,7 @@ public class SkillCaster : MonoBehaviour
         }
 
         SkillData skill = skillContext.Skill;
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        SkillTargetRequirement primaryTargetRequirement = skill.TargetRequirement;
 
         if (RequiresUnitPrimaryTarget(skill))
         {
@@ -722,14 +717,18 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (primaryTargetRequirement == SkillTargetRequirement.GroundCell && !skillContext.HasTargetCell)
+        if ((primaryTargetRequirement == SkillTargetRequirement.GroundCell ||
+             skill.ImpactCenterMode == ImpactCenterMode.TargetCell) &&
+            !skillContext.HasTargetCell)
         {
             if (logFailure)
-                LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' requires a ground cell, but no target cell flow exists yet.");
+                LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' requires a target cell as impact center.");
             return false;
         }
 
-        if (primaryTargetRequirement == SkillTargetRequirement.GroundCell && !IsValidGroundTargetCell(skillContext, logFailure))
+        if ((primaryTargetRequirement == SkillTargetRequirement.GroundCell ||
+             skill.ImpactCenterMode == ImpactCenterMode.TargetCell) &&
+            !IsValidGroundTargetCell(skillContext, logFailure))
             return false;
 
         return HasValidImpactCenter(skillContext, logFailure);
@@ -772,12 +771,23 @@ public class SkillCaster : MonoBehaviour
         if (skillContext == null)
             return false;
 
-        if (skillContext.HasImpactCenterUnit || skillContext.HasTargetCell)
-            return true;
+        SkillData skill = skillContext.Skill;
+        if (skill == null)
+            return false;
+
+        switch (skill.ImpactCenterMode)
+        {
+            case ImpactCenterMode.TargetCell:
+                return skillContext.HasTargetCell;
+            case ImpactCenterMode.Caster:
+            case ImpactCenterMode.PrimaryTarget:
+                if (skillContext.HasImpactCenterUnit)
+                    return true;
+                break;
+        }
 
         if (logFailure)
         {
-            SkillData skill = skillContext.Skill;
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' resolved no valid impact center.");
         }
 
@@ -808,8 +818,7 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
             return false;
 
-        SkillRequirements requirements = skill.Requirements;
-        return requirements != null && requirements.TargetRequirement == SkillTargetRequirement.Ally;
+        return skill.TargetRequirement == SkillTargetRequirement.Ally;
     }
 
     private bool ShouldUseOffensiveTargetSelection(SkillData skill)
@@ -817,8 +826,7 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
             return false;
 
-        SkillRequirements requirements = skill.Requirements;
-        return requirements != null && requirements.TargetRequirement == SkillTargetRequirement.Hostile;
+        return skill.TargetRequirement == SkillTargetRequirement.Hostile;
     }
 
     private Unit SelectPreferredAllySkillTarget(SkillData skill, Unit currentTarget)
@@ -851,7 +859,7 @@ public class SkillCaster : MonoBehaviour
             return false;
 
         SkillRequirements requirements = skill.Requirements;
-        if (requirements != null && requirements.mustTargetInjured)
+        if (requirements != null && requirements.RequiresInjuredTarget)
             return true;
 
         SkillEffect[] effects = skill.Effects;
@@ -1030,9 +1038,7 @@ public class SkillCaster : MonoBehaviour
         if (_unit == null || skill == null)
             return null;
 
-        SkillTargetRequirement primaryTargetRequirement = skill.Requirements != null
-            ? skill.Requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
+        SkillTargetRequirement primaryTargetRequirement = skill.TargetRequirement;
 
         return primaryTargetRequirement switch
         {
@@ -1047,24 +1053,20 @@ public class SkillCaster : MonoBehaviour
 
     private static bool RequiresUnitPrimaryTarget(SkillData skill)
     {
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        SkillTargetRequirement primaryTargetRequirement = skill != null
+            ? skill.TargetRequirement
+            : SkillTargetRequirement.Any;
         return primaryTargetRequirement != SkillTargetRequirement.NoTarget &&
                primaryTargetRequirement != SkillTargetRequirement.GroundCell;
     }
 
     private static bool AllowsNullPrimaryTarget(SkillData skill)
     {
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        SkillTargetRequirement primaryTargetRequirement = skill != null
+            ? skill.TargetRequirement
+            : SkillTargetRequirement.Any;
         return primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
                primaryTargetRequirement == SkillTargetRequirement.GroundCell;
-    }
-
-    private static SkillTargetRequirement ResolvePrimaryTargetRequirement(SkillData skill)
-    {
-        SkillRequirements requirements = skill != null ? skill.Requirements : null;
-        return requirements != null
-            ? requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
     }
 
     private Unit FindClosestTarget(SkillData skill)
@@ -1141,8 +1143,11 @@ public class SkillCaster : MonoBehaviour
 
     private Unit ResolvePopupAnchor(SkillData skill, Unit primaryTarget)
     {
-        if (skill != null && skill.UsesCasterAsPresentationAnchor)
+        if (skill != null &&
+            (skill.Shape == SkillShape.SpawnMinions || skill.ImpactCenterMode == ImpactCenterMode.Caster))
+        {
             return _unit;
+        }
 
         if (primaryTarget != null)
             return primaryTarget;

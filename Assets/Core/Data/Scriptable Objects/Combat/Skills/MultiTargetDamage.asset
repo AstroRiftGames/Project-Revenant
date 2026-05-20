@@ -20,11 +20,11 @@ MonoBehaviour:
   _splashRadiusInCells: 2
   _lineLengthInCells: 1
   _maxTargets: 3
-  _targetMode: 0
+  _impactCenterMode: 0
   _shape: 5
   _requirements:
-    requiresTarget: 1
-    mustTargetHostile: 1
+    _targetRequirement: 1
     mustTargetInjured: 0
+  _impactTargetRequirement: 1
   _effects:
   - {fileID: 11400000, guid: 151b7d2826d54f638cc33a35a9d8c880, type: 2}

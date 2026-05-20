@@ -21,12 +21,10 @@ MonoBehaviour:
   _splashRadiusInCells: 6
   _lineLengthInCells: 1
   _maxTargets: 1
-  _targetMode: 1
+  _impactCenterMode: 1
   _shape: 2
   _requirements:
-    requiresTarget: 0
     _targetRequirement: 5
-    _legacyMustTargetHostile: 1
     mustTargetInjured: 0
   _impactTargetRequirement: 1
   _effects: []

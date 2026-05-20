@@ -11,23 +11,20 @@ public static class SkillHitCollector
     {
         Unit caster = skillContext != null ? skillContext.Caster : null;
         SkillData skill = skillContext != null ? skillContext.Skill : null;
-        if (caster == null || skill == null)
+        if (caster == null || target == null || skill == null)
             return false;
 
-        if (skill.UsesCasterAsImpactCenter && allowCasterForSelfCenteredSkill)
-            return ReferenceEquals(caster, target) && caster.IsAlive;
-
-        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
-        if (primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
-            primaryTargetRequirement == SkillTargetRequirement.GroundCell)
-        {
-            return CanSkillHitUnitUsingImpactRequirementOnly(skillContext, target, allowCasterForSelfCenteredSkill);
-        }
-
-        if (!UnitTargetValidator.IsSkillImpactTargetSelectable(caster, target, skill.Requirements, skill.TargetMode))
-            return false;
-
-        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(caster, target);
+        SkillTargetRequirement impactTargetRequirement = skill.ImpactTargetRequirement;
+        bool requireSelf = impactTargetRequirement == SkillTargetRequirement.Self;
+        bool allowSelf = requireSelf ||
+                         impactTargetRequirement == SkillTargetRequirement.Any ||
+                         allowCasterForSelfCenteredSkill;
+        TargetingPolicy policy = new(
+            ResolveImpactTargetRelation(impactTargetRequirement),
+            requiresTarget: false,
+            allowSelf: allowSelf,
+            requireSelf: requireSelf);
+        return UnitTargetValidator.IsTargetSelectable(caster, target, policy);
     }
 
     private readonly struct SkillTargetRequest
@@ -149,10 +146,13 @@ public static class SkillHitCollector
                 out Unit primaryTarget,
                 out Unit impactCenterUnit,
                 out Vector3 impactCenterWorld,
-                out bool usesCasterAsImpactCenter))
+                out bool impactCenterUsesTargetCell))
             return false;
 
-        bool seedResultsWithPrimaryTarget = !usesCasterAsImpactCenter && primaryTarget != null;
+        bool seedResultsWithPrimaryTarget =
+            primaryTarget != null &&
+            CanUseUnitAsImpactTarget(request, primaryTarget) &&
+            IsWithinImpactRadius(request, impactCenterUnit, impactCenterWorld, primaryTarget);
         if (seedResultsWithPrimaryTarget)
             results.Add(primaryTarget);
 
@@ -219,7 +219,7 @@ public static class SkillHitCollector
         debugLog?.Invoke(
             $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved multi target. " +
             $"PrimaryTarget: {FormatUnit(primaryTarget)}. ImpactCenter: {FormatWorldPosition(impactCenterWorld)}. " +
-            $"Radius: {skill.ImpactRadiusInCells}. Max targets: {maxTargets}. " +
+            $"Radius: {skill.SplashRadiusInCells}. Max targets: {maxTargets}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
             $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
             $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped out of radius: {skippedOutOfRadius}. " +
@@ -253,10 +253,14 @@ public static class SkillHitCollector
                 out Unit primaryTarget,
                 out Unit impactCenterUnit,
                 out Vector3 impactCenterWorld,
-                out bool usesCasterAsImpactCenter))
+                out bool impactCenterUsesTargetCell))
             return false;
 
-        bool seedResultsWithPrimaryTarget = includePrimaryTargetFirst && !usesCasterAsImpactCenter && primaryTarget != null;
+        bool seedResultsWithPrimaryTarget =
+            includePrimaryTargetFirst &&
+            primaryTarget != null &&
+            CanUseUnitAsImpactTarget(request, primaryTarget) &&
+            IsWithinImpactRadius(request, impactCenterUnit, impactCenterWorld, primaryTarget);
         if (seedResultsWithPrimaryTarget)
             results.Add(primaryTarget);
 
@@ -270,12 +274,17 @@ public static class SkillHitCollector
         IReadOnlyList<Unit> roomUnits = GetRoomUnits(caster);
         if (roomUnits == null)
         {
-            if (!includePrimaryTargetFirst && !usesCasterAsImpactCenter && primaryTarget != null)
+            if (!includePrimaryTargetFirst &&
+                primaryTarget != null &&
+                CanUseUnitAsImpactTarget(request, primaryTarget) &&
+                IsWithinImpactRadius(request, impactCenterUnit, impactCenterWorld, primaryTarget))
+            {
                 results.Add(primaryTarget);
+            }
 
             debugLog?.Invoke(
                 $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName} with only " +
-                $"primary target {FormatUnit(usesCasterAsImpactCenter ? impactCenterUnit : primaryTarget)} because no room unit list was available.");
+                $"primary target {FormatUnit(primaryTarget)} because no room unit list was available.");
             return results.Count > 0;
         }
 
@@ -306,7 +315,7 @@ public static class SkillHitCollector
         debugLog?.Invoke(
             $"[SkillHitCollector] {FormatUnit(caster)} shape '{skill.Shape}' resolved {shapeName}. " +
             $"PrimaryTarget: {FormatUnit(primaryTarget)}. ImpactCenter: {FormatWorldPosition(impactCenterWorld)}. " +
-            $"Radius: {skill.ImpactRadiusInCells}. " +
+            $"Radius: {skill.SplashRadiusInCells}. " +
             $"Impacted ({results.Count}): {FormatUnits(results)}. " +
             $"Skipped duplicate primary: {skippedDuplicatePrimary}. " +
             $"Skipped invalid/allied/dead: {skippedInvalid}. Skipped out of radius: {skippedOutOfRadius}.");
@@ -319,23 +328,17 @@ public static class SkillHitCollector
         out Unit primaryTarget,
         out Unit impactCenterUnit,
         out Vector3 impactCenterWorld,
-        out bool usesCasterAsImpactCenter)
+        out bool impactCenterUsesTargetCell)
     {
         primaryTarget = request.PrimaryTarget;
         impactCenterUnit = request.ImpactCenterUnit;
         impactCenterWorld = request.ImpactCenterWorld;
-        usesCasterAsImpactCenter = UsesCasterAsImpactCenter(request.Skill);
+        impactCenterUsesTargetCell = request.Skill != null && request.Skill.ImpactCenterMode == ImpactCenterMode.TargetCell;
 
-        if (impactCenterUnit == null && !request.HasTargetCell)
-            return false;
+        if (impactCenterUsesTargetCell)
+            return request.HasTargetCell;
 
-        if (!usesCasterAsImpactCenter && primaryTarget == null && !request.HasTargetCell)
-            return false;
-
-        if (primaryTarget != null && !usesCasterAsImpactCenter && !CanUseUnitAsImpactTarget(request, primaryTarget))
-            return false;
-
-        return true;
+        return impactCenterUnit != null;
     }
 
     private static bool CanUseUnitAsImpactTarget(SkillTargetRequest request, Unit candidate)
@@ -344,18 +347,13 @@ public static class SkillHitCollector
                CanSkillHitUnit(request.Context, candidate);
     }
 
-    private static bool UsesCasterAsImpactCenter(SkillData skill)
-    {
-        return skill != null && skill.UsesCasterAsImpactCenter;
-    }
-
     private static bool IsWithinImpactRadius(SkillTargetRequest request, Unit centerUnit, Vector3 centerWorld, Unit candidate)
     {
         if (candidate == null)
             return false;
 
         SkillData skill = request.Skill;
-        int radiusInCells = skill != null ? skill.ImpactRadiusInCells : 0;
+        int radiusInCells = skill != null ? skill.SplashRadiusInCells : 0;
         if (radiusInCells <= 0)
             return false;
 
@@ -483,6 +481,16 @@ public static class SkillHitCollector
         if (caster == null || primaryTarget == null || skill == null || !CanUseUnitAsImpactTarget(request, primaryTarget))
             return false;
 
+        if (!TryResolveImpactCenter(
+                request,
+                out _,
+                out Unit impactCenterUnit,
+                out Vector3 impactCenterWorld,
+                out _))
+        {
+            return false;
+        }
+
         int lineLengthInCells = skill.LineLengthInCells;
         if (lineLengthInCells <= 0)
             return false;
@@ -491,7 +499,7 @@ public static class SkillHitCollector
         if (roomUnits == null)
             return false;
 
-        Vector3 lineOrigin = caster.Position;
+        Vector3 lineOrigin = impactCenterUnit != null ? impactCenterUnit.Position : impactCenterWorld;
         Vector3 lineDirection = primaryTarget.Position - lineOrigin;
         lineDirection.z = 0f;
 
@@ -572,27 +580,6 @@ public static class SkillHitCollector
         results.Add(candidate);
     }
 
-    private static bool CanSkillHitUnitUsingImpactRequirementOnly(
-        SkillContext skillContext,
-        Unit target,
-        bool allowCasterForSelfCenteredSkill)
-    {
-        Unit caster = skillContext != null ? skillContext.Caster : null;
-        SkillData skill = skillContext != null ? skillContext.Skill : null;
-        if (caster == null || target == null || skill == null)
-            return false;
-
-        SkillTargetRequirement impactTargetRequirement = skill.ImpactTargetRequirement;
-        bool requireSelf = impactTargetRequirement == SkillTargetRequirement.Self;
-        bool allowSelf = requireSelf || allowCasterForSelfCenteredSkill;
-        TargetingPolicy policy = new(
-            ResolveImpactTargetRelation(impactTargetRequirement),
-            requiresTarget: false,
-            allowSelf: allowSelf,
-            requireSelf: requireSelf);
-        return UnitTargetValidator.IsTargetSelectable(caster, target, policy);
-    }
-
     private static TargetRelation ResolveImpactTargetRelation(SkillTargetRequirement targetRequirement)
     {
         return targetRequirement switch
@@ -601,14 +588,6 @@ public static class SkillHitCollector
             SkillTargetRequirement.Ally => TargetRelation.Ally,
             _ => TargetRelation.Any
         };
-    }
-
-    private static SkillTargetRequirement ResolvePrimaryTargetRequirement(SkillData skill)
-    {
-        SkillRequirements requirements = skill != null ? skill.Requirements : null;
-        return requirements != null
-            ? requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
     }
 
     private static string FormatUnits(List<Unit> units)
