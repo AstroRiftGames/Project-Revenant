@@ -1,31 +1,49 @@
 fileFormatVersion: 2
-guid: 2349d9fbb882ec94582ff05de58eb2f2
+guid: 44a0145b3fe07eb4881c8a568d1afc13
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7627909384208061297
-    second: Humans-Spear-Sheet_0
+      213: 5974831770232034737
+    second: Humans-Tunic&Shoes-Sheet_0
   - first:
-      213: 3397483232985818568
-    second: Humans-Spear-Sheet_1
+      213: 9016710132893830511
+    second: Humans-Tunic&Shoes-Sheet_1
   - first:
-      213: -6367187376315359523
-    second: Humans-Spear-Sheet_2
+      213: 4015391066209149798
+    second: Humans-Tunic&Shoes-Sheet_2
   - first:
-      213: -1444301515107068663
-    second: Humans-Spear-Sheet_3
+      213: 569265957317073083
+    second: Humans-Tunic&Shoes-Sheet_3
   - first:
-      213: 5629367169970239391
-    second: Humans-Spear-Sheet_4
+      213: -7229620697390000240
+    second: Humans-Tunic&Shoes-Sheet_4
   - first:
-      213: 7244529651571413263
-    second: Humans-Spear-Sheet_5
+      213: 8905407866843856963
+    second: Humans-Tunic&Shoes-Sheet_5
   - first:
-      213: 8959493102799789575
-    second: Humans-Spear-Sheet_6
+      213: -2202882149623860005
+    second: Humans-Tunic&Shoes-Sheet_6
   - first:
-      213: 5724760875691727473
-    second: Humans-Spear-Sheet_7
+      213: 8785527518186571383
+    second: Humans-Tunic&Shoes-Sheet_7
+  - first:
+      213: 116193022550139919
+    second: Humans-Tunic&Shoes-Sheet_8
+  - first:
+      213: -5874686493776466935
+    second: Humans-Tunic&Shoes-Sheet_9
+  - first:
+      213: 5770334476464983996
+    second: Humans-Tunic&Shoes-Sheet_10
+  - first:
+      213: 8765408997956477007
+    second: Humans-Tunic&Shoes-Sheet_11
+  - first:
+      213: 6639657682354231097
+    second: Humans-Tunic&Shoes-Sheet_12
+  - first:
+      213: -2812284931958061916
+    second: Humans-Tunic&Shoes-Sheet_13
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,7 +152,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_0
+      name: Human_Clothes_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -142,21 +160,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1731798ab27cbd960800000000000000
-      internalID: 7627909384208061297
+      spriteID: e4b64a66e36cc1f4a82745e2c4e44ff4
+      internalID: 777623158
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_1
+      name: Human_Clothes_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -164,21 +182,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8c52770fff8462f20800000000000000
-      internalID: 3397483232985818568
+      spriteID: f3fe5be1b055b6c4185fd92b10e8ff04
+      internalID: 865623428
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_2
+      name: Human_Clothes_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -186,21 +204,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: dde1f58e0d433a7a0800000000000000
-      internalID: -6367187376315359523
+      spriteID: cde2dde6a9eae314c80daf2f5cdf11e2
+      internalID: 701423311
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_3
+      name: Human_Clothes_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -208,21 +226,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9051c7b9c6fc4fbe0800000000000000
-      internalID: -1444301515107068663
+      spriteID: 21fae78c35939924f93ceaa785a8d520
+      internalID: 1532552554
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_4
+      name: Human_Clothes_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -230,21 +248,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f97725c8d978f1e40800000000000000
-      internalID: 5629367169970239391
+      spriteID: d470ab89324f24e4da0fb88fa7a651ba
+      internalID: 1389958745
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_5
+      name: Human_Clothes_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -252,21 +270,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f01d2beb55db98460800000000000000
-      internalID: 7244529651571413263
+      spriteID: 915163c731252a84a81ddc9d8125abca
+      internalID: 524601692
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_6
+      name: Human_Clothes_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -274,21 +292,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 70e91ffe183865c70800000000000000
-      internalID: 8959493102799789575
+      spriteID: 527cafae7542ef74eadd0d71bc822804
+      internalID: 1952445979
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_7
+      name: Human_Clothes_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -296,15 +314,15 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 17ad8a37faf627f40800000000000000
-      internalID: 5724760875691727473
+      spriteID: 747dbc5c29168c745a990d4a5e6a6705
+      internalID: -237677195
       vertices: []
       indices: 
       edges: []
@@ -313,7 +331,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a34b77c57f10fde4cb8544a933d774db
+    spriteID: 219f4fc958e39ab4c812156316575841
     internalID: 0
     vertices: []
     indices: 
@@ -323,14 +341,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Humans-Spear-Sheet_0: 7627909384208061297
-      Humans-Spear-Sheet_1: 3397483232985818568
-      Humans-Spear-Sheet_2: -6367187376315359523
-      Humans-Spear-Sheet_3: -1444301515107068663
-      Humans-Spear-Sheet_4: 5629367169970239391
-      Humans-Spear-Sheet_5: 7244529651571413263
-      Humans-Spear-Sheet_6: 8959493102799789575
-      Humans-Spear-Sheet_7: 5724760875691727473
+      Human_Clothes_DownLeft_0: 777623158
+      Human_Clothes_DownRight_0: 701423311
+      Human_Clothes_Down_0: 865623428
+      Human_Clothes_Left_0: -237677195
+      Human_Clothes_Right_0: 1532552554
+      Human_Clothes_UpLeft_0: 1952445979
+      Human_Clothes_UpRight_0: 1389958745
+      Human_Clothes_Up_0: 524601692
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

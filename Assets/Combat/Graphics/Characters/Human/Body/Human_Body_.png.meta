@@ -134,7 +134,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Humans-Body-Sheet_0
+      name: Human_Body_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -147,19 +147,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 57c810558841403f0800000000000000
-      internalID: -935600246811947915
+      spriteID: 242a8dccf82746347879ec2bd89cc0ba
+      internalID: 515971923
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_1
+      name: Human_Body_Down_0
       rect:
         serializedVersion: 2
-        x: 64
+        x: 62
         y: 0
         width: 64
         height: 64
@@ -169,16 +169,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9cb01138e0d0c0510800000000000000
-      internalID: 1516601530496650185
+      spriteID: 3a52f8af657b81f47b907fea04e747bd
+      internalID: 445517090
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_2
+      name: Human_Body_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -191,16 +191,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f6d992d583a380620800000000000000
-      internalID: 2740504387010534767
+      spriteID: ecba37973962ea04fa299e6f97cc5301
+      internalID: -1487737521
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_3
+      name: Human_Body_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -213,16 +213,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: cb5e3ccf477ac3d40800000000000000
-      internalID: 5565507360421832124
+      spriteID: a4b36871ca458b045a040a980565d90e
+      internalID: -125220793
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_4
+      name: Human_Body_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -235,16 +235,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 72bcf75c6a3969890800000000000000
-      internalID: -7451606188950566105
+      spriteID: f45a806d36ceb74459ff42e17713d980
+      internalID: -1377881722
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_5
+      name: Human_Body_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -257,16 +257,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 109d2580788b3c4f0800000000000000
-      internalID: -809600617896814335
+      spriteID: 92c6bba783f6cf3429d9c75757795f11
+      internalID: 1283861482
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_6
+      name: Human_Body_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -279,16 +279,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d251895b4821057e0800000000000000
-      internalID: -1778901491619719891
+      spriteID: 4c3298cc21f01cc4a985ff144291616f
+      internalID: -1963658112
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Body-Sheet_7
+      name: Human_Body_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -301,10 +301,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8809cd47568db9ee0800000000000000
-      internalID: -1253170141028642680
+      spriteID: 5a3fd2fc8def07b4dbf00d1ec331dce3
+      internalID: -1708629308
       vertices: []
       indices: 
       edges: []
@@ -323,14 +323,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Humans-Body-Sheet_0: -935600246811947915
-      Humans-Body-Sheet_1: 1516601530496650185
-      Humans-Body-Sheet_2: 2740504387010534767
-      Humans-Body-Sheet_3: 5565507360421832124
-      Humans-Body-Sheet_4: -7451606188950566105
-      Humans-Body-Sheet_5: -809600617896814335
-      Humans-Body-Sheet_6: -1778901491619719891
-      Humans-Body-Sheet_7: -1253170141028642680
+      Human_Body_DownLeft_0: 515971923
+      Human_Body_DownRight_0: -1487737521
+      Human_Body_Down_0: 445517090
+      Human_Body_Left_0: -1708629308
+      Human_Body_Right_0: -125220793
+      Human_Body_UpLeft_0: -1963658112
+      Human_Body_UpRight_0: -1377881722
+      Human_Body_Up_0: 1283861482
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

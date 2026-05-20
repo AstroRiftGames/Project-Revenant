@@ -1,49 +1,31 @@
 fileFormatVersion: 2
-guid: 44a0145b3fe07eb4881c8a568d1afc13
+guid: 2349d9fbb882ec94582ff05de58eb2f2
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5974831770232034737
-    second: Humans-Tunic&Shoes-Sheet_0
+      213: 7627909384208061297
+    second: Humans-Spear-Sheet_0
   - first:
-      213: 9016710132893830511
-    second: Humans-Tunic&Shoes-Sheet_1
+      213: 3397483232985818568
+    second: Humans-Spear-Sheet_1
   - first:
-      213: 4015391066209149798
-    second: Humans-Tunic&Shoes-Sheet_2
+      213: -6367187376315359523
+    second: Humans-Spear-Sheet_2
   - first:
-      213: 569265957317073083
-    second: Humans-Tunic&Shoes-Sheet_3
+      213: -1444301515107068663
+    second: Humans-Spear-Sheet_3
   - first:
-      213: -7229620697390000240
-    second: Humans-Tunic&Shoes-Sheet_4
+      213: 5629367169970239391
+    second: Humans-Spear-Sheet_4
   - first:
-      213: 8905407866843856963
-    second: Humans-Tunic&Shoes-Sheet_5
+      213: 7244529651571413263
+    second: Humans-Spear-Sheet_5
   - first:
-      213: -2202882149623860005
-    second: Humans-Tunic&Shoes-Sheet_6
+      213: 8959493102799789575
+    second: Humans-Spear-Sheet_6
   - first:
-      213: 8785527518186571383
-    second: Humans-Tunic&Shoes-Sheet_7
-  - first:
-      213: 116193022550139919
-    second: Humans-Tunic&Shoes-Sheet_8
-  - first:
-      213: -5874686493776466935
-    second: Humans-Tunic&Shoes-Sheet_9
-  - first:
-      213: 5770334476464983996
-    second: Humans-Tunic&Shoes-Sheet_10
-  - first:
-      213: 8765408997956477007
-    second: Humans-Tunic&Shoes-Sheet_11
-  - first:
-      213: 6639657682354231097
-    second: Humans-Tunic&Shoes-Sheet_12
-  - first:
-      213: -2812284931958061916
-    second: Humans-Tunic&Shoes-Sheet_13
+      213: 5724760875691727473
+    second: Humans-Spear-Sheet_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -152,7 +134,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_0
+      name: Human_Weapon-Spear_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -165,16 +147,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1b51669c6dddae250800000000000000
-      internalID: 5974831770232034737
+      spriteID: 81af2ab9aad4efb4f8445fd16cf248b3
+      internalID: -1556562713
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_1
+      name: Human_Weapon-Spear_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -187,16 +169,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f6d4dc1e71ac12d70800000000000000
-      internalID: 9016710132893830511
+      spriteID: d6999b2287bcca648b1e35cb748de975
+      internalID: 198398726
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_2
+      name: Human_Weapon-Spear_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -209,16 +191,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6636ca776e889b730800000000000000
-      internalID: 4015391066209149798
+      spriteID: 73c3eda02a7611a49b79197261965298
+      internalID: 1011967210
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_3
+      name: Human_Weapon-Spear_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -231,16 +213,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: bb85b904f5076e700800000000000000
-      internalID: 569265957317073083
+      spriteID: 78751fc7118193e4eb63d0d5f71d7bf2
+      internalID: 1429283123
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_4
+      name: Human_Weapon-Spear_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -253,16 +235,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 097d147a74a3bab90800000000000000
-      internalID: -7229620697390000240
+      spriteID: cfb3e220ba74e184c8e13cdc9388f5b4
+      internalID: 1874663538
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_5
+      name: Human_Weapon-Spear_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -275,16 +257,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 3408233a54d569b70800000000000000
-      internalID: 8905407866843856963
+      spriteID: 647cc1110207cd845a1478bb92f580d9
+      internalID: -655726466
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_6
+      name: Human_Weapon-Spear_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -297,16 +279,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: bd4fe953b5acd61e0800000000000000
-      internalID: -2202882149623860005
+      spriteID: abe094f20afffd942bc3b7bdb6247df2
+      internalID: -985624237
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Tunic&Shoes-Sheet_7
+      name: Human_Weapon-Spear_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -319,10 +301,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 7760ee5eab67ce970800000000000000
-      internalID: 8785527518186571383
+      spriteID: f430c15a580fa1c4a8f2b0b25193172e
+      internalID: 1352015329
       vertices: []
       indices: 
       edges: []
@@ -331,7 +313,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 219f4fc958e39ab4c812156316575841
+    spriteID: a34b77c57f10fde4cb8544a933d774db
     internalID: 0
     vertices: []
     indices: 
@@ -341,14 +323,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Humans-Tunic&Shoes-Sheet_0: 5974831770232034737
-      Humans-Tunic&Shoes-Sheet_1: 9016710132893830511
-      Humans-Tunic&Shoes-Sheet_2: 4015391066209149798
-      Humans-Tunic&Shoes-Sheet_3: 569265957317073083
-      Humans-Tunic&Shoes-Sheet_4: -7229620697390000240
-      Humans-Tunic&Shoes-Sheet_5: 8905407866843856963
-      Humans-Tunic&Shoes-Sheet_6: -2202882149623860005
-      Humans-Tunic&Shoes-Sheet_7: 8785527518186571383
+      Human_Weapon-Spear_DownLeft_0: -1556562713
+      Human_Weapon-Spear_DownRight_0: 1011967210
+      Human_Weapon-Spear_Down_0: 198398726
+      Human_Weapon-Spear_Left_0: 1352015329
+      Human_Weapon-Spear_Right_0: 1429283123
+      Human_Weapon-Spear_UpLeft_0: -985624237
+      Human_Weapon-Spear_UpRight_0: 1874663538
+      Human_Weapon-Spear_Up_0: -655726466
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
