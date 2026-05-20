@@ -144,7 +144,8 @@ public static class SkillHitCollector
         if (!TryResolveImpactCenter(request, out Unit primaryTarget, out Unit centerUnit, out Vector3 centerWorld, out bool useCasterAsCenter))
             return false;
 
-        if (!useCasterAsCenter)
+        bool seedWithPrimaryTarget = !useCasterAsCenter && primaryTarget != null;
+        if (seedWithPrimaryTarget)
             results.Add(primaryTarget);
 
         if (!TryGetRequestData(request, out Unit caster, out SkillData skill))
@@ -164,7 +165,7 @@ public static class SkillHitCollector
             for (int i = 0; i < roomUnits.Count; i++)
             {
                 Unit candidate = roomUnits[i];
-                if (!useCasterAsCenter && ReferenceEquals(candidate, primaryTarget))
+                if (seedWithPrimaryTarget && ReferenceEquals(candidate, primaryTarget))
                 {
                     skippedDuplicatePrimary++;
                     continue;
@@ -194,7 +195,7 @@ public static class SkillHitCollector
                 return left.Target.GetInstanceID().CompareTo(right.Target.GetInstanceID());
             });
 
-            int remainingSlots = Mathf.Max(0, maxTargets - 1);
+            int remainingSlots = Mathf.Max(0, maxTargets - results.Count);
             for (int i = 0; i < candidates.Count; i++)
             {
                 if (i < remainingSlots)
@@ -242,7 +243,8 @@ public static class SkillHitCollector
         if (!TryResolveImpactCenter(request, out Unit primaryTarget, out Unit centerUnit, out Vector3 centerWorld, out bool useCasterAsCenter))
             return false;
 
-        if (includePrimaryTargetFirst && !useCasterAsCenter)
+        bool seedWithPrimaryTarget = includePrimaryTargetFirst && !useCasterAsCenter && primaryTarget != null;
+        if (seedWithPrimaryTarget)
             results.Add(primaryTarget);
 
         int skippedDuplicatePrimary = 0;
@@ -255,7 +257,7 @@ public static class SkillHitCollector
         IReadOnlyList<Unit> roomUnits = GetRoomUnits(caster);
         if (roomUnits == null)
         {
-            if (!includePrimaryTargetFirst && !useCasterAsCenter)
+            if (!includePrimaryTargetFirst && !useCasterAsCenter && primaryTarget != null)
                 results.Add(primaryTarget);
 
             debugLog?.Invoke(
@@ -267,7 +269,7 @@ public static class SkillHitCollector
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (!useCasterAsCenter && includePrimaryTargetFirst && ReferenceEquals(candidate, primaryTarget))
+            if (seedWithPrimaryTarget && ReferenceEquals(candidate, primaryTarget))
             {
                 skippedDuplicatePrimary++;
                 continue;
@@ -314,10 +316,10 @@ public static class SkillHitCollector
         if (centerUnit == null && !request.HasTargetCell)
             return false;
 
-        if (!useCasterAsCenter && primaryTarget == null)
+        if (!useCasterAsCenter && primaryTarget == null && !request.HasTargetCell)
             return false;
 
-        if (!useCasterAsCenter && !IsValidImpactTarget(request, primaryTarget))
+        if (primaryTarget != null && !useCasterAsCenter && !IsValidImpactTarget(request, primaryTarget))
             return false;
 
         return true;
@@ -563,14 +565,29 @@ public static class SkillHitCollector
         bool allowCasterForSelfCenteredSkill)
     {
         Unit caster = skillContext != null ? skillContext.Caster : null;
-        if (caster == null || target == null)
+        SkillData skill = skillContext != null ? skillContext.Skill : null;
+        if (caster == null || target == null || skill == null)
             return false;
 
+        SkillTargetRequirement impactTargetRequirement = skill.ImpactTargetRequirement;
+        bool requireSelf = impactTargetRequirement == SkillTargetRequirement.Self;
+        bool allowSelf = requireSelf || allowCasterForSelfCenteredSkill;
         TargetingPolicy policy = new(
-            TargetRelation.Any,
+            ResolveImpactTargetRelation(impactTargetRequirement),
             requiresTarget: false,
-            allowSelf: allowCasterForSelfCenteredSkill);
+            allowSelf: allowSelf,
+            requireSelf: requireSelf);
         return UnitTargetValidator.IsTargetSelectable(caster, target, policy);
+    }
+
+    private static TargetRelation ResolveImpactTargetRelation(SkillTargetRequirement targetRequirement)
+    {
+        return targetRequirement switch
+        {
+            SkillTargetRequirement.Hostile => TargetRelation.Hostile,
+            SkillTargetRequirement.Ally => TargetRelation.Ally,
+            _ => TargetRelation.Any
+        };
     }
 
     private static SkillTargetRequirement ResolveTargetRequirement(SkillData skill)

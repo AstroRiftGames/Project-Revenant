@@ -98,13 +98,23 @@ public class SkillCaster : MonoBehaviour
 
     public bool TryUse(Unit combatTarget)
     {
+        return TryUseInternal(combatTarget, default, false);
+    }
+
+    public bool TryUseGroundCell(Vector2Int targetCell)
+    {
+        return TryUseInternal(null, targetCell, true);
+    }
+
+    private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell)
+    {
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
 
         SkillData skill = ResolveSkill();
         if (!CanStartCast(skill))
             return false;
 
-        if (!TryBuildSkillContext(skill, combatTarget, out SkillContext skillContext))
+        if (!TryBuildSkillContext(skill, combatTarget, targetCell, hasTargetCell, out SkillContext skillContext))
             return false;
 
         if (!TryValidateSkillContext(skillContext))
@@ -441,7 +451,9 @@ public class SkillCaster : MonoBehaviour
             return true;
 
         Unit previousPrimaryTarget = resolvedContext != null ? resolvedContext.PrimaryTarget : _castingTarget;
-        if (!TryBuildSkillContext(skill, previousPrimaryTarget, out SkillContext rebuiltContext))
+        Vector2Int previousTargetCell = resolvedContext != null ? resolvedContext.TargetCell : default;
+        bool hasPreviousTargetCell = resolvedContext != null && resolvedContext.HasTargetCell;
+        if (!TryBuildSkillContext(skill, previousPrimaryTarget, previousTargetCell, hasPreviousTargetCell, out SkillContext rebuiltContext))
             return false;
 
         if (!CanCompleteCastWithContext(rebuiltContext))
@@ -570,42 +582,60 @@ public class SkillCaster : MonoBehaviour
 
     private bool TryBuildSkillContext(SkillData skill, Unit combatTarget, out SkillContext skillContext)
     {
+        return TryBuildSkillContext(skill, combatTarget, default, false, out skillContext);
+    }
+
+    private bool TryBuildSkillContext(
+        SkillData skill,
+        Unit combatTarget,
+        Vector2Int targetCell,
+        bool hasTargetCell,
+        out SkillContext skillContext)
+    {
         skillContext = null;
         if (skill == null || _unit == null)
             return false;
 
         Unit primaryTarget = ChooseSkillTarget(skill, combatTarget);
-        skillContext = BuildSkillContext(skill, primaryTarget);
+        skillContext = BuildSkillContext(skill, primaryTarget, targetCell, hasTargetCell);
         return skillContext != null;
     }
 
     private SkillContext BuildSkillContext(SkillData skill, Unit primaryTarget)
+    {
+        return BuildSkillContext(skill, primaryTarget, default, false);
+    }
+
+    private SkillContext BuildSkillContext(SkillData skill, Unit primaryTarget, Vector2Int targetCell, bool hasTargetCell)
     {
         if (skill == null || _unit == null)
             return null;
 
         RoomContext roomContext = _unit.RoomContext;
         RoomGrid roomGrid = roomContext != null ? roomContext.RoomGrid : null;
-        Vector2Int targetCell = default;
-        bool hasTargetCell = false;
-        Unit impactCenterUnit = ResolveImpactCenterUnit(skill, primaryTarget);
-        Vector3 impactCenterWorld = ResolveImpactCenterWorld(roomGrid, impactCenterUnit, hasTargetCell, targetCell);
+        bool useTargetCell = ShouldUseTargetCell(skill, hasTargetCell);
+        Vector2Int resolvedTargetCell = useTargetCell ? targetCell : default;
+        Unit impactCenterUnit = ResolveImpactCenterUnit(skill, primaryTarget, useTargetCell);
+        Vector3 impactCenterWorld = ResolveImpactCenterWorld(roomGrid, impactCenterUnit, useTargetCell, resolvedTargetCell);
 
         return new SkillContext(
             _unit,
             skill,
             primaryTarget,
-            targetCell,
-            hasTargetCell,
+            resolvedTargetCell,
+            useTargetCell,
             impactCenterWorld,
             impactCenterUnit,
             roomContext,
             roomGrid);
     }
 
-    private Unit ResolveImpactCenterUnit(SkillData skill, Unit primaryTarget)
+    private Unit ResolveImpactCenterUnit(SkillData skill, Unit primaryTarget, bool hasTargetCell)
     {
         if (skill == null || _unit == null)
+            return null;
+
+        if (hasTargetCell)
             return null;
 
         if (skill.UsesCasterAsImpactCenter)
@@ -630,6 +660,15 @@ public class SkillCaster : MonoBehaviour
             return roomGrid.CellToWorld(new Vector3Int(targetCell.x, targetCell.y, 0));
 
         return _unit != null ? _unit.Position : Vector3.zero;
+    }
+
+    private static bool ShouldUseTargetCell(SkillData skill, bool hasTargetCell)
+    {
+        if (!hasTargetCell || skill == null)
+            return false;
+
+        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
+        return targetRequirement == SkillTargetRequirement.GroundCell;
     }
 
     private bool TryValidateChosenTarget(SkillData skill, Unit selectedTarget)
@@ -686,7 +725,42 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
+        if (targetRequirement == SkillTargetRequirement.GroundCell && !IsValidGroundTargetCell(skillContext, logFailure))
+            return false;
+
         return HasValidImpactCenter(skillContext, logFailure);
+    }
+
+    private bool IsValidGroundTargetCell(SkillContext skillContext, bool logFailure)
+    {
+        if (skillContext == null || !skillContext.HasTargetCell)
+            return false;
+
+        RoomGrid roomGrid = skillContext.RoomGrid;
+        if (roomGrid == null)
+        {
+            if (logFailure)
+            {
+                SkillData skill = skillContext.Skill;
+                LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' requires a room grid for ground targeting.");
+            }
+            return false;
+        }
+
+        Vector3Int targetCell = new(skillContext.TargetCell.x, skillContext.TargetCell.y, 0);
+        if (!roomGrid.HasCell(targetCell) || !roomGrid.IsCellInsideWalkableBounds(targetCell))
+        {
+            if (logFailure)
+            {
+                SkillData skill = skillContext.Skill;
+                LogDebug(
+                    $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' target cell " +
+                    $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is outside the valid grid.");
+            }
+            return false;
+        }
+
+        return true;
     }
 
     private bool HasValidImpactCenter(SkillContext skillContext, bool logFailure)
