@@ -16,13 +16,30 @@ public enum SkillTargetRequirement
 [Serializable]
 public class SkillRequirements
 {
+    #region Serialized Contract
+
+    // Compatibility note:
+    // SkillData now exposes the primary target contract semantically, but the
+    // serialized target requirement still lives here to preserve existing
+    // assets and avoid widening this refactor.
     public bool requiresTarget = true;
     [SerializeField] private SkillTargetRequirement _targetRequirement = SkillTargetRequirement.Legacy;
     [FormerlySerializedAs("mustTargetHostile")]
     [SerializeField, HideInInspector] private bool _legacyMustTargetHostile = true;
+    // Additional condition layered on top of the target type/relationship.
     public bool mustTargetInjured;
 
+    #endregion
+
+    #region Semantic Properties
+
     public SkillTargetRequirement TargetRequirement => ResolveTargetRequirement();
+    public bool RequiresTarget => requiresTarget;
+    public bool RequiresInjuredTarget => mustTargetInjured;
+
+    #endregion
+
+    #region Resolution
 
     public SkillTargetRequirement ResolveTargetRequirement()
     {
@@ -34,23 +51,29 @@ public class SkillRequirements
             : SkillTargetRequirement.Ally;
     }
 
+    #endregion
+
+    #region Legacy Combined Validation
+
     // Legacy combined validation kept for compatibility with older callers.
-    // Current skill targeting uses the skill-specific rules in the abilities
-    // flow and reserves AreSkillSpecificRequirementsMet for special cases.
+    // The semantic split is:
+    // - TargetRequirement: primary target relation/type
+    // - SkillRequirements: additional target conditions
+    // - TargetingPolicy / UnitTargetValidator: runtime validation
     public bool AreMet(Unit caster, Unit target)
     {
         if (caster == null)
             return false;
 
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement();
+        SkillTargetRequirement targetRequirement = TargetRequirement;
         if (targetRequirement == SkillTargetRequirement.GroundCell)
             return false;
 
-        if (requiresTarget && target == null)
+        if (RequiresTarget && target == null)
             return false;
 
         if (target == null)
-            return !requiresTarget || targetRequirement == SkillTargetRequirement.NoTarget;
+            return !RequiresTarget || targetRequirement == SkillTargetRequirement.NoTarget;
 
         switch (targetRequirement)
         {
@@ -72,7 +95,7 @@ public class SkillRequirements
                 return false;
         }
 
-        if (mustTargetInjured && target.CurrentHealth >= target.MaxHealth)
+        if (RequiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
             return false;
 
         return AreSkillSpecificRequirementsMet(caster, target);
@@ -85,4 +108,6 @@ public class SkillRequirements
     {
         return caster != null;
     }
+
+    #endregion
 }

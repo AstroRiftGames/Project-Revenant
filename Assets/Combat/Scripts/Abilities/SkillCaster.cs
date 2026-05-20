@@ -444,6 +444,8 @@ public class SkillCaster : MonoBehaviour
         return skill == null || skill.CastTime <= 0f;
     }
 
+    // Rebuilds the cast context only when the cached primary target / impact
+    // center data became stale during cast time.
     private bool TryResolveCastContext(SkillData skill, out SkillContext resolvedContext)
     {
         resolvedContext = _castingContext;
@@ -550,34 +552,35 @@ public class SkillCaster : MonoBehaviour
         return _resolvedSkill;
     }
 
-    private Unit ChooseSkillTarget(SkillData skill, Unit combatTarget)
+    // Resolves the tactical primary target required by the skill contract.
+    private Unit ChoosePrimaryTarget(SkillData skill, Unit requestedPrimaryTarget)
     {
         if (skill == null || _unit == null)
             return null;
 
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
-        if (targetRequirement == SkillTargetRequirement.Self)
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        if (primaryTargetRequirement == SkillTargetRequirement.Self)
             return _unit.IsAlive ? _unit : null;
 
-        if (targetRequirement == SkillTargetRequirement.NoTarget ||
-            targetRequirement == SkillTargetRequirement.GroundCell)
+        if (primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
+            primaryTargetRequirement == SkillTargetRequirement.GroundCell)
         {
             return null;
         }
 
         if (ShouldUseAllyTargetSelection(skill))
-            return SelectPreferredAllySkillTarget(skill, combatTarget);
+            return SelectPreferredAllySkillTarget(skill, requestedPrimaryTarget);
 
         if (ShouldUseOffensiveTargetSelection(skill))
-            return SelectPreferredOffensiveSkillTarget(skill, combatTarget);
+            return SelectPreferredOffensiveSkillTarget(skill, requestedPrimaryTarget);
 
-        if (CanChooseTarget(skill, combatTarget))
-            return combatTarget;
+        if (CanUseUnitAsPrimaryTarget(skill, requestedPrimaryTarget))
+            return requestedPrimaryTarget;
 
         if (AllowsNullPrimaryTarget(skill))
             return null;
 
-        return FindFallbackTarget(skill);
+        return FindFallbackPrimaryTarget(skill);
     }
 
     private bool TryBuildSkillContext(SkillData skill, Unit combatTarget, out SkillContext skillContext)
@@ -596,16 +599,22 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || _unit == null)
             return false;
 
-        Unit primaryTarget = ChooseSkillTarget(skill, combatTarget);
+        // SkillContext keeps primary target selection separate from impact
+        // center resolution so shapes can be evaluated later without guessing.
+        Unit primaryTarget = ChoosePrimaryTarget(skill, combatTarget);
         skillContext = BuildSkillContext(skill, primaryTarget, targetCell, hasTargetCell);
         return skillContext != null;
     }
 
+    // Builds a complete skill context from primary target selection plus the
+    // derived impact center unit/world/cell data required by shapes.
     private SkillContext BuildSkillContext(SkillData skill, Unit primaryTarget)
     {
         return BuildSkillContext(skill, primaryTarget, default, false);
     }
 
+    // PrimaryTarget is the tactical unit choice. ImpactCenter is the unit or
+    // cell from which the shape will later resolve impacted units.
     private SkillContext BuildSkillContext(SkillData skill, Unit primaryTarget, Vector2Int targetCell, bool hasTargetCell)
     {
         if (skill == null || _unit == null)
@@ -644,8 +653,8 @@ public class SkillCaster : MonoBehaviour
         if (primaryTarget != null)
             return primaryTarget;
 
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
-        if (targetRequirement == SkillTargetRequirement.Self)
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        if (primaryTargetRequirement == SkillTargetRequirement.Self)
             return _unit;
 
         return null;
@@ -667,16 +676,18 @@ public class SkillCaster : MonoBehaviour
         if (!hasTargetCell || skill == null)
             return false;
 
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
-        return targetRequirement == SkillTargetRequirement.GroundCell;
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        return primaryTargetRequirement == SkillTargetRequirement.GroundCell;
     }
 
-    private bool TryValidateChosenTarget(SkillData skill, Unit selectedTarget)
+    private bool TryValidatePrimaryTargetContext(SkillData skill, Unit primaryTarget)
     {
-        SkillContext skillContext = BuildSkillContext(skill, selectedTarget);
+        SkillContext skillContext = BuildSkillContext(skill, primaryTarget);
         return TryValidateSkillContext(skillContext);
     }
 
+    // Validates the current primary-target contract plus the resolved impact
+    // center contract required to execute the shape.
     private bool TryValidateSkillContext(SkillContext skillContext)
     {
         return TryValidateSkillContext(skillContext, true);
@@ -692,7 +703,7 @@ public class SkillCaster : MonoBehaviour
         }
 
         SkillData skill = skillContext.Skill;
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
 
         if (RequiresUnitPrimaryTarget(skill))
         {
@@ -703,11 +714,11 @@ public class SkillCaster : MonoBehaviour
                 return false;
             }
 
-            if (CanChooseTarget(skill, skillContext.PrimaryTarget))
+            if (CanUseUnitAsPrimaryTarget(skill, skillContext.PrimaryTarget))
                 return HasValidImpactCenter(skillContext, logFailure);
 
             if (logFailure)
-                LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatUnitName(skillContext.PrimaryTarget)} failed skill rules.");
+                LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' primary target {FormatUnitName(skillContext.PrimaryTarget)} failed skill rules.");
             return false;
         }
 
@@ -718,14 +729,14 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (targetRequirement == SkillTargetRequirement.GroundCell && !skillContext.HasTargetCell)
+        if (primaryTargetRequirement == SkillTargetRequirement.GroundCell && !skillContext.HasTargetCell)
         {
             if (logFailure)
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' requires a ground cell, but no target cell flow exists yet.");
             return false;
         }
 
-        if (targetRequirement == SkillTargetRequirement.GroundCell && !IsValidGroundTargetCell(skillContext, logFailure))
+        if (primaryTargetRequirement == SkillTargetRequirement.GroundCell && !IsValidGroundTargetCell(skillContext, logFailure))
             return false;
 
         return HasValidImpactCenter(skillContext, logFailure);
@@ -780,21 +791,23 @@ public class SkillCaster : MonoBehaviour
         return false;
     }
 
-    private bool CanChooseTarget(SkillData skill, Unit target)
+    // Applies the primary target contract only. Impact target validation lives
+    // later in SkillHitCollector after the shape is resolved.
+    private bool CanUseUnitAsPrimaryTarget(SkillData skill, Unit primaryTarget)
     {
         if (skill == null || _unit == null)
             return false;
 
-        if (target == null)
+        if (primaryTarget == null)
             return AllowsNullPrimaryTarget(skill);
 
         if (!RequiresUnitPrimaryTarget(skill))
             return false;
 
-        if (!UnitTargetValidator.IsSkillTargetSelectable(_unit, target, skill.Requirements))
+        if (!UnitTargetValidator.IsSkillTargetSelectable(_unit, primaryTarget, skill.Requirements))
             return false;
 
-        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, target);
+        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, primaryTarget);
     }
 
     private bool ShouldUseAllyTargetSelection(SkillData skill)
@@ -821,12 +834,12 @@ public class SkillCaster : MonoBehaviour
             return null;
 
         IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
-        Func<Unit, bool> canChooseTarget = candidate => CanChooseTarget(skill, candidate);
+        Func<Unit, bool> canChoosePrimaryTarget = candidate => CanUseUnitAsPrimaryTarget(skill, candidate);
 
         if (IsHealingAllySkill(skill))
-            return TargetingStrategy.SelectBestHealingAllyTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+            return TargetingStrategy.SelectBestHealingAllyTarget(_unit, currentTarget, roomUnits, canChoosePrimaryTarget);
 
-        return TargetingStrategy.SelectBestBuffAllyTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+        return TargetingStrategy.SelectBestBuffAllyTarget(_unit, currentTarget, roomUnits, canChoosePrimaryTarget);
     }
 
     private Unit SelectPreferredOffensiveSkillTarget(SkillData skill, Unit currentTarget)
@@ -835,8 +848,8 @@ public class SkillCaster : MonoBehaviour
             return null;
 
         IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
-        Func<Unit, bool> canChooseTarget = candidate => CanChooseTarget(skill, candidate);
-        return TargetingStrategy.SelectBestOffensiveTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+        Func<Unit, bool> canChoosePrimaryTarget = candidate => CanUseUnitAsPrimaryTarget(skill, candidate);
+        return TargetingStrategy.SelectBestOffensiveTarget(_unit, currentTarget, roomUnits, canChoosePrimaryTarget);
     }
 
     private bool IsHealingAllySkill(SkillData skill)
@@ -872,9 +885,9 @@ public class SkillCaster : MonoBehaviour
         return false;
     }
 
-    private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
+    private bool IsPrimaryTargetInRange(SkillData skill, Unit primaryTarget)
     {
-        SkillContext skillContext = BuildSkillContext(skill, selectedTarget);
+        SkillContext skillContext = BuildSkillContext(skill, primaryTarget);
         return IsSkillContextInRange(skillContext);
     }
 
@@ -1025,18 +1038,18 @@ public class SkillCaster : MonoBehaviour
         };
     }
 
-    private Unit FindFallbackTarget(SkillData skill)
+    private Unit FindFallbackPrimaryTarget(SkillData skill)
     {
         if (_unit == null || skill == null)
             return null;
 
-        SkillTargetRequirement targetType = skill.Requirements != null
+        SkillTargetRequirement primaryTargetRequirement = skill.Requirements != null
             ? skill.Requirements.TargetRequirement
             : SkillTargetRequirement.Any;
 
-        return targetType switch
+        return primaryTargetRequirement switch
         {
-            SkillTargetRequirement.Self => CanChooseTarget(skill, _unit) ? _unit : null,
+            SkillTargetRequirement.Self => CanUseUnitAsPrimaryTarget(skill, _unit) ? _unit : null,
             SkillTargetRequirement.Ally => SelectPreferredAllySkillTarget(skill, null),
             SkillTargetRequirement.Hostile => SelectPreferredOffensiveSkillTarget(skill, null),
             SkillTargetRequirement.NoTarget => null,
@@ -1047,19 +1060,19 @@ public class SkillCaster : MonoBehaviour
 
     private static bool RequiresUnitPrimaryTarget(SkillData skill)
     {
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
-        return targetRequirement != SkillTargetRequirement.NoTarget &&
-               targetRequirement != SkillTargetRequirement.GroundCell;
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        return primaryTargetRequirement != SkillTargetRequirement.NoTarget &&
+               primaryTargetRequirement != SkillTargetRequirement.GroundCell;
     }
 
     private static bool AllowsNullPrimaryTarget(SkillData skill)
     {
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
-        return targetRequirement == SkillTargetRequirement.NoTarget ||
-               targetRequirement == SkillTargetRequirement.GroundCell;
+        SkillTargetRequirement primaryTargetRequirement = ResolvePrimaryTargetRequirement(skill);
+        return primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
+               primaryTargetRequirement == SkillTargetRequirement.GroundCell;
     }
 
-    private static SkillTargetRequirement ResolveTargetRequirement(SkillData skill)
+    private static SkillTargetRequirement ResolvePrimaryTargetRequirement(SkillData skill)
     {
         SkillRequirements requirements = skill != null ? skill.Requirements : null;
         return requirements != null
@@ -1077,7 +1090,7 @@ public class SkillCaster : MonoBehaviour
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (!CanChooseTarget(skill, candidate))
+            if (!CanUseUnitAsPrimaryTarget(skill, candidate))
                 continue;
 
             float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
@@ -1105,7 +1118,7 @@ public class SkillCaster : MonoBehaviour
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (!CanChooseTarget(skill, candidate))
+            if (!CanUseUnitAsPrimaryTarget(skill, candidate))
                 continue;
 
             float healthRatio = candidate.MaxHealth > 0
@@ -1146,11 +1159,11 @@ public class SkillCaster : MonoBehaviour
         return _unit.IsAlive;
     }
 
-    private void OnSkillCastSucceeded(SkillData skill, Unit selectedTarget)
+    private void OnSkillCastSucceeded(SkillData skill, Unit primaryTarget)
     {
         ConsumeChargeOnSuccess(skill);
         BreakInvisibilityAfterSkillUse();
-        NotifySkillUsed(skill, ResolvePopupAnchor(skill, selectedTarget));
+        NotifySkillUsed(skill, ResolvePopupAnchor(skill, primaryTarget));
     }
 
     private void BreakInvisibilityAfterSkillUse()
@@ -1171,13 +1184,13 @@ public class SkillCaster : MonoBehaviour
             $"Charge reset to {_state.CurrentCharge:F1}/{_state.MaxCharge:F1}; cooldown {skill.Cooldown:F2}s.");
     }
 
-    private Unit ResolvePopupAnchor(SkillData skill, Unit selectedTarget)
+    private Unit ResolvePopupAnchor(SkillData skill, Unit primaryTarget)
     {
         if (skill != null && skill.UsesCasterAsPresentationAnchor)
             return _unit;
 
-        if (selectedTarget != null)
-            return selectedTarget;
+        if (primaryTarget != null)
+            return primaryTarget;
 
         return _unitsHit.Count > 0 ? _unitsHit[0] : null;
     }

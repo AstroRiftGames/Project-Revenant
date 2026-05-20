@@ -2,6 +2,8 @@ using UnityEngine;
 
 public static class UnitTargetValidator
 {
+    #region Policy Entry Points
+
     public static bool IsBasicActionTargetSelectable(Unit source, Unit target, TargetRelation relationship, bool requiresInjuredTarget = false)
     {
         return IsTargetSelectable(
@@ -10,6 +12,7 @@ public static class UnitTargetValidator
             TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
     }
 
+    // Validates the primary unit target selected for a skill.
     public static bool IsSkillTargetSelectable(Unit source, Unit target, SkillRequirements requirements)
     {
         if (!TargetingPolicy.TryCreateForSkill(requirements, out TargetingPolicy policy))
@@ -18,6 +21,8 @@ public static class UnitTargetValidator
         return IsTargetSelectable(source, target, policy);
     }
 
+    // Compatibility validation for impact candidates when the affected-unit
+    // policy is still derived from the primary target contract plus target mode.
     public static bool IsSkillImpactTargetSelectable(Unit source, Unit target, SkillRequirements requirements, SkillTargetMode targetMode)
     {
         if (!TargetingPolicy.TryCreateForImpact(requirements, targetMode, out TargetingPolicy policy))
@@ -26,25 +31,19 @@ public static class UnitTargetValidator
         return IsTargetSelectable(source, target, policy);
     }
 
+    #endregion
+
+    #region Policy Application
+
     public static bool IsTargetSelectable(Unit source, Unit target, in TargetingPolicy policy)
     {
-        if (source == null)
+        if (!IsValidSelectingUnit(source))
             return false;
-
-        if (!source.IsAlive)
-            return false;
-
-        if (source.LifecycleState == UnitLifecycleState.Removed ||
-            source.LifecycleState == UnitLifecycleState.Recruitable ||
-            source.LifecycleState == UnitLifecycleState.Dead)
-        {
-            return false;
-        }
 
         if (target == null)
             return !policy.RequiresTarget;
 
-        if (target.LifecycleState == UnitLifecycleState.Removed || target.LifecycleState == UnitLifecycleState.Recruitable)
+        if (!IsValidTargetLifecycle(target))
             return false;
 
         bool isSelfTarget = ReferenceEquals(source, target);
@@ -60,7 +59,7 @@ public static class UnitTargetValidator
         if (!policy.AllowDead && !target.IsAlive)
             return false;
 
-        if (policy.RequireSameRoom && !IsInSameResolvedRoom(source, target))
+        if (policy.RequireSameRoom && !AreUnitsInSameResolvedRoom(source, target))
             return false;
 
         if (policy.RequireDetectable && !isSelfTarget && !source.CanDetect(target))
@@ -79,6 +78,10 @@ public static class UnitTargetValidator
             _ => true
         };
     }
+
+    #endregion
+
+    #region Range Validation
 
     public static bool IsSkillTargetInRange(Unit source, Unit target, SkillData skill)
     {
@@ -111,7 +114,30 @@ public static class UnitTargetValidator
         return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, rangeInCells);
     }
 
-    private static bool IsInSameResolvedRoom(Unit source, Unit target)
+    #endregion
+
+    #region Private Helpers
+
+    private static bool IsValidSelectingUnit(Unit source)
+    {
+        if (source == null)
+            return false;
+
+        if (!source.IsAlive)
+            return false;
+
+        return source.LifecycleState != UnitLifecycleState.Removed &&
+               source.LifecycleState != UnitLifecycleState.Recruitable &&
+               source.LifecycleState != UnitLifecycleState.Dead;
+    }
+
+    private static bool IsValidTargetLifecycle(Unit target)
+    {
+        return target.LifecycleState != UnitLifecycleState.Removed &&
+               target.LifecycleState != UnitLifecycleState.Recruitable;
+    }
+
+    private static bool AreUnitsInSameResolvedRoom(Unit source, Unit target)
     {
         RoomContext sourceRoom = source != null ? source.RoomContext : null;
         RoomContext targetRoom = target != null ? target.RoomContext : null;
@@ -126,4 +152,6 @@ public static class UnitTargetValidator
     {
         return GridUnitCellUtility.ResolveUnitCell(grid, unit);
     }
+
+    #endregion
 }
