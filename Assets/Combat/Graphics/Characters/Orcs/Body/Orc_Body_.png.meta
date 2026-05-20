@@ -1,31 +1,31 @@
 fileFormatVersion: 2
-guid: 7e19d6bb44124574ebdce13c53c410bc
+guid: 399fa0d76121d90438d370f4d8a5ef5b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 448254731348858369
-    second: Orcs-Jawbone-Sheet_0
+      213: -3464988209646553961
+    second: Orcs-Body-Sheet_0
   - first:
-      213: -384038079988252596
-    second: Orcs-Jawbone-Sheet_1
+      213: -4176754355786630264
+    second: Orcs-Body-Sheet_1
   - first:
-      213: 3433377931804298446
-    second: Orcs-Jawbone-Sheet_2
+      213: 1341392522860977145
+    second: Orcs-Body-Sheet_2
   - first:
-      213: 806828441163143366
-    second: Orcs-Jawbone-Sheet_3
+      213: -4446314646154342628
+    second: Orcs-Body-Sheet_3
   - first:
-      213: 211597467683766125
-    second: Orcs-Jawbone-Sheet_4
+      213: -4588706661053632003
+    second: Orcs-Body-Sheet_4
   - first:
-      213: -6429009194737912631
-    second: Orcs-Jawbone-Sheet_5
+      213: 8234130079878242892
+    second: Orcs-Body-Sheet_5
   - first:
-      213: 6607177665584306246
-    second: Orcs-Jawbone-Sheet_6
+      213: 5712523592554642918
+    second: Orcs-Body-Sheet_6
   - first:
-      213: -6367827033183881182
-    second: Orcs-Jawbone-Sheet_7
+      213: 8339703914657902413
+    second: Orcs-Body-Sheet_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,7 +134,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_0
+      name: Orc_Body_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -147,16 +147,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 106dfee9d45883600800000000000000
-      internalID: 448254731348858369
+      spriteID: feee7cdec52b578439402261f97a6038
+      internalID: 912041983
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_1
+      name: Orc_Body_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -169,16 +169,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c40c316a66f9baaf0800000000000000
-      internalID: -384038079988252596
+      spriteID: 8141300c14e096b4fbef9808d46f591c
+      internalID: -1419860449
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_2
+      name: Orc_Body_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -191,16 +191,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ecc4cd4c90fc5af20800000000000000
-      internalID: 3433377931804298446
+      spriteID: 6bc9a4e89cc2a8b4e9a7a36c84ee520a
+      internalID: -1687000999
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_3
+      name: Orc_Body_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -213,16 +213,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6c81636413e623b00800000000000000
-      internalID: 806828441163143366
+      spriteID: 89841c430b831134fab2fa39d9ca2e32
+      internalID: -341923834
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_4
+      name: Orc_Body_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -235,16 +235,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d6fb9a896cebfe200800000000000000
-      internalID: 211597467683766125
+      spriteID: 0632c18ee210d424c9789abfe45fb384
+      internalID: -342114900
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_5
+      name: Orc_Body_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -257,16 +257,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9c43de1233297c6a0800000000000000
-      internalID: -6429009194737912631
+      spriteID: 2305d3dc926f0db40802920c04e60696
+      internalID: -1456794789
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_6
+      name: Orc_Body_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -279,16 +279,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6481c0d941961bb50800000000000000
-      internalID: 6607177665584306246
+      spriteID: c225dee9e9ef7624ca1e1e5ff68708d0
+      internalID: -1107102991
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Jawbone-Sheet_7
+      name: Orc_Body_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -301,10 +301,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 228f1ff2d0fe0a7a0800000000000000
-      internalID: -6367827033183881182
+      spriteID: e77708e7a3747f14289e02bbdfe1a4fb
+      internalID: 1102231467
       vertices: []
       indices: 
       edges: []
@@ -313,7 +313,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 8f30be5c686be704896bfd370de7776c
+    spriteID: c90df5aa8905a59449b1f0b53be50682
     internalID: 0
     vertices: []
     indices: 
@@ -323,14 +323,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Orcs-Jawbone-Sheet_0: 448254731348858369
-      Orcs-Jawbone-Sheet_1: -384038079988252596
-      Orcs-Jawbone-Sheet_2: 3433377931804298446
-      Orcs-Jawbone-Sheet_3: 806828441163143366
-      Orcs-Jawbone-Sheet_4: 211597467683766125
-      Orcs-Jawbone-Sheet_5: -6429009194737912631
-      Orcs-Jawbone-Sheet_6: 6607177665584306246
-      Orcs-Jawbone-Sheet_7: -6367827033183881182
+      Orc_Body_DownLeft_0: 912041983
+      Orc_Body_DownRight_0: -1687000999
+      Orc_Body_Down_0: -1419860449
+      Orc_Body_Left_0: 1102231467
+      Orc_Body_Right_0: -341923834
+      Orc_Body_UpLeft_0: -1107102991
+      Orc_Body_UpRight_0: -342114900
+      Orc_Body_Up_0: -1456794789
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

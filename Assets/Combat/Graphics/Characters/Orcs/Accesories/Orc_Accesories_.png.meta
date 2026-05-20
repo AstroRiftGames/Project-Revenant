@@ -1,31 +1,55 @@
 fileFormatVersion: 2
-guid: 279095f9db12ebd4daf9c0b07e018375
+guid: 797682449722d1245a6ee4bdbfe26193
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6257033996887641923
-    second: Orcs-LeatherArmor-Sheet_0
+      213: -1237796986510287530
+    second: Orcs-Cloak&Skirt-Sheet_0
   - first:
-      213: -3998753622258938663
-    second: Orcs-LeatherArmor-Sheet_1
+      213: 723975379258798934
+    second: Orcs-Cloak&Skirt-Sheet_1
   - first:
-      213: 9067794606464111317
-    second: Orcs-LeatherArmor-Sheet_2
+      213: -7473097515714456623
+    second: Orcs-Cloak&Skirt-Sheet_2
   - first:
-      213: 5038015885900091517
-    second: Orcs-LeatherArmor-Sheet_3
+      213: -4180538370390184950
+    second: Orcs-Cloak&Skirt-Sheet_3
   - first:
-      213: 9174242169560712034
-    second: Orcs-LeatherArmor-Sheet_4
+      213: 6330888763452393003
+    second: Orcs-Cloak&Skirt-Sheet_4
   - first:
-      213: -5221610442857150170
-    second: Orcs-LeatherArmor-Sheet_5
+      213: -1948046273021937253
+    second: Orcs-Cloak&Skirt-Sheet_5
   - first:
-      213: 4471948014397137050
-    second: Orcs-LeatherArmor-Sheet_6
+      213: 6914824442181429417
+    second: Orcs-Cloak&Skirt-Sheet_6
   - first:
-      213: 2557667955148128064
-    second: Orcs-LeatherArmor-Sheet_7
+      213: 40292065904128770
+    second: Orcs-Cloak&Skirt-Sheet_7
+  - first:
+      213: -3160643946162392899
+    second: Orcs-Cloak&Skirt-Sheet_8
+  - first:
+      213: -1958730959387038264
+    second: Orcs-Cloak&Skirt-Sheet_9
+  - first:
+      213: -1569563199196043051
+    second: Orcs-Cloak&Skirt-Sheet_10
+  - first:
+      213: 7367864930787020403
+    second: Orcs-Cloak&Skirt-Sheet_11
+  - first:
+      213: -2873701945736103724
+    second: Orcs-Cloak&Skirt-Sheet_12
+  - first:
+      213: -1703301336299715419
+    second: Orcs-Cloak&Skirt-Sheet_13
+  - first:
+      213: 841896292419173714
+    second: Orcs-Cloak&Skirt-Sheet_14
+  - first:
+      213: 6021594389292217978
+    second: Orcs-Cloak&Skirt-Sheet_15
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,7 +158,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_0
+      name: Orc_Accesories_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -142,21 +166,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: db038f32bbc8a29a0800000000000000
-      internalID: -6257033996887641923
+      spriteID: 9bd16c7b86259cc469bcf219648725d9
+      internalID: -1071494667
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_1
+      name: Orc_Accesories_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -164,21 +188,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9dc03f054c29188c0800000000000000
-      internalID: -3998753622258938663
+      spriteID: af06fefb9f5eeb64da9c796e02477ef2
+      internalID: -947676838
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_2
+      name: Orc_Accesories_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -186,21 +210,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 5d21f7eb62747dd70800000000000000
-      internalID: 9067794606464111317
+      spriteID: 3f3ffe07a8a7ba54697514e341b35c82
+      internalID: 46372471
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_3
+      name: Orc_Accesories_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -208,21 +232,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d7099d371c0aae540800000000000000
-      internalID: 5038015885900091517
+      spriteID: a761db36536b09743919ea8035cce7f4
+      internalID: 683066875
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_4
+      name: Orc_Accesories_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -230,21 +254,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 263431065a4715f70800000000000000
-      internalID: 9174242169560712034
+      spriteID: 36f7cc62d4b74d340b1d26ed4a4f0f2f
+      internalID: 263159022
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_5
+      name: Orc_Accesories_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -252,21 +276,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 629870ea7fc1987b0800000000000000
-      internalID: -5221610442857150170
+      spriteID: 62d54bd2d50db2f40950b9a3af99ef4f
+      internalID: 111220257
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_6
+      name: Orc_Accesories_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -274,21 +298,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a90a724960d8f0e30800000000000000
-      internalID: 4471948014397137050
+      spriteID: bb82feed46387a14eafad5ee0c1ba7c5
+      internalID: 702463869
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-LeatherArmor-Sheet_7
+      name: Orc_Accesories_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -296,15 +320,15 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 04ff0004479ae7320800000000000000
-      internalID: 2557667955148128064
+      spriteID: 507fc51e14da13f4ba6e9fe99e028d7d
+      internalID: 1133475142
       vertices: []
       indices: 
       edges: []
@@ -313,7 +337,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 6b3a10df1dc7c3742862aa720198db7b
+    spriteID: 29d23ceda156ba146ad51fc899a4b927
     internalID: 0
     vertices: []
     indices: 
@@ -323,14 +347,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Orcs-LeatherArmor-Sheet_0: -6257033996887641923
-      Orcs-LeatherArmor-Sheet_1: -3998753622258938663
-      Orcs-LeatherArmor-Sheet_2: 9067794606464111317
-      Orcs-LeatherArmor-Sheet_3: 5038015885900091517
-      Orcs-LeatherArmor-Sheet_4: 9174242169560712034
-      Orcs-LeatherArmor-Sheet_5: -5221610442857150170
-      Orcs-LeatherArmor-Sheet_6: 4471948014397137050
-      Orcs-LeatherArmor-Sheet_7: 2557667955148128064
+      Orc_Accesories_DownLeft_0: -1071494667
+      Orc_Accesories_DownRight_0: 46372471
+      Orc_Accesories_Down_0: -947676838
+      Orc_Accesories_Left_0: 1133475142
+      Orc_Accesories_Right_0: 683066875
+      Orc_Accesories_UpLeft_0: 702463869
+      Orc_Accesories_UpRight_0: 263159022
+      Orc_Accesories_Up_0: 111220257
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
