@@ -53,54 +53,6 @@ public class SkillRequirements
 
     #endregion
 
-    #region Legacy Combined Validation
-
-    // Legacy combined validation kept for compatibility with older callers.
-    // The semantic split is:
-    // - TargetRequirement: primary target relation/type
-    // - SkillRequirements: additional target conditions
-    // - TargetingPolicy / UnitTargetValidator: runtime validation
-    public bool AreMet(Unit caster, Unit target)
-    {
-        if (caster == null)
-            return false;
-
-        SkillTargetRequirement targetRequirement = TargetRequirement;
-        if (targetRequirement == SkillTargetRequirement.GroundCell)
-            return false;
-
-        if (RequiresTarget && target == null)
-            return false;
-
-        if (target == null)
-            return !RequiresTarget || targetRequirement == SkillTargetRequirement.NoTarget;
-
-        switch (targetRequirement)
-        {
-            case SkillTargetRequirement.Hostile:
-                if (!caster.IsHostileTo(target))
-                    return false;
-                break;
-            case SkillTargetRequirement.Ally:
-                if (caster.IsHostileTo(target))
-                    return false;
-                break;
-            case SkillTargetRequirement.Self:
-                if (!ReferenceEquals(caster, target))
-                    return false;
-                break;
-            case SkillTargetRequirement.NoTarget:
-                return false;
-            case SkillTargetRequirement.GroundCell:
-                return false;
-        }
-
-        if (RequiresInjuredTarget && target.CurrentHealth >= target.MaxHealth)
-            return false;
-
-        return AreSkillSpecificRequirementsMet(caster, target);
-    }
-
     // Use this only for rules that belong to one specific skill.
     // Generic checks like self/friend/enemy/alive/injured are handled by the
     // skill targeting flow itself.
@@ -108,6 +60,4 @@ public class SkillRequirements
     {
         return caster != null;
     }
-
-    #endregion
 }

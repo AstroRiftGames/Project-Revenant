@@ -55,7 +55,6 @@ public class SkillCaster : MonoBehaviour
     public float CastRemainingTime => Mathf.Max(0f, _castRemainingTime);
     public bool IsSkillReady => !IsCasting && ResolveSkillReadiness(Skill);
     public bool UsesAbilityChargeVisual => HasSkill && _useAbilityChargeReadiness;
-    public bool UsesLegacyCooldownReadiness => HasSkill && !_useAbilityChargeReadiness && _allowLegacyCooldownFallback;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
     private void Awake()
@@ -680,12 +679,6 @@ public class SkillCaster : MonoBehaviour
         return primaryTargetRequirement == SkillTargetRequirement.GroundCell;
     }
 
-    private bool TryValidatePrimaryTargetContext(SkillData skill, Unit primaryTarget)
-    {
-        SkillContext skillContext = BuildSkillContext(skill, primaryTarget);
-        return TryValidateSkillContext(skillContext);
-    }
-
     // Validates the current primary-target contract plus the resolved impact
     // center contract required to execute the shape.
     private bool TryValidateSkillContext(SkillContext skillContext)
@@ -883,12 +876,6 @@ public class SkillCaster : MonoBehaviour
         }
 
         return false;
-    }
-
-    private bool IsPrimaryTargetInRange(SkillData skill, Unit primaryTarget)
-    {
-        SkillContext skillContext = BuildSkillContext(skill, primaryTarget);
-        return IsSkillContextInRange(skillContext);
     }
 
     private bool IsSkillContextInRange(SkillContext skillContext)
@@ -1103,38 +1090,6 @@ public class SkillCaster : MonoBehaviour
             bestTarget = candidate;
             bestDistance = sqrDistance;
             bestHealth = candidate.CurrentHealth;
-        }
-
-        return bestTarget;
-    }
-
-    private Unit FindMostInjuredTarget(SkillData skill)
-    {
-        IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
-        Unit bestTarget = null;
-        float bestHealthRatio = float.MaxValue;
-        float bestDistance = float.MaxValue;
-
-        for (int i = 0; i < roomUnits.Count; i++)
-        {
-            Unit candidate = roomUnits[i];
-            if (!CanUseUnitAsPrimaryTarget(skill, candidate))
-                continue;
-
-            float healthRatio = candidate.MaxHealth > 0
-                ? (float)candidate.CurrentHealth / candidate.MaxHealth
-                : 1f;
-            float sqrDistance = (_unit.Position - candidate.Position).sqrMagnitude;
-
-            if (healthRatio > bestHealthRatio)
-                continue;
-
-            if (Mathf.Approximately(healthRatio, bestHealthRatio) && sqrDistance >= bestDistance)
-                continue;
-
-            bestTarget = candidate;
-            bestHealthRatio = healthRatio;
-            bestDistance = sqrDistance;
         }
 
         return bestTarget;
