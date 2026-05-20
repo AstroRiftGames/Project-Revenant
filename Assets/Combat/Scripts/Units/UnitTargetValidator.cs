@@ -31,8 +31,21 @@ public static class UnitTargetValidator
         if (source == null)
             return false;
 
+        if (!source.IsAlive)
+            return false;
+
+        if (source.LifecycleState == UnitLifecycleState.Removed ||
+            source.LifecycleState == UnitLifecycleState.Recruitable ||
+            source.LifecycleState == UnitLifecycleState.Dead)
+        {
+            return false;
+        }
+
         if (target == null)
             return !policy.RequiresTarget;
+
+        if (target.LifecycleState == UnitLifecycleState.Removed || target.LifecycleState == UnitLifecycleState.Recruitable)
+            return false;
 
         bool isSelfTarget = ReferenceEquals(source, target);
         if (policy.RequireSelf && !isSelfTarget)

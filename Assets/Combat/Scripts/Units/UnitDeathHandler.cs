@@ -15,6 +15,7 @@ public class UnitDeathHandler : MonoBehaviour
     private RecruitableUnitInteraction _recruitableInteraction;
     private RecruitableCorpseHandler _corpseHandler;
     private UnitMovement _unitMovement;
+    private SkillCaster _skillCaster;
     private bool[] _initialBehaviourEnabledStates = Array.Empty<bool>();
     private bool _hasResolvedDeath;
     private bool _isSoulAbsorbedCorpse;
@@ -29,6 +30,7 @@ public class UnitDeathHandler : MonoBehaviour
         _recruitableInteraction = GetComponent<RecruitableUnitInteraction>();
         _corpseHandler = GetComponent<RecruitableCorpseHandler>();
         _unitMovement = GetComponent<UnitMovement>();
+        _skillCaster = GetComponent<SkillCaster>();
 
         if (_behavioursToDisableForRecruitableDeath == null || _behavioursToDisableForRecruitableDeath.Length == 0)
             _behavioursToDisableForRecruitableDeath = ResolveDefaultBehavioursToDisable();
@@ -67,7 +69,7 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _isSoulAbsorbedCorpse = false;
         PrepareMovementForDeath();
-        CaptureCorpseOccupancy();
+        ClearCorpseOccupancy();
         SetLifeState(UnitLifecycleState.Dead);
         gameObject.SetActive(false);
     }
@@ -95,9 +97,10 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _isSoulAbsorbedCorpse = true;
         PrepareMovementForDeath();
-        CaptureCorpseOccupancy();
         DisableBehavioursForRecruitableDeath();
-        SetLifeState(UnitLifecycleState.Dead);
+        ClearCorpseOccupancy();
+        SetLifeState(UnitLifecycleState.Removed);
+        gameObject.SetActive(false);
     }
 
     private void DisableBehavioursForRecruitableDeath()
@@ -131,6 +134,7 @@ public class UnitDeathHandler : MonoBehaviour
 
     private void PrepareMovementForDeath()
     {
+        _skillCaster?.InterruptCast();
         _unitMovement?.InterruptMovement();
     }
 

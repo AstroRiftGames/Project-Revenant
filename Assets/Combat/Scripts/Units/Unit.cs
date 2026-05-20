@@ -7,6 +7,16 @@ public interface IRoomContextUnitComponent
     void IntegrateWithRoom(RoomContext roomContext);
 }
 
+public enum UnitOperationalState
+{
+    Idle,
+    Moving,
+    Attacking,
+    Casting,
+    CrowdControl,
+    Dead
+}
+
 [RequireComponent(typeof(LifeController))]
 public class Unit : Creature, IGridOccupant
 {
@@ -15,11 +25,16 @@ public class Unit : Creature, IGridOccupant
 
     private RoomContext _roomContext;
     private IBasicAction _resolvedAction;
+    private UnitMovement _movement;
+    private SkillCaster _operationalSkillCaster;
+    private bool _isExecutingBasicAction;
     private readonly List<MonoBehaviour> _roomContextComponentsBuffer = new();
 
     protected override void Awake()
     {
         base.Awake();
+        _movement = GetComponent<UnitMovement>();
+        _operationalSkillCaster = GetComponent<SkillCaster>();
 
         if (_unitData != null)
             Initialize(_unitData);
@@ -42,6 +57,7 @@ public class Unit : Creature, IGridOccupant
 
     public RoomContext RoomContext => _roomContext;
     public IBasicAction Action => _resolvedAction ??= ResolveAction();
+    public UnitOperationalState OperationalState => ResolveOperationalState();
     public bool IsDpsMelee => Role == UnitRole.DPS && CombatStyle != UnitCombatStyle.Ranged;
     public bool IsDpsRanged => Role == UnitRole.DPS && CombatStyle == UnitCombatStyle.Ranged;
     public bool WantsToHoldSpacing => Role == UnitRole.Support || IsDpsRanged;
@@ -113,6 +129,36 @@ public class Unit : Creature, IGridOccupant
         }
 
         transform.position = GridNavigationUtility.ResolvePlacementWorldPosition(grid, transform.position, this);
+    }
+
+    public void BeginBasicActionExecution()
+    {
+        _isExecutingBasicAction = true;
+    }
+
+    public void EndBasicActionExecution()
+    {
+        _isExecutingBasicAction = false;
+    }
+
+    private UnitOperationalState ResolveOperationalState()
+    {
+        if (!IsAlive || (_lifeController != null && !_lifeController.IsAlive))
+            return UnitOperationalState.Dead;
+
+        if (StatusEffects != null && !StatusEffects.CanAct)
+            return UnitOperationalState.CrowdControl;
+
+        if (_operationalSkillCaster != null && _operationalSkillCaster.IsCasting)
+            return UnitOperationalState.Casting;
+
+        if (_isExecutingBasicAction)
+            return UnitOperationalState.Attacking;
+
+        if (_movement != null && _movement.IsMoving)
+            return UnitOperationalState.Moving;
+
+        return UnitOperationalState.Idle;
     }
 
     private IBasicAction ResolveAction()

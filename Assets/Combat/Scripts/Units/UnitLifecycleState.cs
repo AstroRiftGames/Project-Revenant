@@ -6,6 +6,9 @@ public enum UnitLifecycleState
     // Corpse can still be resolved through interaction (recruit or soul absorb).
     Recruitable,
 
-    // Non-interactable end state for both ordinary deaths and already-resolved corpses.
-    Dead
+    // Dead combatant or non-interactable corpse still present in runtime.
+    Dead,
+
+    // Unit or corpse has been fully removed from runtime interactions/lists.
+    Removed
 }

@@ -156,7 +156,7 @@ public class SkillCaster : MonoBehaviour
 
     public void AddAbilityCharge(float amount, AbilityChargeSource source)
     {
-        if (_unit == null || !_unit.IsAlive)
+        if (!CanApplyAbilityCharge(source))
             return;
 
         if (!CanGainAbilityCharge())
@@ -226,7 +226,10 @@ public class SkillCaster : MonoBehaviour
 
     private bool CanReceiveChargeFromSource(AbilityChargeSource source)
     {
-        if (_unit == null || !_unit.IsAlive)
+        if (_unit == null)
+            return false;
+
+        if (!CanApplyAbilityCharge(source))
             return false;
 
         return source switch
@@ -255,7 +258,7 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleDamageTaken(int amount)
     {
-        if (_unit == null || _unit.Role != UnitRole.Tank || !_unit.IsAlive || amount <= 0)
+        if (_unit == null || _unit.Role != UnitRole.Tank || amount <= 0)
             return;
 
         AddAbilityChargeFromSource(AbilityChargeSource.DamageTaken);
@@ -538,6 +541,9 @@ public class SkillCaster : MonoBehaviour
         if (CanChooseTarget(skill, combatTarget))
             return combatTarget;
 
+        if (AllowsNullPrimaryTarget(skill))
+            return null;
+
         return FindFallbackTarget(skill);
     }
 
@@ -545,6 +551,9 @@ public class SkillCaster : MonoBehaviour
     {
         if (selectedTarget == null)
         {
+            if (AllowsNullPrimaryTarget(skill))
+                return true;
+
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' resolved no valid target.");
             return false;
         }
@@ -561,10 +570,16 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || _unit == null)
             return false;
 
-        if (skill.UsesCasterAsImpactCenter)
-            return _unit.IsAlive;
+        if (target == null)
+            return AllowsNullPrimaryTarget(skill);
 
-        return SkillHitCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
+        if (!RequiresUnitPrimaryTarget(skill))
+            return false;
+
+        if (!UnitTargetValidator.IsSkillTargetSelectable(_unit, target, skill.Requirements))
+            return false;
+
+        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, target);
     }
 
     private bool ShouldUseAllyTargetSelection(SkillData skill)
@@ -644,6 +659,9 @@ public class SkillCaster : MonoBehaviour
 
     private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
     {
+        if (selectedTarget == null && AllowsNullPrimaryTarget(skill))
+            return true;
+
         return UnitTargetValidator.IsSkillTargetInRange(_unit, selectedTarget, skill);
     }
 
@@ -754,8 +772,32 @@ public class SkillCaster : MonoBehaviour
             SkillTargetRequirement.Self => CanChooseTarget(skill, _unit) ? _unit : null,
             SkillTargetRequirement.Ally => SelectPreferredAllySkillTarget(skill, null),
             SkillTargetRequirement.Hostile => SelectPreferredOffensiveSkillTarget(skill, null),
+            SkillTargetRequirement.NoTarget => null,
+            SkillTargetRequirement.GroundCell => null,
             _ => FindClosestTarget(skill)
         };
+    }
+
+    private static bool RequiresUnitPrimaryTarget(SkillData skill)
+    {
+        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
+        return targetRequirement != SkillTargetRequirement.NoTarget &&
+               targetRequirement != SkillTargetRequirement.GroundCell;
+    }
+
+    private static bool AllowsNullPrimaryTarget(SkillData skill)
+    {
+        SkillTargetRequirement targetRequirement = ResolveTargetRequirement(skill);
+        return targetRequirement == SkillTargetRequirement.NoTarget ||
+               targetRequirement == SkillTargetRequirement.GroundCell;
+    }
+
+    private static SkillTargetRequirement ResolveTargetRequirement(SkillData skill)
+    {
+        SkillRequirements requirements = skill != null ? skill.Requirements : null;
+        return requirements != null
+            ? requirements.TargetRequirement
+            : SkillTargetRequirement.Any;
     }
 
     private Unit FindClosestTarget(SkillData skill)
@@ -816,6 +858,25 @@ public class SkillCaster : MonoBehaviour
         }
 
         return bestTarget;
+    }
+
+    private bool CanApplyAbilityCharge(AbilityChargeSource source)
+    {
+        if (_unit == null)
+            return false;
+
+        UnitLifecycleState lifecycleState = _unit.LifecycleState;
+        if (lifecycleState == UnitLifecycleState.Removed ||
+            lifecycleState == UnitLifecycleState.Recruitable ||
+            lifecycleState == UnitLifecycleState.Dead)
+        {
+            return false;
+        }
+
+        if (source == AbilityChargeSource.DamageTaken)
+            return true;
+
+        return _unit.IsAlive;
     }
 
     private void OnSkillCastSucceeded(SkillData skill, Unit selectedTarget)

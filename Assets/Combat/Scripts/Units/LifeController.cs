@@ -43,6 +43,11 @@ public class LifeController : MonoBehaviour, IDamageable
             throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required death components on '{name}'.");
     }
 
+    private void Start()
+    {
+        EnsureLivingLifecycleState();
+    }
+
     public void Initialize(int maxHealth)
     {
         CurrentHealth = Mathf.Max(0, maxHealth);
@@ -153,5 +158,16 @@ public class LifeController : MonoBehaviour, IDamageable
         _hasResolvedDeath = false;
         _statusEffectController?.RestoreLivingRuntimeState();
         _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
+    }
+
+    private void EnsureLivingLifecycleState()
+    {
+        if (CurrentHealth <= 0 || _deathHandler == null || _recruitableState == null)
+            return;
+
+        if (_recruitableState.CurrentState == UnitLifecycleState.Alive)
+            return;
+
+        RestoreLivingRuntimeState();
     }
 }
