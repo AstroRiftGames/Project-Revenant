@@ -49,6 +49,9 @@ public class UnitBrain : MonoBehaviour
         if (!CanActInCurrentEncounter())
             return;
 
+        if (_skillCaster != null && _skillCaster.IsCasting)
+            return;
+
         if (_movement.IsMoving)
             return;
 
@@ -99,7 +102,7 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryUseSkillIntent()
     {
-        if (_skillCaster == null || !_skillCaster.TryUse(_currentTarget))
+        if (_skillCaster == null || !_skillCaster.IsSkillReady || !_skillCaster.TryUse(_currentTarget))
             return false;
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
@@ -114,6 +117,12 @@ public class UnitBrain : MonoBehaviour
         if (TryMoveToBasicActionRange())
             return;
 
+        if (!_action.IsInRange(_unit, _currentTarget))
+        {
+            TryRetargetAfterFailedMovement();
+            return;
+        }
+
         if (!_action.CanExecute(_unit, _currentTarget))
             return;
 
@@ -122,11 +131,27 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryMoveToBasicActionRange()
     {
+        if (_currentTarget == null)
+            return false;
+
         if (_action.IsInRange(_unit, _currentTarget))
             return false;
 
         int preferredDistance = _unit.GetPreferredDistance(_action);
-        _movement.MoveTowards(_currentTarget, preferredDistance);
+        return _movement.MoveTowards(_currentTarget, preferredDistance);
+    }
+
+    private bool TryRetargetAfterFailedMovement()
+    {
+        if (_targeting == null || _currentTarget == null)
+            return false;
+
+        Unit failedTarget = _currentTarget;
+        Unit alternateTarget = _targeting.SelectAlternativeBasicActionTarget(_unit, _action, failedTarget);
+        if (alternateTarget == null || ReferenceEquals(alternateTarget, failedTarget))
+            return false;
+
+        _currentTarget = alternateTarget;
         return true;
     }
 

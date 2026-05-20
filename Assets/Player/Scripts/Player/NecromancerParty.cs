@@ -33,6 +33,10 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public UnitRole Role => UnitDefinition != null ? UnitDefinition.role : default;
     public float CurrentAbilityCooldown => 0;
     public float MaxAbilityCooldown => 1;
+    public float CurrentAbilityCharge => 0f;
+    public float MaxAbilityCharge => 0f;
+    public bool IsAbilityReady => false;
+    public bool UsesAbilityChargeVisual => false;
     public Sprite AbilityIcon => null;
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
     public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;

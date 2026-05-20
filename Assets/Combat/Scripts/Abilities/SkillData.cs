@@ -19,6 +19,7 @@ public class SkillData : ScriptableObject
     [SerializeField] [TextArea(3, 10)] private string _description;
     [SerializeField] private Sprite _icon;
     [SerializeField] private float _cooldown = 5f;
+    [SerializeField] private float _castTime = 0f;
     [SerializeField] private int _rangeInCells = 1;
     [SerializeField] private int _splashRadiusInCells = 1;
     [SerializeField] private int _lineLengthInCells = 1;
@@ -35,6 +36,7 @@ public class SkillData : ScriptableObject
     public string Description => _description;
     public Sprite Icon => _icon;
     public float Cooldown => Mathf.Max(0f, _cooldown);
+    public float CastTime => Mathf.Max(0f, _castTime);
     public int RangeInCells => Mathf.Max(0, _rangeInCells);
     public int SplashRadiusInCells => Mathf.Max(0, _splashRadiusInCells);
     public int ImpactRadiusInCells => SplashRadiusInCells;

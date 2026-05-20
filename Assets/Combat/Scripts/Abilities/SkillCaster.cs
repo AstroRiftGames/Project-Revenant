@@ -2,17 +2,43 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AbilityChargeSource
+{
+    BasicAttack,
+    BasicHeal,
+    Kill,
+    DamageTaken,
+    NearbyAllySkillUsed
+}
+
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Unit))]
 public class SkillCaster : MonoBehaviour
 {
+    public static event Action<Unit, SkillData, Unit> AnySkillUsed;
+
     [SerializeField] private SkillData _overrideSkill;
+    [Header("Transition - Ability Charge")]
+    [SerializeField] private bool _useAbilityChargeReadiness = true;
+    [SerializeField] private bool _allowLegacyCooldownFallback = false;
+    [SerializeField] private float _maxAbilityCharge = 100f;
+    [SerializeField] private float _chargePerSuccessfulBasicAttack = 25f;
+    [SerializeField] private float _chargePerSuccessfulBasicHeal = 25f;
+    [SerializeField] private float _chargeFromKill = 20f;
+    [SerializeField] private float _chargeFromDamageTaken = 10f;
+    [SerializeField] private float _chargeFromNearbyAllySkillUsed = 15f;
+    [SerializeField] private float _nearbyAllySkillChargeRadius = 3.5f;
     [SerializeField] private bool _debugLogs;
 
     private Unit _unit;
+    private LifeController _lifeController;
+    private UnitMovement _movement;
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
     private readonly List<Unit> _unitsHit = new();
+    private SkillData _castingSkill;
+    private Unit _castingTarget;
+    private float _castRemainingTime;
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
 
@@ -20,17 +46,50 @@ public class SkillCaster : MonoBehaviour
     public bool HasSkill => Skill != null;
     public float CurrentCooldown => _state.RemainingCooldown;
     public float MaxCooldown => Skill != null ? Skill.Cooldown : 0f;
+    public float CurrentCharge => _state.CurrentCharge;
+    public float MaxCharge => _state.MaxCharge;
+    public bool IsCasting => _castingSkill != null;
+    public SkillData CurrentCastingSkill => _castingSkill;
+    public Unit CastTarget => _castingTarget;
+    public float CastRemainingTime => Mathf.Max(0f, _castRemainingTime);
+    public bool IsSkillReady => !IsCasting && ResolveSkillReadiness(Skill);
+    public bool UsesAbilityChargeVisual => HasSkill && _useAbilityChargeReadiness;
+    public bool UsesLegacyCooldownReadiness => HasSkill && !_useAbilityChargeReadiness && _allowLegacyCooldownFallback;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        _lifeController = GetComponent<LifeController>();
+        _movement = GetComponent<UnitMovement>();
+        _state.ConfigureCharge(_maxAbilityCharge);
         ResolveSkill();
+    }
+
+    private void OnEnable()
+    {
+        LifeController.OnUnitDied += HandleUnitDied;
+        AnySkillUsed += HandleAnySkillUsed;
+
+        if (_lifeController != null)
+            _lifeController.OnDamageTaken += HandleDamageTaken;
+    }
+
+    private void OnDisable()
+    {
+        CancelCurrentCast();
+        LifeController.OnUnitDied -= HandleUnitDied;
+        AnySkillUsed -= HandleAnySkillUsed;
+
+        if (_lifeController != null)
+            _lifeController.OnDamageTaken -= HandleDamageTaken;
     }
 
     private void Update()
     {
-        if (_state.IsReady || !CanChargeCooldown())
+        UpdateCasting();
+
+        if (_state.IsReady || !CanTickLegacyCooldown())
             return;
 
         _state.Tick(Time.deltaTime);
@@ -41,7 +100,7 @@ public class SkillCaster : MonoBehaviour
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
 
         SkillData skill = ResolveSkill();
-        if (!CanTryUseSkill(skill))
+        if (!CanStartCast(skill))
             return false;
 
         Unit selectedTarget = ChooseSkillTarget(skill, combatTarget);
@@ -54,21 +113,13 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (!TryCollectUnitsHit(skill, selectedTarget))
+        if (!BeginCast(skill, selectedTarget))
             return false;
 
-        LogDebug(
-            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved target {FormatUnitName(selectedTarget)} " +
-            $"and {_unitsHit.Count} target(s) hit: {FormatUnits(_unitsHit)}.");
+        if (!ShouldCompleteCastImmediately(skill))
+            return true;
 
-        if (!ApplySkillToUnitsHit(skill, selectedTarget))
-        {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
-            return false;
-        }
-
-        OnSkillCastSucceeded(skill, selectedTarget);
-        return true;
+        return CompleteCast();
     }
 
     public void ResetState()
@@ -76,12 +127,174 @@ public class SkillCaster : MonoBehaviour
         _state.Reset();
     }
 
-    private bool CanChargeCooldown()
+    public void NotifyBasicActionHit()
+    {
+        AddAbilityChargeFromSource(AbilityChargeSource.BasicAttack);
+    }
+
+    public void NotifyBasicActionSucceeded(TargetRelation targetRelation)
+    {
+        AbilityChargeSource source = ResolveBasicActionChargeSource(targetRelation);
+        if (source == AbilityChargeSource.BasicHeal && !CanChargeFromBasicHeal())
+            return;
+
+        AddAbilityChargeFromSource(source);
+    }
+
+    public void AddAbilityChargeFromSource(AbilityChargeSource source)
+    {
+        if (!CanReceiveChargeFromSource(source))
+            return;
+
+        AddAbilityCharge(GetChargeAmountForSource(source), source);
+    }
+
+    public void AddAbilityCharge(float amount)
+    {
+        AddAbilityCharge(amount, AbilityChargeSource.BasicAttack);
+    }
+
+    public void AddAbilityCharge(float amount, AbilityChargeSource source)
+    {
+        if (_unit == null || !_unit.IsAlive)
+            return;
+
+        if (!CanGainAbilityCharge())
+            return;
+
+        float previousCharge = _state.CurrentCharge;
+        _state.AddCharge(amount);
+
+        if (_state.CurrentCharge > previousCharge)
+        {
+            LogDebug(
+                $"[SkillCaster] {FormatOwnerIdentity()} gained ability charge from {source}: " +
+                $"{_state.CurrentCharge:F1}/{_state.MaxCharge:F1}.");
+        }
+    }
+
+    public void ResetAbilityCharge()
+    {
+        _state.ResetCharge();
+    }
+
+    public void InterruptCast()
+    {
+        InterruptCast("external interruption");
+    }
+
+    private bool CanTickLegacyCooldown()
     {
         return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCooldownCharge;
     }
 
-    private bool CanTryUseSkill(SkillData skill)
+    private bool CanGainAbilityCharge()
+    {
+        return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCooldownCharge;
+    }
+
+    private bool CanChargeFromBasicHeal()
+    {
+        if (_unit == null)
+            return false;
+
+        IBasicAction action = _unit.Action;
+        return action != null &&
+               action.TargetRelation == TargetRelation.Ally &&
+               action.RequiresInjuredTarget;
+    }
+
+    private static AbilityChargeSource ResolveBasicActionChargeSource(TargetRelation targetRelation)
+    {
+        return targetRelation == TargetRelation.Ally
+            ? AbilityChargeSource.BasicHeal
+            : AbilityChargeSource.BasicAttack;
+    }
+
+    private float GetChargeAmountForSource(AbilityChargeSource source)
+    {
+        return source switch
+        {
+            AbilityChargeSource.BasicHeal => Mathf.Max(0f, _chargePerSuccessfulBasicHeal),
+            AbilityChargeSource.BasicAttack => Mathf.Max(0f, _chargePerSuccessfulBasicAttack),
+            AbilityChargeSource.Kill => Mathf.Max(0f, _chargeFromKill),
+            AbilityChargeSource.DamageTaken => Mathf.Max(0f, _chargeFromDamageTaken),
+            AbilityChargeSource.NearbyAllySkillUsed => Mathf.Max(0f, _chargeFromNearbyAllySkillUsed),
+            _ => 0f
+        };
+    }
+
+    private bool CanReceiveChargeFromSource(AbilityChargeSource source)
+    {
+        if (_unit == null || !_unit.IsAlive)
+            return false;
+
+        return source switch
+        {
+            AbilityChargeSource.Kill => _unit.Role == UnitRole.DPS,
+            AbilityChargeSource.DamageTaken => _unit.Role == UnitRole.Tank,
+            AbilityChargeSource.NearbyAllySkillUsed => _unit.Role == UnitRole.Support,
+            _ => true
+        };
+    }
+
+    private void HandleUnitDied(Unit deadUnit)
+    {
+        if (_unit == null || deadUnit == null || _unit.Role != UnitRole.DPS || !_unit.IsAlive)
+            return;
+
+        Unit killer = deadUnit.GetLastAttacker();
+        if (!ReferenceEquals(killer, _unit))
+            return;
+
+        if (ReferenceEquals(deadUnit, _unit) || deadUnit.Team == _unit.Team)
+            return;
+
+        AddAbilityChargeFromSource(AbilityChargeSource.Kill);
+    }
+
+    private void HandleDamageTaken(int amount)
+    {
+        if (_unit == null || _unit.Role != UnitRole.Tank || !_unit.IsAlive || amount <= 0)
+            return;
+
+        AddAbilityChargeFromSource(AbilityChargeSource.DamageTaken);
+    }
+
+    private void HandleAnySkillUsed(Unit caster, SkillData skill, Unit popupAnchor)
+    {
+        if (_unit == null || _unit.Role != UnitRole.Support || !_unit.IsAlive)
+            return;
+
+        if (caster == null || skill == null || ReferenceEquals(caster, _unit))
+            return;
+
+        if (caster.Team != _unit.Team)
+            return;
+
+        if (!ReferenceEquals(caster.RoomContext, _unit.RoomContext))
+            return;
+
+        if (!IsWithinNearbyAllySkillChargeRange(caster))
+            return;
+
+        AddAbilityChargeFromSource(AbilityChargeSource.NearbyAllySkillUsed);
+    }
+
+    private bool IsWithinNearbyAllySkillChargeRange(Unit caster)
+    {
+        if (_unit == null || caster == null)
+            return false;
+
+        float chargeRadius = Mathf.Max(0f, _nearbyAllySkillChargeRadius);
+        if (chargeRadius <= 0f)
+            return false;
+
+        float sqrDistance = (_unit.Position - caster.Position).sqrMagnitude;
+        return sqrDistance <= chargeRadius * chargeRadius;
+    }
+
+    private bool CanStartCast(SkillData skill)
     {
         if (_unit == null)
         {
@@ -95,17 +308,204 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (_unit.StatusEffects != null && !_unit.StatusEffects.CanUseSkills)
+        if (IsCasting)
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: already casting '{_castingSkill.DisplayName}'.");
+            return false;
+        }
+
+        if (!_unit.IsAlive)
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner is dead.");
+            return false;
+        }
+
+        if (_unit.StatusEffects != null && (!_unit.StatusEffects.CanAct || !_unit.StatusEffects.CanUseSkills))
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: active status effect blocks skill usage.");
             return false;
         }
 
-        if (_state.IsReady)
+        if (ResolveSkillReadiness(skill))
             return true;
+
+        if (UsesAbilityChargeReadiness(skill))
+        {
+            float missingCharge = Mathf.Max(0f, _state.MaxCharge - _state.CurrentCharge);
+            LogDebug(
+                $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is not charged " +
+                $"({_state.CurrentCharge:F1}/{_state.MaxCharge:F1}, missing {missingCharge:F1}).");
+            return false;
+        }
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is on cooldown for {_state.RemainingCooldown:F2}s.");
         return false;
+    }
+
+    private bool BeginCast(SkillData skill, Unit selectedTarget)
+    {
+        if (skill == null || _unit == null || IsCasting)
+            return false;
+
+        _castingSkill = skill;
+        _castingTarget = selectedTarget;
+        _castRemainingTime = skill.CastTime;
+        _movement?.InterruptMovement();
+
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} began cast for '{skill.DisplayName}' " +
+            $"toward {FormatUnitName(selectedTarget)}. Cast time: {skill.CastTime:F2}s.");
+        return true;
+    }
+
+    private bool CompleteCast()
+    {
+        SkillData skill = _castingSkill;
+        if (skill == null)
+            return false;
+
+        if (ShouldInterruptCurrentCast())
+        {
+            InterruptCast("owner can no longer complete cast");
+            return false;
+        }
+
+        if (!TryResolveCastTarget(skill, out Unit resolvedTarget))
+        {
+            CancelCurrentCast();
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} canceled '{skill.DisplayName}' because no valid target remained.");
+            return false;
+        }
+
+        if (!TryCollectUnitsHit(skill, resolvedTarget))
+        {
+            CancelCurrentCast();
+            return false;
+        }
+
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved target {FormatUnitName(resolvedTarget)} " +
+            $"and {_unitsHit.Count} target(s) hit: {FormatUnits(_unitsHit)}.");
+
+        if (!ApplySkillToUnitsHit(skill, resolvedTarget))
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to impacted targets.");
+            CancelCurrentCast();
+            return false;
+        }
+
+        ClearCastingState();
+        OnSkillCastSucceeded(skill, resolvedTarget);
+        return true;
+    }
+
+    private void UpdateCasting()
+    {
+        if (!IsCasting)
+            return;
+
+        if (ShouldInterruptCurrentCast())
+        {
+            InterruptCast("owner became unable to act during casting");
+            return;
+        }
+
+        if (_castRemainingTime <= 0f)
+            return;
+
+        _castRemainingTime = Mathf.Max(0f, _castRemainingTime - Mathf.Max(0f, Time.deltaTime));
+        if (_castRemainingTime > 0f)
+            return;
+
+        CompleteCast();
+    }
+
+    private bool ShouldCompleteCastImmediately(SkillData skill)
+    {
+        return skill == null || skill.CastTime <= 0f;
+    }
+
+    private bool TryResolveCastTarget(SkillData skill, out Unit resolvedTarget)
+    {
+        resolvedTarget = _castingTarget;
+        if (CanCompleteCastOnTarget(skill, resolvedTarget))
+            return true;
+
+        Unit retargetedUnit = ChooseSkillTarget(skill, resolvedTarget);
+        if (ReferenceEquals(retargetedUnit, resolvedTarget) || !CanCompleteCastOnTarget(skill, retargetedUnit))
+            return false;
+
+        _castingTarget = retargetedUnit;
+        resolvedTarget = retargetedUnit;
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} retargeted '{skill.DisplayName}' to {FormatUnitName(retargetedUnit)} before completion.");
+        return true;
+    }
+
+    private bool CanCompleteCastOnTarget(SkillData skill, Unit target)
+    {
+        return TryValidateChosenTarget(skill, target) && IsTargetCloseEnough(skill, target);
+    }
+
+    private bool ShouldInterruptCurrentCast()
+    {
+        if (_unit == null || !_unit.IsAlive)
+            return true;
+
+        StatusEffectController statusEffects = _unit.StatusEffects;
+        if (statusEffects == null)
+            return false;
+
+        return !statusEffects.CanAct || !statusEffects.CanUseSkills;
+    }
+
+    private void InterruptCast(string reason)
+    {
+        if (!IsCasting)
+            return;
+
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} interrupted '{_castingSkill.DisplayName}': {reason}.");
+        ClearCastingState();
+    }
+
+    private void CancelCurrentCast()
+    {
+        if (!IsCasting)
+            return;
+
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} canceled '{_castingSkill.DisplayName}' before completion.");
+        ClearCastingState();
+    }
+
+    private void ClearCastingState()
+    {
+        _castingSkill = null;
+        _castingTarget = null;
+        _castRemainingTime = 0f;
+    }
+
+    private bool ResolveSkillReadiness(SkillData skill)
+    {
+        if (skill == null)
+            return false;
+
+        if (UsesAbilityChargeReadiness(skill))
+            return _state.IsChargeReady;
+
+        if (UsesLegacyCooldownCompatibility(skill))
+            return _state.IsCooldownReady;
+
+        return false;
+    }
+
+    private bool UsesAbilityChargeReadiness(SkillData skill)
+    {
+        return skill != null && _useAbilityChargeReadiness;
+    }
+
+    private bool UsesLegacyCooldownCompatibility(SkillData skill)
+    {
+        return skill != null && !_useAbilityChargeReadiness && _allowLegacyCooldownFallback;
     }
 
     private SkillData ResolveSkill()
@@ -128,6 +528,12 @@ public class SkillCaster : MonoBehaviour
 
         if (skill.ResolvesPrimaryTargetToCaster)
             return _unit.IsAlive ? _unit : null;
+
+        if (ShouldUseAllyTargetSelection(skill))
+            return SelectPreferredAllySkillTarget(skill, combatTarget);
+
+        if (ShouldUseOffensiveTargetSelection(skill))
+            return SelectPreferredOffensiveSkillTarget(skill, combatTarget);
 
         if (CanChooseTarget(skill, combatTarget))
             return combatTarget;
@@ -161,24 +567,84 @@ public class SkillCaster : MonoBehaviour
         return SkillHitCollector.CanSkillHitUnit(_unit, skill, target, allowCasterForSelfCenteredSkill: true);
     }
 
-    private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
+    private bool ShouldUseAllyTargetSelection(SkillData skill)
     {
-        if (_unit == null || skill == null)
+        if (skill == null)
             return false;
 
-        if (selectedTarget == null)
-            return !skill.RequiresTarget;
+        SkillRequirements requirements = skill.Requirements;
+        return requirements != null && requirements.TargetRequirement == SkillTargetRequirement.Ally;
+    }
 
-        if (skill.ResolvesPrimaryTargetToCaster)
+    private bool ShouldUseOffensiveTargetSelection(SkillData skill)
+    {
+        if (skill == null)
+            return false;
+
+        SkillRequirements requirements = skill.Requirements;
+        return requirements != null && requirements.TargetRequirement == SkillTargetRequirement.Hostile;
+    }
+
+    private Unit SelectPreferredAllySkillTarget(SkillData skill, Unit currentTarget)
+    {
+        if (skill == null || _unit == null)
+            return null;
+
+        IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
+        Func<Unit, bool> canChooseTarget = candidate => CanChooseTarget(skill, candidate);
+
+        if (IsHealingAllySkill(skill))
+            return TargetingStrategy.SelectBestHealingAllyTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+
+        return TargetingStrategy.SelectBestBuffAllyTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+    }
+
+    private Unit SelectPreferredOffensiveSkillTarget(SkillData skill, Unit currentTarget)
+    {
+        if (skill == null || _unit == null)
+            return null;
+
+        IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
+        Func<Unit, bool> canChooseTarget = candidate => CanChooseTarget(skill, candidate);
+        return TargetingStrategy.SelectBestOffensiveTarget(_unit, currentTarget, roomUnits, canChooseTarget);
+    }
+
+    private bool IsHealingAllySkill(SkillData skill)
+    {
+        if (skill == null)
+            return false;
+
+        SkillRequirements requirements = skill.Requirements;
+        if (requirements != null && requirements.mustTargetInjured)
             return true;
 
-        RoomGrid grid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
-        if (grid == null)
-            return Vector3.Distance(_unit.Position, selectedTarget.Position) <= skill.RangeInCells;
+        SkillEffect[] effects = skill.Effects;
+        if (effects != null)
+        {
+            for (int i = 0; i < effects.Length; i++)
+            {
+                if (effects[i] is HealSkillEffect)
+                    return true;
+            }
+        }
 
-        Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(grid, _unit);
-        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(grid, selectedTarget);
-        return GridNavigationUtility.IsWithinCellRange(casterCell, targetCell, skill.RangeInCells);
+        SkillStatusEffect[] statusEffects = skill.StatusEffects;
+        if (statusEffects != null)
+        {
+            for (int i = 0; i < statusEffects.Length; i++)
+            {
+                StatusEffectDefinition definition = statusEffects[i].Definition;
+                if (definition != null && definition.IsHeal)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsTargetCloseEnough(SkillData skill, Unit selectedTarget)
+    {
+        return UnitTargetValidator.IsSkillTargetInRange(_unit, selectedTarget, skill);
     }
 
     private bool TryCollectUnitsHit(SkillData skill, Unit selectedTarget)
@@ -286,7 +752,8 @@ public class SkillCaster : MonoBehaviour
         return targetType switch
         {
             SkillTargetRequirement.Self => CanChooseTarget(skill, _unit) ? _unit : null,
-            SkillTargetRequirement.Ally => FindMostInjuredTarget(skill),
+            SkillTargetRequirement.Ally => SelectPreferredAllySkillTarget(skill, null),
+            SkillTargetRequirement.Hostile => SelectPreferredOffensiveSkillTarget(skill, null),
             _ => FindClosestTarget(skill)
         };
     }
@@ -353,8 +820,8 @@ public class SkillCaster : MonoBehaviour
 
     private void OnSkillCastSucceeded(SkillData skill, Unit selectedTarget)
     {
+        ConsumeChargeOnSuccess(skill);
         BreakInvisibilityAfterSkillUse();
-        ConsumeSkillCooldown(skill);
         NotifySkillUsed(skill, ResolvePopupAnchor(skill, selectedTarget));
     }
 
@@ -364,13 +831,16 @@ public class SkillCaster : MonoBehaviour
             _unit.StatusEffects.RemoveEffectOfType(StatusEffectType.Invisibility);
     }
 
-    private void ConsumeSkillCooldown(SkillData skill)
+    private void ConsumeChargeOnSuccess(SkillData skill)
     {
         if (skill == null)
             return;
 
+        ResetAbilityCharge();
         _state.StartCooldown(skill.Cooldown);
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} started cooldown for '{skill.DisplayName}': {skill.Cooldown:F2}s.");
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} consumed '{skill.DisplayName}' availability. " +
+            $"Charge reset to {_state.CurrentCharge:F1}/{_state.MaxCharge:F1}; cooldown {skill.Cooldown:F2}s.");
     }
 
     private Unit ResolvePopupAnchor(SkillData skill, Unit selectedTarget)
@@ -389,6 +859,7 @@ public class SkillCaster : MonoBehaviour
         int listenerCount = SkillUsed?.GetInvocationList().Length ?? 0;
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} emitting SkillUsed for '{skill.DisplayName}' with {listenerCount} listener(s).");
         SkillUsed?.Invoke(_unit, skill, popupAnchor);
+        AnySkillUsed?.Invoke(_unit, skill, popupAnchor);
         LogDebug(
             $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_unitsHit.Count} target(s) hit.");
     }

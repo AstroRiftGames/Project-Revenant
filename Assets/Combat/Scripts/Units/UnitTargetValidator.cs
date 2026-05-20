@@ -2,6 +2,30 @@ using UnityEngine;
 
 public static class UnitTargetValidator
 {
+    public static bool IsBasicActionTargetSelectable(Unit source, Unit target, TargetRelation relationship, bool requiresInjuredTarget = false)
+    {
+        return IsTargetSelectable(
+            source,
+            target,
+            TargetingPolicy.ForBasicAction(relationship, requiresInjuredTarget));
+    }
+
+    public static bool IsSkillTargetSelectable(Unit source, Unit target, SkillRequirements requirements)
+    {
+        if (!TargetingPolicy.TryCreateForSkill(requirements, out TargetingPolicy policy))
+            return false;
+
+        return IsTargetSelectable(source, target, policy);
+    }
+
+    public static bool IsSkillImpactTargetSelectable(Unit source, Unit target, SkillRequirements requirements, SkillTargetMode targetMode)
+    {
+        if (!TargetingPolicy.TryCreateForImpact(requirements, targetMode, out TargetingPolicy policy))
+            return false;
+
+        return IsTargetSelectable(source, target, policy);
+    }
+
     public static bool IsTargetSelectable(Unit source, Unit target, in TargetingPolicy policy)
     {
         if (source == null)
@@ -41,6 +65,20 @@ public static class UnitTargetValidator
             TargetRelation.Ally => !source.IsHostileTo(target),
             _ => true
         };
+    }
+
+    public static bool IsSkillTargetInRange(Unit source, Unit target, SkillData skill)
+    {
+        if (source == null || skill == null)
+            return false;
+
+        if (target == null)
+            return !skill.RequiresTarget;
+
+        if (skill.ResolvesPrimaryTargetToCaster)
+            return true;
+
+        return IsTargetInRange(source, target, skill.RangeInCells);
     }
 
     public static bool IsTargetInRange(Unit source, Unit target, int rangeInCells)

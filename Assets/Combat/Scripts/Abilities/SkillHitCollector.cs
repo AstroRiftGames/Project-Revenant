@@ -12,46 +12,7 @@ public static class SkillHitCollector
         if (skill.UsesCasterAsImpactCenter && allowCasterForSelfCenteredSkill)
             return ReferenceEquals(caster, target) && caster.IsAlive;
 
-        if (target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
-            return false;
-
-        if (!IsInSameRoom(caster, target))
-            return false;
-
-        bool isCaster = ReferenceEquals(caster, target);
-        if (!isCaster && !caster.CanDetect(target))
-            return false;
-
-        if (!isCaster && target.StatusEffects != null && target.StatusEffects.HasInvisibility)
-            return false;
-
-        SkillTargetRequirement targetType = skill.Requirements != null
-            ? skill.Requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
-
-        switch (targetType)
-        {
-            case SkillTargetRequirement.Self:
-                if (!isCaster)
-                    return false;
-                break;
-
-            case SkillTargetRequirement.Ally:
-                if (isCaster || caster.Team != target.Team)
-                    return false;
-                break;
-
-            case SkillTargetRequirement.Hostile:
-                if (!caster.IsHostileTo(target))
-                    return false;
-                break;
-
-            case SkillTargetRequirement.NoTarget:
-            case SkillTargetRequirement.GroundCell:
-                return false;
-        }
-
-        if (skill.Requirements != null && skill.Requirements.mustTargetInjured && target.CurrentHealth >= target.MaxHealth)
+        if (!UnitTargetValidator.IsSkillImpactTargetSelectable(caster, target, skill.Requirements, skill.TargetMode))
             return false;
 
         return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(caster, target);
@@ -395,17 +356,6 @@ public static class SkillHitCollector
         return caster != null && caster.RoomContext != null
             ? caster.RoomContext.RoomGrid
             : null;
-    }
-
-    private static bool IsInSameRoom(Unit caster, Unit target)
-    {
-        RoomContext casterRoom = caster != null ? caster.RoomContext : null;
-        RoomContext targetRoom = target != null ? target.RoomContext : null;
-
-        if (casterRoom == null && targetRoom == null)
-            return true;
-
-        return ReferenceEquals(casterRoom, targetRoom);
     }
 
     private static bool TryResolveLineProjection(

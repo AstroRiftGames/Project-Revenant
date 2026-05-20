@@ -13,6 +13,10 @@ namespace Selection.Interfaces
         UnitRole Role { get; }
         float CurrentAbilityCooldown { get; }
         float MaxAbilityCooldown { get; }
+        float CurrentAbilityCharge { get; }
+        float MaxAbilityCharge { get; }
+        bool IsAbilityReady { get; }
+        bool UsesAbilityChargeVisual { get; }
         Sprite AbilityIcon { get; }
         SkillData Skill { get; }
         Sprite CharacterSprite { get; }

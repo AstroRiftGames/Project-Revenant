@@ -75,6 +75,7 @@ public class UnitCombat : MonoBehaviour
     [SerializeField] private CombatProjectileVisual _supportProjectileVisualPrefab;
 
     private Unit _unit;
+    private SkillCaster _skillCaster;
     private float _nextAttackTime;
 
     public int AttackRangeInCells => _unit != null ? Mathf.Max(0, _unit.AttackRangeInCells) : 0;
@@ -82,6 +83,7 @@ public class UnitCombat : MonoBehaviour
     private void Awake()
     {
         _unit = GetComponent<Unit>();
+        _skillCaster = GetComponent<SkillCaster>();
     }
 
     public bool IsBasicActionTargetInRange(Unit target)
@@ -111,31 +113,7 @@ public class UnitCombat : MonoBehaviour
         if (self == null || _unit == null)
             return false;
 
-        if (target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
-            return false;
-
-        if (!IsInSameRoom(self, target))
-            return false;
-
-        if (ReferenceEquals(self, target))
-            return false;
-
-        if (!self.CanDetect(target))
-            return false;
-
-        if (target.StatusEffects != null && target.StatusEffects.HasInvisibility)
-            return false;
-
-        if (targetRelation == TargetRelation.Hostile && !self.IsHostileTo(target))
-            return false;
-
-        if (targetRelation == TargetRelation.Ally && self.IsHostileTo(target))
-            return false;
-
-        if (needsInjuredTarget && target.CurrentHealth >= target.MaxHealth)
-            return false;
-
-        return true;
+        return UnitTargetValidator.IsBasicActionTargetSelectable(self, target, targetRelation, needsInjuredTarget);
     }
 
     public bool TryUseAttack(Unit self, Unit target, TargetRelation targetRelation)
@@ -171,21 +149,13 @@ public class UnitCombat : MonoBehaviour
         if (!CanUseBasicActionOn(self, target, targetRelation, needsInjuredTarget))
             return false;
 
+        int targetHealthBefore = target != null ? target.CurrentHealth : 0;
         ApplyBasicActionToTarget(target, effect);
+        bool appliedEffect = DidBasicActionApplyEffect(target, targetHealthBefore);
+        NotifySuccessfulBasicAction(targetRelation, appliedEffect);
         ConsumeBasicActionCooldown();
         ShowBasicActionPresentation(target);
         return true;
-    }
-
-    private static bool IsInSameRoom(Unit self, Unit target)
-    {
-        RoomContext selfRoom = self != null ? self.RoomContext : null;
-        RoomContext targetRoom = target != null ? target.RoomContext : null;
-
-        if (selfRoom == null && targetRoom == null)
-            return true;
-
-        return ReferenceEquals(selfRoom, targetRoom);
     }
 
     private bool CanOwnerUseBasicAction()
@@ -201,6 +171,22 @@ public class UnitCombat : MonoBehaviour
     private static void ApplyBasicActionToTarget(Unit target, System.Action<Unit> effect)
     {
         effect(target);
+    }
+
+    private static bool DidBasicActionApplyEffect(Unit target, int targetHealthBefore)
+    {
+        if (target == null)
+            return false;
+
+        return target.CurrentHealth != targetHealthBefore;
+    }
+
+    private void NotifySuccessfulBasicAction(TargetRelation targetRelation, bool appliedEffect)
+    {
+        if (_skillCaster == null || !appliedEffect)
+            return;
+
+        _skillCaster.NotifyBasicActionSucceeded(targetRelation);
     }
 
     private void ConsumeBasicActionCooldown()
