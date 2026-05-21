@@ -6,8 +6,9 @@ public class KnockbackSkillEffect : SkillEffect
     [SerializeField] private int _knockbackCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(SkillContext context, Unit hitUnit)
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
+        Unit hitUnit = ResolveTargetUnit(impact);
         Unit caster = context != null ? context.Caster : null;
         if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;

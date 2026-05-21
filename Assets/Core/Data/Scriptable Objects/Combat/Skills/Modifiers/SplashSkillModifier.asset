@@ -9,10 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91e0ebccb4e54cc4bf2286ef8b47cb0f, type: 3}
-  m_Name: SpawnMinionEffect
+  m_Script: {fileID: 11500000, guid: 9f4e8aa6c2c94474a6f79e6d20f3b1c2, type: 3}
+  m_Name: SplashSkillModifier
   m_EditorClassIdentifier: 
-  _summonedUnit: {fileID: 11400000, guid: b86923acd10247d45bc11d58e87d1732, type: 2}
-  _anchorMode: 1
-  _spawnRangeInCells: 1
-  _debugLogs: 1

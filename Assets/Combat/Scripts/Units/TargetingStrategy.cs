@@ -207,6 +207,59 @@ public class TargetingStrategy : MonoBehaviour
         return bestTarget;
     }
 
+    public static Unit SelectHighestBasicDamageTarget(Unit self, IReadOnlyList<Unit> candidates, Func<Unit, bool> isValidCandidate)
+    {
+        if (self == null || candidates == null || isValidCandidate == null)
+            return null;
+
+        Unit bestTarget = null;
+        int bestBaseDamage = int.MinValue;
+        float bestSqrDistance = float.MaxValue;
+        int bestInstanceId = int.MaxValue;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            Unit candidate = candidates[i];
+            if (candidate == null || !isValidCandidate(candidate))
+                continue;
+
+            int candidateBaseDamage = ResolveBaseDamage(candidate);
+            float candidateSqrDistance = ResolveSqrDistance(self, candidate);
+            int candidateInstanceId = candidate.GetInstanceID();
+
+            if (candidateBaseDamage > bestBaseDamage)
+            {
+                bestTarget = candidate;
+                bestBaseDamage = candidateBaseDamage;
+                bestSqrDistance = candidateSqrDistance;
+                bestInstanceId = candidateInstanceId;
+                continue;
+            }
+
+            if (candidateBaseDamage < bestBaseDamage)
+                continue;
+
+            if (candidateSqrDistance < bestSqrDistance)
+            {
+                bestTarget = candidate;
+                bestSqrDistance = candidateSqrDistance;
+                bestInstanceId = candidateInstanceId;
+                continue;
+            }
+
+            if (candidateSqrDistance > bestSqrDistance)
+                continue;
+
+            if (candidateInstanceId < bestInstanceId)
+            {
+                bestTarget = candidate;
+                bestInstanceId = candidateInstanceId;
+            }
+        }
+
+        return bestTarget;
+    }
+
     public static Unit SelectBestOffensiveTarget(
         Unit self,
         Unit currentTarget,

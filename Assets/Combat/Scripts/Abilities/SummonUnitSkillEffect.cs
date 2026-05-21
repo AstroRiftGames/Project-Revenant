@@ -1,13 +1,22 @@
 using UnityEngine;
 
+public enum SummonAnchorMode
+{
+    AroundCaster,
+    AroundPrimaryTarget,
+    AroundImpactCenter,
+    AtTargetCell
+}
+
 [CreateAssetMenu(fileName = "SummonUnitSkillEffect", menuName = "Combat/Skills/Effects/Summon Unit Skill Effect")]
 public class SummonUnitSkillEffect : SkillEffect
 {
     [SerializeField] private UnitData _summonedUnit;
+    [SerializeField] private SummonAnchorMode _anchorMode = SummonAnchorMode.AroundPrimaryTarget;
     [SerializeField] private int _spawnRangeInCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(SkillContext context, Unit hitUnit)
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
         Unit caster = context != null ? context.Caster : null;
         SkillData skill = context != null ? context.Skill : null;
@@ -32,14 +41,17 @@ public class SummonUnitSkillEffect : SkillEffect
         }
 
         Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        Vector3Int desiredCell = ResolveDesiredSpawnCell(context, grid, caster);
+        if (!TryResolveDesiredSpawnCell(context, grid, caster, out Vector3Int desiredCell, out string anchorDescription))
+            return false;
+
         int spawnRangeInCells = Mathf.Max(0, _spawnRangeInCells);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
         {
-            LogDebug(
+            Warn(
                 $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: no valid summon cell was found near {FormatCell(desiredCell)} " +
-                $"within range {spawnRangeInCells}.");
+                $"for anchor mode '{_anchorMode}' ({anchorDescription}) within range {spawnRangeInCells}.",
+                caster);
             return false;
         }
 
@@ -85,7 +97,7 @@ public class SummonUnitSkillEffect : SkillEffect
 
         LogDebug(
             $"[SummonUnitSkillEffect] {FormatUnit(caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
-            $"from desired {FormatCell(desiredCell)} using skill '{skill?.DisplayName ?? "Unknown"}'.");
+            $"from desired {FormatCell(desiredCell)} using skill '{skill?.DisplayName ?? "Unknown"}' and anchor '{_anchorMode}'.");
         return true;
     }
 
@@ -105,22 +117,78 @@ public class SummonUnitSkillEffect : SkillEffect
         return roomContext != null ? roomContext.RoomGrid : null;
     }
 
-    private static Vector3Int ResolveDesiredSpawnCell(SkillContext context, RoomGrid grid, Unit caster)
+    private bool TryResolveDesiredSpawnCell(
+        SkillContext context,
+        RoomGrid grid,
+        Unit caster,
+        out Vector3Int desiredCell,
+        out string anchorDescription)
     {
-        Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        if (context == null || grid == null)
-            return casterCell;
+        desiredCell = default;
+        anchorDescription = "none";
 
-        if (context.HasTargetCell)
-            return new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0);
+        if (grid == null || caster == null)
+            return false;
 
-        if (context.HasPrimaryTarget)
-            return ResolveUnitCell(grid, context.PrimaryTarget);
+        switch (_anchorMode)
+        {
+            case SummonAnchorMode.AroundCaster:
+                desiredCell = ResolveUnitCell(grid, caster);
+                anchorDescription = FormatUnit(caster);
+                return true;
 
-        if (context.HasImpactCenterUnit)
-            return ResolveUnitCell(grid, context.ImpactCenterUnit);
+            case SummonAnchorMode.AroundPrimaryTarget:
+                if (context != null && context.HasPrimaryTarget)
+                {
+                    desiredCell = ResolveUnitCell(grid, context.PrimaryTarget);
+                    anchorDescription = FormatUnit(context.PrimaryTarget);
+                    return true;
+                }
 
-        return casterCell;
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires PrimaryTarget but none was available.",
+                    caster);
+                return false;
+
+            case SummonAnchorMode.AroundImpactCenter:
+                if (context != null && context.HasImpactCenterUnit)
+                {
+                    desiredCell = ResolveUnitCell(grid, context.ImpactCenterUnit);
+                    anchorDescription = FormatUnit(context.ImpactCenterUnit);
+                    return true;
+                }
+
+                if (context != null)
+                {
+                    desiredCell = grid.WorldToCell(context.ImpactCenterWorld);
+                    anchorDescription = FormatWorld(context.ImpactCenterWorld);
+                    return true;
+                }
+
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires SkillContext impact center data.",
+                    caster);
+                return false;
+
+            case SummonAnchorMode.AtTargetCell:
+                if (context != null && context.HasTargetCell)
+                {
+                    desiredCell = new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0);
+                    anchorDescription = FormatCell(desiredCell);
+                    return true;
+                }
+
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires TargetCell but none was available.",
+                    caster);
+                return false;
+
+            default:
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: unsupported anchor mode '{_anchorMode}'.",
+                    caster);
+                return false;
+        }
     }
 
     private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
@@ -132,6 +200,11 @@ public class SummonUnitSkillEffect : SkillEffect
     {
         if (_debugLogs)
             Debug.Log(message);
+    }
+
+    private void Warn(string message, Object contextObject)
+    {
+        Debug.LogWarning(message, contextObject);
     }
 
     private static string FormatUnit(Unit unit)
@@ -146,6 +219,11 @@ public class SummonUnitSkillEffect : SkillEffect
     private static string FormatCell(Vector3Int cell)
     {
         return $"({cell.x}, {cell.y}, {cell.z})";
+    }
+
+    private static string FormatWorld(Vector3 worldPosition)
+    {
+        return $"({worldPosition.x:F2}, {worldPosition.y:F2}, {worldPosition.z:F2})";
     }
 }
 

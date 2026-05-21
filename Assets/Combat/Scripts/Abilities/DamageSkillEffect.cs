@@ -5,8 +5,9 @@ public class DamageSkillEffect : SkillEffect
 {
     [SerializeField] private int _damage = 1;
 
-    public override bool Apply(SkillContext context, Unit hitUnit)
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
+        Unit hitUnit = ResolveTargetUnit(impact);
         Unit caster = context != null ? context.Caster : null;
         if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;

@@ -66,22 +66,26 @@ public readonly struct TargetingPolicy
     #region Skill-Derived Policies
 
     // Primary target policy derived from the documented skill type contract.
-    public static bool TryCreateForSkill(SkillRequirements requirements, out TargetingPolicy policy)
+    public static bool TryCreateForSkill(SkillData skill, out TargetingPolicy policy)
     {
-        return TryCreateForPrimarySkillTarget(requirements, out policy);
+        return TryCreateForPrimarySkillTarget(skill, out policy);
     }
 
     #endregion
 
     #region Private Helpers
 
-    private static bool TryCreateForPrimarySkillTarget(SkillRequirements requirements, out TargetingPolicy policy)
+    private static bool TryCreateForPrimarySkillTarget(SkillData skill, out TargetingPolicy policy)
     {
-        SkillTargetRequirement primaryTargetRequirement = requirements != null
-            ? requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
-        if (primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
-            primaryTargetRequirement == SkillTargetRequirement.GroundCell)
+        if (skill == null || !skill.TryValidateDeclarativeContract(out _))
+        {
+            policy = default;
+            return false;
+        }
+
+        PrimaryTargetRequirement primaryTargetRequirement = skill.PrimaryTargetRequirement;
+        if (primaryTargetRequirement == PrimaryTargetRequirement.None ||
+            primaryTargetRequirement == PrimaryTargetRequirement.GroundCell)
         {
             policy = default;
             return false;
@@ -90,18 +94,18 @@ public readonly struct TargetingPolicy
         policy = new TargetingPolicy(
             ResolveRelationship(primaryTargetRequirement),
             requiresTarget: true,
-            allowSelf: primaryTargetRequirement == SkillTargetRequirement.Any || primaryTargetRequirement == SkillTargetRequirement.Self,
-            requireSelf: primaryTargetRequirement == SkillTargetRequirement.Self,
-            requireInjured: requirements != null && requirements.RequiresInjuredTarget);
+            allowSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
+            requireSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
+            requireInjured: skill.Requirements != null && skill.Requirements.RequiresInjuredTarget);
         return true;
     }
 
-    private static TargetRelation ResolveRelationship(SkillTargetRequirement targetRequirement)
+    private static TargetRelation ResolveRelationship(PrimaryTargetRequirement targetRequirement)
     {
         return targetRequirement switch
         {
-            SkillTargetRequirement.Hostile => TargetRelation.Hostile,
-            SkillTargetRequirement.Ally => TargetRelation.Ally,
+            PrimaryTargetRequirement.Hostile => TargetRelation.Hostile,
+            PrimaryTargetRequirement.Ally => TargetRelation.Ally,
             _ => TargetRelation.Any
         };
     }

@@ -15,15 +15,21 @@ MonoBehaviour:
   _skillId: SpawnMinion
   _displayName: Spawn Minion
   _icon: {fileID: 21300000, guid: ff6cfe2d6884ede46a87beed35653a0c, type: 3}
+  _primaryTargetRequirement: 1
+  _impactTargetRequirement: 0
+  _targetSelectionMode: 6
+  _targetFallbackMode: 1
+  _trajectory: 0
+  _impactPattern: 0
+  _skillExecutionMode: 0
   _rangeInCells: 3
   _splashRadiusInCells: 1
   _lineLengthInCells: 1
   _maxTargets: 1
   _impactCenterMode: 0
-  _shape: 6
+  _shape: 0
   _requirements:
     _targetRequirement: 1
     mustTargetInjured: 0
-  _impactTargetRequirement: 1
   _effects:
   - {fileID: 11400000, guid: 48d8f39f7eb84d46b289514573f76f27, type: 2}

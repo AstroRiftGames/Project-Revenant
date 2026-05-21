@@ -13,40 +13,45 @@ public class SkillData : ScriptableObject
 
     #endregion
 
-    #region Tipo
+    #region Targeting
 
-    // Documented skill type contract:
-    // how the skill is applied, target selection, impact pattern, execution,
-    // and valid target rules.
-    [FormerlySerializedAs("_targetMode")]
-    [SerializeField] private ImpactCenterMode _impactCenterMode = ImpactCenterMode.PrimaryTarget;
-    [SerializeField] private SkillShape _shape = SkillShape.SingleTarget;
+    [SerializeField] private PrimaryTargetRequirement _primaryTargetRequirement = PrimaryTargetRequirement.Hostile;
+    [SerializeField] private ImpactTargetRequirement _impactTargetRequirement = ImpactTargetRequirement.Hostile;
+    [SerializeField] private TargetSelectionMode _targetSelectionMode = TargetSelectionMode.RoleBasedOffensive;
+    [SerializeField] private TargetFallbackMode _targetFallbackMode = TargetFallbackMode.Retarget;
     [SerializeField] private SkillRequirements _requirements = new();
-    [SerializeField] private SkillTargetRequirement _impactTargetRequirement = SkillTargetRequirement.Any;
 
     #endregion
 
-    #region Efectos
+    #region Delivery
 
-    // Effect layer: what the skill actually causes once a hit target is
-    // resolved. Damage, healing, summon and knockback currently live here.
+    [SerializeField] private SkillTrajectory _trajectory = SkillTrajectory.Hitscan;
+    [SerializeField] private ImpactPattern _impactPattern = ImpactPattern.Direct;
+    [SerializeField] private ImpactCenterMode _impactCenterMode = ImpactCenterMode.PrimaryTarget;
+    [SerializeField] private SkillExecutionMode _skillExecutionMode = SkillExecutionMode.Instant;
+
+    // Legacy bridge only. This is not the final declarative model.
+    // Splash = legacy composite, future Direct + SplashModifier.
+    // PiercingLine = legacy composite, future Line + PiercingModifier.
+    // SpawnMinions = legacy incorrect, future SummonUnitSkillEffect anchored to SkillContext.
+    [FormerlySerializedAs("_shape")]
+    [SerializeField] private SkillShape _legacyShape = SkillShape.SingleTarget;
+
+    #endregion
+
+    #region Effects
+
     [SerializeField] private SkillEffect[] _effects;
+    [SerializeField] private SkillModifier[] _modifiers;
 
     #endregion
 
-    #region Modificadores
-
-    // Documented modifiers are not modeled as composable data yet.
-    // Current runtime still expresses some modifier-like behavior through
-    // Shape and parameter fields such as Splash/PiercingLine.
-
-    #endregion
-
-    #region Parametros
+    #region Parameters
 
     [SerializeField] private float _castTime = 0f;
     [SerializeField] private int _rangeInCells = 1;
-    [SerializeField] private int _splashRadiusInCells = 1;
+    [FormerlySerializedAs("_splashRadiusInCells")]
+    [SerializeField] private int _radiusInCells = 1;
     [SerializeField] private int _lineLengthInCells = 1;
     [SerializeField] private int _maxTargets = 1;
 
@@ -61,44 +66,223 @@ public class SkillData : ScriptableObject
 
     #endregion
 
-    #region Tipo Properties
+    #region Targeting Properties
 
-    public ImpactCenterMode ImpactCenterMode => _impactCenterMode;
-    public SkillTargetRequirement TargetRequirement => _requirements != null
-        ? _requirements.TargetRequirement
-        : SkillTargetRequirement.Any;
-    public SkillTargetRequirement ImpactTargetRequirement => NormalizeImpactTargetRequirement(_impactTargetRequirement);
-    public SkillShape Shape => _shape;
+    public PrimaryTargetRequirement PrimaryTargetRequirement => _primaryTargetRequirement;
+    public ImpactTargetRequirement ImpactTargetRequirement => _impactTargetRequirement;
+    public TargetSelectionMode TargetSelectionMode => _targetSelectionMode;
+    public TargetFallbackMode TargetFallbackMode => _targetFallbackMode;
     public SkillRequirements Requirements => _requirements;
 
     #endregion
 
-    #region Efecto Properties
+    #region Delivery Properties
 
-    public SkillEffect[] Effects => _effects;
+    public SkillTrajectory Trajectory => _trajectory;
+    public ImpactPattern ImpactPattern => _impactPattern;
+    public ImpactCenterMode ImpactCenterMode => _impactCenterMode;
+    public SkillExecutionMode ExecutionMode => _skillExecutionMode;
+    public SkillShape LegacyShape => _legacyShape;
 
     #endregion
 
-    #region Parametro Properties
+    #region Effect Properties
+
+    public SkillEffect[] Effects => _effects;
+    public SkillModifier[] Modifiers => _modifiers;
+
+    #endregion
+
+    #region Parameter Properties
 
     public float CastTime => Mathf.Max(0f, _castTime);
     public int RangeInCells => Mathf.Max(0, _rangeInCells);
-    public int SplashRadiusInCells => Mathf.Max(0, _splashRadiusInCells);
+    public int RadiusInCells => Mathf.Max(0, _radiusInCells);
     public int LineLengthInCells => Mathf.Max(0, _lineLengthInCells);
     public int MaxTargets => Mathf.Max(1, _maxTargets);
 
     #endregion
 
-    #region Resolution Helpers
+    #region Validation
 
-    private static SkillTargetRequirement NormalizeImpactTargetRequirement(SkillTargetRequirement targetRequirement)
+    public bool TryValidateDeclarativeContract(out string validationError)
     {
-        return targetRequirement switch
+        if (!IsValidPrimaryTargetRequirement(_primaryTargetRequirement))
         {
-            SkillTargetRequirement.NoTarget => SkillTargetRequirement.Any,
-            SkillTargetRequirement.GroundCell => SkillTargetRequirement.Any,
-            _ => targetRequirement
-        };
+            validationError = $"Skill '{name}' has invalid PrimaryTargetRequirement value '{(int)_primaryTargetRequirement}'.";
+            return false;
+        }
+
+        if (!IsValidImpactTargetRequirement(_impactTargetRequirement))
+        {
+            validationError = $"Skill '{name}' has invalid ImpactTargetRequirement value '{(int)_impactTargetRequirement}'.";
+            return false;
+        }
+
+        if (!IsValidTargetSelectionMode(_targetSelectionMode))
+        {
+            validationError = $"Skill '{name}' has invalid TargetSelectionMode value '{(int)_targetSelectionMode}'.";
+            return false;
+        }
+
+        if (!IsValidTargetFallbackMode(_targetFallbackMode))
+        {
+            validationError = $"Skill '{name}' has invalid TargetFallbackMode value '{(int)_targetFallbackMode}'.";
+            return false;
+        }
+
+        if (!IsValidSkillTrajectory(_trajectory))
+        {
+            validationError = $"Skill '{name}' has invalid SkillTrajectory value '{(int)_trajectory}'.";
+            return false;
+        }
+
+        if (!IsValidImpactPattern(_impactPattern))
+        {
+            validationError = $"Skill '{name}' has invalid ImpactPattern value '{(int)_impactPattern}'.";
+            return false;
+        }
+
+        if (!IsValidImpactCenterMode(_impactCenterMode))
+        {
+            validationError = $"Skill '{name}' has invalid ImpactCenterMode value '{(int)_impactCenterMode}'.";
+            return false;
+        }
+
+        if (!IsValidSkillExecutionMode(_skillExecutionMode))
+        {
+            validationError = $"Skill '{name}' has invalid SkillExecutionMode value '{(int)_skillExecutionMode}'.";
+            return false;
+        }
+
+        validationError = null;
+        return true;
+    }
+
+    public bool UsesLegacySplashShape()
+    {
+        return _legacyShape == SkillShape.Splash;
+    }
+
+    public bool UsesLegacyPiercingLineShape()
+    {
+        return _legacyShape == SkillShape.PiercingLine;
+    }
+
+    public bool UsesLegacySpawnMinionsShape()
+    {
+        return _legacyShape == SkillShape.SpawnMinions;
+    }
+
+    private static bool IsValidPrimaryTargetRequirement(PrimaryTargetRequirement value)
+    {
+        switch (value)
+        {
+            case PrimaryTargetRequirement.None:
+            case PrimaryTargetRequirement.Hostile:
+            case PrimaryTargetRequirement.Ally:
+            case PrimaryTargetRequirement.Self:
+            case PrimaryTargetRequirement.GroundCell:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidImpactTargetRequirement(ImpactTargetRequirement value)
+    {
+        switch (value)
+        {
+            case ImpactTargetRequirement.Hostile:
+            case ImpactTargetRequirement.Ally:
+            case ImpactTargetRequirement.Self:
+            case ImpactTargetRequirement.Any:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidTargetSelectionMode(TargetSelectionMode value)
+    {
+        switch (value)
+        {
+            case TargetSelectionMode.None:
+            case TargetSelectionMode.Closest:
+            case TargetSelectionMode.LowestHealth:
+            case TargetSelectionMode.HighestBasicDamage:
+            case TargetSelectionMode.AllyLowestHealth:
+            case TargetSelectionMode.AllyRolePriority:
+            case TargetSelectionMode.RoleBasedOffensive:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidTargetFallbackMode(TargetFallbackMode value)
+    {
+        switch (value)
+        {
+            case TargetFallbackMode.Cancel:
+            case TargetFallbackMode.Retarget:
+            case TargetFallbackMode.ContinueFromCurrentContext:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidSkillTrajectory(SkillTrajectory value)
+    {
+        switch (value)
+        {
+            case SkillTrajectory.Hitscan:
+            case SkillTrajectory.Projectile:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidImpactPattern(ImpactPattern value)
+    {
+        switch (value)
+        {
+            case ImpactPattern.Direct:
+            case ImpactPattern.Area:
+            case ImpactPattern.Line:
+            case ImpactPattern.MultiTarget:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidImpactCenterMode(ImpactCenterMode value)
+    {
+        switch (value)
+        {
+            case ImpactCenterMode.PrimaryTarget:
+            case ImpactCenterMode.Caster:
+            case ImpactCenterMode.TargetCell:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static bool IsValidSkillExecutionMode(SkillExecutionMode value)
+    {
+        switch (value)
+        {
+            case SkillExecutionMode.Instant:
+            case SkillExecutionMode.CastTime:
+            case SkillExecutionMode.Channel:
+                return true;
+            default:
+                return false;
+        }
     }
 
     #endregion

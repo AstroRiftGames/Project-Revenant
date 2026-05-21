@@ -15,6 +15,13 @@ MonoBehaviour:
   _skillId: AreaDamage
   _displayName: Area Damage
   _icon: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
+  _primaryTargetRequirement: 1
+  _impactTargetRequirement: 0
+  _targetSelectionMode: 6
+  _targetFallbackMode: 1
+  _trajectory: 0
+  _impactPattern: 1
+  _skillExecutionMode: 0
   _rangeInCells: 9
   _splashRadiusInCells: 1
   _lineLengthInCells: 1
@@ -24,7 +31,6 @@ MonoBehaviour:
   _requirements:
     _targetRequirement: 1
     mustTargetInjured: 0
-  _impactTargetRequirement: 1
   _effects:
   - {fileID: 11400000, guid: 4a9ba9f81f6d430b85c219ec98edce5a, type: 2}
   - {fileID: 11400000, guid: 2748c06695864b11b13f2177b8d62b6d, type: 2}

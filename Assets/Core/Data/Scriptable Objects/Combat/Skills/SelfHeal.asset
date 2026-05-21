@@ -15,6 +15,13 @@ MonoBehaviour:
   _skillId: SelfHeal
   _displayName: Self Heal
   _icon: {fileID: 21300000, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
+  _primaryTargetRequirement: 3
+  _impactTargetRequirement: 2
+  _targetSelectionMode: 0
+  _targetFallbackMode: 1
+  _trajectory: 0
+  _impactPattern: 0
+  _skillExecutionMode: 0
   _rangeInCells: 3
   _splashRadiusInCells: 1
   _lineLengthInCells: 1
@@ -24,6 +31,5 @@ MonoBehaviour:
   _requirements:
     _targetRequirement: 3
     mustTargetInjured: 1
-  _impactTargetRequirement: 3
   _effects:
   - {fileID: 11400000, guid: 7040e877f3f44ca7aa6606f66d24fb56, type: 2}

@@ -13,9 +13,9 @@ public static class UnitTargetValidator
     }
 
     // Validates the primary unit target selected for a skill.
-    public static bool IsSkillTargetSelectable(Unit source, Unit target, SkillRequirements requirements)
+    public static bool IsSkillTargetSelectable(Unit source, Unit target, SkillData skill)
     {
-        if (!TargetingPolicy.TryCreateForSkill(requirements, out TargetingPolicy policy))
+        if (!TargetingPolicy.TryCreateForSkill(skill, out TargetingPolicy policy))
             return false;
 
         return IsTargetSelectable(source, target, policy);
@@ -78,14 +78,14 @@ public static class UnitTargetValidator
         if (source == null || skill == null)
             return false;
 
-        SkillTargetRequirement primaryTargetRequirement = skill.TargetRequirement;
+        PrimaryTargetRequirement primaryTargetRequirement = skill.PrimaryTargetRequirement;
         if (target == null)
         {
-            return primaryTargetRequirement == SkillTargetRequirement.NoTarget ||
-                   primaryTargetRequirement == SkillTargetRequirement.GroundCell;
+            return primaryTargetRequirement == PrimaryTargetRequirement.None ||
+                   primaryTargetRequirement == PrimaryTargetRequirement.GroundCell;
         }
 
-        if (primaryTargetRequirement == SkillTargetRequirement.Self)
+        if (primaryTargetRequirement == PrimaryTargetRequirement.Self)
             return true;
 
         return IsTargetInRange(source, target, skill.RangeInCells);
