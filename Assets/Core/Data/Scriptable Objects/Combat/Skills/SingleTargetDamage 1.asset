@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
   m_Name: SingleTargetDamage 1
   m_EditorClassIdentifier: 
-  _skillId: SingleTargetDamage
+  _skillId: SingleTargetDamageDebuffDefense
   _displayName: Single Target Damage
   _description: 
   _icon: {fileID: 21300000, guid: a2be312c074657642affb862ad52d52d, type: 3}
