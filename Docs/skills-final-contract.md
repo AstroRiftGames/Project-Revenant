@@ -63,8 +63,10 @@ Casos cerrados en esta etapa:
 - `SplashSkillModifier`
 - `PiercingSkillModifier`
 - `ExplosiveSkillModifier`
+- `BounceSkillModifier`
 
 `ExplosiveSkillModifier` genera impactos secundarios alrededor de cada impacto base resolviendo un centro de explosion por celda. No aplica dano ni status por si mismo. `SkillEffect[]` se ejecuta despues sobre la lista final de impactos.
+`BounceSkillModifier` genera impactos secundarios encadenados eligiendo el siguiente objetivo valido mas cercano. No aplica dano ni status por si mismo. El orden en `SkillModifier[]` importa porque cada modifier opera sobre la lista de impactos que dejaron los anteriores.
 
 Por ahora `Persistent`, `Periodic` y `Accumulative` siguen viviendo en `StatusEffectDefinition` y no se duplican como `SkillModifier`.
 
@@ -84,6 +86,12 @@ Por ahora `Persistent`, `Periodic` y `Accumulative` siguen viviendo en `StatusEf
 - El feedback visual actual sigue siendo temporal y unit-centric.
 - No forma parte del contrato final de skills.
 - No condiciona el pipeline real `impacts -> modifiers -> effects`.
+
+Ejemplos estructurales:
+
+- `Direct + Bounce + Damage` = dano que rebota.
+- `Line + Piercing + Bounce + Damage` = linea penetrante cuyos impactos pueden generar rebotes.
+- `Direct + Bounce + Explosive + Damage` = rebotes que luego explotan si `Explosive` esta despues.
 
 ## Legacy Bridge
 
