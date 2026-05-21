@@ -1,16 +1,6 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-[System.Serializable]
-public struct SkillStatusEffect
-{
-    [SerializeField] private StatusEffectDefinition _definition;
-    [SerializeField] private TargetRelation _targetRelation;
-
-    public StatusEffectDefinition Definition => _definition;
-    public TargetRelation TargetRelation => _targetRelation;
-}
-
 [CreateAssetMenu(fileName = "SkillData", menuName = "Combat/Skills/Skill Data")]
 public class SkillData : ScriptableObject
 {
@@ -41,8 +31,6 @@ public class SkillData : ScriptableObject
     // Effect layer: what the skill actually causes once a hit target is
     // resolved. Damage, healing, summon and knockback currently live here.
     [SerializeField] private SkillEffect[] _effects;
-    [FormerlySerializedAs("_appliedStatusEffects")]
-    [SerializeField] private SkillStatusEffect[] _statusEffects;
 
     #endregion
 
@@ -88,7 +76,6 @@ public class SkillData : ScriptableObject
     #region Efecto Properties
 
     public SkillEffect[] Effects => _effects;
-    public SkillStatusEffect[] StatusEffects => _statusEffects;
 
     #endregion
 

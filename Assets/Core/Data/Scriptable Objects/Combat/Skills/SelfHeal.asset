@@ -27,6 +27,3 @@ MonoBehaviour:
   _impactTargetRequirement: 3
   _effects:
   - {fileID: 11400000, guid: 7040e877f3f44ca7aa6606f66d24fb56, type: 2}
-  _appliedStatusEffects:
-  - _definition: {fileID: 11400000, guid: e6c65df3c4b1bc840809b5de93fe16f0, type: 2}
-    _targetRelation: 2

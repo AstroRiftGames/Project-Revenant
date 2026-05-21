@@ -165,3 +165,11 @@ Assets actuales:
 - poner reglas de targeting dentro de `SkillEffect`
 - resolver shape dentro de `DamageSkillEffect` o `HealSkillEffect`
 - volver a derivar impacto desde `TargetMode.Self`
+
+## 8. Status Asset Notes
+
+- `SelfHeal` queda como heal puro: mantiene `HealSkillEffect` y ya no aplica un status extra legacy.
+- `SE_Berserk` no representa un `Berserk` runtime real. Su `_effectType` actual es `StatModifierBuff`, por lo que hoy se comporta como un buff de dano legacy/misnombrado.
+- `SE_Berserk` no debe reutilizarse como control o bloqueo de skills mientras no exista una migracion de datos explicita al enum `Berserk`.
+- `SE_Knockback` existe como asset de status, pero ninguna skill activa lo referencia y el knockback mecanico actual vive en `KnockbackSkillEffect`.
+- Los campos YAML legacy `_requireAllyTarget` fueron removidos de los `StatusEffectDefinition` que todavia los serializaban porque ya no participan del contrato runtime.

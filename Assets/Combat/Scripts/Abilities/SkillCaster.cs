@@ -832,17 +832,6 @@ public class SkillCaster : MonoBehaviour
             }
         }
 
-        SkillStatusEffect[] statusEffects = skill.StatusEffects;
-        if (statusEffects != null)
-        {
-            for (int i = 0; i < statusEffects.Length; i++)
-            {
-                StatusEffectDefinition definition = statusEffects[i].Definition;
-                if (definition != null && definition.IsHeal)
-                    return true;
-            }
-        }
-
         return false;
     }
 
@@ -915,11 +904,7 @@ public class SkillCaster : MonoBehaviour
         if (skill == null || hitUnit == null)
             return false;
 
-        bool anyApplied = false;
-
-        anyApplied |= ApplySkillEffectsToUnit(skillContext, hitUnit);
-        anyApplied |= ApplyStatusEffectsToUnit(skillContext, hitUnit);
-        return anyApplied;
+        return ApplySkillEffectsToUnit(skillContext, hitUnit);
     }
 
     private bool ApplySkillEffectsToUnit(SkillContext skillContext, Unit hitUnit)
@@ -940,57 +925,6 @@ public class SkillCaster : MonoBehaviour
         }
 
         return anyApplied;
-    }
-
-    private bool ApplyStatusEffectsToUnit(SkillContext skillContext, Unit hitUnit)
-    {
-        SkillData skill = skillContext != null ? skillContext.Skill : null;
-        if (skill == null)
-            return false;
-
-        SkillStatusEffect[] statusEffects = skill.StatusEffects;
-        if (statusEffects == null || statusEffects.Length == 0 || hitUnit == null || hitUnit.StatusEffects == null)
-            return false;
-
-        bool anyApplied = false;
-        for (int effectIndex = 0; effectIndex < statusEffects.Length; effectIndex++)
-        {
-            SkillStatusEffect statusEffect = statusEffects[effectIndex];
-            StatusEffectDefinition definition = statusEffect.Definition;
-            if (definition == null || !CanApplyStatusToUnit(skillContext, statusEffect.TargetRelation, hitUnit))
-                continue;
-
-            StatusEffectApplication application = BuildStatusEffectApplication(skillContext, hitUnit, definition);
-            anyApplied |= hitUnit.StatusEffects.TryApply(application);
-        }
-
-        return anyApplied;
-    }
-
-    private StatusEffectApplication BuildStatusEffectApplication(
-        SkillContext skillContext,
-        Unit hitUnit,
-        StatusEffectDefinition definition)
-    {
-        return new(
-            hitUnit,
-            skillContext != null ? skillContext.Caster : null,
-            skillContext != null ? skillContext.Skill : null,
-            definition);
-    }
-
-    private bool CanApplyStatusToUnit(SkillContext skillContext, TargetRelation targetRelation, Unit hitUnit)
-    {
-        Unit caster = skillContext != null ? skillContext.Caster : null;
-        if (caster == null || hitUnit == null)
-            return false;
-
-        return targetRelation switch
-        {
-            TargetRelation.Hostile => caster.IsHostileTo(hitUnit),
-            TargetRelation.Ally => !caster.IsHostileTo(hitUnit),
-            _ => true
-        };
     }
 
     private Unit FindFallbackPrimaryTarget(SkillData skill)
