@@ -31,6 +31,7 @@ Valores actuales:
 - `ImpactPattern` define el patron base de impacto.
 - `ImpactCenterMode` define el centro espacial desde donde se resuelve el patron.
 - `SkillExecutionMode` define cuando y como se ejecuta.
+- `SkillShape` ya no forma parte del contrato final runtime.
 
 Valores actuales:
 
@@ -60,7 +61,6 @@ Valores actuales:
 
 Casos cerrados en esta etapa:
 
-- `SplashSkillModifier`
 - `PiercingSkillModifier`
 - `ExplosiveSkillModifier`
 - `BounceSkillModifier`
@@ -99,13 +99,15 @@ Ejemplos estructurales:
 
 ## Legacy Bridge
 
-`SkillShape` queda temporalmente como puente interno para no romper las skills actuales mientras conviven assets legacy.
+`SkillShape` queda solo como compatibilidad serializada temporal. Es un campo muerto de migracion. El runtime ya no resuelve patrones ni modifiers a partir de `SkillShape`.
 
 Casos legacy reconocidos:
 
 - `Splash` = composite legacy. Futuro: `Direct` + `SplashSkillModifier`.
 - `PiercingLine` = composite legacy. Futuro: `Line` + `PiercingSkillModifier`.
 - `SpawnMinions` = shape legacy incorrecto. Futuro: `SummonUnitSkillEffect` anclado a `SkillContext`.
+- `SingleTarget`, `Area`, `Line` y `MultiTarget` ya fueron reemplazados runtime por `ImpactPattern`.
+- Los assets nuevos no deben usar `_shape`.
 
 ## Notas
 

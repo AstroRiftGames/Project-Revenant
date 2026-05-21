@@ -836,7 +836,9 @@ public class SkillCaster : MonoBehaviour
         if (!SkillHitCollector.TryCollectImpacts(skillContext, _impactsHit, LogDebug))
         {
             SkillData skill = skillContext != null ? skillContext.Skill : null;
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' legacy shape '{skill?.LegacyShape}' produced no impacts.");
+            LogDebug(
+                $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' " +
+                $"with impact pattern '{skill?.ImpactPattern}' produced no impacts.");
             return false;
         }
 

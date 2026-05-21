@@ -46,7 +46,7 @@ public static class SkillHitCollector
         public Vector2Int TargetCell => Context != null ? Context.TargetCell : default;
         public Vector3 ImpactCenterWorld => Context != null ? Context.ImpactCenterWorld : Vector3.zero;
         public RoomGrid RoomGrid => Context != null ? Context.RoomGrid : null;
-        public SkillShape RuntimeShape => ResolveRuntimeShape(Skill);
+        public ImpactPattern ImpactPattern => Skill != null ? Skill.ImpactPattern : ImpactPattern.Direct;
     }
 
     public static bool TryCollectImpacts(SkillContext skillContext, List<SkillImpact> results, Action<string> debugLog = null)
@@ -111,7 +111,7 @@ public static class SkillHitCollector
 
         TryAddUnitImpact(results, primaryTarget, 0, true);
         debugLog?.Invoke(
-            $"[SkillHitCollector] {FormatUnit(request.Caster)} shape '{request.RuntimeShape}' resolved primary target " +
+            $"[SkillHitCollector] {FormatUnit(request.Caster)} pattern '{request.ImpactPattern}' resolved primary target " +
             $"{FormatUnit(primaryTarget)}. Impacted: {FormatImpacts(results)}.");
         return true;
     }
@@ -130,7 +130,7 @@ public static class SkillHitCollector
             TryAddUnitImpact(results, resolution.Projections[0].Target, 0, true);
 
         debugLog?.Invoke(
-            $"[SkillHitCollector] {FormatUnit(resolution.Caster)} shape '{resolution.RuntimeShape}' resolved line. " +
+            $"[SkillHitCollector] {FormatUnit(resolution.Caster)} pattern '{resolution.ImpactPattern}' resolved line. " +
             $"PrimaryTarget: {FormatUnit(resolution.PrimaryTarget)}. ImpactCenter: {FormatWorldPosition(resolution.LineOrigin)}. " +
             $"Direction: {FormatWorldDirection(resolution.LineDirection)}. Length: {resolution.LineLengthInCells} cells ({resolution.LineLengthWorld:F2} world). " +
             $"Tolerance: {resolution.LineTolerance:F2}. First impact: {FormatUnit(results.Count > 0 ? results[0].TargetUnit : null)}. " +
@@ -220,7 +220,7 @@ public static class SkillHitCollector
         }
 
         debugLog?.Invoke(
-            $"[SkillHitCollector] {FormatUnit(caster)} shape '{request.RuntimeShape}' resolved multi target. " +
+            $"[SkillHitCollector] {FormatUnit(caster)} pattern '{request.ImpactPattern}' resolved multi target. " +
             $"PrimaryTarget: {FormatUnit(primaryTarget)}. ImpactCenter: {FormatWorldPosition(impactCenterWorld)}. " +
             $"Radius: {skill.RadiusInCells}. Max targets: {maxTargets}. " +
             $"Impacted ({results.Count}): {FormatImpacts(results)}. " +
@@ -273,7 +273,7 @@ public static class SkillHitCollector
             }
 
             debugLog?.Invoke(
-                $"[SkillHitCollector] {FormatUnit(caster)} shape '{request.RuntimeShape}' resolved {shapeName} with only " +
+                $"[SkillHitCollector] {FormatUnit(caster)} pattern '{request.ImpactPattern}' resolved {shapeName} with only " +
                 $"primary target {FormatUnit(primaryTarget)} because no room unit list was available.");
             return results.Count > 0;
         }
@@ -306,7 +306,7 @@ public static class SkillHitCollector
         }
 
         debugLog?.Invoke(
-            $"[SkillHitCollector] {FormatUnit(caster)} shape '{request.RuntimeShape}' resolved {shapeName}. " +
+            $"[SkillHitCollector] {FormatUnit(caster)} pattern '{request.ImpactPattern}' resolved {shapeName}. " +
             $"PrimaryTarget: {FormatUnit(primaryTarget)}. ImpactCenter: {FormatWorldPosition(impactCenterWorld)}. " +
             $"Radius: {skill.RadiusInCells}. " +
             $"Impacted ({results.Count}): {FormatImpacts(results)}. " +
@@ -646,38 +646,6 @@ public static class SkillHitCollector
                 modifier.ModifyImpacts(skillContext, skill, results);
             }
         }
-
-        ApplyLegacyBridgeModifiersIfNeeded(skillContext, skill, results);
-    }
-
-    private static void ApplyLegacyBridgeModifiersIfNeeded(SkillContext skillContext, SkillData skill, List<SkillImpact> results)
-    {
-        if (skillContext == null || skill == null || results == null)
-            return;
-
-        if (skill.UsesLegacySplashShape() && !HasModifierOfType<SplashSkillModifier>(skill))
-            ApplySplashModifierToImpacts(skillContext, skill, results);
-
-        if (skill.UsesLegacyPiercingLineShape() && !HasModifierOfType<PiercingSkillModifier>(skill))
-            ApplyPiercingModifierToImpacts(skillContext, skill, results);
-    }
-
-    private static bool HasModifierOfType<TModifier>(SkillData skill) where TModifier : SkillModifier
-    {
-        if (skill == null)
-            return false;
-
-        SkillModifier[] modifiers = skill.Modifiers;
-        if (modifiers == null)
-            return false;
-
-        for (int i = 0; i < modifiers.Length; i++)
-        {
-            if (modifiers[i] is TModifier)
-                return true;
-        }
-
-        return false;
     }
 
     private static TargetRelation ResolveImpactTargetRelation(ImpactTargetRequirement targetRequirement)
@@ -816,30 +784,6 @@ public static class SkillHitCollector
         return foundEffect;
     }
 
-    private static SkillShape ResolveRuntimeShape(SkillData skill)
-    {
-        if (skill == null)
-            return SkillShape.SingleTarget;
-
-        if (skill.UsesLegacySplashShape())
-            return SkillShape.Splash;
-
-        if (skill.UsesLegacyPiercingLineShape())
-            return SkillShape.PiercingLine;
-
-        if (skill.UsesLegacySpawnMinionsShape())
-            return SkillShape.SingleTarget;
-
-        return skill.ImpactPattern switch
-        {
-            ImpactPattern.Direct => SkillShape.SingleTarget,
-            ImpactPattern.Area => SkillShape.Area,
-            ImpactPattern.Line => SkillShape.Line,
-            ImpactPattern.MultiTarget => SkillShape.MultiTarget,
-            _ => skill.LegacyShape
-        };
-    }
-
     private static string FormatUnits(List<Unit> units)
     {
         if (units == null || units.Count == 0)
@@ -964,7 +908,7 @@ public static class SkillHitCollector
         public Unit Caster { get; }
         public Unit PrimaryTarget { get; }
         public SkillData Skill { get; }
-        public SkillShape RuntimeShape => ResolveRuntimeShape(Skill);
+        public ImpactPattern ImpactPattern => Skill != null ? Skill.ImpactPattern : ImpactPattern.Direct;
         public Vector3 LineOrigin { get; }
         public Vector3 LineDirection { get; }
         public int LineLengthInCells { get; }

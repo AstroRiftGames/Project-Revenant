@@ -82,7 +82,6 @@ public class SkillData : ScriptableObject
     public ImpactPattern ImpactPattern => _impactPattern;
     public ImpactCenterMode ImpactCenterMode => _impactCenterMode;
     public SkillExecutionMode ExecutionMode => _skillExecutionMode;
-    public SkillShape LegacyShape => _legacyShape;
 
     #endregion
 
@@ -159,19 +158,35 @@ public class SkillData : ScriptableObject
         return true;
     }
 
-    public bool UsesLegacySplashShape()
+    private void OnValidate()
     {
-        return _legacyShape == SkillShape.Splash;
+        if (TryGetLegacyShapeMigrationWarning(out string warning))
+            Debug.LogWarning(warning, this);
     }
 
-    public bool UsesLegacyPiercingLineShape()
+    private bool TryGetLegacyShapeMigrationWarning(out string warning)
     {
-        return _legacyShape == SkillShape.PiercingLine;
-    }
+        switch (_legacyShape)
+        {
+            case SkillShape.Splash:
+                warning =
+                    $"Skill '{name}' still serializes legacy shape 'Splash'. Migrate it to ImpactPattern.Direct + SplashSkillModifier.";
+                return true;
 
-    public bool UsesLegacySpawnMinionsShape()
-    {
-        return _legacyShape == SkillShape.SpawnMinions;
+            case SkillShape.PiercingLine:
+                warning =
+                    $"Skill '{name}' still serializes legacy shape 'PiercingLine'. Migrate it to ImpactPattern.Line + PiercingSkillModifier.";
+                return true;
+
+            case SkillShape.SpawnMinions:
+                warning =
+                    $"Skill '{name}' still serializes legacy shape 'SpawnMinions'. Migrate it to SummonUnitSkillEffect + SummonAnchorMode.";
+                return true;
+
+            default:
+                warning = null;
+                return false;
+        }
     }
 
     private static bool IsValidPrimaryTargetRequirement(PrimaryTargetRequirement value)
