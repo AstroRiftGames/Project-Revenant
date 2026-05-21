@@ -64,9 +64,13 @@ Casos cerrados en esta etapa:
 - `PiercingSkillModifier`
 - `ExplosiveSkillModifier`
 - `BounceSkillModifier`
+- `SplashSkillModifier`
 
 `ExplosiveSkillModifier` genera impactos secundarios alrededor de cada impacto base resolviendo un centro de explosion por celda. No aplica dano ni status por si mismo. `SkillEffect[]` se ejecuta despues sobre la lista final de impactos.
 `BounceSkillModifier` genera impactos secundarios encadenados eligiendo el siguiente objetivo valido mas cercano. No aplica dano ni status por si mismo. El orden en `SkillModifier[]` importa porque cada modifier opera sobre la lista de impactos que dejaron los anteriores.
+`SplashSkillModifier` tambien participa de la matriz experimental. Igual que el resto de modifiers estructurales, puede cambiar el conjunto final de impactos segun su posicion en `SkillModifier[]`.
+
+Los assets experimentales no representan balance final. Solo sirven para validar el contrato runtime y el orden efectivo de `SkillModifier[]`.
 
 Por ahora `Persistent`, `Periodic` y `Accumulative` siguen viviendo en `StatusEffectDefinition` y no se duplican como `SkillModifier`.
 
