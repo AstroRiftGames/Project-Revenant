@@ -62,6 +62,9 @@ Casos cerrados en esta etapa:
 
 - `SplashSkillModifier`
 - `PiercingSkillModifier`
+- `ExplosiveSkillModifier`
+
+`ExplosiveSkillModifier` genera impactos secundarios alrededor de cada impacto base resolviendo un centro de explosion por celda. No aplica dano ni status por si mismo. `SkillEffect[]` se ejecuta despues sobre la lista final de impactos.
 
 Por ahora `Persistent`, `Periodic` y `Accumulative` siguen viviendo en `StatusEffectDefinition` y no se duplican como `SkillModifier`.
 
@@ -75,6 +78,12 @@ Por ahora `Persistent`, `Periodic` y `Accumulative` siguen viviendo en `StatusEf
 - Las listas de `Unit` solo pueden existir como vistas derivadas para UI, logs o feedback visual. No deben decidir gameplay.
 - El popup anchor debe resolverse desde `SkillImpact` y solo degradarse a `Unit` al borde visual si un consumidor legacy lo exige.
 - `GroundCell`, `Explosive` y `Bounce` dependen de esta capa.
+
+## Feedback Visual Temporal
+
+- El feedback visual actual sigue siendo temporal y unit-centric.
+- No forma parte del contrato final de skills.
+- No condiciona el pipeline real `impacts -> modifiers -> effects`.
 
 ## Legacy Bridge
 

@@ -51,6 +51,21 @@ public sealed class SkillImpact
             isPrimaryImpact);
     }
 
+    public static SkillImpact CreateUnit(Unit targetUnit, Vector2Int cell, int chainIndex, bool isPrimaryImpact)
+    {
+        if (targetUnit == null)
+            return null;
+
+        return new SkillImpact(
+            SkillImpactKind.Unit,
+            targetUnit,
+            cell,
+            true,
+            targetUnit.Position,
+            chainIndex,
+            isPrimaryImpact);
+    }
+
     public static SkillImpact CreateCell(Vector2Int cell, int chainIndex, bool isPrimaryImpact)
     {
         return new SkillImpact(
