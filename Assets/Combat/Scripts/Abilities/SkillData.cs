@@ -64,15 +64,6 @@ public class SkillData : ScriptableObject
 
     #endregion
 
-    #region Legacy y deuda
-
-    // Legacy availability field kept because current SkillCaster cooldown
-    // flow still consumes it directly. This is not part of the documented
-    // type/effect/modifier split yet.
-    [SerializeField] private float _cooldown = 5f;
-
-    #endregion
-
     #region Metadata Properties
 
     public string SkillId => _skillId;
@@ -108,12 +99,6 @@ public class SkillData : ScriptableObject
     public int SplashRadiusInCells => Mathf.Max(0, _splashRadiusInCells);
     public int LineLengthInCells => Mathf.Max(0, _lineLengthInCells);
     public int MaxTargets => Mathf.Max(1, _maxTargets);
-
-    #endregion
-
-    #region Legacy y deuda
-
-    public float Cooldown => Mathf.Max(0f, _cooldown);
 
     #endregion
 

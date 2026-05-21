@@ -11,8 +11,6 @@ namespace Selection.Interfaces
         int CurrentHealth { get; }
         int MaxHealth { get; }
         UnitRole Role { get; }
-        float CurrentAbilityCooldown { get; }
-        float MaxAbilityCooldown { get; }
         float CurrentAbilityCharge { get; }
         float MaxAbilityCharge { get; }
         bool IsAbilityReady { get; }

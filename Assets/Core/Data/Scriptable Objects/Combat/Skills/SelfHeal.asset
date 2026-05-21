@@ -15,7 +15,6 @@ MonoBehaviour:
   _skillId: SelfHeal
   _displayName: Self Heal
   _icon: {fileID: 21300000, guid: 3e4077cf5f1be9942ba5b67b42dfb365, type: 3}
-  _cooldown: 4
   _rangeInCells: 3
   _splashRadiusInCells: 1
   _lineLengthInCells: 1

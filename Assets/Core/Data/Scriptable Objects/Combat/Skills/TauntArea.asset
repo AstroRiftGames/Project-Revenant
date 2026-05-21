@@ -16,7 +16,6 @@ MonoBehaviour:
   _displayName: Taunt Area
   _description: 
   _icon: {fileID: 0}
-  _cooldown: 5
   _rangeInCells: 0
   _splashRadiusInCells: 6
   _lineLengthInCells: 1

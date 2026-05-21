@@ -18,9 +18,6 @@ public class SkillCaster : MonoBehaviour
     public static event Action<Unit, SkillData, Unit> AnySkillUsed;
 
     [SerializeField] private SkillData _overrideSkill;
-    [Header("Transition - Ability Charge")]
-    [SerializeField] private bool _useAbilityChargeReadiness = true;
-    [SerializeField] private bool _allowLegacyCooldownFallback = false;
     [SerializeField] private float _maxAbilityCharge = 100f;
     [SerializeField] private float _chargePerSuccessfulBasicAttack = 25f;
     [SerializeField] private float _chargePerSuccessfulBasicHeal = 25f;
@@ -45,8 +42,6 @@ public class SkillCaster : MonoBehaviour
 
     public SkillData Skill => ResolveSkill();
     public bool HasSkill => Skill != null;
-    public float CurrentCooldown => _state.RemainingCooldown;
-    public float MaxCooldown => Skill != null ? Skill.Cooldown : 0f;
     public float CurrentCharge => _state.CurrentCharge;
     public float MaxCharge => _state.MaxCharge;
     public bool IsCasting => _castingSkill != null;
@@ -54,7 +49,7 @@ public class SkillCaster : MonoBehaviour
     public Unit CastTarget => _castingContext != null ? _castingContext.PrimaryTarget : _castingTarget;
     public float CastRemainingTime => Mathf.Max(0f, _castRemainingTime);
     public bool IsSkillReady => !IsCasting && ResolveSkillReadiness(Skill);
-    public bool UsesAbilityChargeVisual => HasSkill && _useAbilityChargeReadiness;
+    public bool UsesAbilityChargeVisual => HasSkill;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
     private void Awake()
@@ -88,11 +83,6 @@ public class SkillCaster : MonoBehaviour
     private void Update()
     {
         UpdateCasting();
-
-        if (_state.IsReady || !CanTickLegacyCooldown())
-            return;
-
-        _state.Tick(Time.deltaTime);
     }
 
     public bool TryUse(Unit combatTarget)
@@ -194,11 +184,6 @@ public class SkillCaster : MonoBehaviour
     public void InterruptCast()
     {
         InterruptCast("external interruption");
-    }
-
-    private bool CanTickLegacyCooldown()
-    {
-        return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCooldownCharge;
     }
 
     private bool CanGainAbilityCharge()
@@ -345,16 +330,10 @@ public class SkillCaster : MonoBehaviour
         if (ResolveSkillReadiness(skill))
             return true;
 
-        if (UsesAbilityChargeReadiness(skill))
-        {
-            float missingCharge = Mathf.Max(0f, _state.MaxCharge - _state.CurrentCharge);
-            LogDebug(
-                $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is not charged " +
-                $"({_state.CurrentCharge:F1}/{_state.MaxCharge:F1}, missing {missingCharge:F1}).");
-            return false;
-        }
-
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is on cooldown for {_state.RemainingCooldown:F2}s.");
+        float missingCharge = Mathf.Max(0f, _state.MaxCharge - _state.CurrentCharge);
+        LogDebug(
+            $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is not charged " +
+            $"({_state.CurrentCharge:F1}/{_state.MaxCharge:F1}, missing {missingCharge:F1}).");
         return false;
     }
 
@@ -516,26 +495,7 @@ public class SkillCaster : MonoBehaviour
 
     private bool ResolveSkillReadiness(SkillData skill)
     {
-        if (skill == null)
-            return false;
-
-        if (UsesAbilityChargeReadiness(skill))
-            return _state.IsChargeReady;
-
-        if (UsesLegacyCooldownCompatibility(skill))
-            return _state.IsCooldownReady;
-
-        return false;
-    }
-
-    private bool UsesAbilityChargeReadiness(SkillData skill)
-    {
-        return skill != null && _useAbilityChargeReadiness;
-    }
-
-    private bool UsesLegacyCooldownCompatibility(SkillData skill)
-    {
-        return skill != null && !_useAbilityChargeReadiness && _allowLegacyCooldownFallback;
+        return skill != null && _state.IsChargeReady;
     }
 
     private SkillData ResolveSkill()
@@ -1135,10 +1095,9 @@ public class SkillCaster : MonoBehaviour
             return;
 
         ResetAbilityCharge();
-        _state.StartCooldown(skill.Cooldown);
         LogDebug(
             $"[SkillCaster] {FormatOwnerIdentity()} consumed '{skill.DisplayName}' availability. " +
-            $"Charge reset to {_state.CurrentCharge:F1}/{_state.MaxCharge:F1}; cooldown {skill.Cooldown:F2}s.");
+            $"Charge reset to {_state.CurrentCharge:F1}/{_state.MaxCharge:F1}.");
     }
 
     private Unit ResolvePopupAnchor(SkillData skill, Unit primaryTarget)

@@ -168,21 +168,9 @@ namespace Selection.UI
             if (cooldownSlider == null || currentStats == null)
                 return;
 
-            if (currentStats.UsesAbilityChargeVisual)
-            {
-                float maxCharge = currentStats.MaxAbilityCharge;
-                float normalizedCharge = maxCharge > 0f
-                    ? Mathf.Clamp01(currentStats.CurrentAbilityCharge / maxCharge)
-                    : 0f;
-
-                cooldownSlider.maxValue = 1f;
-                cooldownSlider.value = normalizedCharge;
-                return;
-            }
-
-            float maxCooldown = currentStats.MaxAbilityCooldown;
-            cooldownSlider.maxValue = maxCooldown > 0f ? maxCooldown : 1f;
-            cooldownSlider.value = Mathf.Clamp(currentStats.CurrentAbilityCooldown, 0f, cooldownSlider.maxValue);
+            float normalizedCharge = ResolveNormalizedAbilityCharge(currentStats);
+            cooldownSlider.maxValue = 1f;
+            cooldownSlider.value = normalizedCharge;
         }
 
         private void RefreshAbilityText(bool isEnemy)
@@ -196,7 +184,7 @@ namespace Selection.UI
                 return;
             }
 
-            if (currentStats != null && currentStats.UsesAbilityChargeVisual)
+            if (currentStats != null)
             {
                 if (currentStats.IsAbilityReady)
                 {
@@ -205,31 +193,28 @@ namespace Selection.UI
                     return;
                 }
 
-                float maxCharge = currentStats.MaxAbilityCharge;
-                float normalizedCharge = maxCharge > 0f
-                    ? Mathf.Clamp01(currentStats.CurrentAbilityCharge / maxCharge)
-                    : 0f;
-
+                float normalizedCharge = ResolveNormalizedAbilityCharge(currentStats);
                 cooldownText.text = $"{Mathf.RoundToInt(normalizedCharge * 100f)}%";
                 cooldownText.enabled = true;
                 return;
             }
 
-            if (currentStats != null && currentStats.CurrentAbilityCooldown > 0f)
-            {
-                cooldownText.text = $"{currentStats.CurrentAbilityCooldown:F1}s";
-                cooldownText.enabled = true;
-                return;
-            }
-
-            if (currentStats != null && currentStats.IsAbilityReady)
-            {
-                cooldownText.text = "READY";
-                cooldownText.enabled = true;
-                return;
-            }
-
             cooldownText.enabled = false;
+        }
+
+        private static float ResolveNormalizedAbilityCharge(ICharacterStatsProvider stats)
+        {
+            if (stats == null)
+                return 0f;
+
+            if (stats.IsAbilityReady)
+                return 1f;
+
+            float maxCharge = stats.MaxAbilityCharge;
+            if (maxCharge <= 0f)
+                return 0f;
+
+            return Mathf.Clamp01(stats.CurrentAbilityCharge / maxCharge);
         }
 
         private void UpdateEffectsUI()

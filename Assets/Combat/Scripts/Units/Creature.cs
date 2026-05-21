@@ -57,8 +57,6 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     [Header("Selection Visuals")]
     [SerializeField] private GameObject selectionIndicator;
-    public float CurrentAbilityCooldown => _skillCaster != null ? _skillCaster.CurrentCooldown : 0f;
-    public float MaxAbilityCooldown => _skillCaster != null ? _skillCaster.MaxCooldown : 0f;
     public float CurrentAbilityCharge => _skillCaster != null ? _skillCaster.CurrentCharge : 0f;
     public float MaxAbilityCharge => _skillCaster != null ? _skillCaster.MaxCharge : 0f;
     public bool IsAbilityReady => _skillCaster != null && _skillCaster.IsSkillReady;
