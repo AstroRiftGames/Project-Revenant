@@ -89,19 +89,38 @@ public class SkillCaster : MonoBehaviour
 
     public bool TryUse(Unit combatTarget)
     {
-        return TryUseInternal(combatTarget, default, false);
+        return TryUseInternal(combatTarget, default, false, null);
     }
 
     public bool TryUseGroundCell(Vector2Int targetCell)
     {
-        return TryUseInternal(null, targetCell, true);
+        return TryUseInternal(null, targetCell, true, null);
     }
 
-    private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell)
+    // Debug/test entry point. Reuses the live cast pipeline with an explicit skill override.
+    public bool TryCastSkillForDebug(SkillData skill, Unit primaryTarget)
+    {
+        return TryUseInternal(primaryTarget, default, false, skill);
+    }
+
+    // Debug/test readback. Gameplay must keep using the internal impact list.
+    public int CopyLastResolvedImpactsForDebug(List<SkillImpact> destination)
+    {
+        if (destination == null)
+            return 0;
+
+        destination.Clear();
+        for (int i = 0; i < _impactsHit.Count; i++)
+            destination.Add(_impactsHit[i]);
+
+        return destination.Count;
+    }
+
+    private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell, SkillData skillOverride)
     {
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
 
-        SkillData skill = ResolveSkill();
+        SkillData skill = skillOverride != null ? skillOverride : ResolveSkill();
         if (!CanStartCast(skill))
             return false;
 

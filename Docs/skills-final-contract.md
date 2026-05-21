@@ -2,6 +2,9 @@
 
 ## Objetivo
 
+Catalogo activo de contenido: `Assets/Core/Data/Scriptable Objects/Combat/Skills/V2/`.
+Los assets legacy previos quedan movidos a `Assets/Core/Data/Scriptable Objects/Combat/Skills/Deprecated/` y ya no representan el contrato runtime canonico.
+
 Este contrato separa la declaracion de una skill en cuatro capas:
 
 - Tipo: como se aplica.

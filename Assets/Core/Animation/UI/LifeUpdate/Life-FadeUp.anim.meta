@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Assets/Scriptable Objects/DPSData.asset.meta
 guid: 8b21dfee844264c4dbb4d6a6a1edeb98
-========
-guid: 4920bb36e22c6b844b15f012a86b72d2
->>>>>>>> UI:Assets/Animation/UI/LifeUpdate/Default.anim.meta
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 7400000

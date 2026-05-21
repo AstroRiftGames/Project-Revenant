@@ -21,6 +21,7 @@ public class CreatureAffiliationOutline : MonoBehaviour
     private Creature _creature;
     private LifeController _lifeController;
     private RecruitableUnitState _recruitableState;
+    private UnitAffiliationState _affiliationState;
 
     private void Awake()
     {
@@ -28,6 +29,7 @@ public class CreatureAffiliationOutline : MonoBehaviour
         _creature         = GetComponent<Creature>();
         _lifeController   = GetComponent<LifeController>();
         _recruitableState = GetComponent<RecruitableUnitState>();
+        _affiliationState = GetComponent<UnitAffiliationState>();
     }
 
     private void OnEnable()
@@ -73,8 +75,9 @@ public class CreatureAffiliationOutline : MonoBehaviour
         // rather than RecruitableUnitState.IsAlive, which may not reflect the true alive state
         // during initialization order or for units without a UnitDeathHandler.
         bool alive = _lifeController != null ? _lifeController.IsAlive : true;
-        bool show  = alive && (_creature.IsAlly || _creature.IsEnemy);
-        Color color = _creature.IsAlly ? _allyColor : _enemyColor;
+        UnitTeam team = _affiliationState != null ? _affiliationState.Team : UnitTeam.Enemy;
+        bool show = alive;
+        Color color = team == UnitTeam.Ally ? _allyColor : _enemyColor;
 
         _outlineView.SetOutlineThickness(_thickness);
         _outlineView.SetOutlineColor(color);

@@ -120,15 +120,35 @@ public static class UnitTargetValidator
         if (!source.IsAlive)
             return false;
 
-        return source.LifecycleState != UnitLifecycleState.Removed &&
-               source.LifecycleState != UnitLifecycleState.Recruitable &&
-               source.LifecycleState != UnitLifecycleState.Dead;
+        if (!TryGetLifecycleState(source, out UnitLifecycleState lifecycleState))
+            return false;
+
+        return lifecycleState != UnitLifecycleState.Removed &&
+               lifecycleState != UnitLifecycleState.Recruitable &&
+               lifecycleState != UnitLifecycleState.Dead;
     }
 
     private static bool IsValidTargetLifecycle(Unit target)
     {
-        return target.LifecycleState != UnitLifecycleState.Removed &&
-               target.LifecycleState != UnitLifecycleState.Recruitable;
+        if (!TryGetLifecycleState(target, out UnitLifecycleState lifecycleState))
+            return false;
+
+        return lifecycleState != UnitLifecycleState.Removed &&
+               lifecycleState != UnitLifecycleState.Recruitable;
+    }
+
+    private static bool TryGetLifecycleState(Unit unit, out UnitLifecycleState lifecycleState)
+    {
+        lifecycleState = UnitLifecycleState.Dead;
+        if (unit == null)
+            return false;
+
+        RecruitableUnitState recruitableState = unit.GetComponent<RecruitableUnitState>();
+        if (recruitableState == null)
+            return false;
+
+        lifecycleState = recruitableState.CurrentState;
+        return true;
     }
 
     private static bool AreUnitsInSameResolvedRoom(Unit source, Unit target)
