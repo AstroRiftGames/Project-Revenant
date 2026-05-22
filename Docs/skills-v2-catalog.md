@@ -8,6 +8,9 @@ Catalogo activo: `Assets/Core/Data/Scriptable Objects/Combat/Skills/V2/`
 - `Persistent`, `Periodic` y `Accumulative` siguen modelados via `StatusEffectDefinition` cuando corresponde.
 - `Expandible` no se implementa en esta etapa.
 - Los valores numericos son placeholder de prototipo, no balance final.
+- La validacion del catalogo V2 se hace manualmente desde `SkillRuntimeValidationScene`.
+- Codex no debe ejecutar Unity, batch validation ni generar reportes automaticos para este catalogo.
+- No hay `Logs/skill_v2_validation_report.txt` como salida obligatoria.
 
 | SkillId | Rol | Tipo / ImpactPattern | TargetRequirement | ImpactTargetRequirement | TargetSelectionMode | Effects | Modifiers | Status aplicado | Prefab de test asociado | Estado |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -43,3 +46,20 @@ Catalogo activo: `Assets/Core/Data/Scriptable Objects/Combat/Skills/V2/`
 - `Status_Debuff_Defense`
 - `Status_Debuff_MoveSpeed`
 - `Status_Debuff_Accuracy`
+
+## Validacion manual
+
+- Escena: `Assets/Combat/Testing/Skills/Scenes/SkillRuntimeValidationScene.unity`
+- Selector manual: `Y`
+- Cast manual: `T`
+- El estado de validacion se registra manualmente si hace falta.
+- La validacion automatizada fue retirada por friccion operativa.
+
+## Casos criticos pendientes antes de abrir GroundCell
+
+- `Tank_AreaDamage`
+- `DPS_DirectExplosiveDamage`
+- `DPS_DirectBounceDamage`
+- `DPS_LinePiercingExplosiveDamage`
+- `Tank_SpawnMinions`
+- `Support_SpawnMinions`

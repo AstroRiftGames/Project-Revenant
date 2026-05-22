@@ -7,6 +7,9 @@ public class ExplosiveSkillModifier : SkillModifier
     [SerializeField] private int _explosionRadiusInCells = 1;
     [SerializeField] private bool _includePrimaryImpactTarget = true;
 
+    public int ExplosionRadiusInCells => Mathf.Max(0, _explosionRadiusInCells);
+    public bool IncludePrimaryImpactTarget => _includePrimaryImpactTarget;
+
     public override void ModifyImpacts(SkillContext context, SkillData skill, List<SkillImpact> impacts)
     {
         if (context == null || skill == null || impacts == null || impacts.Count == 0)
@@ -18,10 +21,10 @@ public class ExplosiveSkillModifier : SkillModifier
 
         Unit caster = context.Caster;
         RoomGrid roomGrid = ResolveRoomGrid(context, caster);
-        if (caster == null || roomGrid == null)
+        if (caster == null)
         {
             Warn(
-                $"[ExplosiveSkillModifier] Skill '{skill.DisplayName}' could not resolve a RoomGrid for explosive impacts.",
+                $"[ExplosiveSkillModifier] Skill '{skill.DisplayName}' could not resolve a caster for explosive impacts.",
                 skill);
             return;
         }
@@ -37,10 +40,10 @@ public class ExplosiveSkillModifier : SkillModifier
             if (sourceImpact == null)
                 continue;
 
-            if (!TryResolveExplosionCenterCell(roomGrid, sourceImpact, out Vector3Int explosionCenterCell))
+            if (!TryResolveExplosionCenter(roomGrid, sourceImpact, out Vector3Int explosionCenterCell, out Vector3 explosionCenterWorld))
             {
                 Warn(
-                    $"[ExplosiveSkillModifier] Skill '{skill.DisplayName}' ignored an impact because no explosion center cell could be resolved " +
+                    $"[ExplosiveSkillModifier] Skill '{skill.DisplayName}' ignored an impact because no explosion center could be resolved " +
                     $"for kind '{sourceImpact.Kind}'.",
                     skill);
                 continue;
@@ -55,8 +58,7 @@ public class ExplosiveSkillModifier : SkillModifier
                 if (!SkillHitCollector.CanSkillHitUnit(context, candidate))
                     continue;
 
-                Vector3Int candidateCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, candidate);
-                if (!GridNavigationUtility.IsWithinCellRange(explosionCenterCell, candidateCell, explosionRadiusInCells))
+                if (!IsCandidateInsideExplosion(roomGrid, explosionCenterCell, explosionCenterWorld, candidate, explosionRadiusInCells))
                     continue;
 
                 bool isPrimaryTargetUnit =
@@ -68,12 +70,7 @@ public class ExplosiveSkillModifier : SkillModifier
                 if (ContainsUnitImpact(impacts, candidate))
                     continue;
 
-                Vector2Int candidateCell2D = new(candidateCell.x, candidateCell.y);
-                SkillImpact explosiveImpact = SkillImpact.CreateUnit(
-                    candidate,
-                    candidateCell2D,
-                    sourceImpact.ChainIndex + 1,
-                    false);
+                SkillImpact explosiveImpact = CreateExplosiveImpact(roomGrid, candidate, sourceImpact.ChainIndex + 1);
                 if (explosiveImpact == null)
                     continue;
 
@@ -92,31 +89,76 @@ public class ExplosiveSkillModifier : SkillModifier
             : null;
     }
 
-    private static bool TryResolveExplosionCenterCell(RoomGrid roomGrid, SkillImpact impact, out Vector3Int explosionCenterCell)
+    private static bool TryResolveExplosionCenter(
+        RoomGrid roomGrid,
+        SkillImpact impact,
+        out Vector3Int explosionCenterCell,
+        out Vector3 explosionCenterWorld)
     {
         explosionCenterCell = default;
-        if (roomGrid == null || impact == null)
+        explosionCenterWorld = default;
+        if (impact == null)
             return false;
-
-        if (impact.HasCell)
-        {
-            explosionCenterCell = new Vector3Int(impact.Cell.x, impact.Cell.y, 0);
-            return true;
-        }
 
         if (impact.HasTargetUnit)
         {
-            explosionCenterCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, impact.TargetUnit);
+            explosionCenterWorld = impact.TargetUnit.Position;
+            if (roomGrid != null)
+                explosionCenterCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, impact.TargetUnit);
             return true;
         }
 
         if (impact.Kind == SkillImpactKind.AreaPoint)
         {
-            explosionCenterCell = roomGrid.WorldToCell(impact.WorldPosition);
+            explosionCenterWorld = impact.WorldPosition;
+            if (roomGrid != null)
+                explosionCenterCell = roomGrid.WorldToCell(impact.WorldPosition);
+            return true;
+        }
+
+        if (impact.HasCell && roomGrid != null)
+        {
+            explosionCenterCell = new Vector3Int(impact.Cell.x, impact.Cell.y, 0);
+            explosionCenterWorld = roomGrid.CellToWorld(explosionCenterCell);
             return true;
         }
 
         return false;
+    }
+
+    private static bool IsCandidateInsideExplosion(
+        RoomGrid roomGrid,
+        Vector3Int explosionCenterCell,
+        Vector3 explosionCenterWorld,
+        Unit candidate,
+        int explosionRadiusInCells)
+    {
+        if (candidate == null)
+            return false;
+
+        if (roomGrid != null)
+        {
+            Vector3Int candidateCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, candidate);
+            return GridNavigationUtility.IsWithinCellRange(explosionCenterCell, candidateCell, explosionRadiusInCells);
+        }
+
+        float distance = Vector3.Distance(explosionCenterWorld, candidate.Position);
+        return distance <= Mathf.Max(0f, explosionRadiusInCells);
+    }
+
+    private static SkillImpact CreateExplosiveImpact(RoomGrid roomGrid, Unit candidate, int chainIndex)
+    {
+        if (candidate == null)
+            return null;
+
+        if (roomGrid != null)
+        {
+            Vector3Int candidateCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, candidate);
+            Vector2Int candidateCell2D = new(candidateCell.x, candidateCell.y);
+            return SkillImpact.CreateUnit(candidate, candidateCell2D, chainIndex, false);
+        }
+
+        return SkillImpact.CreateUnit(candidate, chainIndex, false);
     }
 
     private static bool ContainsUnitImpact(List<SkillImpact> impacts, Unit candidate)

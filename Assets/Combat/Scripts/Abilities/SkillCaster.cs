@@ -16,6 +16,7 @@ public enum AbilityChargeSource
 public class SkillCaster : MonoBehaviour
 {
     public static event Action<Unit, SkillData, Unit> AnySkillUsed;
+    public static event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> AnySkillImpactsResolvedForVisuals;
 
     [SerializeField] private SkillData _overrideSkill;
     [SerializeField] private float _maxAbilityCharge = 100f;
@@ -41,6 +42,7 @@ public class SkillCaster : MonoBehaviour
     private float _castRemainingTime;
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
+    public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillImpactsResolvedForVisuals;
 
     public SkillData Skill => ResolveSkill();
     public bool HasSkill => Skill != null;
@@ -97,13 +99,15 @@ public class SkillCaster : MonoBehaviour
         return TryUseInternal(null, targetCell, true, null);
     }
 
-    // Debug/test entry point. Reuses the live cast pipeline with an explicit skill override.
+    // Debug/manual validation entry point used by SkillRuntimeTestHarness.
+    // Reuses the live cast pipeline with an explicit skill override.
     public bool TryCastSkillForDebug(SkillData skill, Unit primaryTarget)
     {
         return TryUseInternal(primaryTarget, default, false, skill);
     }
 
-    // Debug/test readback. Gameplay must keep using the internal impact list.
+    // Debug/manual validation readback used by SkillRuntimeTestHarness.
+    // Gameplay must keep using the internal impact list.
     public int CopyLastResolvedImpactsForDebug(List<SkillImpact> destination)
     {
         if (destination == null)
@@ -411,6 +415,8 @@ public class SkillCaster : MonoBehaviour
             $"[SkillCaster] {FormatOwnerIdentity()} '{skill.DisplayName}' resolved context {FormatSkillContext(resolvedContext)} " +
             $"and {_impactsHit.Count} impact(s): {FormatImpacts(_impactsHit)}.");
 
+        NotifySkillImpactsResolvedForVisuals(skill, resolvedContext);
+
         if (!ApplySkillToImpacts(resolvedContext))
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to resolved impacts.");
@@ -535,6 +541,73 @@ public class SkillCaster : MonoBehaviour
         _castingContext = null;
         _castingTarget = null;
         _castRemainingTime = 0f;
+    }
+
+    private void NotifySkillImpactsResolvedForVisuals(SkillData skill, SkillContext resolvedContext)
+    {
+        IReadOnlyList<SkillImpact> visualImpacts = CreateVisualImpactSnapshot();
+
+        try
+        {
+            SkillImpactsResolvedForVisuals?.Invoke(skill, resolvedContext, visualImpacts);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"[SkillCaster] {FormatOwnerIdentity()} ignored a visual listener exception while resolving '{skill?.DisplayName ?? "<null>"}': {exception.Message}",
+                this);
+        }
+
+        try
+        {
+            AnySkillImpactsResolvedForVisuals?.Invoke(skill, resolvedContext, visualImpacts);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"[SkillCaster] {FormatOwnerIdentity()} ignored a global visual listener exception while resolving '{skill?.DisplayName ?? "<null>"}': {exception.Message}",
+                this);
+        }
+    }
+
+    private IReadOnlyList<SkillImpact> CreateVisualImpactSnapshot()
+    {
+        var snapshot = new List<SkillImpact>(_impactsHit.Count);
+        for (int i = 0; i < _impactsHit.Count; i++)
+        {
+            SkillImpact impact = _impactsHit[i];
+            if (impact == null)
+                continue;
+
+            SkillImpact copy = CloneImpactForVisuals(impact);
+            if (copy != null)
+                snapshot.Add(copy);
+        }
+
+        return snapshot.AsReadOnly();
+    }
+
+    private static SkillImpact CloneImpactForVisuals(SkillImpact impact)
+    {
+        if (impact == null)
+            return null;
+
+        switch (impact.Kind)
+        {
+            case SkillImpactKind.Unit:
+                return impact.HasCell
+                    ? SkillImpact.CreateUnit(impact.TargetUnit, impact.Cell, impact.ChainIndex, impact.IsPrimaryImpact)
+                    : SkillImpact.CreateUnit(impact.TargetUnit, impact.ChainIndex, impact.IsPrimaryImpact);
+
+            case SkillImpactKind.Cell:
+                return SkillImpact.CreateCell(impact.Cell, impact.ChainIndex, impact.IsPrimaryImpact);
+
+            case SkillImpactKind.AreaPoint:
+                return SkillImpact.CreateAreaPoint(impact.WorldPosition, impact.ChainIndex, impact.IsPrimaryImpact);
+
+            default:
+                return null;
+        }
     }
 
     private bool ResolveSkillReadiness(SkillData skill)

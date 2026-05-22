@@ -5,6 +5,8 @@ public class ApplyStatusSkillEffect : SkillEffect
 {
     [SerializeField] private StatusEffectDefinition[] _statusDefinitions;
 
+    public StatusEffectDefinition[] StatusDefinitions => _statusDefinitions;
+
     public override bool Apply(SkillContext context, SkillImpact impact)
     {
         Unit hitUnit = ResolveTargetUnit(impact);

@@ -6,6 +6,8 @@ public class KnockbackSkillEffect : SkillEffect
     [SerializeField] private int _knockbackCells = 1;
     [SerializeField] private bool _debugLogs;
 
+    public int KnockbackCells => Mathf.Max(0, _knockbackCells);
+
     public override bool Apply(SkillContext context, SkillImpact impact)
     {
         Unit hitUnit = ResolveTargetUnit(impact);

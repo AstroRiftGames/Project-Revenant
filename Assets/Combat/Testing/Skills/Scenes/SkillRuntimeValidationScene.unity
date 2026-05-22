@@ -2168,6 +2168,7 @@ GameObject:
   - component: {fileID: 610100004}
   - component: {fileID: 610100005}
   - component: {fileID: 610100006}
+  - component: {fileID: 610100007}
   m_Layer: 0
   m_Name: SkillRuntimeValidationRoot
   m_TagString: Untagged
@@ -2284,6 +2285,42 @@ MonoBehaviour:
   _activeIndex: 0
   _nextCaseKey: 121
   _castKey: 116
+--- !u!114 &610100007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10011, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enabled: 1
+  _runtimeRoot: {fileID: 610100001}
+  _defaultDuration: 0.6
+  _primaryPointSize: 0.42
+  _secondaryPointSize: 0.28
+  _lineWidth: 0.08
+  _ringWidth: 0.07
+  _targetPointPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10031, type: 3}
+  _areaCirclePrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10032, type: 3}
+  _linePrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10033, type: 3}
+  _impactSecondaryPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10034, type: 3}
+  _bounceLinkPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10035, type: 3}
+  _summonPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10036, type: 3}
+  _healPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10037, type: 3}
+  _statusPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10038, type: 3}
+  _knockbackPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10039, type: 3}
+  _damageColor: {r: 1, g: 0.35, b: 0.2, a: 0.95}
+  _healColor: {r: 0.3, g: 1, b: 0.45, a: 0.95}
+  _buffColor: {r: 0.25, g: 0.75, b: 1, a: 0.95}
+  _debuffColor: {r: 0.72, g: 0.35, b: 0.95, a: 0.95}
+  _summonColor: {r: 0.25, g: 1, b: 1, a: 0.95}
+  _areaColor: {r: 1, g: 0.82, b: 0.22, a: 0.9}
+  _bounceColor: {r: 0.75, g: 0.95, b: 1, a: 0.95}
+  _lineColor: {r: 1, g: 0.55, b: 0.45, a: 0.92}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0

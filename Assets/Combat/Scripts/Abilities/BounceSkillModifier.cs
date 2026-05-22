@@ -8,6 +8,10 @@ public class BounceSkillModifier : SkillModifier
     [SerializeField] private int _bounceRangeInCells = 1;
     [SerializeField] private bool _canBounceToPrimaryTargetAgain;
 
+    public int MaxBounces => Mathf.Max(0, _maxBounces);
+    public int BounceRangeInCells => Mathf.Max(0, _bounceRangeInCells);
+    public bool CanBounceToPrimaryTargetAgain => _canBounceToPrimaryTargetAgain;
+
     public override void ModifyImpacts(SkillContext context, SkillData skill, List<SkillImpact> impacts)
     {
         if (context == null || skill == null || impacts == null || impacts.Count == 0)
@@ -20,10 +24,10 @@ public class BounceSkillModifier : SkillModifier
 
         Unit caster = context.Caster;
         RoomGrid roomGrid = ResolveRoomGrid(context, caster);
-        if (caster == null || roomGrid == null)
+        if (caster == null)
         {
             Warn(
-                $"[BounceSkillModifier] Skill '{skill.DisplayName}' could not resolve a RoomGrid for bounce impacts.",
+                $"[BounceSkillModifier] Skill '{skill.DisplayName}' could not resolve a caster for bounce impacts.",
                 skill);
             return;
         }
@@ -66,8 +70,7 @@ public class BounceSkillModifier : SkillModifier
                 if (ReferenceEquals(nextUnit, chainPrimaryUnit))
                     primaryTargetRepeated = true;
 
-                Vector2Int nextCell2D = new(nextUnitCell.x, nextUnitCell.y);
-                SkillImpact bounceImpact = SkillImpact.CreateUnit(nextUnit, nextCell2D, nextChainIndex, false);
+                SkillImpact bounceImpact = CreateBounceImpact(roomGrid, nextUnit, nextUnitCell, nextChainIndex);
                 if (bounceImpact == null)
                     break;
 
@@ -98,10 +101,12 @@ public class BounceSkillModifier : SkillModifier
         nextUnit = null;
         nextUnitCell = default;
 
-        if (context == null || roomGrid == null || roomUnits == null || currentUnit == null)
+        if (context == null || roomUnits == null || currentUnit == null)
             return false;
 
-        Vector3Int currentUnitCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, currentUnit);
+        Vector3Int currentUnitCell = roomGrid != null
+            ? GridUnitCellUtility.ResolveUnitCell(roomGrid, currentUnit)
+            : default;
         float bestDistance = float.MaxValue;
         int bestInstanceId = int.MaxValue;
 
@@ -130,11 +135,13 @@ public class BounceSkillModifier : SkillModifier
             if (ContainsUnitImpact(impacts, candidate) && !canReusePrimaryTarget)
                 continue;
 
-            Vector3Int candidateCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, candidate);
-            if (!GridNavigationUtility.IsWithinCellRange(currentUnitCell, candidateCell, bounceRangeInCells))
+            Vector3Int candidateCell = roomGrid != null
+                ? GridUnitCellUtility.ResolveUnitCell(roomGrid, candidate)
+                : default;
+            if (!IsCandidateWithinBounceRange(roomGrid, currentUnit, currentUnitCell, candidate, candidateCell, bounceRangeInCells))
                 continue;
 
-            float distance = GridNavigationUtility.GetCellDistance(currentUnitCell, candidateCell);
+            float distance = ResolveBounceDistance(roomGrid, currentUnit, currentUnitCell, candidate, candidateCell);
             int candidateInstanceId = candidate.GetInstanceID();
             if (distance < bestDistance ||
                 (Mathf.Approximately(distance, bestDistance) && candidateInstanceId < bestInstanceId))
@@ -147,6 +154,54 @@ public class BounceSkillModifier : SkillModifier
         }
 
         return nextUnit != null;
+    }
+
+    private static bool IsCandidateWithinBounceRange(
+        RoomGrid roomGrid,
+        Unit currentUnit,
+        Vector3Int currentUnitCell,
+        Unit candidate,
+        Vector3Int candidateCell,
+        int bounceRangeInCells)
+    {
+        if (currentUnit == null || candidate == null)
+            return false;
+
+        if (roomGrid != null)
+            return GridNavigationUtility.IsWithinCellRange(currentUnitCell, candidateCell, bounceRangeInCells);
+
+        float distance = Vector3.Distance(currentUnit.Position, candidate.Position);
+        return distance <= Mathf.Max(0f, bounceRangeInCells);
+    }
+
+    private static float ResolveBounceDistance(
+        RoomGrid roomGrid,
+        Unit currentUnit,
+        Vector3Int currentUnitCell,
+        Unit candidate,
+        Vector3Int candidateCell)
+    {
+        if (currentUnit == null || candidate == null)
+            return float.MaxValue;
+
+        if (roomGrid != null)
+            return GridNavigationUtility.GetCellDistance(currentUnitCell, candidateCell);
+
+        return Vector3.Distance(currentUnit.Position, candidate.Position);
+    }
+
+    private static SkillImpact CreateBounceImpact(RoomGrid roomGrid, Unit nextUnit, Vector3Int nextUnitCell, int nextChainIndex)
+    {
+        if (nextUnit == null)
+            return null;
+
+        if (roomGrid != null)
+        {
+            Vector2Int nextCell2D = new(nextUnitCell.x, nextUnitCell.y);
+            return SkillImpact.CreateUnit(nextUnit, nextCell2D, nextChainIndex, false);
+        }
+
+        return SkillImpact.CreateUnit(nextUnit, nextChainIndex, false);
     }
 
     private static RoomGrid ResolveRoomGrid(SkillContext context, Unit caster)

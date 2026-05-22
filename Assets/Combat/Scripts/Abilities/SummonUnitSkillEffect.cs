@@ -16,6 +16,9 @@ public class SummonUnitSkillEffect : SkillEffect
     [SerializeField] private int _spawnRangeInCells = 1;
     [SerializeField] private bool _debugLogs;
 
+    public SummonAnchorMode AnchorMode => _anchorMode;
+    public int SpawnRangeInCells => Mathf.Max(0, _spawnRangeInCells);
+
     public override bool Apply(SkillContext context, SkillImpact impact)
     {
         Unit caster = context != null ? context.Caster : null;

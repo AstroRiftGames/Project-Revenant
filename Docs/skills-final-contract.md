@@ -118,4 +118,14 @@ Casos legacy reconocidos:
 - No hay normalizacion silenciosa a `Any`.
 - Si una skill tiene datos declarativos invalidos, debe fallar con error controlado.
 - `GroundCell` no se redisenia en esta etapa.
-- Modifiers todavia no se implementan.
+- La validacion V2 se hace manualmente desde `SkillRuntimeValidationScene`.
+- Codex no debe ejecutar Unity, batch validation ni controlar Play Mode para skills.
+- No hay reporte automatico obligatorio en `Logs/skill_v2_validation_report.txt`.
+- La validacion automatizada fue retirada por friccion operativa.
+- Antes de abrir `GroundCell` deben validarse manualmente los casos criticos del catalogo V2:
+  - `Tank_AreaDamage`
+  - `DPS_DirectExplosiveDamage`
+  - `DPS_DirectBounceDamage`
+  - `DPS_LinePiercingExplosiveDamage`
+  - `Tank_SpawnMinions`
+  - `Support_SpawnMinions`

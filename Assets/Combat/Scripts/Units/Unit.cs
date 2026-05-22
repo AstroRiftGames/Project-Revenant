@@ -97,9 +97,11 @@ public class Unit : Creature, IGridOccupant
 
     public IReadOnlyList<Unit> GetRoomUnits()
     {
-        return RoomContext != null
-            ? RoomContext.Units
-            : Array.Empty<Unit>();
+        if (RoomContext != null)
+            return RoomContext.Units;
+
+        IReadOnlyList<Unit> debugUnits = CreatureDuelDebugUnitRegistry.GetUnitsFor(this);
+        return debugUnits ?? Array.Empty<Unit>();
     }
 
     public int GetPreferredDistance(IBasicAction action)
@@ -139,6 +141,31 @@ public class Unit : Creature, IGridOccupant
     public void EndBasicActionExecution()
     {
         _isExecutingBasicAction = false;
+    }
+
+    // Debug/manual validation entry point for duel sandbox scenes.
+    // Reuses the live basic action pipeline without UnitBrain orchestration.
+    public bool TryBasicActionForDebug(Unit forcedTarget)
+    {
+        IBasicAction action = Action;
+        if (action == null || !IsAlive)
+            return false;
+
+        BeginBasicActionExecution();
+        try
+        {
+            return action.Execute(this, forcedTarget);
+        }
+        finally
+        {
+            EndBasicActionExecution();
+        }
+    }
+
+    // Alias kept explicit for duel sandbox discoverability.
+    public bool TryBasicAttackForDebug(Unit forcedTarget)
+    {
+        return TryBasicActionForDebug(forcedTarget);
     }
 
     private UnitOperationalState ResolveOperationalState()
