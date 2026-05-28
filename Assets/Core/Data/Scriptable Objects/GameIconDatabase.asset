@@ -39,7 +39,7 @@ MonoBehaviour:
     color: {r: 0.5411765, g: 0.36862746, b: 0.23137255, a: 1}
   roleIcons:
   - role: 0
-    icon: {fileID: 21300000, guid: c33c6ae4ffbbdc8439f47c9811ec4064, type: 3}
+    icon: {fileID: -6221635561139988244, guid: 5755b1dec9a811244b6e600fa0c67ae8, type: 3}
     color: {r: 0.24313726, g: 0.4862745, b: 0.69411767, a: 1}
   - role: 1
     icon: {fileID: 8606772957828517546, guid: 4e729847f877fce40abf45047f0ccde3, type: 3}
@@ -80,26 +80,26 @@ MonoBehaviour:
     color: {r: 0.25490198, g: 0.49803922, b: 0.72156864, a: 1}
   roomIcons:
   - roomType: 0
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 1781240246084749206, guid: 378b330bb086ccb42ad83efcdf51d84f, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 1
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: -304308915214456209, guid: 98e0364ff9d7ea6488596e573fff4a6d, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 2
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 2378667772780328666, guid: 27426ecf1bd85214a9fa592d7c1fa845, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 3
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: -7033443567660528086, guid: e1e30dd3ba9ff9540b9a4802e92f577e, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 4
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 7853577280416093474, guid: c2c3d24705e75b4499e48112d8b747f7, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 5
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 6175361289478672219, guid: 521bfa3c37a4ede4db2a83759b381957, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   - roomType: 6
-    icon: {fileID: 21300000, guid: ba819174422bfeb4bac57853e95cc8d2, type: 3}
-    color: {r: 0, g: 0, b: 0, a: 0}
+    icon: {fileID: 6850221415465856317, guid: a9e0f81eda245134b8b31862ad70faee, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   effectsIcons:
   - effectType: 2
     icon: {fileID: -2117330891, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
