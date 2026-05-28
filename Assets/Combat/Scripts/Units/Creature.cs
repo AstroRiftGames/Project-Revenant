@@ -28,7 +28,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     public UnitFaction Faction => _affiliationState.Faction;
     public Vector3 Position => transform.position;
     public bool IsEnemy => Team == UnitTeam.Enemy;
-    public bool IsAlly => Team == UnitTeam.NecromancerAlly;
+    public bool IsAlly => Team == UnitTeam.Ally;
     public UnitLifecycleState LifecycleState => _recruitableState.CurrentState;
     public bool IsRecruitable => _recruitableState.IsRecruitable;
 
@@ -57,8 +57,10 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
 
     [Header("Selection Visuals")]
     [SerializeField] private GameObject selectionIndicator;
-    public float CurrentAbilityCooldown => _skillCaster != null ? _skillCaster.CurrentCooldown : 0f;
-    public float MaxAbilityCooldown => _skillCaster != null ? _skillCaster.MaxCooldown : 0f;
+    public float CurrentAbilityCharge => _skillCaster != null ? _skillCaster.CurrentCharge : 0f;
+    public float MaxAbilityCharge => _skillCaster != null ? _skillCaster.MaxCharge : 0f;
+    public bool IsAbilityReady => _skillCaster != null && _skillCaster.IsSkillReady;
+    public bool UsesAbilityChargeVisual => _skillCaster != null && _skillCaster.UsesAbilityChargeVisual;
     public Sprite AbilityIcon => _skillCaster != null ? _skillCaster.Icon : null;
     public SkillData Skill => _data != null ? _data.skill : null;
     public Sprite CharacterSprite => _data != null ? _data.sprite : null;
@@ -155,6 +157,9 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (!IsAlive || !creature.IsAlive)
             return false;
 
+        if (LifecycleState != UnitLifecycleState.Alive || creature.LifecycleState != UnitLifecycleState.Alive)
+            return false;
+
         return Team != creature.Team;
     }
 
@@ -163,43 +168,13 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (candidate == null || ReferenceEquals(candidate, this))
             return false;
 
-        if (candidate is not MonoBehaviour behaviour)
+        if (candidate is not Creature creature)
             return false;
 
-        return behaviour.gameObject.activeInHierarchy;
-    }
+        if (creature.LifecycleState != UnitLifecycleState.Alive)
+            return false;
 
-    public void GetVisibleUnits(List<IUnit> candidates, List<IUnit> results)
-    {
-        results?.Clear();
-    }
-
-    public void GetVisibleHostileUnits(List<IUnit> candidates, List<IUnit> results)
-    {
-        results?.Clear();
-    }
-
-    public IUnit GetNearestVisibleHostileUnit(List<IUnit> candidates, List<IUnit> visibleHostilesBuffer)
-    {
-        if (visibleHostilesBuffer == null)
-            return null;
-
-        GetVisibleHostileUnits(candidates, visibleHostilesBuffer);
-        IUnit nearest = null;
-        float bestSqrDistance = float.MaxValue;
-
-        for (int i = 0; i < visibleHostilesBuffer.Count; i++)
-        {
-            IUnit candidate = visibleHostilesBuffer[i];
-            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
-            if (sqrDistance >= bestSqrDistance)
-                continue;
-
-            bestSqrDistance = sqrDistance;
-            nearest = candidate;
-        }
-
-        return nearest;
+        return creature.gameObject.activeInHierarchy;
     }
 
     public void TakeDamage(int amount, IUnit source = null)

@@ -23,6 +23,8 @@ Builds editor-only code if you add tooling or inspectors.
 ```
 Runs Unity Test Framework Edit Mode tests from the command line. The package is installed, but the repo currently has almost no formal test coverage.
 
+Do not use Unity batch automation for V2 skill validation. The V2 skill catalog is validated manually inside `Assets/Combat/Testing/Skills/Scenes/SkillRuntimeValidationScene.unity` with `Y` to switch cases and `T` to cast.
+
 ## Coding Style & Naming Conventions
 Use 4 spaces for indentation and standard C# brace style. Follow the existing naming pattern: `PascalCase` for types, methods, and public properties; `_camelCase` for private serialized fields; descriptive singular class names such as `Unit`, `FusionService`, and `ShopUIManager`.
 
@@ -32,6 +34,8 @@ Do not rely on `AddComponent` at runtime to complete the `Necromancer` setup. Sc
 
 ## Testing Guidelines
 Add Edit Mode or Play Mode tests when changing combat rules, grid logic, status effects, or procedural generation. Name test files after the unit under test, for example `GridPathfinderTests.cs`. If you add temporary scene-side probes like `MovementRangeTest.cs`, remove or convert them before merging.
+
+For the V2 skill catalog specifically, keep the scene, prefabs, harness, selector, and binder for manual validation, and do not add Codex-driven Play Mode or batch tooling back into that flow.
 
 ## Commit & Pull Request Guidelines
 Recent commits use short imperative subjects such as `Add shop system: service, data, and controller` and `Refactor feedback UI, prefabs and life UI code`. Keep commit titles concise, capitalized, and action-first.

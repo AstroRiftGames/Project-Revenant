@@ -115,6 +115,10 @@ GameObject:
   - component: {fileID: -3392875078749779773}
   - component: {fileID: 1971913270504358189}
   - component: {fileID: 6758294938861454681}
+  - component: {fileID: 8601000000000000001}
+  - component: {fileID: 8601000000000000002}
+  - component: {fileID: 8601000000000000003}
+  - component: {fileID: 8601000000000000004}
   m_Layer: 10
   m_Name: Enemy Tank
   m_TagString: Untagged
@@ -527,6 +531,58 @@ MonoBehaviour:
   _allyColor: {r: 0.18, g: 0.52, b: 1, a: 1}
   _enemyColor: {r: 1, g: 0.22, b: 0.22, a: 1}
   _thickness: 1
+--- !u!114 &8601000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4094174674307024680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87d94f90552048cf85f17d4f9e9d0dd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _behavioursToDisableForRecruitableDeath: []
+--- !u!114 &8601000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4094174674307024680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad0c3737489646c299c523dc9a7f33ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8601000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4094174674307024680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1096ba3deaccc6f458728870c3caa803, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _minimumRecruitHealth: 1
+--- !u!114 &8601000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4094174674307024680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b546f668a79cb1b47987a9975eee1b3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _partyMemberId: 
+  _isFromNecromancerParty: 0
 --- !u!1001 &1112152896068209597
 PrefabInstance:
   m_ObjectHideFlags: 0

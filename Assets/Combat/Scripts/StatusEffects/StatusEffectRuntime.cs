@@ -1,16 +1,6 @@
 using System;
 using UnityEngine;
 
-[Serializable]
-public struct AppliedStatusEffectSpec
-{
-    [SerializeField] private StatusEffectDefinition _definition;
-    [SerializeField] private bool _requireAllyTarget;
-
-    public StatusEffectDefinition Definition => _definition;
-    public bool RequireAllyTarget => _requireAllyTarget;
-}
-
 public readonly struct StatusEffectApplication
 {
     public StatusEffectApplication(Unit targetUnit, Unit sourceUnit, SkillData sourceSkill, StatusEffectDefinition definition)

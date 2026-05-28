@@ -1,87 +1,15 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
-
-public enum SkillTargetRequirement
-{
-    Legacy = 0,
-    Hostile = 1,
-    Ally = 2,
-    Self = 3,
-    Any = 4,
-    NoTarget = 5,
-    GroundCell = 6
-}
 
 [Serializable]
 public class SkillRequirements
 {
-    public bool requiresTarget = true;
-    [SerializeField] private SkillTargetRequirement _targetRequirement = SkillTargetRequirement.Legacy;
-    [FormerlySerializedAs("mustTargetHostile")]
-    [SerializeField, HideInInspector] private bool _legacyMustTargetHostile = true;
     public bool mustTargetInjured;
 
-    public SkillTargetRequirement TargetRequirement => ResolveTargetRequirement();
+    public bool RequiresInjuredTarget => mustTargetInjured;
 
-    public SkillTargetRequirement ResolveTargetRequirement()
-    {
-        if (_targetRequirement != SkillTargetRequirement.Legacy)
-            return _targetRequirement;
-
-        return _legacyMustTargetHostile
-            ? SkillTargetRequirement.Hostile
-            : SkillTargetRequirement.Ally;
-    }
-
-    // Legacy combined validation kept for compatibility with older callers.
-    // New targeting flows should use TargetingPolicy + UnitTargetValidator for
-    // general target eligibility and reserve AreSkillSpecificRequirementsMet for
-    // skill-specific constraints only.
-    public bool AreMet(Unit caster, Unit target)
-    {
-        if (caster == null)
-            return false;
-
-        SkillTargetRequirement targetRequirement = ResolveTargetRequirement();
-        if (targetRequirement == SkillTargetRequirement.GroundCell)
-            return false;
-
-        if (requiresTarget && target == null)
-            return false;
-
-        if (target == null)
-            return !requiresTarget || targetRequirement == SkillTargetRequirement.NoTarget;
-
-        switch (targetRequirement)
-        {
-            case SkillTargetRequirement.Hostile:
-                if (!caster.IsHostileTo(target))
-                    return false;
-                break;
-            case SkillTargetRequirement.Ally:
-                if (caster.IsHostileTo(target))
-                    return false;
-                break;
-            case SkillTargetRequirement.Self:
-                if (!ReferenceEquals(caster, target))
-                    return false;
-                break;
-            case SkillTargetRequirement.NoTarget:
-                return false;
-            case SkillTargetRequirement.GroundCell:
-                return false;
-        }
-
-        if (mustTargetInjured && target.CurrentHealth >= target.MaxHealth)
-            return false;
-
-        return AreSkillSpecificRequirementsMet(caster, target);
-    }
-
-    // Primary extension point for constraints that belong to a specific skill rather than
-    // to general target eligibility. Keep this narrow: relationship/self/alive/visibility/
-    // same-room/injured should stay in TargetingPolicy + UnitTargetValidator.
+    // Use this only for rules that belong to one specific skill.
+    // Declarative targeting rules now live directly on SkillData.
     public bool AreSkillSpecificRequirementsMet(Unit caster, Unit target)
     {
         return caster != null;

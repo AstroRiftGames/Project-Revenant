@@ -111,7 +111,7 @@ public class NecromancerDeploymentController : MonoBehaviour
 
         Unit unit = hitCollider.GetComponentInParent<Unit>();
         if (unit == null ||
-            unit.Team != UnitTeam.NecromancerAlly ||
+            unit.Team != UnitTeam.Ally ||
             !ReferenceEquals(unit.RoomContext, deploymentController.RoomContext))
         {
             return false;

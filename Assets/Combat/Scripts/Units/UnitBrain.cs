@@ -9,14 +9,15 @@ public class UnitBrain : MonoBehaviour
 
     [SerializeField] private bool _debugEncounter = true;
     [SerializeField] private bool _debugSkillFlow;
+    [SerializeField] private bool _debugOperationalState;
 
     private Unit _unit;
     private UnitMovement _movement;
     private TargetingStrategy _targeting;
     private SkillCaster _skillCaster;
     private UnitAnimationController _animationController;
-    private IBasicAction _action;
     private Unit _currentTarget;
+    private UnitOperationalState _lastOperationalState = UnitOperationalState.Idle;
     private bool _hasLoggedMissingControllerBlock;
     private bool _hasLoggedDeploymentBlock;
     private bool _hasLoggedResolvedBlock;
@@ -35,7 +36,6 @@ public class UnitBrain : MonoBehaviour
         _targeting = GetComponent<TargetingStrategy>();
         _skillCaster = GetComponent<SkillCaster>();
         _animationController = GetComponent<UnitAnimationController>();
-        _action = _unit != null ? _unit.Action : null;
     }
 
     private void Update()
@@ -43,13 +43,12 @@ public class UnitBrain : MonoBehaviour
         if (!CanUpdateBrain())
             return;
 
-        if (!CanActFromStatusEffects())
-            return;
-
         if (!CanActInCurrentEncounter())
             return;
 
-        if (_movement.IsMoving)
+        UnitOperationalState operationalState = _unit.OperationalState;
+        LogOperationalStateChange(operationalState);
+        if (!CanActFromOperationalState(operationalState))
             return;
 
         UpdateDecisionState();
@@ -61,13 +60,13 @@ public class UnitBrain : MonoBehaviour
         return _unit != null &&
                _movement != null &&
                _targeting != null &&
-               _action != null &&
+               _unit.Action != null &&
                _unit.IsAlive;
     }
 
     private void UpdateDecisionState()
     {
-        _currentTarget = _targeting.SelectTarget(_unit, _action, _currentTarget);
+        _currentTarget = _targeting.SelectBasicActionTarget(_unit, _unit.Action, _currentTarget);
     }
 
     private void ExecuteDecision()
@@ -99,7 +98,7 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryUseSkillIntent()
     {
-        if (_skillCaster == null || !_skillCaster.TryUse(_currentTarget))
+        if (_skillCaster == null || !_skillCaster.IsSkillReady || !_skillCaster.TryUse(_currentTarget))
             return false;
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
@@ -114,7 +113,13 @@ public class UnitBrain : MonoBehaviour
         if (TryMoveToBasicActionRange())
             return;
 
-        if (!_action.CanExecute(_unit, _currentTarget))
+        if (!_unit.Action.IsInRange(_unit, _currentTarget))
+        {
+            TryRetargetAfterFailedMovement();
+            return;
+        }
+
+        if (!_unit.Action.CanExecute(_unit, _currentTarget))
             return;
 
         ExecuteBasicAction();
@@ -122,11 +127,27 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryMoveToBasicActionRange()
     {
-        if (_action.IsInRange(_unit, _currentTarget))
+        if (_currentTarget == null)
             return false;
 
-        int preferredDistance = _unit.GetPreferredDistance(_action);
-        _movement.MoveTowards(_currentTarget, preferredDistance);
+        if (_unit.Action.IsInRange(_unit, _currentTarget))
+            return false;
+
+        int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
+        return _movement.MoveTowards(_currentTarget, preferredDistance);
+    }
+
+    private bool TryRetargetAfterFailedMovement()
+    {
+        if (_targeting == null || _currentTarget == null)
+            return false;
+
+        Unit failedTarget = _currentTarget;
+        Unit alternateTarget = _targeting.SelectAlternativeBasicActionTarget(_unit, _unit.Action, failedTarget);
+        if (alternateTarget == null || ReferenceEquals(alternateTarget, failedTarget))
+            return false;
+
+        _currentTarget = alternateTarget;
         return true;
     }
 
@@ -135,7 +156,15 @@ public class UnitBrain : MonoBehaviour
         _animationController?.SetAttackTarget(_currentTarget.Position);
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_currentTarget)}.");
-        _action.Execute(_unit, _currentTarget);
+        _unit.BeginBasicActionExecution();
+        try
+        {
+            _unit.Action.Execute(_unit, _currentTarget);
+        }
+        finally
+        {
+            _unit.EndBasicActionExecution();
+        }
     }
 
     private bool TryResolveFearBehavior()
@@ -158,7 +187,7 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryMaintainSpacing()
     {
-        int preferredDistance = _unit.GetPreferredDistance(_action);
+        int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
         Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _currentTarget);
         return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
     }
@@ -217,18 +246,30 @@ public class UnitBrain : MonoBehaviour
         return false;
     }
 
-    private bool CanActFromStatusEffects()
+    private bool CanActFromOperationalState(UnitOperationalState operationalState)
     {
-        if (_unit == null || _unit.StatusEffects == null || _unit.StatusEffects.CanAct)
-            return true;
+        switch (operationalState)
+        {
+            case UnitOperationalState.Dead:
+                return false;
 
-        if (_unit.StatusEffects.RestrictsMovement)
-            _movement.InterruptMovement();
+            case UnitOperationalState.CrowdControl:
+                if (_unit != null && _unit.StatusEffects != null && _unit.StatusEffects.RestrictsMovement)
+                    _movement.InterruptMovement();
 
-        LogEncounterGate(
-            ref _hasLoggedStatusBlock,
-            $"[UnitBrain] '{name}' blocked by active status effect.");
-        return false;
+                LogEncounterGate(
+                    ref _hasLoggedStatusBlock,
+                    $"[UnitBrain] '{name}' blocked by active status effect.");
+                return false;
+
+            case UnitOperationalState.Casting:
+            case UnitOperationalState.Attacking:
+            case UnitOperationalState.Moving:
+                return false;
+
+            default:
+                return true;
+        }
     }
 
     private void LogEncounterGate(ref bool guard, string message)
@@ -252,6 +293,15 @@ public class UnitBrain : MonoBehaviour
     {
         if (_debugSkillFlow)
             Debug.Log(message, this);
+    }
+
+    private void LogOperationalStateChange(UnitOperationalState operationalState)
+    {
+        if (!_debugOperationalState || _lastOperationalState == operationalState)
+            return;
+
+        _lastOperationalState = operationalState;
+        Debug.Log($"[UnitBrain] '{name}' operational state -> {operationalState}.", this);
     }
 
     private string FormatDebugIdentity()

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(RecruitableUnitState))]
+[RequireComponent(typeof(UnitDeathHandler))]
 public class LifeController : MonoBehaviour, IDamageable
 {
     [SerializeField] private bool _debugDamage;
@@ -34,12 +35,17 @@ public class LifeController : MonoBehaviour, IDamageable
     {
         _unit = GetComponent<Unit>();
         _recruitableState = GetComponent<RecruitableUnitState>();
-        _deathHandler = GetComponent<UnitDeathHandler>() ?? gameObject.AddComponent<UnitDeathHandler>();
+        _deathHandler = GetComponent<UnitDeathHandler>();
         _statusEffectController = GetComponent<StatusEffectController>();
         _unitMovement = GetComponent<UnitMovement>();
 
-        if (_recruitableState == null)
-            throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required {nameof(RecruitableUnitState)} on '{name}'.");
+        if (_recruitableState == null || _deathHandler == null)
+            throw new InvalidOperationException($"[{nameof(LifeController)}] Missing required death components on '{name}'.");
+    }
+
+    private void Start()
+    {
+        EnsureLivingLifecycleState();
     }
 
     public void Initialize(int maxHealth)
@@ -131,6 +137,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void Revive(int currentHealth)
     {
+        if (CurrentHealth > 0 && _recruitableState.CurrentState == UnitLifecycleState.Alive)
+            return;
+
         RestoreLivingRuntimeState();
         SetCurrentHealth(Mathf.Max(1, currentHealth));
         OnLifeUpdated?.Invoke(CurrentHealth);
@@ -152,5 +161,16 @@ public class LifeController : MonoBehaviour, IDamageable
         _hasResolvedDeath = false;
         _statusEffectController?.RestoreLivingRuntimeState();
         _deathHandler?.ResetDeathState(UnitLifecycleState.Alive);
+    }
+
+    private void EnsureLivingLifecycleState()
+    {
+        if (CurrentHealth <= 0 || _deathHandler == null || _recruitableState == null)
+            return;
+
+        if (_recruitableState.CurrentState == UnitLifecycleState.Alive)
+            return;
+
+        RestoreLivingRuntimeState();
     }
 }

@@ -6,8 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(NecromancerDeploymentController))]
 public class Necromancer : MonoBehaviour
 {
+    [SerializeField] private NecromancerData _data;
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
     [SerializeField] private KeyCode _startCombatKey = KeyCode.F;
     [SerializeField] private bool _debugCombatStartLogs = true;
@@ -26,8 +28,14 @@ public class Necromancer : MonoBehaviour
     private bool _hasClickedCell;
     private bool _clickedCellWasWalkable;
 
+    public NecromancerData Data => _data;
+    public string NecromancerId => _data != null ? _data.NecromancerId : string.Empty;
+    public string DisplayName => _data != null ? _data.DisplayName : name;
+
     private void Awake()
     {
+        _spriteRenderer ??= GetComponent<SpriteRenderer>();
+
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
 
@@ -38,6 +46,8 @@ public class Necromancer : MonoBehaviour
                 "Add the required scripts on the Necromancer prefab instead of relying on runtime setup.",
                 this);
         }
+
+        ApplyData();
     }
 
     private void Start()
@@ -372,6 +382,18 @@ public class Necromancer : MonoBehaviour
     {
         if (_debugCombatStartLogs)
             Debug.Log(message, this);
+    }
+
+    private void ApplyData()
+    {
+        if (_data == null)
+            return;
+
+        if (_data.MoveSpeed > 0f)
+            _moveSpeed = _data.MoveSpeed;
+
+        if (_spriteRenderer != null && _data.Sprite != null)
+            _spriteRenderer.sprite = _data.Sprite;
     }
 
 #if UNITY_EDITOR

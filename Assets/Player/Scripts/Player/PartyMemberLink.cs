@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class PartyMemberLink : MonoBehaviour
 {
     [SerializeField] private string _partyMemberId;

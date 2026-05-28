@@ -5,20 +5,23 @@ public class DamageSkillEffect : SkillEffect
 {
     [SerializeField] private int _damage = 1;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
-        if (context == null || context.Caster == null || target == null || !target.IsAlive)
+        Unit hitUnit = ResolveTargetUnit(impact);
+        Unit caster = context != null ? context.Caster : null;
+        if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;
 
-        target.TakeDamage(Mathf.Max(0, _damage), context.Caster);
+        int damageAmount = Mathf.Max(0, _damage);
+        hitUnit.TakeDamage(damageAmount, caster);
 
-        if (context.Caster.StatusEffects != null && context.Caster.StatusEffects.HasLifeSteal)
+        if (caster.StatusEffects != null && caster.StatusEffects.HasLifeSteal)
         {
-            float healPercent = context.Caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
-            int healAmount = Mathf.RoundToInt(_damage * healPercent);
-            LifeController casterLife = context.Caster.GetComponent<LifeController>();
+            float healPercent = caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
+            int healAmount = Mathf.RoundToInt(damageAmount * healPercent);
+            LifeController casterLife = caster.GetComponent<LifeController>();
             if (healAmount > 0 && casterLife != null)
-                casterLife.Heal(healAmount, target);
+                casterLife.Heal(healAmount, hitUnit);
         }
 
         return true;

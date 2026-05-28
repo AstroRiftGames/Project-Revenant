@@ -19,7 +19,7 @@ public class UnitStatsData
 public enum UnitTeam
 {
     Enemy,
-    NecromancerAlly
+    Ally
 }
 
 public enum UnitCombatStyle

@@ -30,4 +30,3 @@ MonoBehaviour:
   _applyPopupText: HEAL O.T
   _showExpirePopup: 0
   _expirePopupText: 
-  _requireAllyTarget: 1 

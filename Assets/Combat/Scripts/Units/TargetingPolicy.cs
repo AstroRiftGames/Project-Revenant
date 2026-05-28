@@ -1,7 +1,9 @@
 public readonly struct TargetingPolicy
 {
+    #region Runtime Policy
+
     public TargetingPolicy(
-        RequiredTargetRelationship relationship,
+        TargetRelation relationship,
         bool requiresTarget = true,
         bool allowSelf = false,
         bool requireSelf = false,
@@ -24,7 +26,7 @@ public readonly struct TargetingPolicy
         RequireDetectable = requireDetectable;
     }
 
-    public RequiredTargetRelationship Relationship { get; }
+    public TargetRelation Relationship { get; }
     public bool RequiresTarget { get; }
     public bool AllowSelf { get; }
     public bool RequireSelf { get; }
@@ -35,7 +37,11 @@ public readonly struct TargetingPolicy
     public bool RequireActive { get; }
     public bool RequireDetectable { get; }
 
-    public static TargetingPolicy ForRelationship(RequiredTargetRelationship relationship, bool allowSelf = false)
+    #endregion
+
+    #region Generic Policies
+
+    public static TargetingPolicy ForRelationship(TargetRelation relationship, bool allowSelf = false)
     {
         return new TargetingPolicy(relationship, allowSelf: allowSelf);
     }
@@ -43,11 +49,11 @@ public readonly struct TargetingPolicy
     public static TargetingPolicy ForBasicAction(IBasicAction action)
     {
         return action != null
-            ? ForBasicAction(action.RequiredTargetRelationship, action.RequiresInjuredTarget)
-            : ForRelationship(RequiredTargetRelationship.Hostile);
+            ? ForBasicAction(action.TargetRelation, action.RequiresInjuredTarget)
+            : ForRelationship(TargetRelation.Hostile);
     }
 
-    public static TargetingPolicy ForBasicAction(RequiredTargetRelationship relationship, bool requiresInjuredTarget = false)
+    public static TargetingPolicy ForBasicAction(TargetRelation relationship, bool requiresInjuredTarget = false)
     {
         return new TargetingPolicy(
             relationship,
@@ -55,56 +61,54 @@ public readonly struct TargetingPolicy
             requireInjured: requiresInjuredTarget);
     }
 
-    public static bool TryCreateForSkill(SkillRequirements requirements, out TargetingPolicy policy)
+    #endregion
+
+    #region Skill-Derived Policies
+
+    // Primary target policy derived from the documented skill type contract.
+    public static bool TryCreateForSkill(SkillData skill, out TargetingPolicy policy)
     {
-        SkillTargetRequirement targetRequirement = requirements != null
-            ? requirements.TargetRequirement
-            : SkillTargetRequirement.Any;
-        if (targetRequirement == SkillTargetRequirement.NoTarget || targetRequirement == SkillTargetRequirement.GroundCell)
+        return TryCreateForPrimarySkillTarget(skill, out policy);
+    }
+
+    #endregion
+
+    #region Private Helpers
+
+    private static bool TryCreateForPrimarySkillTarget(SkillData skill, out TargetingPolicy policy)
+    {
+        if (skill == null || !skill.TryValidateDeclarativeContract(out _))
+        {
+            policy = default;
+            return false;
+        }
+
+        PrimaryTargetRequirement primaryTargetRequirement = skill.PrimaryTargetRequirement;
+        if (primaryTargetRequirement == PrimaryTargetRequirement.None ||
+            primaryTargetRequirement == PrimaryTargetRequirement.GroundCell)
         {
             policy = default;
             return false;
         }
 
         policy = new TargetingPolicy(
-            ResolveRelationship(targetRequirement),
-            requiresTarget: requirements == null || requirements.requiresTarget,
-            allowSelf: targetRequirement == SkillTargetRequirement.Any || targetRequirement == SkillTargetRequirement.Self,
-            requireSelf: targetRequirement == SkillTargetRequirement.Self,
-            requireInjured: requirements != null && requirements.mustTargetInjured);
+            ResolveRelationship(primaryTargetRequirement),
+            requiresTarget: true,
+            allowSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
+            requireSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
+            requireInjured: skill.Requirements != null && skill.Requirements.RequiresInjuredTarget);
         return true;
     }
 
-    public static bool TryCreateForImpact(SkillRequirements requirements, SkillTargetMode targetMode, out TargetingPolicy policy)
-    {
-        if (!TryCreateForSkill(requirements, out policy))
-            return false;
-
-        if (targetMode == SkillTargetMode.Self)
-        {
-            policy = new TargetingPolicy(
-                policy.Relationship,
-                policy.RequiresTarget,
-                allowSelf: true,
-                policy.RequireSelf,
-                policy.AllowDead,
-                policy.AllowInvisible,
-                policy.RequireInjured,
-                policy.RequireSameRoom,
-                policy.RequireActive,
-                policy.RequireDetectable);
-        }
-
-        return true;
-    }
-
-    private static RequiredTargetRelationship ResolveRelationship(SkillTargetRequirement targetRequirement)
+    private static TargetRelation ResolveRelationship(PrimaryTargetRequirement targetRequirement)
     {
         return targetRequirement switch
         {
-            SkillTargetRequirement.Hostile => RequiredTargetRelationship.Hostile,
-            SkillTargetRequirement.Ally => RequiredTargetRelationship.Ally,
-            _ => RequiredTargetRelationship.Any
+            PrimaryTargetRequirement.Hostile => TargetRelation.Hostile,
+            PrimaryTargetRequirement.Ally => TargetRelation.Ally,
+            _ => TargetRelation.Any
         };
     }
+
+    #endregion
 }

@@ -81,11 +81,7 @@ public class UnitVisualMaterialController : MonoBehaviour
     private void Awake()
     {
         EnsureDefaultBindings();
-        _flashColorPropertyId = Shader.PropertyToID(_flashColorPropertyName);
-        _flashAmountPropertyId = Shader.PropertyToID(_flashAmountPropertyName);
-        _overlayColorPropertyId = Shader.PropertyToID(_overlayColorPropertyName);
-        _overlayAmountPropertyId = Shader.PropertyToID(_overlayAmountPropertyName);
-        _propertyBlock = new MaterialPropertyBlock();
+        EnsureRuntimeState();
 
         ResolveRendererReferences();
         EnsureOverlayMaterial();
@@ -95,6 +91,7 @@ public class UnitVisualMaterialController : MonoBehaviour
     private void OnEnable()
     {
         EnsureDefaultBindings();
+        EnsureRuntimeState();
         ResolveRendererReferences();
         EnsureOverlayMaterial();
         ApplyVisualState();
@@ -142,6 +139,7 @@ public class UnitVisualMaterialController : MonoBehaviour
 
     private void ApplyVisualState()
     {
+        EnsureRuntimeState();
         ResolveRendererReferences();
         if (!CanRenderOverlay())
         {
@@ -325,6 +323,7 @@ public class UnitVisualMaterialController : MonoBehaviour
 
         if (clearPropertyBlock)
         {
+            EnsurePropertyBlock();
             _overlayRenderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.Clear();
             _overlayRenderer.SetPropertyBlock(_propertyBlock);
@@ -379,5 +378,28 @@ public class UnitVisualMaterialController : MonoBehaviour
     private static VisualStateBinding CreateBinding(UnitVisualMaterialState state, Color overlayColor, float overlayAmount)
     {
         return new VisualStateBinding(state, overlayColor, overlayAmount);
+    }
+
+    private void EnsureRuntimeState()
+    {
+        if (_flashColorPropertyId == 0)
+            _flashColorPropertyId = Shader.PropertyToID(_flashColorPropertyName);
+
+        if (_flashAmountPropertyId == 0)
+            _flashAmountPropertyId = Shader.PropertyToID(_flashAmountPropertyName);
+
+        if (_overlayColorPropertyId == 0)
+            _overlayColorPropertyId = Shader.PropertyToID(_overlayColorPropertyName);
+
+        if (_overlayAmountPropertyId == 0)
+            _overlayAmountPropertyId = Shader.PropertyToID(_overlayAmountPropertyName);
+
+        EnsurePropertyBlock();
+    }
+
+    private void EnsurePropertyBlock()
+    {
+        if (_propertyBlock == null)
+            _propertyBlock = new MaterialPropertyBlock();
     }
 }

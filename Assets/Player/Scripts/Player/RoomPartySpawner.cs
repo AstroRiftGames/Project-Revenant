@@ -223,13 +223,17 @@ public class RoomPartySpawner : MonoBehaviour
 
             PartyMemberLink link = instance.GetComponent<PartyMemberLink>();
             if (link == null)
-                link = instance.AddComponent<PartyMemberLink>();
+            {
+                Debug.LogWarning($"[RoomPartySpawner] '{member.UnitDefinition.name}' prefab is missing {nameof(PartyMemberLink)}.", this);
+                Destroy(instance);
+                continue;
+            }
 
             link.Initialize(member.PartyMemberId, true);
             unit.SetAffiliation(member.RuntimeTeam, member.RuntimeFaction);
             instance.GetComponent<LifeController>()?.SetCurrentHealth(Mathf.Max(1, member.CurrentHealth));
 
-            TrackDeployment(instance, member.PartyMemberId);
+            TrackDeployedUnit(instance, member.PartyMemberId);
             spawnIndex++;
         }
     }
@@ -327,7 +331,7 @@ public class RoomPartySpawner : MonoBehaviour
         ClearCurrentDeployment();
     }
 
-    public void TrackDeployment(GameObject instance, string partyMemberId)
+    public void TrackDeployedUnit(GameObject instance, string partyMemberId)
     {
         if (instance == null)
             return;

@@ -1,43 +1,60 @@
 using UnityEngine;
 
+public enum SummonAnchorMode
+{
+    AroundCaster,
+    AroundPrimaryTarget,
+    AroundImpactCenter,
+    AtTargetCell
+}
+
 [CreateAssetMenu(fileName = "SummonUnitSkillEffect", menuName = "Combat/Skills/Effects/Summon Unit Skill Effect")]
 public class SummonUnitSkillEffect : SkillEffect
 {
     [SerializeField] private UnitData _summonedUnit;
+    [SerializeField] private SummonAnchorMode _anchorMode = SummonAnchorMode.AroundPrimaryTarget;
     [SerializeField] private int _spawnRangeInCells = 1;
     [SerializeField] private bool _debugLogs;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public SummonAnchorMode AnchorMode => _anchorMode;
+    public int SpawnRangeInCells => Mathf.Max(0, _spawnRangeInCells);
+
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
-        if (context == null || context.Caster == null)
+        Unit caster = context != null ? context.Caster : null;
+        SkillData skill = context != null ? context.Skill : null;
+        if (caster == null)
         {
-            LogDebug("[SummonUnitSkillEffect] Aborted: missing cast context or caster.");
+            LogDebug("[SummonUnitSkillEffect] Aborted: missing caster.");
             return false;
         }
 
         if (_summonedUnit == null || _summonedUnit.unitPrefab == null)
         {
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: no summoned unit prefab was assigned.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: no summoned unit prefab was assigned.");
             return false;
         }
 
-        RoomContext roomContext = context.Caster.RoomContext;
-        RoomGrid grid = roomContext != null ? roomContext.RoomGrid : null;
+        RoomContext roomContext = ResolveRoomContext(context, caster);
+        RoomGrid grid = ResolveRoomGrid(context, roomContext);
         if (roomContext == null || grid == null)
         {
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: caster has no room context or room grid.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: caster has no room context or room grid.");
             return false;
         }
 
-        Vector3Int casterCell = ResolveUnitCell(grid, context.Caster);
-        Vector3Int desiredCell = ResolveDesiredSpawnCell(grid, context.Caster, context.PrimaryTarget);
+        Vector3Int casterCell = ResolveUnitCell(grid, caster);
+        if (!TryResolveDesiredSpawnCell(context, grid, caster, out Vector3Int desiredCell, out string anchorDescription))
+            return false;
+
         int spawnRangeInCells = Mathf.Max(0, _spawnRangeInCells);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
         {
-            LogDebug(
-                $"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: no valid summon cell was found near {FormatCell(desiredCell)} " +
-                $"within range {spawnRangeInCells}.");
+            Warn(
+                $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: no valid summon cell was found near {FormatCell(desiredCell)} " +
+                $"for anchor mode '{_anchorMode}' ({anchorDescription}) within range {spawnRangeInCells}.",
+                caster);
             return false;
         }
 
@@ -46,7 +63,7 @@ public class SummonUnitSkillEffect : SkillEffect
         if (!instance.TryGetComponent(out Unit summonedUnit))
         {
             Object.Destroy(instance);
-            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} aborted: summoned prefab '{_summonedUnit.unitPrefab.name}' has no Unit component.");
+            LogDebug($"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: summoned prefab '{_summonedUnit.unitPrefab.name}' has no Unit component.");
             return false;
         }
 
@@ -54,7 +71,7 @@ public class SummonUnitSkillEffect : SkillEffect
         if (runtimeMarker == null)
             runtimeMarker = instance.AddComponent<CombatSummonedUnitRuntimeMarker>();
 
-        summonedUnit.SetAffiliation(context.Caster.Team, context.Caster.Faction);
+        summonedUnit.SetAffiliation(caster.Team, caster.Faction);
 
         if (instance.TryGetComponent(out UnitMovement movement))
         {
@@ -82,22 +99,99 @@ public class SummonUnitSkillEffect : SkillEffect
         }
 
         LogDebug(
-            $"[SummonUnitSkillEffect] {FormatUnit(context.Caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
-            $"from desired {FormatCell(desiredCell)} using skill '{context.Skill.DisplayName}'.");
+            $"[SummonUnitSkillEffect] {FormatUnit(caster)} summoned '{_summonedUnit.displayName}' at {FormatCell(spawnCell)} " +
+            $"from desired {FormatCell(desiredCell)} using skill '{skill?.DisplayName ?? "Unknown"}' and anchor '{_anchorMode}'.");
         return true;
     }
 
-    private static Vector3Int ResolveDesiredSpawnCell(RoomGrid grid, Unit caster, Unit primaryTarget)
+    private static RoomContext ResolveRoomContext(SkillContext context, Unit caster)
     {
-        Vector3Int casterCell = ResolveUnitCell(grid, caster);
-        if (grid == null || caster == null || primaryTarget == null)
-            return casterCell;
+        if (context != null && context.RoomContext != null)
+            return context.RoomContext;
 
-        Vector3Int targetCell = ResolveUnitCell(grid, primaryTarget);
-        Vector3Int delta = targetCell - casterCell;
-        int stepX = delta.x == 0 ? 0 : (delta.x > 0 ? 1 : -1);
-        int stepY = delta.y == 0 ? 0 : (delta.y > 0 ? 1 : -1);
-        return casterCell + new Vector3Int(stepX, stepY, 0);
+        return caster != null ? caster.RoomContext : null;
+    }
+
+    private static RoomGrid ResolveRoomGrid(SkillContext context, RoomContext roomContext)
+    {
+        if (context != null && context.RoomGrid != null)
+            return context.RoomGrid;
+
+        return roomContext != null ? roomContext.RoomGrid : null;
+    }
+
+    private bool TryResolveDesiredSpawnCell(
+        SkillContext context,
+        RoomGrid grid,
+        Unit caster,
+        out Vector3Int desiredCell,
+        out string anchorDescription)
+    {
+        desiredCell = default;
+        anchorDescription = "none";
+
+        if (grid == null || caster == null)
+            return false;
+
+        switch (_anchorMode)
+        {
+            case SummonAnchorMode.AroundCaster:
+                desiredCell = ResolveUnitCell(grid, caster);
+                anchorDescription = FormatUnit(caster);
+                return true;
+
+            case SummonAnchorMode.AroundPrimaryTarget:
+                if (context != null && context.HasPrimaryTarget)
+                {
+                    desiredCell = ResolveUnitCell(grid, context.PrimaryTarget);
+                    anchorDescription = FormatUnit(context.PrimaryTarget);
+                    return true;
+                }
+
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires PrimaryTarget but none was available.",
+                    caster);
+                return false;
+
+            case SummonAnchorMode.AroundImpactCenter:
+                if (context != null && context.HasImpactCenterUnit)
+                {
+                    desiredCell = ResolveUnitCell(grid, context.ImpactCenterUnit);
+                    anchorDescription = FormatUnit(context.ImpactCenterUnit);
+                    return true;
+                }
+
+                if (context != null)
+                {
+                    desiredCell = grid.WorldToCell(context.ImpactCenterWorld);
+                    anchorDescription = FormatWorld(context.ImpactCenterWorld);
+                    return true;
+                }
+
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires SkillContext impact center data.",
+                    caster);
+                return false;
+
+            case SummonAnchorMode.AtTargetCell:
+                if (context != null && context.HasTargetCell)
+                {
+                    desiredCell = new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0);
+                    anchorDescription = FormatCell(desiredCell);
+                    return true;
+                }
+
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: anchor mode '{_anchorMode}' requires TargetCell but none was available.",
+                    caster);
+                return false;
+
+            default:
+                Warn(
+                    $"[SummonUnitSkillEffect] {FormatUnit(caster)} aborted: unsupported anchor mode '{_anchorMode}'.",
+                    caster);
+                return false;
+        }
     }
 
     private static Vector3Int ResolveUnitCell(RoomGrid grid, Unit unit)
@@ -109,6 +203,11 @@ public class SummonUnitSkillEffect : SkillEffect
     {
         if (_debugLogs)
             Debug.Log(message);
+    }
+
+    private void Warn(string message, Object contextObject)
+    {
+        Debug.LogWarning(message, contextObject);
     }
 
     private static string FormatUnit(Unit unit)
@@ -123,6 +222,11 @@ public class SummonUnitSkillEffect : SkillEffect
     private static string FormatCell(Vector3Int cell)
     {
         return $"({cell.x}, {cell.y}, {cell.z})";
+    }
+
+    private static string FormatWorld(Vector3 worldPosition)
+    {
+        return $"({worldPosition.x:F2}, {worldPosition.y:F2}, {worldPosition.z:F2})";
     }
 }
 

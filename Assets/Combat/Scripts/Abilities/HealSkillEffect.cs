@@ -5,15 +5,17 @@ public class HealSkillEffect : SkillEffect
 {
     [SerializeField] private int _heal = 1;
 
-    public override bool Apply(SkillCastContext context, Unit target)
+    public override bool Apply(SkillContext context, SkillImpact impact)
     {
-        if (context == null || context.Caster == null || target == null || !target.IsAlive)
+        Unit hitUnit = ResolveTargetUnit(impact);
+        Unit caster = context != null ? context.Caster : null;
+        if (caster == null || hitUnit == null || !hitUnit.IsAlive)
             return false;
 
-        if (target.CurrentHealth >= target.MaxHealth)
+        if (hitUnit.CurrentHealth >= hitUnit.MaxHealth)
             return false;
 
-        target.Heal(Mathf.Max(0, _heal), context.Caster);
+        hitUnit.Heal(Mathf.Max(0, _heal), caster);
         return true;
     }
 }

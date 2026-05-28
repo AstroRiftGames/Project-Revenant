@@ -2,24 +2,31 @@ using UnityEngine;
 
 public sealed class SkillState
 {
-    public bool IsReady => RemainingCooldown <= 0f;
-    public float RemainingCooldown { get; private set; }
+    public bool IsChargeReady => CurrentCharge >= MaxCharge;
+    public float CurrentCharge { get; private set; }
+    public float MaxCharge { get; private set; } = 100f;
 
-    public void StartCooldown(float duration)
+    public void ConfigureCharge(float maxCharge, float initialCharge = 0f)
     {
-        RemainingCooldown = Mathf.Max(0f, duration);
+        MaxCharge = Mathf.Max(1f, maxCharge);
+        CurrentCharge = Mathf.Clamp(initialCharge, 0f, MaxCharge);
     }
 
-    public void Tick(float deltaTime)
+    public void AddCharge(float amount)
     {
-        if (RemainingCooldown <= 0f)
+        if (amount <= 0f)
             return;
 
-        RemainingCooldown = Mathf.Max(0f, RemainingCooldown - Mathf.Max(0f, deltaTime));
+        CurrentCharge = Mathf.Clamp(CurrentCharge + amount, 0f, MaxCharge);
+    }
+
+    public void ResetCharge()
+    {
+        CurrentCharge = 0f;
     }
 
     public void Reset()
     {
-        RemainingCooldown = 0f;
+        ResetCharge();
     }
 }

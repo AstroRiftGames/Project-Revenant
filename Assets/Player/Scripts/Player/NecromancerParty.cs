@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 using Selection.Interfaces;
@@ -31,8 +30,10 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     int ICharacterStatsProvider.CurrentHealth => CurrentHealth;
     public int MaxHealth => UnitDefinition != null && UnitDefinition.stats != null ? Mathf.Max(1, UnitDefinition.stats.maxHealth) : 1;
     public UnitRole Role => UnitDefinition != null ? UnitDefinition.role : default;
-    public float CurrentAbilityCooldown => 0;
-    public float MaxAbilityCooldown => 1;
+    public float CurrentAbilityCharge => 0f;
+    public float MaxAbilityCharge => 1f;
+    public bool IsAbilityReady => false;
+    public bool UsesAbilityChargeVisual => true;
     public Sprite AbilityIcon => null;
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
     public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;
@@ -105,16 +106,43 @@ public class NecromancerParty : MonoBehaviour
 
     public IEnumerable<PartyMemberData> GetDeployableMembers()
     {
-        return _members
-            .Where(member => member != null && member.IsAlive && member.UnitDefinition != null)
-            .OrderBy(member => member.FormationIndex)
-            .Take(_maxPartyMembers);
+        List<PartyMemberData> deployableMembers = new();
+
+        for (int i = 0; i < _members.Count; i++)
+        {
+            PartyMemberData member = _members[i];
+            if (member == null || !member.IsAlive || member.UnitDefinition == null)
+                continue;
+
+            deployableMembers.Add(member);
+        }
+
+        deployableMembers.Sort(static (left, right) => left.FormationIndex.CompareTo(right.FormationIndex));
+        if (deployableMembers.Count <= _maxPartyMembers)
+            return deployableMembers;
+
+        List<PartyMemberData> limitedMembers = new(_maxPartyMembers);
+        for (int i = 0; i < _maxPartyMembers; i++)
+            limitedMembers.Add(deployableMembers[i]);
+
+        return limitedMembers;
     }
 
     public bool TryGetMember(string partyMemberId, out PartyMemberData member)
     {
-        member = _members.FirstOrDefault(candidate => candidate != null && candidate.PartyMemberId == partyMemberId);
-        return member != null;
+        member = null;
+
+        for (int i = 0; i < _members.Count; i++)
+        {
+            PartyMemberData candidate = _members[i];
+            if (candidate == null || candidate.PartyMemberId != partyMemberId)
+                continue;
+
+            member = candidate;
+            return true;
+        }
+
+        return false;
     }
 
     public void ClearDeploymentFlags()
@@ -162,7 +190,7 @@ public class NecromancerParty : MonoBehaviour
             return true;
 
         int currentHealth = Mathf.Max(1, unit.BaseMaxHealth);
-        member = CreateMember(unitData, GetNextFormationIndex(), UnitTeam.NecromancerAlly, unit.Faction, currentHealth);
+        member = CreateMember(unitData, GetNextFormationIndex(), UnitTeam.Ally, unit.Faction, currentHealth);
         member.IsDeployed = true;
         _members.Add(member);
         NormalizeFormationIndices();

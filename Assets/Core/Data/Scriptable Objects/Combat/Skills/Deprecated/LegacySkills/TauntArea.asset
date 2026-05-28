@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
+  m_Name: TauntArea
+  m_EditorClassIdentifier: 
+  _skillId: TauntArea
+  _displayName: Taunt Area
+  _description: 
+  _icon: {fileID: 0}
+  _primaryTargetRequirement: 0
+  _impactTargetRequirement: 0
+  _targetSelectionMode: 0
+  _targetFallbackMode: 0
+  _trajectory: 0
+  _impactPattern: 1
+  _skillExecutionMode: 0
+  _rangeInCells: 0
+  _splashRadiusInCells: 6
+  _lineLengthInCells: 1
+  _maxTargets: 1
+  _impactCenterMode: 1
+  _shape: 2
+  _requirements:
+    _targetRequirement: 5
+    mustTargetInjured: 0
+  _effects:
+  - {fileID: 11400000, guid: 45f8bfc85d894544b31bd55b9808dc7e, type: 2}
