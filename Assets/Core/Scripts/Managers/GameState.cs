@@ -7,5 +7,7 @@ public enum GameState
     InCombat,
     CombatResolved,
     StationUI,
-    GameOver
+    GameOver,
+    Dialogue
 }
+

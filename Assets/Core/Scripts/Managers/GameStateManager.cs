@@ -36,10 +36,10 @@ public class GameStateManager : MonoBehaviour
                 return next == GameState.SafeZone;
 
             case GameState.SafeZone:
-                return next == GameState.ExploringDungeon || next == GameState.StationUI;
+                return next == GameState.ExploringDungeon || next == GameState.StationUI || next == GameState.Dialogue;
 
             case GameState.ExploringDungeon:
-                return next == GameState.Deployment || next == GameState.StationUI;
+                return next == GameState.Deployment || next == GameState.StationUI || next == GameState.Dialogue;
 
             case GameState.Deployment:
                 return next == GameState.InCombat || next == GameState.ExploringDungeon;
@@ -55,6 +55,9 @@ public class GameStateManager : MonoBehaviour
 
             case GameState.GameOver:
                 return next == GameState.SafeZone;
+
+            case GameState.Dialogue:
+                return next == GameState.SafeZone || next == GameState.ExploringDungeon || next == GameState.StationUI;
 
             default:
                 return false;

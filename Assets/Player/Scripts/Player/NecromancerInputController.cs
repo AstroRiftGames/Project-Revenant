@@ -71,7 +71,7 @@ public class NecromancerInputController : MonoBehaviour
         if (_necromancer == null)
             return;
 
-        if (IsManualMovementBlockedByEncounterState())
+        if (IsManualMovementBlockedByEncounterState() || IsManualMovementBlockedByDialogue())
         {
             _necromancer.HandleManualPointerExitedGrid();
             TryHandleCancelInput(new PointerContractContext(false, false));
@@ -163,6 +163,15 @@ public class NecromancerInputController : MonoBehaviour
         RoomContext roomContext = grid.GetComponentInParent<RoomContext>(includeInactive: true);
         CombatRoomController combatController = roomContext != null ? roomContext.CombatController : null;
         return combatController != null && combatController.IsCombatRoom && !combatController.IsResolved;
+    }
+
+    private bool IsManualMovementBlockedByDialogue()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.StateManager != null)
+        {
+            return GameManager.Instance.StateManager.CurrentState == GameState.Dialogue;
+        }
+        return false;
     }
 
     private static bool TryResolvePointerTarget<TContract>(Vector3 worldPosition, int layerMask, out TContract contract)

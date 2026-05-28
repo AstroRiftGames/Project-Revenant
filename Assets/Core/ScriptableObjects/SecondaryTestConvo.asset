@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eabfd2f5215690b4fbc3f80fdf3475ed, type: 3}
+  m_Name: SecondaryTestConvo
+  m_EditorClassIdentifier: 
+  _lines:
+  - _speakerName: NPC
+    _speakerPortrait: {fileID: 9174447302323967937, guid: b1069bb1ac8e1e0449b72ae0271fdc50, type: 3}
+    _portraitPosition: 0
+    _text: I told you; this is just a test...
+    _voiceClickSound: {fileID: 0}
+  - _speakerName: Player
+    _speakerPortrait: {fileID: 5012592327895361995, guid: b1069bb1ac8e1e0449b72ae0271fdc50, type: 3}
+    _portraitPosition: 1
+    _text: My bad...
+    _voiceClickSound: {fileID: 0}
+  _completionEventId: 
