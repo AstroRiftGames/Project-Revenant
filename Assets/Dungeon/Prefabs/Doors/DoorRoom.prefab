@@ -106,6 +106,7 @@ GameObject:
   - component: {fileID: 5240293404765053411}
   - component: {fileID: 2262140206353092150}
   - component: {fileID: 4704939973876235513}
+  - component: {fileID: 8070761148605033189}
   m_Layer: 7
   m_Name: Door
   m_TagString: Untagged
@@ -289,6 +290,20 @@ MonoBehaviour:
     doorSprite: {fileID: -1705022922198783380, guid: 956edde9f96aaad4ba00eb381ee6b9d6, type: 3}
   - roomType: 6
     doorSprite: {fileID: 9148536561716015607, guid: 26ae17a0a239efa48a6be655da224c9b, type: 3}
+--- !u!114 &8070761148605033189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8515988892718533815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2516ab3dc03c9c41b228b2d99ac09bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _database: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
+  cursorType: 1
 --- !u!1001 &5158147745985195678
 PrefabInstance:
   m_ObjectHideFlags: 0

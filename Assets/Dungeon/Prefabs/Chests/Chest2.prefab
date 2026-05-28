@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: -8692040189783460019}
   - component: {fileID: 3302440792310834247}
   - component: {fileID: 8522840869542565840}
+  - component: {fileID: 6507703962311205524}
   m_Layer: 7
   m_Name: Chest2
   m_TagString: Untagged
@@ -282,6 +283,20 @@ MonoBehaviour:
   _drawGizmos: 1
   _cellAnchor: {fileID: 2648858184671771583}
   _cellAnchorWorldOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &6507703962311205524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4776528938805947016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2516ab3dc03c9c41b228b2d99ac09bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _database: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
+  cursorType: 1
 --- !u!1 &4886669372423135220
 GameObject:
   m_ObjectHideFlags: 0
