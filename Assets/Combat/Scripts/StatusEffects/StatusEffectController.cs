@@ -40,7 +40,7 @@ public class StatusEffectController : MonoBehaviour
     public bool CanMoveTowardTarget => !HasStun && !HasFear && !HasSleep;
     public bool ShouldFlee => HasFear;
     public bool RestrictsMovement => HasMovementRestriction();
-    public bool PreventsSkillCooldownCharge => IsSourceOfEffectInCurrentRoom(StatusEffectType.Taunt);
+    public bool PreventsSkillCharge => IsSourceOfEffectInCurrentRoom(StatusEffectType.Taunt);
     public bool IsImmuneToControl => HasIncorruptible;
 
     private void Awake()

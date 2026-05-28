@@ -33,7 +33,7 @@ public class PartyMemberData : ISelectable, ICharacterStatsProvider
     public float CurrentAbilityCharge => 0f;
     public float MaxAbilityCharge => 1f;
     public bool IsAbilityReady => false;
-    public bool UsesAbilityChargeVisual => true;
+    public bool UsesAbilityChargeVisual => false;
     public Sprite AbilityIcon => null;
     public Sprite CharacterSprite => UnitDefinition != null ? UnitDefinition.sprite : null;
     public UnitStatsData CoreStats => UnitDefinition != null ? UnitDefinition.stats : null;
