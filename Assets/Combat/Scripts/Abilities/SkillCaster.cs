@@ -97,27 +97,6 @@ public class SkillCaster : MonoBehaviour
         return TryUseInternal(null, targetCell, true, null);
     }
 
-    // Debug/manual validation entry point used by SkillRuntimeTestHarness.
-    // Reuses the live cast pipeline with an explicit skill override.
-    public bool TryCastSkillForDebug(SkillData skill, Unit primaryTarget)
-    {
-        return TryUseInternal(primaryTarget, default, false, skill);
-    }
-
-    // Debug/manual validation readback used by SkillRuntimeTestHarness.
-    // Gameplay must keep using the internal impact list.
-    public int CopyLastResolvedImpactsForDebug(List<SkillImpact> destination)
-    {
-        if (destination == null)
-            return 0;
-
-        destination.Clear();
-        for (int i = 0; i < _impactsHit.Count; i++)
-            destination.Add(_impactsHit[i]);
-
-        return destination.Count;
-    }
-
     private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell, SkillData skillOverride)
     {
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");

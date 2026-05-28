@@ -176,14 +176,26 @@ public class GridOccupancyTracker : MonoBehaviour
         if (!_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
             return false;
 
+        List<IGridOccupant> destroyed = null;
         foreach (IGridOccupant occupant in occupants)
         {
-            if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell)
+            if (occupant == null)
+                continue;
+
+            if (IsDestroyedOccupant(occupant))
+            {
+                destroyed ??= new List<IGridOccupant>();
+                destroyed.Add(occupant);
+                continue;
+            }
+
+            if (ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell)
                 continue;
 
             return true;
         }
 
+        RemoveDestroyedOccupants(destroyed);
         return false;
     }
 
@@ -191,15 +203,28 @@ public class GridOccupancyTracker : MonoBehaviour
     {
         if (_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
         {
+            List<IGridOccupant> destroyed = null;
             foreach (IGridOccupant occupant in occupants)
             {
-                if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
+                if (occupant == null)
+                    continue;
+
+                if (IsDestroyedOccupant(occupant))
+                {
+                    destroyed ??= new List<IGridOccupant>();
+                    destroyed.Add(occupant);
+                    continue;
+                }
+
+                if (ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
                     continue;
 
                 return true;
             }
+
+            RemoveDestroyedOccupants(destroyed);
         }
-        
+
         if (IsCellReserved(cell, ignoredOccupant))
             return true;
 
@@ -210,21 +235,54 @@ public class GridOccupancyTracker : MonoBehaviour
     {
         if (_occupantsByCell.TryGetValue(cell, out HashSet<IGridOccupant> occupants))
         {
+            List<IGridOccupant> destroyed = null;
             foreach (IGridOccupant occupant in occupants)
             {
-                if (occupant == null || ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
+                if (occupant == null)
+                    continue;
+
+                if (IsDestroyedOccupant(occupant))
+                {
+                    destroyed ??= new List<IGridOccupant>();
+                    destroyed.Add(occupant);
+                    continue;
+                }
+
+                if (ReferenceEquals(occupant, ignoredOccupant) || !occupant.OccupiesCell || !occupant.BlocksMovement)
                     continue;
 
                 return occupant;
             }
+
+            RemoveDestroyedOccupants(destroyed);
         }
-        
+
         return null;
     }
 
     public IGridOccupant GetReservingOccupant(Vector3Int cell)
     {
         return _cellReservations.TryGetValue(cell, out IGridOccupant occupant) ? occupant : null;
+    }
+
+    private static bool IsDestroyedOccupant(IGridOccupant occupant)
+    {
+        if (occupant is Object unityObject)
+            return unityObject == null;
+
+        return occupant == null;
+    }
+
+    private void RemoveDestroyedOccupants(List<IGridOccupant> destroyed)
+    {
+        if (destroyed == null)
+            return;
+
+        foreach (IGridOccupant occupant in destroyed)
+        {
+            if (_cellsByOccupant.TryGetValue(occupant, out Vector3Int cell))
+                RemoveFromCurrentCell(occupant);
+        }
     }
 
     private void RemoveFromCurrentCell(IGridOccupant occupant)
