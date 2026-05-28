@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 
+[RequireComponent(typeof(CursorChange))]
 [DisallowMultipleComponent]
 public class DoorInteractable : MonoBehaviour, IInteractable, IGridOccupant
 {

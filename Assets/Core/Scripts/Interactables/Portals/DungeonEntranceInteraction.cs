@@ -4,6 +4,7 @@ using Core.Systems;
 
 namespace Interactables.Portals
 {
+    [RequireComponent(typeof(CursorChange))]
     [DisallowMultipleComponent]
     public class DungeonEntranceInteraction : MonoBehaviour, IInteractable
     {

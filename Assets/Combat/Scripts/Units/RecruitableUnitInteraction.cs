@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(RecruitableUnitState))]
+[RequireComponent(typeof(RecruitableUnitState), typeof(CursorChange))]
 public class RecruitableUnitInteraction : MonoBehaviour, IInteractable
 {
     private RecruitableUnitState _recruitableState;

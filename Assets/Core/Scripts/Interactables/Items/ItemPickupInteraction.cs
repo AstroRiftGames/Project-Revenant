@@ -5,6 +5,7 @@ using Inventory.Core;
 
 namespace Interactables.Items
 {
+    [RequireComponent(typeof(CursorChange))]
     [DisallowMultipleComponent]
     public class ItemPickupInteraction : MonoBehaviour, IInteractable
     {

@@ -5,6 +5,7 @@ using Dialogue.Core;
 
 namespace Interactables
 {
+    [RequireComponent(typeof(CursorChange))]
     [DisallowMultipleComponent]
     public class DialogueNPC : MonoBehaviour, IInteractable
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(ChestState))]
+[RequireComponent(typeof(ChestState), typeof(CursorChange))]
 public class ChestInteractionController : MonoBehaviour, IInteractable, IGridOccupant, IRoomContextComponent
 {
     private const int RequiredAdjacencyDistance = 1;

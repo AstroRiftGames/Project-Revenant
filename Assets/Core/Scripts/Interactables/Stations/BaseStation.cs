@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 
+[RequireComponent(typeof(CursorChange))]
 /// <summary>
 /// Clase base para todas las estaciones del juego (Fusion, Altar, Shop, etc.).
 /// Maneja el boilerplate de IInteractable y permite extender la funcionalidad.
