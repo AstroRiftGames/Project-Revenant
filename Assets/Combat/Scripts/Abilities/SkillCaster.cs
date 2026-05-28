@@ -185,7 +185,7 @@ public class SkillCaster : MonoBehaviour
 
     private bool CanGainAbilityCharge()
     {
-        return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCooldownCharge;
+        return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCharge;
     }
 
     private bool CanChargeFromBasicHeal()
