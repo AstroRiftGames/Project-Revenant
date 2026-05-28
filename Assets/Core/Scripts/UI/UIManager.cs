@@ -15,6 +15,7 @@ public enum UIType
     DeepInspector,
     Profile,
     CombatStatus,
+    Dialogue,
 }
 
 public class UIManager : MonoBehaviour
