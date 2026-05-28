@@ -137,6 +137,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void Revive(int currentHealth)
     {
+        if (CurrentHealth > 0 && _recruitableState.CurrentState == UnitLifecycleState.Alive)
+            return;
+
         RestoreLivingRuntimeState();
         SetCurrentHealth(Mathf.Max(1, currentHealth));
         OnLifeUpdated?.Invoke(CurrentHealth);

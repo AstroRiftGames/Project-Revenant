@@ -46,6 +46,13 @@ public class UnitDeathHandler : MonoBehaviour
 
         _hasResolvedDeath = true;
 
+        if (_recruitableState == null)
+        {
+            Debug.LogError($"[{nameof(UnitDeathHandler)}] '{name}' missing RecruitableUnitState. Forcing default death.", this);
+            ResolveDefaultDeath();
+            return;
+        }
+
         if (_unit != null && _unit.IsEnemy)
         {
             LeaveRecruitableCorpse();
@@ -81,7 +88,9 @@ public class UnitDeathHandler : MonoBehaviour
         if (_recruitableInteraction == null || _corpseHandler == null)
         {
             Debug.LogWarning(
-                $"[{nameof(UnitDeathHandler)}] '{name}' is missing corpse interaction components and will not leave a recruitable corpse.",
+                $"[{nameof(UnitDeathHandler)}] '{name}' missing RecruitableUnitInteraction or RecruitableCorpseHandler. " +
+                $"Falling back to default death. RecruitableInteraction: {_recruitableInteraction != null}, " +
+                $"CorpseHandler: {_corpseHandler != null}.",
                 this);
             ResolveDefaultDeath();
             return;
@@ -97,7 +106,6 @@ public class UnitDeathHandler : MonoBehaviour
     {
         _isSoulAbsorbedCorpse = true;
         PrepareMovementForDeath();
-        DisableBehavioursForRecruitableDeath();
         ClearCorpseOccupancy();
         SetLifeState(UnitLifecycleState.Removed);
         gameObject.SetActive(false);

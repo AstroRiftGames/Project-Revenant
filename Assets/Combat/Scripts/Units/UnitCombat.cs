@@ -186,7 +186,7 @@ public class UnitCombat : MonoBehaviour
         if (_skillCaster == null || !appliedEffect)
             return;
 
-        _skillCaster.NotifyBasicActionSucceeded(targetRelation);
+        _skillCaster.GrantChargeFromBasicAction(targetRelation);
     }
 
     private void ConsumeBasicActionCooldown()

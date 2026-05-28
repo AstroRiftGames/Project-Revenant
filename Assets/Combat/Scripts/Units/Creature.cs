@@ -157,6 +157,9 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (!IsAlive || !creature.IsAlive)
             return false;
 
+        if (LifecycleState != UnitLifecycleState.Alive || creature.LifecycleState != UnitLifecycleState.Alive)
+            return false;
+
         return Team != creature.Team;
     }
 
@@ -165,10 +168,13 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (candidate == null || ReferenceEquals(candidate, this))
             return false;
 
-        if (candidate is not MonoBehaviour behaviour)
+        if (candidate is not Creature creature)
             return false;
 
-        return behaviour.gameObject.activeInHierarchy;
+        if (creature.LifecycleState != UnitLifecycleState.Alive)
+            return false;
+
+        return creature.gameObject.activeInHierarchy;
     }
 
     public void GetVisibleUnits(List<IUnit> candidates, List<IUnit> results)

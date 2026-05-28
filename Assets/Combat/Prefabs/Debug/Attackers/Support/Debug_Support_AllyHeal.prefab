@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &168480000053724679
 GameObject:
@@ -734,4 +734,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
   m_PrefabInstance: {fileID: 2415194798210639674}
   m_PrefabAsset: {fileID: 0}
-

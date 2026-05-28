@@ -467,6 +467,9 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null || !isActiveAndEnabled)
             return;
 
+        if (_unit.LifecycleState != UnitLifecycleState.Alive)
+            return;
+
         if (!ReferenceEquals(_registeredGrid, _grid))
             ReleaseCurrentOccupancy();
 

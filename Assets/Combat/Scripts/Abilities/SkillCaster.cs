@@ -34,8 +34,6 @@ public class SkillCaster : MonoBehaviour
     private SkillData _resolvedSkill;
     private readonly SkillState _state = new();
     private readonly List<SkillImpact> _impactsHit = new();
-    // Derived unit-only view for popup anchors and legacy debug text. Gameplay must use _impactsHit.
-    private readonly List<Unit> _unitsHit = new();
     private SkillData _castingSkill;
     private SkillContext _castingContext;
     private Unit _castingTarget;
@@ -155,12 +153,7 @@ public class SkillCaster : MonoBehaviour
         _state.Reset();
     }
 
-    public void NotifyBasicActionHit()
-    {
-        AddAbilityChargeFromSource(AbilityChargeSource.BasicAttack);
-    }
-
-    public void NotifyBasicActionSucceeded(TargetRelation targetRelation)
+    public void GrantChargeFromBasicAction(TargetRelation targetRelation)
     {
         AbilityChargeSource source = ResolveBasicActionChargeSource(targetRelation);
         if (source == AbilityChargeSource.BasicHeal && !CanChargeFromBasicHeal())
@@ -346,9 +339,9 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (!_unit.IsAlive)
+        if (!_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
         {
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner is dead.");
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner cannot act (dead, recruit corpse, or removed).");
             return false;
         }
 
@@ -424,8 +417,8 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        ClearCastingState();
         OnSkillCastSucceeded(skill, resolvedContext.PrimaryTarget);
+        ClearCastingState();
         return true;
     }
 
@@ -657,11 +650,6 @@ public class SkillCaster : MonoBehaviour
         return FindFallbackPrimaryTarget(skill);
     }
 
-    private bool TryBuildSkillContext(SkillData skill, Unit combatTarget, out SkillContext skillContext)
-    {
-        return TryBuildSkillContext(skill, combatTarget, default, false, out skillContext);
-    }
-
     private bool TryBuildSkillContext(
         SkillData skill,
         Unit combatTarget,
@@ -678,13 +666,6 @@ public class SkillCaster : MonoBehaviour
         Unit primaryTarget = ChoosePrimaryTarget(skill, combatTarget);
         skillContext = BuildSkillContext(skill, primaryTarget, targetCell, hasTargetCell);
         return skillContext != null;
-    }
-
-    // Builds a complete skill context from primary target selection plus the
-    // derived impact center unit/world/cell data required by shapes.
-    private SkillContext BuildSkillContext(SkillData skill, Unit primaryTarget)
-    {
-        return BuildSkillContext(skill, primaryTarget, default, false);
     }
 
     // PrimaryTarget is the tactical unit choice. ImpactCenter is the unit or
@@ -924,7 +905,6 @@ public class SkillCaster : MonoBehaviour
     private bool TryCollectImpacts(SkillContext skillContext)
     {
         _impactsHit.Clear();
-        _unitsHit.Clear();
         if (!SkillHitCollector.TryCollectImpacts(skillContext, _impactsHit, LogDebug))
         {
             SkillData skill = skillContext != null ? skillContext.Skill : null;
@@ -934,27 +914,7 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        CollectHitUnitsFromImpacts(_impactsHit, _unitsHit);
         return true;
-    }
-
-    private static void CollectHitUnitsFromImpacts(List<SkillImpact> impacts, List<Unit> units)
-    {
-        if (impacts == null || units == null)
-            return;
-
-        for (int i = 0; i < impacts.Count; i++)
-        {
-            SkillImpact impact = impacts[i];
-            if (impact == null || !impact.HasTargetUnit)
-                continue;
-
-            Unit hitUnit = impact.TargetUnit;
-            if (hitUnit == null || units.Contains(hitUnit))
-                continue;
-
-            units.Add(hitUnit);
-        }
     }
 
     private bool ApplySkillToImpacts(SkillContext skillContext)
@@ -1152,7 +1112,7 @@ public class SkillCaster : MonoBehaviour
         if (_unit != null)
             return _unit;
 
-        return _unitsHit.Count > 0 ? _unitsHit[0] : null;
+        return _impactsHit.Count > 0 && _impactsHit[0].HasTargetUnit ? _impactsHit[0].TargetUnit : null;
     }
 
     private void NotifySkillUsed(SkillData skill, Unit popupAnchor)
@@ -1162,7 +1122,7 @@ public class SkillCaster : MonoBehaviour
         SkillUsed?.Invoke(_unit, skill, popupAnchor);
         AnySkillUsed?.Invoke(_unit, skill, popupAnchor);
         LogDebug(
-            $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_unitsHit.Count} target(s) hit.");
+            $"[SkillCaster] {FormatOwnerIdentity()} used '{skill.DisplayName}' on {_impactsHit.Count} target(s) hit.");
     }
 
     private void LogDebug(string message)
@@ -1233,22 +1193,6 @@ public class SkillCaster : MonoBehaviour
         }
 
         return string.Join(", ", labels);
-    }
-
-    private static bool SkillContextsMatch(SkillContext left, SkillContext right)
-    {
-        if (ReferenceEquals(left, right))
-            return true;
-
-        if (left == null || right == null)
-            return false;
-
-        return ReferenceEquals(left.Caster, right.Caster) &&
-               ReferenceEquals(left.Skill, right.Skill) &&
-               ReferenceEquals(left.PrimaryTarget, right.PrimaryTarget) &&
-               left.HasTargetCell == right.HasTargetCell &&
-               (!left.HasTargetCell || left.TargetCell == right.TargetCell) &&
-               ReferenceEquals(left.ImpactCenterUnit, right.ImpactCenterUnit);
     }
 
     private static string FormatSkillContext(SkillContext skillContext)

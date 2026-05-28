@@ -72,7 +72,9 @@ public class Unit : Creature, IGridOccupant
             return transform.position;
         }
     }
-    public bool OccupiesCell => gameObject.activeInHierarchy;
+    // Only alive units occupy cells as regular occupants.
+    // Recruitable corpses block via persistent blocker, not as IGridOccupant.
+    public bool OccupiesCell => LifecycleState == UnitLifecycleState.Alive && gameObject.activeInHierarchy;
     public bool BlocksMovement => true;
 
     public void AssignRoomContext(RoomContext context)

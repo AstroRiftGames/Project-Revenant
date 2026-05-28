@@ -292,7 +292,8 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
     {
         return unit != null &&
                unit.gameObject.activeInHierarchy &&
-               unit.IsAlive;
+               unit.IsAlive &&
+               unit.LifecycleState == UnitLifecycleState.Alive;
     }
 
     private static CombatRoomOutcome ResolveOutcome(bool hasAliveAllies, bool hasAliveEnemies)
