@@ -1,55 +1,49 @@
 fileFormatVersion: 2
-guid: 797682449722d1245a6ee4bdbfe26193
+guid: 44a0145b3fe07eb4881c8a568d1afc13
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1237796986510287530
-    second: Orcs-Cloak&Skirt-Sheet_0
+      213: 5974831770232034737
+    second: Humans-Tunic&Shoes-Sheet_0
   - first:
-      213: 723975379258798934
-    second: Orcs-Cloak&Skirt-Sheet_1
+      213: 9016710132893830511
+    second: Humans-Tunic&Shoes-Sheet_1
   - first:
-      213: -7473097515714456623
-    second: Orcs-Cloak&Skirt-Sheet_2
+      213: 4015391066209149798
+    second: Humans-Tunic&Shoes-Sheet_2
   - first:
-      213: -4180538370390184950
-    second: Orcs-Cloak&Skirt-Sheet_3
+      213: 569265957317073083
+    second: Humans-Tunic&Shoes-Sheet_3
   - first:
-      213: 6330888763452393003
-    second: Orcs-Cloak&Skirt-Sheet_4
+      213: -7229620697390000240
+    second: Humans-Tunic&Shoes-Sheet_4
   - first:
-      213: -1948046273021937253
-    second: Orcs-Cloak&Skirt-Sheet_5
+      213: 8905407866843856963
+    second: Humans-Tunic&Shoes-Sheet_5
   - first:
-      213: 6914824442181429417
-    second: Orcs-Cloak&Skirt-Sheet_6
+      213: -2202882149623860005
+    second: Humans-Tunic&Shoes-Sheet_6
   - first:
-      213: 40292065904128770
-    second: Orcs-Cloak&Skirt-Sheet_7
+      213: 8785527518186571383
+    second: Humans-Tunic&Shoes-Sheet_7
   - first:
-      213: -3160643946162392899
-    second: Orcs-Cloak&Skirt-Sheet_8
+      213: 116193022550139919
+    second: Humans-Tunic&Shoes-Sheet_8
   - first:
-      213: -1958730959387038264
-    second: Orcs-Cloak&Skirt-Sheet_9
+      213: -5874686493776466935
+    second: Humans-Tunic&Shoes-Sheet_9
   - first:
-      213: -1569563199196043051
-    second: Orcs-Cloak&Skirt-Sheet_10
+      213: 5770334476464983996
+    second: Humans-Tunic&Shoes-Sheet_10
   - first:
-      213: 7367864930787020403
-    second: Orcs-Cloak&Skirt-Sheet_11
+      213: 8765408997956477007
+    second: Humans-Tunic&Shoes-Sheet_11
   - first:
-      213: -2873701945736103724
-    second: Orcs-Cloak&Skirt-Sheet_12
+      213: 6639657682354231097
+    second: Humans-Tunic&Shoes-Sheet_12
   - first:
-      213: -1703301336299715419
-    second: Orcs-Cloak&Skirt-Sheet_13
-  - first:
-      213: 841896292419173714
-    second: Orcs-Cloak&Skirt-Sheet_14
-  - first:
-      213: 6021594389292217978
-    second: Orcs-Cloak&Skirt-Sheet_15
+      213: -2812284931958061916
+    second: Humans-Tunic&Shoes-Sheet_13
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -158,7 +152,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_0
+      name: Human_Clothes_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -166,21 +160,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 65d510be23672dee0800000000000000
-      internalID: -1237796986510287530
+      spriteID: e4b64a66e36cc1f4a82745e2c4e44ff4
+      internalID: 777623158
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_1
+      name: Human_Clothes_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -188,21 +182,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 65379da85c31c0a00800000000000000
-      internalID: 723975379258798934
+      spriteID: f3fe5be1b055b6c4185fd92b10e8ff04
+      internalID: 865623428
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_2
+      name: Human_Clothes_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -210,21 +204,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1d35cf357693a4890800000000000000
-      internalID: -7473097515714456623
+      spriteID: cde2dde6a9eae314c80daf2f5cdf11e2
+      internalID: 701423311
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_3
+      name: Human_Clothes_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -232,21 +226,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a0ca007608ebbf5c0800000000000000
-      internalID: -4180538370390184950
+      spriteID: 21fae78c35939924f93ceaa785a8d520
+      internalID: 1532552554
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_4
+      name: Human_Clothes_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -254,21 +248,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b268712b9c5dbd750800000000000000
-      internalID: 6330888763452393003
+      spriteID: d470ab89324f24e4da0fb88fa7a651ba
+      internalID: 1389958745
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_5
+      name: Human_Clothes_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -276,21 +270,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b99f0826c3627f4e0800000000000000
-      internalID: -1948046273021937253
+      spriteID: 915163c731252a84a81ddc9d8125abca
+      internalID: 524601692
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_6
+      name: Human_Clothes_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -298,21 +292,21 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9a8a960a13466ff50800000000000000
-      internalID: 6914824442181429417
+      spriteID: 527cafae7542ef74eadd0d71bc822804
+      internalID: 1952445979
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Cloak&Skirt-Sheet_7
+      name: Human_Clothes_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -320,15 +314,15 @@ TextureImporter:
         width: 64
         height: 64
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 2037b73ab652f8000800000000000000
-      internalID: 40292065904128770
+      spriteID: 747dbc5c29168c745a990d4a5e6a6705
+      internalID: -237677195
       vertices: []
       indices: 
       edges: []
@@ -337,7 +331,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 29d23ceda156ba146ad51fc899a4b927
+    spriteID: 219f4fc958e39ab4c812156316575841
     internalID: 0
     vertices: []
     indices: 
@@ -347,14 +341,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Orcs-Cloak&Skirt-Sheet_0: -1237796986510287530
-      Orcs-Cloak&Skirt-Sheet_1: 723975379258798934
-      Orcs-Cloak&Skirt-Sheet_2: -7473097515714456623
-      Orcs-Cloak&Skirt-Sheet_3: -4180538370390184950
-      Orcs-Cloak&Skirt-Sheet_4: 6330888763452393003
-      Orcs-Cloak&Skirt-Sheet_5: -1948046273021937253
-      Orcs-Cloak&Skirt-Sheet_6: 6914824442181429417
-      Orcs-Cloak&Skirt-Sheet_7: 40292065904128770
+      Human_Clothes_DownLeft_0: 777623158
+      Human_Clothes_DownRight_0: 701423311
+      Human_Clothes_Down_0: 865623428
+      Human_Clothes_Left_0: -237677195
+      Human_Clothes_Right_0: 1532552554
+      Human_Clothes_UpLeft_0: 1952445979
+      Human_Clothes_UpRight_0: 1389958745
+      Human_Clothes_Up_0: 524601692
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

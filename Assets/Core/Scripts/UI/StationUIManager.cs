@@ -86,6 +86,8 @@ public abstract class StationUIManager : MonoBehaviour
         }
     }
 
+    public static event System.Action OnAnyStationClosed;
+
     /// <summary>
     /// Cierra el panel principal y oculta el elemento en el UIManager.
     /// </summary>
@@ -101,5 +103,7 @@ public abstract class StationUIManager : MonoBehaviour
             UIManager.Instance.HideElement(_myUIType);
             UIManager.Instance.ShowGameplayUI();
         }
+
+        OnAnyStationClosed?.Invoke();
     }
 }

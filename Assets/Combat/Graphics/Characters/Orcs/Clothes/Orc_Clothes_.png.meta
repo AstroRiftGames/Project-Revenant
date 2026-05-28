@@ -1,31 +1,31 @@
 fileFormatVersion: 2
-guid: 2349d9fbb882ec94582ff05de58eb2f2
+guid: 279095f9db12ebd4daf9c0b07e018375
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7627909384208061297
-    second: Humans-Spear-Sheet_0
+      213: -6257033996887641923
+    second: Orcs-LeatherArmor-Sheet_0
   - first:
-      213: 3397483232985818568
-    second: Humans-Spear-Sheet_1
+      213: -3998753622258938663
+    second: Orcs-LeatherArmor-Sheet_1
   - first:
-      213: -6367187376315359523
-    second: Humans-Spear-Sheet_2
+      213: 9067794606464111317
+    second: Orcs-LeatherArmor-Sheet_2
   - first:
-      213: -1444301515107068663
-    second: Humans-Spear-Sheet_3
+      213: 5038015885900091517
+    second: Orcs-LeatherArmor-Sheet_3
   - first:
-      213: 5629367169970239391
-    second: Humans-Spear-Sheet_4
+      213: 9174242169560712034
+    second: Orcs-LeatherArmor-Sheet_4
   - first:
-      213: 7244529651571413263
-    second: Humans-Spear-Sheet_5
+      213: -5221610442857150170
+    second: Orcs-LeatherArmor-Sheet_5
   - first:
-      213: 8959493102799789575
-    second: Humans-Spear-Sheet_6
+      213: 4471948014397137050
+    second: Orcs-LeatherArmor-Sheet_6
   - first:
-      213: 5724760875691727473
-    second: Humans-Spear-Sheet_7
+      213: 2557667955148128064
+    second: Orcs-LeatherArmor-Sheet_7
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,7 +134,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_0
+      name: Orc_Clothes_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -147,16 +147,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1731798ab27cbd960800000000000000
-      internalID: 7627909384208061297
+      spriteID: 459da1f61a4b03b41b9c070e3c38f873
+      internalID: 1437037971
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_1
+      name: Orc_Clothes_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -169,16 +169,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8c52770fff8462f20800000000000000
-      internalID: 3397483232985818568
+      spriteID: 532cf82bff5f9db4886497ca0955ef20
+      internalID: 614495862
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_2
+      name: Orc_Clothes_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -191,16 +191,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: dde1f58e0d433a7a0800000000000000
-      internalID: -6367187376315359523
+      spriteID: a3ebd2158242bd544a5f00ef56aad406
+      internalID: 768795739
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_3
+      name: Orc_Clothes_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -213,16 +213,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9051c7b9c6fc4fbe0800000000000000
-      internalID: -1444301515107068663
+      spriteID: 31de76d31e38bf44fb7e533afca36efe
+      internalID: 1643000802
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_4
+      name: Orc_Clothes_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -235,16 +235,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f97725c8d978f1e40800000000000000
-      internalID: 5629367169970239391
+      spriteID: c6ed731bc0c89344f9839e393c278c2b
+      internalID: -1988268000
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_5
+      name: Orc_Clothes_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -257,16 +257,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f01d2beb55db98460800000000000000
-      internalID: 7244529651571413263
+      spriteID: fbbea4767e60a034cacf7e5c6015cafa
+      internalID: -116820146
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_6
+      name: Orc_Clothes_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -279,16 +279,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 70e91ffe183865c70800000000000000
-      internalID: 8959493102799789575
+      spriteID: bcde336f2f9fdba4ca9486427a4942be
+      internalID: -1293974634
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Humans-Spear-Sheet_7
+      name: Orc_Clothes_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -301,10 +301,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 17ad8a37faf627f40800000000000000
-      internalID: 5724760875691727473
+      spriteID: 324f686674c87cb408b88d20c5b8c9bb
+      internalID: -1122214692
       vertices: []
       indices: 
       edges: []
@@ -313,7 +313,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: a34b77c57f10fde4cb8544a933d774db
+    spriteID: 6b3a10df1dc7c3742862aa720198db7b
     internalID: 0
     vertices: []
     indices: 
@@ -323,14 +323,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Humans-Spear-Sheet_0: 7627909384208061297
-      Humans-Spear-Sheet_1: 3397483232985818568
-      Humans-Spear-Sheet_2: -6367187376315359523
-      Humans-Spear-Sheet_3: -1444301515107068663
-      Humans-Spear-Sheet_4: 5629367169970239391
-      Humans-Spear-Sheet_5: 7244529651571413263
-      Humans-Spear-Sheet_6: 8959493102799789575
-      Humans-Spear-Sheet_7: 5724760875691727473
+      Orc_Clothes_DownLeft_0: 1437037971
+      Orc_Clothes_DownRight_0: 768795739
+      Orc_Clothes_Down_0: 614495862
+      Orc_Clothes_Left_0: -1122214692
+      Orc_Clothes_Right_0: 1643000802
+      Orc_Clothes_UpLeft_0: -1293974634
+      Orc_Clothes_UpRight_0: -1988268000
+      Orc_Clothes_Up_0: -116820146
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

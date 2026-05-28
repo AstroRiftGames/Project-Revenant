@@ -1,31 +1,55 @@
 fileFormatVersion: 2
-guid: 399fa0d76121d90438d370f4d8a5ef5b
+guid: b3fd7a5f0c2ac0c40910ca6128deac8f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3464988209646553961
-    second: Orcs-Body-Sheet_0
+      213: -2132303620630299616
+    second: Humans-Cloak&Cap-Sheet_0
   - first:
-      213: -4176754355786630264
-    second: Orcs-Body-Sheet_1
+      213: 5419470211017833220
+    second: Humans-Cloak&Cap-Sheet_1
   - first:
-      213: 1341392522860977145
-    second: Orcs-Body-Sheet_2
+      213: -3186484591046774179
+    second: Humans-Cloak&Cap-Sheet_2
   - first:
-      213: -4446314646154342628
-    second: Orcs-Body-Sheet_3
+      213: -2397568118179001890
+    second: Humans-Cloak&Cap-Sheet_3
   - first:
-      213: -4588706661053632003
-    second: Orcs-Body-Sheet_4
+      213: -1169754490244443167
+    second: Humans-Cloak&Cap-Sheet_4
   - first:
-      213: 8234130079878242892
-    second: Orcs-Body-Sheet_5
+      213: 7013895453041250737
+    second: Humans-Cloak&Cap-Sheet_5
   - first:
-      213: 5712523592554642918
-    second: Orcs-Body-Sheet_6
+      213: -1820163583615151700
+    second: Humans-Cloak&Cap-Sheet_6
   - first:
-      213: 8339703914657902413
-    second: Orcs-Body-Sheet_7
+      213: 9141380609406766841
+    second: Humans-Cloak&Cap-Sheet_7
+  - first:
+      213: -4074907859912541105
+    second: Humans-Cloak&Cap-Sheet_8
+  - first:
+      213: 7842782178728643291
+    second: Humans-Cloak&Cap-Sheet_9
+  - first:
+      213: -7016390855767069240
+    second: Humans-Cloak&Cap-Sheet_10
+  - first:
+      213: -4041664377179733040
+    second: Humans-Cloak&Cap-Sheet_11
+  - first:
+      213: 3171941162658328571
+    second: Humans-Cloak&Cap-Sheet_12
+  - first:
+      213: -2961161046522393700
+    second: Humans-Cloak&Cap-Sheet_13
+  - first:
+      213: 7699630516151488395
+    second: Humans-Cloak&Cap-Sheet_14
+  - first:
+      213: -3497200385110047615
+    second: Humans-Cloak&Cap-Sheet_15
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -134,7 +158,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_0
+      name: Human_Accesories_DownLeft_0
       rect:
         serializedVersion: 2
         x: 0
@@ -147,16 +171,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 794b915e493e9efc0800000000000000
-      internalID: -3464988209646553961
+      spriteID: 0e550fd0f74528b47a2ce138a701b580
+      internalID: -34797218
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_1
+      name: Human_Accesories_Down_0
       rect:
         serializedVersion: 2
         x: 64
@@ -169,16 +193,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 88bb545fa003906c0800000000000000
-      internalID: -4176754355786630264
+      spriteID: 44f925e34305ba7479d4d0355c9ce392
+      internalID: -1584021842
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_2
+      name: Human_Accesories_DownRight_0
       rect:
         serializedVersion: 2
         x: 128
@@ -191,16 +215,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9fb5e7d74659d9210800000000000000
-      internalID: 1341392522860977145
+      spriteID: 4ef8c7154af0fcf469984f545eda7a52
+      internalID: 1372502347
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_3
+      name: Human_Accesories_Right_0
       rect:
         serializedVersion: 2
         x: 192
@@ -213,16 +237,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c1f8a5c03648b42c0800000000000000
-      internalID: -4446314646154342628
+      spriteID: 016a2518f42f0574b8c697d1fc672dfe
+      internalID: -1823599113
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_4
+      name: Human_Accesories_UpRight_0
       rect:
         serializedVersion: 2
         x: 256
@@ -235,16 +259,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: df1fd619a93a150c0800000000000000
-      internalID: -4588706661053632003
+      spriteID: 7053224c52081f34e9827ce5a229685e
+      internalID: 913393714
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_5
+      name: Human_Accesories_Up_0
       rect:
         serializedVersion: 2
         x: 320
@@ -257,16 +281,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c42608d6ea1854270800000000000000
-      internalID: 8234130079878242892
+      spriteID: 69279cbe12972924cbda674f215c88b3
+      internalID: -1972786479
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_6
+      name: Human_Accesories_UpLeft_0
       rect:
         serializedVersion: 2
         x: 384
@@ -279,16 +303,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 6edf141f0f5f64f40800000000000000
-      internalID: 5712523592554642918
+      spriteID: 517c92d9958ab254ab6ee749d3bae47a
+      internalID: -1402103209
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Orcs-Body-Sheet_7
+      name: Human_Accesories_Left_0
       rect:
         serializedVersion: 2
         x: 448
@@ -301,10 +325,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d4f6e1556849cb370800000000000000
-      internalID: 8339703914657902413
+      spriteID: 8394bbb05c0a14d48a8102e841d1e73e
+      internalID: -1405093495
       vertices: []
       indices: 
       edges: []
@@ -313,7 +337,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c90df5aa8905a59449b1f0b53be50682
+    spriteID: ce80495bcb4a1c44480970d2e15d5726
     internalID: 0
     vertices: []
     indices: 
@@ -323,14 +347,14 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Orcs-Body-Sheet_0: -3464988209646553961
-      Orcs-Body-Sheet_1: -4176754355786630264
-      Orcs-Body-Sheet_2: 1341392522860977145
-      Orcs-Body-Sheet_3: -4446314646154342628
-      Orcs-Body-Sheet_4: -4588706661053632003
-      Orcs-Body-Sheet_5: 8234130079878242892
-      Orcs-Body-Sheet_6: 5712523592554642918
-      Orcs-Body-Sheet_7: 8339703914657902413
+      Human_Accesories_DownLeft_0: -34797218
+      Human_Accesories_DownRight_0: 1372502347
+      Human_Accesories_Down_0: -1584021842
+      Human_Accesories_Left_0: -1405093495
+      Human_Accesories_Right_0: -1823599113
+      Human_Accesories_UpLeft_0: -1402103209
+      Human_Accesories_UpRight_0: 913393714
+      Human_Accesories_Up_0: -1972786479
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
