@@ -952,18 +952,13 @@ public class SkillCaster : MonoBehaviour
         if (_unit == null || skill == null)
             return null;
 
-        PrimaryTargetRequirement primaryTargetRequirement = skill.PrimaryTargetRequirement;
-
         if (skill.TargetSelectionMode != TargetSelectionMode.None)
             return SelectPrimaryTargetByMode(skill, null);
 
-        return primaryTargetRequirement switch
-        {
-            PrimaryTargetRequirement.Self => CanUseUnitAsPrimaryTarget(skill, _unit) ? _unit : null,
-            PrimaryTargetRequirement.None => null,
-            PrimaryTargetRequirement.GroundCell => null,
-            _ => null
-        };
+        if (skill.PrimaryTargetRequirement == PrimaryTargetRequirement.Self)
+            return CanUseUnitAsPrimaryTarget(skill, _unit) ? _unit : null;
+
+        return null;
     }
 
     private static bool RequiresUnitPrimaryTarget(SkillData skill)

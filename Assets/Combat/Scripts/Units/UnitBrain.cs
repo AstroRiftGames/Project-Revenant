@@ -16,7 +16,6 @@ public class UnitBrain : MonoBehaviour
     private TargetingStrategy _targeting;
     private SkillCaster _skillCaster;
     private UnitAnimationController _animationController;
-    private IBasicAction _action;
     private Unit _currentTarget;
     private UnitOperationalState _lastOperationalState = UnitOperationalState.Idle;
     private bool _hasLoggedMissingControllerBlock;
@@ -37,7 +36,6 @@ public class UnitBrain : MonoBehaviour
         _targeting = GetComponent<TargetingStrategy>();
         _skillCaster = GetComponent<SkillCaster>();
         _animationController = GetComponent<UnitAnimationController>();
-        _action = _unit != null ? _unit.Action : null;
     }
 
     private void Update()
@@ -62,13 +60,13 @@ public class UnitBrain : MonoBehaviour
         return _unit != null &&
                _movement != null &&
                _targeting != null &&
-               _action != null &&
+               _unit.Action != null &&
                _unit.IsAlive;
     }
 
     private void UpdateDecisionState()
     {
-        _currentTarget = _targeting.SelectBasicActionTarget(_unit, _action, _currentTarget);
+        _currentTarget = _targeting.SelectBasicActionTarget(_unit, _unit.Action, _currentTarget);
     }
 
     private void ExecuteDecision()
@@ -115,13 +113,13 @@ public class UnitBrain : MonoBehaviour
         if (TryMoveToBasicActionRange())
             return;
 
-        if (!_action.IsInRange(_unit, _currentTarget))
+        if (!_unit.Action.IsInRange(_unit, _currentTarget))
         {
             TryRetargetAfterFailedMovement();
             return;
         }
 
-        if (!_action.CanExecute(_unit, _currentTarget))
+        if (!_unit.Action.CanExecute(_unit, _currentTarget))
             return;
 
         ExecuteBasicAction();
@@ -132,10 +130,10 @@ public class UnitBrain : MonoBehaviour
         if (_currentTarget == null)
             return false;
 
-        if (_action.IsInRange(_unit, _currentTarget))
+        if (_unit.Action.IsInRange(_unit, _currentTarget))
             return false;
 
-        int preferredDistance = _unit.GetPreferredDistance(_action);
+        int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
         return _movement.MoveTowards(_currentTarget, preferredDistance);
     }
 
@@ -145,7 +143,7 @@ public class UnitBrain : MonoBehaviour
             return false;
 
         Unit failedTarget = _currentTarget;
-        Unit alternateTarget = _targeting.SelectAlternativeBasicActionTarget(_unit, _action, failedTarget);
+        Unit alternateTarget = _targeting.SelectAlternativeBasicActionTarget(_unit, _unit.Action, failedTarget);
         if (alternateTarget == null || ReferenceEquals(alternateTarget, failedTarget))
             return false;
 
@@ -161,7 +159,7 @@ public class UnitBrain : MonoBehaviour
         _unit.BeginBasicActionExecution();
         try
         {
-            _action.Execute(_unit, _currentTarget);
+            _unit.Action.Execute(_unit, _currentTarget);
         }
         finally
         {
@@ -189,7 +187,7 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryMaintainSpacing()
     {
-        int preferredDistance = _unit.GetPreferredDistance(_action);
+        int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
         Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _currentTarget);
         return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
     }

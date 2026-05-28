@@ -172,7 +172,7 @@ public class Unit : Creature, IGridOccupant
 
     private UnitOperationalState ResolveOperationalState()
     {
-        if (!IsAlive || (_lifeController != null && !_lifeController.IsAlive))
+        if (!IsAlive)
             return UnitOperationalState.Dead;
 
         if (StatusEffects != null && !StatusEffects.CanAct)

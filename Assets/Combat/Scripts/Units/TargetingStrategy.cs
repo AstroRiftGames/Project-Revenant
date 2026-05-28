@@ -28,7 +28,7 @@ public class TargetingStrategy : MonoBehaviour
                 roomUnits,
                 self.GetAliveAggressors(),
                 canPickTarget),
-            _ => SelectRolePriorityTarget(
+            _ => SelectBestOffensiveTarget(
                 self,
                 currentTarget,
                 roomUnits,
@@ -62,7 +62,7 @@ public class TargetingStrategy : MonoBehaviour
                 roomUnits,
                 self.GetAliveAggressors(),
                 canPickTarget),
-            _ => SelectRolePriorityTarget(
+            _ => SelectBestOffensiveTarget(
                 self,
                 null,
                 roomUnits,
@@ -441,18 +441,6 @@ public class TargetingStrategy : MonoBehaviour
                     return bestAggressor;
             }
         }
-
-        return SelectBestOffensiveTarget(self, currentTarget, candidates, isValidCandidate);
-    }
-
-    private static Unit SelectRolePriorityTarget(
-        Unit self,
-        Unit currentTarget,
-        IReadOnlyList<Unit> candidates,
-        Func<Unit, bool> isValidCandidate)
-    {
-        if (self == null || candidates == null || isValidCandidate == null)
-            return null;
 
         return SelectBestOffensiveTarget(self, currentTarget, candidates, isValidCandidate);
     }

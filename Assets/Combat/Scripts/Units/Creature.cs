@@ -177,39 +177,6 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         return creature.gameObject.activeInHierarchy;
     }
 
-    public void GetVisibleUnits(List<IUnit> candidates, List<IUnit> results)
-    {
-        results?.Clear();
-    }
-
-    public void GetVisibleHostileUnits(List<IUnit> candidates, List<IUnit> results)
-    {
-        results?.Clear();
-    }
-
-    public IUnit GetNearestVisibleHostileUnit(List<IUnit> candidates, List<IUnit> visibleHostilesBuffer)
-    {
-        if (visibleHostilesBuffer == null)
-            return null;
-
-        GetVisibleHostileUnits(candidates, visibleHostilesBuffer);
-        IUnit nearest = null;
-        float bestSqrDistance = float.MaxValue;
-
-        for (int i = 0; i < visibleHostilesBuffer.Count; i++)
-        {
-            IUnit candidate = visibleHostilesBuffer[i];
-            float sqrDistance = (candidate.Position - Position).sqrMagnitude;
-            if (sqrDistance >= bestSqrDistance)
-                continue;
-
-            bestSqrDistance = sqrDistance;
-            nearest = candidate;
-        }
-
-        return nearest;
-    }
-
     public void TakeDamage(int amount, IUnit source = null)
     {
         int resolvedDamage = ResolveIncomingDamage(amount, source);

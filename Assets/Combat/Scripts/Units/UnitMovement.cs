@@ -216,7 +216,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public void ClearDestination()
     {
-        Planner.InvalidatePathCache();
+        ClearPath();
     }
 
     public void ClearPath()
@@ -540,22 +540,13 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private bool TryCommitMovementStep(Vector3Int originCell, Vector3Int nextStep)
     {
         if (Time.time < _nextRetryTime)
-        {
             return false;
-        }
-        
+
         if (nextStep == originCell)
             return false;
 
         if (_isInDeadlock && Time.time < _deadlockCooldownEndTime)
-        {
             return false;
-        }
-        
-        if (Time.time < _nextRetryTime)
-        {
-            return false;
-        }
 
         if (_grid.OccupancyService.IsCellBlockedFor(_unit, nextStep))
         {
