@@ -1,131 +1,67 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using PrefabDungeonGeneration;
 
 public class UIStateManager : MonoBehaviour
 {
-    private CombatRoomController _currentCombatRoom;
-
     private void Start()
     {
-        // Initial setup as requested
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RequestHideUI(UIType.Minimap);
             GameManager.Instance.RequestHideUI(UIType.LOG);
             GameManager.Instance.RequestHideUI(UIType.DeepInspector);
             GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+            
+            if (GameManager.Instance.StateManager != null)
+            {
+                GameManager.Instance.StateManager.OnStateChanged += HandleStateChanged;
+                HandleStateChanged(GameState.MainMenu, GameManager.Instance.StateManager.CurrentState);
+            }
         }
-
-        CheckCurrentScene(SceneManager.GetActiveScene());
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        FloorManager.OnRoomEntered += OnRoomEntered;
+        if (GameManager.Instance != null && GameManager.Instance.StateManager != null)
+        {
+            GameManager.Instance.StateManager.OnStateChanged -= HandleStateChanged;
+        }
     }
 
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        FloorManager.OnRoomEntered -= OnRoomEntered;
-        UnsubscribeFromCombatRoom();
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        CheckCurrentScene(scene);
-    }
-
-    private void CheckCurrentScene(Scene scene)
+    private void HandleStateChanged(GameState previous, GameState next)
     {
         if (GameManager.Instance == null) return;
 
-        // Inspector: Oculto durante la SafeZone, siempre mostrado durante la Dungeon.
-        // Minimap: Se muestra al entrar a la dungeon (Start lo inicia oculto).
-        if (scene.name == "SafeZone")
+        switch (next)
         {
-            GameManager.Instance.RequestHideUI(UIType.Inspector);
-            GameManager.Instance.RequestHideUI(UIType.Minimap);
-            GameManager.Instance.RequestHideUI(UIType.DeepInspector);
-        }
-        else if (scene.name == "Dungeon")
-        {
-            GameManager.Instance.RequestShowUI(UIType.Inspector);
-            GameManager.Instance.RequestShowUI(UIType.Minimap);
-        }
-    }
+            case GameState.SafeZone:
+                GameManager.Instance.RequestHideUI(UIType.Inspector);
+                GameManager.Instance.RequestHideUI(UIType.Minimap);
+                GameManager.Instance.RequestHideUI(UIType.DeepInspector);
+                GameManager.Instance.RequestHideUI(UIType.LOG);
+                GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                break;
 
-    private void OnRoomEntered(RoomDoor door, GameObject nextRoom)
-    {
-        UnsubscribeFromCombatRoom();
+            case GameState.ExploringDungeon:
+            case GameState.StationUI: // Station handles its own UI, but base elements remain the same
+            case GameState.Deployment:
+                GameManager.Instance.RequestShowUI(UIType.Inspector);
+                GameManager.Instance.RequestShowUI(UIType.Minimap);
+                GameManager.Instance.RequestHideUI(UIType.LOG);
+                GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                break;
 
-        if (nextRoom != null && nextRoom.TryGetComponent(out RoomContext roomContext))
-        {
-            if (roomContext.IsCombatRoom && roomContext.CombatController != null)
-            {
-                _currentCombatRoom = roomContext.CombatController;
-                _currentCombatRoom.CombatStarted += OnCombatStarted;
-                _currentCombatRoom.CombatResolved += OnCombatResolved;
+            case GameState.InCombat:
+                GameManager.Instance.RequestShowUI(UIType.Inspector);
+                GameManager.Instance.RequestHideUI(UIType.Minimap);
+                GameManager.Instance.RequestShowUI(UIType.LOG);
+                GameManager.Instance.RequestShowUI(UIType.CombatStatus);
+                break;
 
-                // Si ya está en combate por alguna razón, sincronizar el estado
-                if (_currentCombatRoom.IsCombatActive)
-                {
-                    OnCombatStarted(_currentCombatRoom);
-                }
-                else if (_currentCombatRoom.IsResolved)
-                {
-                    OnCombatResolved(_currentCombatRoom, _currentCombatRoom.Outcome);
-                }
-                else
-                {
-                    // Deployment state or similar: hide combat UI, show navigation UI
-                    GameManager.Instance.RequestShowUI(UIType.Minimap);
-                    GameManager.Instance.RequestHideUI(UIType.LOG);
-                    GameManager.Instance.RequestHideUI(UIType.CombatStatus);
-                }
-            }
-            else
-            {
-                // Si entra a una room normal, asegurar que el Minimap esté visible, el LOG oculto y el CombatStatus oculto
-                if (GameManager.Instance != null && SceneManager.GetActiveScene().name == "Dungeon")
-                {
-                    GameManager.Instance.RequestShowUI(UIType.Minimap);
-                    GameManager.Instance.RequestHideUI(UIType.LOG);
-                    GameManager.Instance.RequestHideUI(UIType.CombatStatus);
-                }
-            }
-        }
-    }
-
-    private void OnCombatStarted(CombatRoomController controller)
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.RequestHideUI(UIType.Minimap);
-            GameManager.Instance.RequestShowUI(UIType.LOG);
-            GameManager.Instance.RequestShowUI(UIType.CombatStatus);
-        }
-    }
-
-    private void OnCombatResolved(CombatRoomController controller, CombatRoomOutcome outcome)
-    {
-        if (GameManager.Instance != null && SceneManager.GetActiveScene().name == "Dungeon")
-        {
-            GameManager.Instance.RequestShowUI(UIType.Minimap);
-            GameManager.Instance.RequestHideUI(UIType.LOG);
-            GameManager.Instance.RequestHideUI(UIType.CombatStatus);
-        }
-    }
-
-    private void UnsubscribeFromCombatRoom()
-    {
-        if (_currentCombatRoom != null)
-        {
-            _currentCombatRoom.CombatStarted -= OnCombatStarted;
-            _currentCombatRoom.CombatResolved -= OnCombatResolved;
-            _currentCombatRoom = null;
+            case GameState.GameOver:
+                GameManager.Instance.RequestHideUI(UIType.Minimap);
+                GameManager.Instance.RequestHideUI(UIType.LOG);
+                GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                break;
         }
     }
 }
