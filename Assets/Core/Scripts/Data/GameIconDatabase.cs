@@ -47,6 +47,14 @@ namespace Data
             public Color color;
         }
 
+        [Serializable]
+        public struct CursorIcon
+        {
+            public CursorType cursorType;
+            public Texture2D icon;
+            public Vector2 hotspot;
+        }
+
         [Header("Faction Icons")]
         public List<FactionIcon> factionIcons = new List<FactionIcon>();
 
@@ -61,6 +69,9 @@ namespace Data
 
         [Header("Effects Icons")]
         public List<EffectIcon> effectsIcons = new List<EffectIcon>();
+
+        [Header("Cursor Icons")]
+        public List<CursorIcon> cursorIcons = new List<CursorIcon>();
 
         private static GameIconDatabase _instance;
         
@@ -108,6 +119,13 @@ namespace Data
             foreach (var entry in effectsIcons)
                 if (entry.effectType == effectType) return (entry.icon, entry.color);
             return (null, Color.white);
+        }
+
+        public (Texture2D, Vector2) GetCursorIcon(CursorType cursorType)
+        {
+            foreach (var entry in cursorIcons)
+                if (entry.cursorType == cursorType) return (entry.icon, entry.hotspot);
+            return (null, Vector2.zero);
         }
     }
 }
