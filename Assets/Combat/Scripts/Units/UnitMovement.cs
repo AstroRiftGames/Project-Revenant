@@ -113,7 +113,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public bool SetDestinationCell(Vector3Int destinationCell)
     {
-        if (_grid == null || _unit == null)
+        if (!CanMoveOwner())
             return false;
 
         if (_unit.StatusEffects != null && !_unit.StatusEffects.CanMove)
@@ -467,7 +467,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (_grid == null || _unit == null || !isActiveAndEnabled)
             return;
 
-        if (_unit.LifecycleState != UnitLifecycleState.Alive)
+        if (!_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
             return;
 
         if (!ReferenceEquals(_registeredGrid, _grid))
@@ -531,10 +531,18 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private bool CanEvaluateTarget(Unit targetUnit)
     {
+        return CanMoveOwner() &&
+               targetUnit != null &&
+               targetUnit.IsAlive &&
+               targetUnit.LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private bool CanMoveOwner()
+    {
         return _grid != null &&
                _unit != null &&
-               targetUnit != null &&
-               targetUnit.IsAlive;
+               _unit.IsAlive &&
+               _unit.LifecycleState == UnitLifecycleState.Alive;
     }
 
     private bool TryCommitMovementStep(Vector3Int originCell, Vector3Int nextStep)

@@ -263,7 +263,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit unit = roomUnits[i];
-            if (unit == null || !unit.gameObject.activeInHierarchy || !unit.IsAlive || unit.Team != UnitTeam.Enemy)
+            if (!IsValidCombatant(unit) || unit.Team != UnitTeam.Enemy)
                 continue;
 
             enemies.Add(unit);

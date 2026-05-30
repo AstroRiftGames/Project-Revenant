@@ -10,4 +10,11 @@ public abstract class SkillEffect : ScriptableObject
             ? impact.TargetUnit
             : null;
     }
+
+    protected static bool IsCombatAliveUnit(Unit unit)
+    {
+        return unit != null &&
+               unit.IsAlive &&
+               unit.LifecycleState == UnitLifecycleState.Alive;
+    }
 }

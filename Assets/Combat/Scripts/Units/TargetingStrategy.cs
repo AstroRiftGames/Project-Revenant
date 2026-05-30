@@ -126,7 +126,6 @@ public class TargetingStrategy : MonoBehaviour
             requiresTarget: true,
             allowSelf: false,
             requireSelf: false,
-            allowDead: false,
             allowInvisible: false,
             requireInjured: false,
             requireSameRoom: false,

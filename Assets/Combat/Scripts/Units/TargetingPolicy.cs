@@ -7,7 +7,6 @@ public readonly struct TargetingPolicy
         bool requiresTarget = true,
         bool allowSelf = false,
         bool requireSelf = false,
-        bool allowDead = false,
         bool allowInvisible = false,
         bool requireInjured = false,
         bool requireSameRoom = true,
@@ -18,7 +17,6 @@ public readonly struct TargetingPolicy
         RequiresTarget = requiresTarget;
         AllowSelf = allowSelf;
         RequireSelf = requireSelf;
-        AllowDead = allowDead;
         AllowInvisible = allowInvisible;
         RequireInjured = requireInjured;
         RequireSameRoom = requireSameRoom;
@@ -30,7 +28,6 @@ public readonly struct TargetingPolicy
     public bool RequiresTarget { get; }
     public bool AllowSelf { get; }
     public bool RequireSelf { get; }
-    public bool AllowDead { get; }
     public bool AllowInvisible { get; }
     public bool RequireInjured { get; }
     public bool RequireSameRoom { get; }

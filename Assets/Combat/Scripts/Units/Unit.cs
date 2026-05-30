@@ -17,7 +17,13 @@ public enum UnitOperationalState
     Dead
 }
 
+[DisallowMultipleComponent]
 [RequireComponent(typeof(LifeController))]
+[RequireComponent(typeof(UnitDeathHandler))]
+[RequireComponent(typeof(UnitMovement))]
+[RequireComponent(typeof(UnitCombat))]
+[RequireComponent(typeof(TargetingStrategy))]
+[RequireComponent(typeof(UnitBrain))]
 public class Unit : Creature, IGridOccupant
 {
     [SerializeField] private UnitData _unitData;
@@ -74,7 +80,7 @@ public class Unit : Creature, IGridOccupant
     }
     // Only alive units occupy cells as regular occupants.
     // Recruitable corpses block via persistent blocker, not as IGridOccupant.
-    public bool OccupiesCell => LifecycleState == UnitLifecycleState.Alive && gameObject.activeInHierarchy;
+    public bool OccupiesCell => IsAlive && LifecycleState == UnitLifecycleState.Alive && gameObject.activeInHierarchy;
     public bool BlocksMovement => true;
 
     public void AssignRoomContext(RoomContext context)
@@ -150,7 +156,7 @@ public class Unit : Creature, IGridOccupant
     public bool TryBasicActionForDebug(Unit forcedTarget)
     {
         IBasicAction action = Action;
-        if (action == null || !IsAlive)
+        if (action == null || !IsAlive || LifecycleState != UnitLifecycleState.Alive)
             return false;
 
         BeginBasicActionExecution();
@@ -172,7 +178,7 @@ public class Unit : Creature, IGridOccupant
 
     private UnitOperationalState ResolveOperationalState()
     {
-        if (!IsAlive)
+        if (!IsAlive || LifecycleState != UnitLifecycleState.Alive)
             return UnitOperationalState.Dead;
 
         if (StatusEffects != null && !StatusEffects.CanAct)

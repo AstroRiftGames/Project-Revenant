@@ -156,10 +156,10 @@ public class SkillCaster : MonoBehaviour
 
     public void AddAbilityCharge(float amount, AbilityChargeSource source)
     {
-        if (!CanApplyAbilityCharge(source))
+        if (!CanApplyAbilityCharge())
             return;
 
-        if (!CanGainAbilityCharge())
+        if (!CanGainAbilityChargeByStatus())
             return;
 
         float previousCharge = _state.CurrentCharge;
@@ -183,7 +183,7 @@ public class SkillCaster : MonoBehaviour
         InterruptCast("external interruption");
     }
 
-    private bool CanGainAbilityCharge()
+    private bool CanGainAbilityChargeByStatus()
     {
         return _unit == null || _unit.StatusEffects == null || !_unit.StatusEffects.PreventsSkillCharge;
     }
@@ -224,7 +224,7 @@ public class SkillCaster : MonoBehaviour
         if (_unit == null)
             return false;
 
-        if (!CanApplyAbilityCharge(source))
+        if (!CanApplyAbilityCharge())
             return false;
 
         return source switch
@@ -238,7 +238,7 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleUnitDied(Unit deadUnit)
     {
-        if (_unit == null || deadUnit == null || _unit.Role != UnitRole.DPS || !_unit.IsAlive)
+        if (deadUnit == null || !IsOwnerCombatAlive() || _unit.Role != UnitRole.DPS)
             return;
 
         Unit killer = deadUnit.GetLastAttacker();
@@ -253,7 +253,7 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleDamageTaken(int amount)
     {
-        if (_unit == null || _unit.Role != UnitRole.Tank || amount <= 0)
+        if (!IsOwnerCombatAlive() || _unit.Role != UnitRole.Tank || amount <= 0)
             return;
 
         AddAbilityChargeFromSource(AbilityChargeSource.DamageTaken);
@@ -261,7 +261,7 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleAnySkillUsed(Unit caster, SkillData skill, Unit popupAnchor)
     {
-        if (_unit == null || _unit.Role != UnitRole.Support || !_unit.IsAlive)
+        if (!IsOwnerCombatAlive() || _unit.Role != UnitRole.Support)
             return;
 
         if (caster == null || skill == null || ReferenceEquals(caster, _unit))
@@ -292,6 +292,19 @@ public class SkillCaster : MonoBehaviour
         return sqrDistance <= chargeRadius * chargeRadius;
     }
 
+    private bool IsOwnerCombatAlive()
+    {
+        return _unit != null &&
+               _unit.IsAlive &&
+               _unit.LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private bool IsOwnerSkillBlockedByStatus()
+    {
+        StatusEffectController statusEffects = _unit != null ? _unit.StatusEffects : null;
+        return statusEffects != null && (!statusEffects.CanAct || !statusEffects.CanUseSkills);
+    }
+
     private bool CanStartCast(SkillData skill)
     {
         if (_unit == null)
@@ -318,13 +331,13 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        if (!_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+        if (!IsOwnerCombatAlive())
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner cannot act (dead, recruit corpse, or removed).");
             return false;
         }
 
-        if (_unit.StatusEffects != null && (!_unit.StatusEffects.CanAct || !_unit.StatusEffects.CanUseSkills))
+        if (IsOwnerSkillBlockedByStatus())
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: active status effect blocks skill usage.");
             return false;
@@ -479,14 +492,10 @@ public class SkillCaster : MonoBehaviour
 
     private bool ShouldInterruptCurrentCast()
     {
-        if (_unit == null || !_unit.IsAlive)
+        if (!IsOwnerCombatAlive())
             return true;
 
-        StatusEffectController statusEffects = _unit.StatusEffects;
-        if (statusEffects == null)
-            return false;
-
-        return !statusEffects.CanAct || !statusEffects.CanUseSkills;
+        return IsOwnerSkillBlockedByStatus();
     }
 
     private void InterruptCast(string reason)
@@ -608,7 +617,7 @@ public class SkillCaster : MonoBehaviour
 
         PrimaryTargetRequirement primaryTargetRequirement = skill.PrimaryTargetRequirement;
         if (primaryTargetRequirement == PrimaryTargetRequirement.Self)
-            return _unit.IsAlive ? _unit : null;
+            return IsOwnerCombatAlive() ? _unit : null;
 
         if (primaryTargetRequirement == PrimaryTargetRequirement.None ||
             primaryTargetRequirement == PrimaryTargetRequirement.GroundCell)
@@ -1000,23 +1009,9 @@ public class SkillCaster : MonoBehaviour
         };
     }
 
-    private bool CanApplyAbilityCharge(AbilityChargeSource source)
+    private bool CanApplyAbilityCharge()
     {
-        if (_unit == null)
-            return false;
-
-        UnitLifecycleState lifecycleState = _unit.LifecycleState;
-        if (lifecycleState == UnitLifecycleState.Removed ||
-            lifecycleState == UnitLifecycleState.Recruitable ||
-            lifecycleState == UnitLifecycleState.Dead)
-        {
-            return false;
-        }
-
-        if (source == AbilityChargeSource.DamageTaken)
-            return true;
-
-        return _unit.IsAlive;
+        return IsOwnerCombatAlive();
     }
 
     private void OnSkillCastSucceeded(SkillData skill, Unit primaryTarget)

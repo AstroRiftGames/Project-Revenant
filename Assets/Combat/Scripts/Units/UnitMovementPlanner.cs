@@ -40,7 +40,7 @@ public sealed class UnitMovementPlanner
         int rangeInCells,
         string debugName)
     {
-        if (grid == null || movingUnit == null || targetUnit == null || !targetUnit.IsAlive)
+        if (grid == null || movingUnit == null || !IsCombatAliveTarget(targetUnit))
             return UnitMovementDecision.NoMove(UnitMovementPlanReason.InvalidRequest, originCell, originCell);
 
         Vector3Int targetCell = grid.WorldToCell(targetUnit.Position);
@@ -106,7 +106,7 @@ public sealed class UnitMovementPlanner
         Unit targetUnit,
         int desiredDistance)
     {
-        if (grid == null || movingUnit == null || targetUnit == null || !targetUnit.IsAlive)
+        if (grid == null || movingUnit == null || !IsCombatAliveTarget(targetUnit))
             return UnitMovementDecision.NoMove(UnitMovementPlanReason.InvalidRequest, originCell, originCell);
 
         Vector3Int targetCell = grid.WorldToCell(targetUnit.Position);
@@ -394,6 +394,13 @@ public sealed class UnitMovementPlanner
             return new List<Vector3Int>();
 
         return GridPathfinder.FindPath(grid, startCell, targetCell, movingUnit);
+    }
+
+    private static bool IsCombatAliveTarget(Unit targetUnit)
+    {
+        return targetUnit != null &&
+               targetUnit.IsAlive &&
+               targetUnit.LifecycleState == UnitLifecycleState.Alive;
     }
 
     private readonly struct StepSelectionResult

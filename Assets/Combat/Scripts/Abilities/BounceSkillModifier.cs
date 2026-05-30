@@ -40,7 +40,7 @@ public class BounceSkillModifier : SkillModifier
         for (int sourceImpactIndex = 0; sourceImpactIndex < sourceImpactCount; sourceImpactIndex++)
         {
             SkillImpact sourceImpact = impacts[sourceImpactIndex];
-            if (sourceImpact == null || !sourceImpact.HasTargetUnit || sourceImpact.TargetUnit == null || !sourceImpact.TargetUnit.IsAlive)
+            if (sourceImpact == null || !sourceImpact.HasTargetUnit || !IsCombatAliveUnit(sourceImpact.TargetUnit))
                 continue;
 
             Unit chainPrimaryUnit = sourceImpact.TargetUnit;
@@ -113,7 +113,7 @@ public class BounceSkillModifier : SkillModifier
         for (int unitIndex = 0; unitIndex < roomUnits.Count; unitIndex++)
         {
             Unit candidate = roomUnits[unitIndex];
-            if (candidate == null || !candidate.IsAlive)
+            if (!IsCombatAliveUnit(candidate))
                 continue;
 
             if (ReferenceEquals(candidate, currentUnit))

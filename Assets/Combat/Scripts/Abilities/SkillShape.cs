@@ -1,3 +1,6 @@
+using System;
+
+[Obsolete("Use SkillData ImpactPattern/ImpactCenterMode and SkillModifier instead. Kept only for serialized legacy assets.")]
 public enum SkillShape
 {
     SingleTarget,

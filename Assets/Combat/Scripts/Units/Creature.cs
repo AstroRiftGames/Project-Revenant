@@ -14,6 +14,7 @@ public enum UnitAttackKind { Melee, Projectile, SupportProjectile }
 [RequireComponent(typeof(StatusEffectController))]
 [RequireComponent(typeof(UnitVisualMaterialController))]
 [RequireComponent(typeof(StatusEffectVisualFeedback))]
+[RequireComponent(typeof(UnitSelectionFeedbackView))]
 public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterStatsProvider
 {
     public static event Action<Creature> OnCreatureEnabled;
@@ -76,37 +77,16 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
         _skillCaster = GetComponent<SkillCaster>();
-        _statusEffectController = GetComponent<StatusEffectController>();
-        if (_statusEffectController == null)
-        {
-            Debug.LogWarning(
-                $"[{nameof(Creature)}] '{name}' was missing {nameof(StatusEffectController)} at runtime and it was auto-added. " +
-                "Update the prefab setup to include it explicitly.",
-                this);
-            _statusEffectController = gameObject.AddComponent<StatusEffectController>();
-        }
+        _statusEffectController = ResolveAuthoringComponent<StatusEffectController>(
+            "Add it to the prefab; it is required for status effects and combat stat modifiers.");
 
-        if (GetComponent<StatusEffectVisualFeedback>() == null)
-        {
-            Debug.LogWarning(
-                $"[{nameof(Creature)}] '{name}' was missing {nameof(StatusEffectVisualFeedback)} at runtime and it was auto-added. " +
-                "Update the prefab setup to include it explicitly if this unit should show status feedback.",
-                this);
-            gameObject.AddComponent<StatusEffectVisualFeedback>();
-        }
+        ResolveAuthoringComponent<UnitVisualMaterialController>(
+            "Add it to the prefab if this unit should use unified material feedback.");
+        ResolveAuthoringComponent<StatusEffectVisualFeedback>(
+            "Add it to the prefab if this unit should show status and lifecycle feedback.");
 
-        if (GetComponent<UnitVisualMaterialController>() == null)
-        {
-            Debug.LogWarning(
-                $"[{nameof(Creature)}] '{name}' was missing {nameof(UnitVisualMaterialController)} at runtime and it was auto-added. " +
-                "Update the prefab setup to include it explicitly if this unit should use unified material feedback.",
-                this);
-            gameObject.AddComponent<UnitVisualMaterialController>();
-        }
-
-        _selectionFeedbackView = GetComponent<UnitSelectionFeedbackView>();
-        if (_selectionFeedbackView == null)
-            _selectionFeedbackView = gameObject.AddComponent<UnitSelectionFeedbackView>();
+        _selectionFeedbackView = ResolveAuthoringComponent<UnitSelectionFeedbackView>(
+            "Add it to the prefab to keep selection feedback setup explicit.");
 
         _selectionFeedbackView.Configure(selectionIndicator);
         ValidateRequiredComponents();
@@ -171,7 +151,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         if (candidate is not Creature creature)
             return false;
 
-        if (creature.LifecycleState != UnitLifecycleState.Alive)
+        if (!creature.IsAlive || creature.LifecycleState != UnitLifecycleState.Alive)
             return false;
 
         return creature.gameObject.activeInHierarchy;
@@ -216,6 +196,19 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
     {
         if (_lifeController == null || _recruitableState == null || _affiliationState == null || _statusEffectController == null)
             throw new InvalidOperationException($"[{nameof(Creature)}] Missing required runtime components on '{name}'.");
+    }
+
+    private T ResolveAuthoringComponent<T>(string authoringGuidance) where T : Component
+    {
+        T component = GetComponent<T>();
+        if (component != null)
+            return component;
+
+        Debug.LogWarning(
+            $"[{nameof(Creature)}] '{name}' is missing {typeof(T).Name}. " +
+            $"It was auto-added for legacy prefab compatibility. {authoringGuidance}",
+            this);
+        return gameObject.AddComponent<T>();
     }
 
     private float ResolveFinalFloatStat(CombatStatType statType, float baseValue)

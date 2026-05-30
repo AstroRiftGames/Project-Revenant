@@ -221,7 +221,7 @@ public class StatusEffectController : MonoBehaviour
         return _runtimeStoppedByDeath ||
                !isActiveAndEnabled ||
                !ReferenceEquals(application.TargetUnit, _unit) ||
-               !_unit.IsAlive;
+               !IsCombatAlive(_unit);
     }
 
     private bool AddNewEffect(StatusEffectApplication application, float now)
@@ -274,7 +274,7 @@ public class StatusEffectController : MonoBehaviour
 
     private void ResolvePeriodicTick(ActiveStatusEffect activeEffect)
     {
-        if (activeEffect == null || activeEffect.Definition == null || _lifeController == null || !_lifeController.IsAlive)
+        if (activeEffect == null || activeEffect.Definition == null || _lifeController == null || !IsCombatAlive(_unit))
             return;
 
         int tickValue = Mathf.Max(0, activeEffect.Definition.TickValue * activeEffect.StackCount);
@@ -441,7 +441,7 @@ public class StatusEffectController : MonoBehaviour
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit candidate = roomUnits[i];
-            if (candidate == null || ReferenceEquals(candidate, _unit) || !candidate.IsAlive || candidate.StatusEffects == null)
+            if (ReferenceEquals(candidate, _unit) || !IsCombatAlive(candidate) || candidate.StatusEffects == null)
                 continue;
 
             if (candidate.StatusEffects.HasEffectFromSource(effectType, _unit))
@@ -473,12 +473,18 @@ public class StatusEffectController : MonoBehaviour
 
     private bool IsValidForcedTarget(Unit sourceUnit)
     {
-        return sourceUnit != null &&
-               sourceUnit.IsAlive &&
+        return IsCombatAlive(sourceUnit) &&
                sourceUnit.gameObject.activeInHierarchy &&
                _unit != null &&
                _unit.IsHostileTo(sourceUnit) &&
                ReferenceEquals(_unit.RoomContext, sourceUnit.RoomContext);
+    }
+
+    private static bool IsCombatAlive(Unit unit)
+    {
+        return unit != null &&
+               unit.IsAlive &&
+               unit.LifecycleState == UnitLifecycleState.Alive;
     }
 
     private void LogDebug(string message)

@@ -12,7 +12,7 @@ public class KnockbackSkillEffect : SkillEffect
     {
         Unit hitUnit = ResolveTargetUnit(impact);
         Unit caster = context != null ? context.Caster : null;
-        if (caster == null || hitUnit == null || !hitUnit.IsAlive)
+        if (caster == null || !IsCombatAliveUnit(hitUnit))
             return false;
 
         return ApplyKnockback(context, hitUnit, caster);

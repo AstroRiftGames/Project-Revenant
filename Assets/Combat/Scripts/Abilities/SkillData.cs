@@ -34,8 +34,10 @@ public class SkillData : ScriptableObject
     // Splash = legacy composite, future Direct + SplashModifier.
     // PiercingLine = legacy composite, future Line + PiercingModifier.
     // SpawnMinions = legacy incorrect, future SummonUnitSkillEffect anchored to SkillContext.
+#pragma warning disable CS0618
     [FormerlySerializedAs("_shape")]
     [SerializeField] private SkillShape _legacyShape = SkillShape.SingleTarget;
+#pragma warning restore CS0618
 
     #endregion
 
@@ -166,6 +168,7 @@ public class SkillData : ScriptableObject
 
     private bool TryGetLegacyShapeMigrationWarning(out string warning)
     {
+#pragma warning disable CS0618
         switch (_legacyShape)
         {
             case SkillShape.Splash:
@@ -187,6 +190,7 @@ public class SkillData : ScriptableObject
                 warning = null;
                 return false;
         }
+#pragma warning restore CS0618
     }
 
     private static bool IsValidPrimaryTargetRequirement(PrimaryTargetRequirement value)

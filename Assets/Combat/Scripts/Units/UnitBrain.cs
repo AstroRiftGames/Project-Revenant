@@ -23,12 +23,6 @@ public class UnitBrain : MonoBehaviour
     private bool _hasLoggedResolvedBlock;
     private bool _hasLoggedStatusBlock;
 
-    private enum BrainExecutionResult
-    {
-        NoOp,
-        Consumed
-    }
-
     private void Awake()
     {
         _unit = GetComponent<Unit>();
@@ -61,6 +55,7 @@ public class UnitBrain : MonoBehaviour
                _movement != null &&
                _targeting != null &&
                _unit.Action != null &&
+               _unit.LifecycleState == UnitLifecycleState.Alive &&
                _unit.IsAlive;
     }
 
@@ -71,29 +66,16 @@ public class UnitBrain : MonoBehaviour
 
     private void ExecuteDecision()
     {
-        if (ExecuteImmediateIntent() == BrainExecutionResult.Consumed)
+        if (TryResolveFearBehavior())
             return;
 
-        ExecuteCombatIntent();
-    }
-
-    private BrainExecutionResult ExecuteImmediateIntent()
-    {
-        if (TryResolveFearBehavior())
-            return BrainExecutionResult.Consumed;
-
-        if (TryMaintainSpacing())
-            return BrainExecutionResult.Consumed;
-
-        return BrainExecutionResult.NoOp;
-    }
-
-    private void ExecuteCombatIntent()
-    {
         if (TryUseSkillIntent())
             return;
 
-        ExecuteBasicActionIntent();
+        if (TryExecuteBasicActionIntent())
+            return;
+
+        ExecuteMovementIntent();
     }
 
     private bool TryUseSkillIntent()
@@ -105,24 +87,33 @@ public class UnitBrain : MonoBehaviour
         return true;
     }
 
-    private void ExecuteBasicActionIntent()
+    private bool TryExecuteBasicActionIntent()
     {
         if (_currentTarget == null)
-            return;
+            return false;
 
+        if (!_unit.Action.IsInRange(_unit, _currentTarget))
+            return false;
+
+        if (!_unit.Action.CanExecute(_unit, _currentTarget))
+            return false;
+
+        ExecuteBasicAction();
+        return true;
+    }
+
+    private void ExecuteMovementIntent()
+    {
         if (TryMoveToBasicActionRange())
             return;
 
-        if (!_unit.Action.IsInRange(_unit, _currentTarget))
+        if (ShouldRetargetAfterFailedMovement())
         {
             TryRetargetAfterFailedMovement();
             return;
         }
 
-        if (!_unit.Action.CanExecute(_unit, _currentTarget))
-            return;
-
-        ExecuteBasicAction();
+        TryMaintainSpacing();
     }
 
     private bool TryMoveToBasicActionRange()
@@ -149,6 +140,12 @@ public class UnitBrain : MonoBehaviour
 
         _currentTarget = alternateTarget;
         return true;
+    }
+
+    private bool ShouldRetargetAfterFailedMovement()
+    {
+        return _currentTarget != null &&
+               !_unit.Action.IsInRange(_unit, _currentTarget);
     }
 
     private void ExecuteBasicAction()

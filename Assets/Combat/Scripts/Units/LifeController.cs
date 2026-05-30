@@ -57,13 +57,13 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void TakeDamage(int amount, IUnit source = null)
     {
-        if (!IsAlive || amount <= 0)
+        if (!CanReceiveCombatLifeEffect() || amount <= 0)
             return;
 
         if (_statusEffectController != null && _statusEffectController.HasInvincibility)
             return;
 
-        if (source is Unit attacker && attacker.IsAlive && attacker != _unit)
+        if (source is Unit attacker && IsCombatAlive(attacker) && attacker != _unit)
         {
             LastAttacker = attacker;
             if (!_aggressors.Contains(attacker))
@@ -84,7 +84,7 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void Heal(int amount, IUnit source = null)
     {
-        if (!IsAlive || amount <= 0 || CurrentHealth >= MaxHealth)
+        if (!CanReceiveCombatLifeEffect() || amount <= 0 || CurrentHealth >= MaxHealth)
             return;
 
         int previousHealth = CurrentHealth;
@@ -97,9 +97,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public List<Unit> GetAliveAggressors()
     {
-        _aggressors.RemoveAll(aggressor => aggressor == null || !aggressor.IsAlive || !aggressor.gameObject.activeInHierarchy);
+        _aggressors.RemoveAll(aggressor => !IsActiveCombatAlive(aggressor));
 
-        if (LastAttacker != null && (!LastAttacker.IsAlive || !LastAttacker.gameObject.activeInHierarchy))
+        if (LastAttacker != null && !IsActiveCombatAlive(LastAttacker))
             LastAttacker = null;
 
         return new List<Unit>(_aggressors);
@@ -172,5 +172,22 @@ public class LifeController : MonoBehaviour, IDamageable
             return;
 
         RestoreLivingRuntimeState();
+    }
+
+    private bool CanReceiveCombatLifeEffect()
+    {
+        return IsAlive && LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private static bool IsCombatAlive(Unit unit)
+    {
+        return unit != null &&
+               unit.IsAlive &&
+               unit.LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private static bool IsActiveCombatAlive(Unit unit)
+    {
+        return IsCombatAlive(unit) && unit.gameObject.activeInHierarchy;
     }
 }

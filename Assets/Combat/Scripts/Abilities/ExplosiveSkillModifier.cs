@@ -52,7 +52,7 @@ public class ExplosiveSkillModifier : SkillModifier
             for (int unitIndex = 0; unitIndex < roomUnits.Count; unitIndex++)
             {
                 Unit candidate = roomUnits[unitIndex];
-                if (candidate == null || !candidate.IsAlive)
+                if (!IsCombatAliveUnit(candidate))
                     continue;
 
                 if (!SkillHitCollector.CanSkillHitUnit(context, candidate))

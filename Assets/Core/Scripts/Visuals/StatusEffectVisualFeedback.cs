@@ -141,7 +141,18 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         _lifeController ??= GetComponent<LifeController>();
         _recruitableUnitState ??= GetComponent<RecruitableUnitState>();
         _unitDeathHandler ??= GetComponent<UnitDeathHandler>();
-        _unitVisualMaterialController ??= GetComponent<UnitVisualMaterialController>() ?? gameObject.AddComponent<UnitVisualMaterialController>();
+        _unitVisualMaterialController ??= GetComponent<UnitVisualMaterialController>();
+        if (_unitVisualMaterialController == null)
+            _unitVisualMaterialController = AddMissingVisualMaterialController();
+    }
+
+    private UnitVisualMaterialController AddMissingVisualMaterialController()
+    {
+        Debug.LogWarning(
+            $"[{nameof(StatusEffectVisualFeedback)}] '{name}' is missing {nameof(UnitVisualMaterialController)}. " +
+            "It was auto-added for legacy prefab compatibility. Add it to the prefab to keep visual feedback setup explicit.",
+            this);
+        return gameObject.AddComponent<UnitVisualMaterialController>();
     }
 
     private void ForceRefreshVisualState()

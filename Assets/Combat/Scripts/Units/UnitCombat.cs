@@ -88,8 +88,14 @@ public class UnitCombat : MonoBehaviour
 
     public bool IsBasicActionTargetInRange(Unit target)
     {
-        if (_unit == null || target == null || !target.gameObject.activeInHierarchy || !target.IsAlive)
+        if (!CanOwnerParticipateInCombat() ||
+            target == null ||
+            !target.gameObject.activeInHierarchy ||
+            !target.IsAlive ||
+            target.LifecycleState != UnitLifecycleState.Alive)
+        {
             return false;
+        }
 
         return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
@@ -160,7 +166,15 @@ public class UnitCombat : MonoBehaviour
 
     private bool CanOwnerUseBasicAction()
     {
-        return _unit == null || _unit.StatusEffects == null || _unit.StatusEffects.CanAttack;
+        return CanOwnerParticipateInCombat() &&
+               (_unit.StatusEffects == null || _unit.StatusEffects.CanAttack);
+    }
+
+    private bool CanOwnerParticipateInCombat()
+    {
+        return _unit != null &&
+               _unit.IsAlive &&
+               _unit.LifecycleState == UnitLifecycleState.Alive;
     }
 
     private bool IsBasicActionReady()

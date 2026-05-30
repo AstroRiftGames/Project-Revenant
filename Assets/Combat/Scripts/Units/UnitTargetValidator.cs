@@ -46,7 +46,7 @@ public static class UnitTargetValidator
         if (policy.RequireActive && !target.gameObject.activeInHierarchy)
             return false;
 
-        if (!policy.AllowDead && !target.IsAlive)
+        if (!target.IsAlive)
             return false;
 
         if (policy.RequireSameRoom && !AreUnitsInSameResolvedRoom(source, target))
@@ -123,9 +123,7 @@ public static class UnitTargetValidator
         if (!TryGetLifecycleState(source, out UnitLifecycleState lifecycleState))
             return false;
 
-        return lifecycleState != UnitLifecycleState.Removed &&
-               lifecycleState != UnitLifecycleState.Recruitable &&
-               lifecycleState != UnitLifecycleState.Dead;
+        return lifecycleState == UnitLifecycleState.Alive;
     }
 
     private static bool IsValidTargetLifecycle(Unit target)
@@ -133,8 +131,7 @@ public static class UnitTargetValidator
         if (!TryGetLifecycleState(target, out UnitLifecycleState lifecycleState))
             return false;
 
-        return lifecycleState != UnitLifecycleState.Removed &&
-               lifecycleState != UnitLifecycleState.Recruitable;
+        return lifecycleState == UnitLifecycleState.Alive;
     }
 
     private static bool TryGetLifecycleState(Unit unit, out UnitLifecycleState lifecycleState)

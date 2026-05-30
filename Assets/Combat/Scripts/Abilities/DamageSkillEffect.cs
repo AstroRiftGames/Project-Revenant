@@ -9,7 +9,7 @@ public class DamageSkillEffect : SkillEffect
     {
         Unit hitUnit = ResolveTargetUnit(impact);
         Unit caster = context != null ? context.Caster : null;
-        if (caster == null || hitUnit == null || !hitUnit.IsAlive)
+        if (caster == null || !IsCombatAliveUnit(hitUnit))
             return false;
 
         int damageAmount = Mathf.Max(0, _damage);

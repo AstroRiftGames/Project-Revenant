@@ -15,7 +15,18 @@ public class DamageBlinkView : MonoBehaviour
     private void Awake()
     {
         _lifeController = GetComponent<LifeController>();
-        _visualMaterialController = GetComponent<UnitVisualMaterialController>() ?? gameObject.AddComponent<UnitVisualMaterialController>();
+        _visualMaterialController = GetComponent<UnitVisualMaterialController>();
+        if (_visualMaterialController == null)
+            _visualMaterialController = AddMissingVisualMaterialController();
+    }
+
+    private UnitVisualMaterialController AddMissingVisualMaterialController()
+    {
+        Debug.LogWarning(
+            $"[{nameof(DamageBlinkView)}] '{name}' is missing {nameof(UnitVisualMaterialController)}. " +
+            "It was auto-added for legacy prefab compatibility. Add it to the prefab to keep damage blink setup explicit.",
+            this);
+        return gameObject.AddComponent<UnitVisualMaterialController>();
     }
 
     private void OnEnable()
