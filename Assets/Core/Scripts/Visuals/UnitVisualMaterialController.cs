@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum UnitVisualMaterialState
@@ -17,6 +18,15 @@ public enum UnitVisualMaterialState
 [DisallowMultipleComponent]
 public class UnitVisualMaterialController : MonoBehaviour
 {
+    private const string RuntimeOverlayObjectSuffix = "_VisualFeedbackOverlay";
+
+    private sealed class RendererBinding
+    {
+        public SpriteRenderer SourceRenderer;
+        public SpriteRenderer OverlayRenderer;
+        public bool RuntimeOverlay;
+    }
+
     [System.Serializable]
     private struct VisualStateBinding
     {
@@ -42,6 +52,8 @@ public class UnitVisualMaterialController : MonoBehaviour
     [Header("Renderers")]
     [SerializeField] private SpriteRenderer _sourceRenderer;
     [SerializeField] private SpriteRenderer _overlayRenderer;
+    [SerializeField] private SpriteRenderer[] _sourceRenderers;
+    [SerializeField] private SpriteRenderer[] _overlayRenderers;
     [SerializeField] [Min(0)] private int _overlaySortingOrderOffset = 1;
 
     [Header("Blink")]
@@ -68,6 +80,7 @@ public class UnitVisualMaterialController : MonoBehaviour
     private int _overlayAmountPropertyId;
     private UnitVisualMaterialState _baseState;
     private bool _blinkOverrideActive;
+    private readonly List<RendererBinding> _rendererBindings = new();
     private bool _hasLoggedMissingOverlayWarning;
     private bool _hasLoggedMissingMaterialWarning;
     private bool _hasLoggedResolvedRenderers;
@@ -101,6 +114,11 @@ public class UnitVisualMaterialController : MonoBehaviour
     {
         _blinkOverrideActive = false;
         DisableOverlay();
+    }
+
+    private void OnDestroy()
+    {
+        DestroyRuntimeOverlayRenderers();
     }
 
     private void OnValidate()
@@ -146,7 +164,7 @@ public class UnitVisualMaterialController : MonoBehaviour
             DisableOverlay();
             return;
         }
-        SyncOverlayRenderer();
+        SyncOverlayRenderers();
 
         VisualStateBinding binding = ResolveBinding(_baseState);
         bool shouldRenderOverlay = _blinkOverrideActive || binding.OverlayAmount > 0f;
@@ -165,16 +183,25 @@ public class UnitVisualMaterialController : MonoBehaviour
             return;
         }
 
-        _overlayRenderer.GetPropertyBlock(_propertyBlock);
+        for (int i = 0; i < _rendererBindings.Count; i++)
+            ApplyOverlayProperties(_rendererBindings[i].OverlayRenderer, binding);
+
+        LogDebug($"[UnitVisualMaterialController] '{name}' applied state={_baseState}, blink={_blinkOverrideActive}, overlay=on.");
+    }
+
+    private void ApplyOverlayProperties(SpriteRenderer overlayRenderer, VisualStateBinding binding)
+    {
+        if (overlayRenderer == null)
+            return;
+
+        overlayRenderer.GetPropertyBlock(_propertyBlock);
         _propertyBlock.Clear();
         _propertyBlock.SetColor(_overlayColorPropertyId, binding.OverlayColor);
         _propertyBlock.SetFloat(_overlayAmountPropertyId, binding.OverlayAmount);
         _propertyBlock.SetColor(_flashColorPropertyId, _blinkColor);
         _propertyBlock.SetFloat(_flashAmountPropertyId, _blinkOverrideActive ? _blinkAmount : 0f);
-        _overlayRenderer.SetPropertyBlock(_propertyBlock);
-        _overlayRenderer.enabled = true;
-
-        LogDebug($"[UnitVisualMaterialController] '{name}' applied state={_baseState}, blink={_blinkOverrideActive}, overlay=on.");
+        overlayRenderer.SetPropertyBlock(_propertyBlock);
+        overlayRenderer.enabled = true;
     }
 
     private VisualStateBinding ResolveBinding(UnitVisualMaterialState state)
@@ -205,19 +232,20 @@ public class UnitVisualMaterialController : MonoBehaviour
         if (_overlayRenderer == null)
             _overlayRenderer = ResolveOverlayRenderer();
 
+        RebuildRendererBindings();
+
         if (_debugLogs && !_hasLoggedResolvedRenderers)
         {
             _hasLoggedResolvedRenderers = true;
-            string sourceName = _sourceRenderer != null ? _sourceRenderer.name : "NULL";
-            string overlayName = _overlayRenderer != null ? _overlayRenderer.name : "NULL";
-            Debug.Log($"[UnitVisualMaterialController] '{name}' sourceRenderer={sourceName}, overlayRenderer={overlayName}.", this);
+            Debug.Log($"[UnitVisualMaterialController] '{name}' renderer bindings: {FormatRendererBindingsForDebug()}.", this);
         }
     }
 
     private void AutoAssignSafeRendererReferences()
     {
         _sourceRenderer ??= GetComponent<SpriteRenderer>();
-        _overlayRenderer ??= ResolveOverlayRenderer();
+        if (_sourceRenderer != null)
+            _overlayRenderer ??= ResolveOverlayRenderer();
     }
 
     private SpriteRenderer ResolveOverlayRenderer()
@@ -237,50 +265,131 @@ public class UnitVisualMaterialController : MonoBehaviour
         return null;
     }
 
+    private void RebuildRendererBindings()
+    {
+        _rendererBindings.Clear();
+
+        if (HasExplicitSourceRendererCollection())
+        {
+            for (int i = 0; i < _sourceRenderers.Length; i++)
+            {
+                SpriteRenderer sourceRenderer = _sourceRenderers[i];
+                SpriteRenderer overlayRenderer = ResolveOverlayRendererForSource(i, sourceRenderer, createRuntimeOverlay: true);
+                AddRendererBinding(sourceRenderer, overlayRenderer, overlayRenderer != null && IsRuntimeOverlayRenderer(sourceRenderer, overlayRenderer));
+            }
+
+            return;
+        }
+
+        AddRendererBinding(_sourceRenderer, _overlayRenderer, runtimeOverlay: false);
+    }
+
+    private bool HasExplicitSourceRendererCollection()
+    {
+        if (_sourceRenderers == null)
+            return false;
+
+        for (int i = 0; i < _sourceRenderers.Length; i++)
+        {
+            if (_sourceRenderers[i] != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private SpriteRenderer ResolveOverlayRendererForSource(int index, SpriteRenderer sourceRenderer, bool createRuntimeOverlay)
+    {
+        if (sourceRenderer == null)
+            return null;
+
+        if (_overlayRenderers != null && index >= 0 && index < _overlayRenderers.Length)
+        {
+            SpriteRenderer configuredOverlay = _overlayRenderers[index];
+            if (configuredOverlay != null && !ReferenceEquals(configuredOverlay, sourceRenderer))
+                return configuredOverlay;
+        }
+
+        if (ReferenceEquals(sourceRenderer, _sourceRenderer) && _overlayRenderer != null && !ReferenceEquals(_overlayRenderer, sourceRenderer))
+            return _overlayRenderer;
+
+        if (!createRuntimeOverlay)
+            return null;
+
+        return ResolveExistingRuntimeOverlayRenderer(sourceRenderer) ?? CreateRuntimeOverlayRenderer(sourceRenderer);
+    }
+
+    private void AddRendererBinding(SpriteRenderer sourceRenderer, SpriteRenderer overlayRenderer, bool runtimeOverlay)
+    {
+        if (sourceRenderer == null || overlayRenderer == null || ReferenceEquals(sourceRenderer, overlayRenderer))
+            return;
+
+        _rendererBindings.Add(new RendererBinding
+        {
+            SourceRenderer = sourceRenderer,
+            OverlayRenderer = overlayRenderer,
+            RuntimeOverlay = runtimeOverlay
+        });
+    }
+
+    private SpriteRenderer ResolveExistingRuntimeOverlayRenderer(SpriteRenderer sourceRenderer)
+    {
+        if (sourceRenderer == null)
+            return null;
+
+        Transform overlayTransform = sourceRenderer.transform.Find($"{sourceRenderer.name}{RuntimeOverlayObjectSuffix}");
+        return overlayTransform != null ? overlayTransform.GetComponent<SpriteRenderer>() : null;
+    }
+
+    private SpriteRenderer CreateRuntimeOverlayRenderer(SpriteRenderer sourceRenderer)
+    {
+        if (sourceRenderer == null)
+            return null;
+
+        GameObject overlayObject = new($"{sourceRenderer.name}{RuntimeOverlayObjectSuffix}");
+        overlayObject.hideFlags = HideFlags.DontSave;
+        overlayObject.transform.SetParent(sourceRenderer.transform, false);
+        overlayObject.transform.localPosition = Vector3.zero;
+        overlayObject.transform.localRotation = Quaternion.identity;
+        overlayObject.transform.localScale = Vector3.one;
+
+        SpriteRenderer overlayRenderer = overlayObject.AddComponent<SpriteRenderer>();
+        overlayRenderer.enabled = false;
+        overlayRenderer.sharedMaterial = _unitVisualMaterial;
+        return overlayRenderer;
+    }
+
+    private bool IsRuntimeOverlayRenderer(SpriteRenderer sourceRenderer, SpriteRenderer overlayRenderer)
+    {
+        if (sourceRenderer == null || overlayRenderer == null)
+            return false;
+
+        return overlayRenderer.transform.parent == sourceRenderer.transform &&
+               overlayRenderer.name == $"{sourceRenderer.name}{RuntimeOverlayObjectSuffix}";
+    }
+
     private bool CanRenderOverlay()
     {
-        if (_sourceRenderer == null)
+        if (_rendererBindings.Count > 0)
         {
-            if (!_hasLoggedMissingOverlayWarning)
-            {
-                Debug.LogWarning($"[UnitVisualMaterialController] '{name}' has no source SpriteRenderer assigned. Visual feedback disabled.", this);
-                _hasLoggedMissingOverlayWarning = true;
-            }
-
-            return false;
+            _hasLoggedMissingOverlayWarning = false;
+            return true;
         }
 
-        if (_overlayRenderer == null)
+        if (!_hasLoggedMissingOverlayWarning)
         {
-            if (!_hasLoggedMissingOverlayWarning)
-            {
-                Debug.LogWarning($"[UnitVisualMaterialController] '{name}' has no overlay SpriteRenderer assigned. Visual feedback disabled and source renderer will remain untouched.", this);
-                _hasLoggedMissingOverlayWarning = true;
-            }
-
-            return false;
+            Debug.LogWarning(
+                $"[UnitVisualMaterialController] '{name}' has no valid source/overlay SpriteRenderer pair assigned. " +
+                "Visual feedback disabled and source renderers will remain untouched.",
+                this);
+            _hasLoggedMissingOverlayWarning = true;
         }
 
-        if (ReferenceEquals(_overlayRenderer, _sourceRenderer))
-        {
-            if (!_hasLoggedMissingOverlayWarning)
-            {
-                Debug.LogWarning($"[UnitVisualMaterialController] '{name}' overlay renderer matches source renderer. Visual feedback disabled to keep source renderer untouched.", this);
-                _hasLoggedMissingOverlayWarning = true;
-            }
-
-            return false;
-        }
-
-        _hasLoggedMissingOverlayWarning = false;
-        return true;
+        return false;
     }
 
     private void EnsureOverlayMaterial()
     {
-        if (_overlayRenderer == null)
-            return;
-
         if (_unitVisualMaterial == null)
         {
             if (!_hasLoggedMissingMaterialWarning)
@@ -294,42 +403,60 @@ public class UnitVisualMaterialController : MonoBehaviour
 
         _hasLoggedMissingMaterialWarning = false;
 
-        if (_overlayRenderer.sharedMaterial != _unitVisualMaterial)
-            _overlayRenderer.sharedMaterial = _unitVisualMaterial;
+        for (int i = 0; i < _rendererBindings.Count; i++)
+        {
+            SpriteRenderer overlayRenderer = _rendererBindings[i].OverlayRenderer;
+            if (overlayRenderer != null && overlayRenderer.sharedMaterial != _unitVisualMaterial)
+                overlayRenderer.sharedMaterial = _unitVisualMaterial;
+        }
     }
 
-    private void SyncOverlayRenderer()
+    private void SyncOverlayRenderers()
     {
-        if (_sourceRenderer == null || _overlayRenderer == null)
+        for (int i = 0; i < _rendererBindings.Count; i++)
+            SyncOverlayRenderer(_rendererBindings[i].SourceRenderer, _rendererBindings[i].OverlayRenderer);
+    }
+
+    private void SyncOverlayRenderer(SpriteRenderer sourceRenderer, SpriteRenderer overlayRenderer)
+    {
+        if (sourceRenderer == null || overlayRenderer == null)
             return;
 
-        _overlayRenderer.sprite = _sourceRenderer.sprite;
-        _overlayRenderer.flipX = _sourceRenderer.flipX;
-        _overlayRenderer.flipY = _sourceRenderer.flipY;
-        _overlayRenderer.drawMode = _sourceRenderer.drawMode;
-        _overlayRenderer.size = _sourceRenderer.size;
-        _overlayRenderer.tileMode = _sourceRenderer.tileMode;
-        _overlayRenderer.adaptiveModeThreshold = _sourceRenderer.adaptiveModeThreshold;
-        _overlayRenderer.maskInteraction = _sourceRenderer.maskInteraction;
-        _overlayRenderer.spriteSortPoint = _sourceRenderer.spriteSortPoint;
-        _overlayRenderer.sortingLayerID = _sourceRenderer.sortingLayerID;
-        _overlayRenderer.sortingOrder = _sourceRenderer.sortingOrder + _overlaySortingOrderOffset;
+        overlayRenderer.sprite = sourceRenderer.sprite;
+        overlayRenderer.flipX = sourceRenderer.flipX;
+        overlayRenderer.flipY = sourceRenderer.flipY;
+        overlayRenderer.drawMode = sourceRenderer.drawMode;
+        overlayRenderer.size = sourceRenderer.size;
+        overlayRenderer.tileMode = sourceRenderer.tileMode;
+        overlayRenderer.adaptiveModeThreshold = sourceRenderer.adaptiveModeThreshold;
+        overlayRenderer.maskInteraction = sourceRenderer.maskInteraction;
+        overlayRenderer.spriteSortPoint = sourceRenderer.spriteSortPoint;
+        overlayRenderer.sortingLayerID = sourceRenderer.sortingLayerID;
+        overlayRenderer.sortingOrder = sourceRenderer.sortingOrder + _overlaySortingOrderOffset;
     }
 
     private void DisableOverlay(bool clearPropertyBlock = false)
     {
-        if (_overlayRenderer == null)
+        if (_rendererBindings.Count == 0)
             return;
 
-        if (clearPropertyBlock)
+        for (int i = 0; i < _rendererBindings.Count; i++)
         {
-            EnsurePropertyBlock();
-            _overlayRenderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.Clear();
-            _overlayRenderer.SetPropertyBlock(_propertyBlock);
+            SpriteRenderer overlayRenderer = _rendererBindings[i].OverlayRenderer;
+            if (overlayRenderer == null)
+                continue;
+
+            if (clearPropertyBlock)
+            {
+                EnsurePropertyBlock();
+                overlayRenderer.GetPropertyBlock(_propertyBlock);
+                _propertyBlock.Clear();
+                overlayRenderer.SetPropertyBlock(_propertyBlock);
+            }
+
+            overlayRenderer.enabled = false;
         }
 
-        _overlayRenderer.enabled = false;
         LogDebug($"[UnitVisualMaterialController] '{name}' overlay disabled.");
     }
 
@@ -338,7 +465,42 @@ public class UnitVisualMaterialController : MonoBehaviour
         if (!CanRenderOverlay())
             return;
 
-        SyncOverlayRenderer();
+        SyncOverlayRenderers();
+    }
+
+    private void DestroyRuntimeOverlayRenderers()
+    {
+        for (int i = 0; i < _rendererBindings.Count; i++)
+        {
+            RendererBinding binding = _rendererBindings[i];
+            if (!binding.RuntimeOverlay || binding.OverlayRenderer == null)
+                continue;
+
+            GameObject overlayObject = binding.OverlayRenderer.gameObject;
+            if (Application.isPlaying)
+                Destroy(overlayObject);
+            else
+                DestroyImmediate(overlayObject);
+        }
+
+        _rendererBindings.Clear();
+    }
+
+    private string FormatRendererBindingsForDebug()
+    {
+        if (_rendererBindings.Count == 0)
+            return "none";
+
+        List<string> entries = new(_rendererBindings.Count);
+        for (int i = 0; i < _rendererBindings.Count; i++)
+        {
+            RendererBinding binding = _rendererBindings[i];
+            string sourceName = binding.SourceRenderer != null ? binding.SourceRenderer.name : "NULL";
+            string overlayName = binding.OverlayRenderer != null ? binding.OverlayRenderer.name : "NULL";
+            entries.Add($"{sourceName}->{overlayName}");
+        }
+
+        return string.Join(", ", entries);
     }
 
     private void EnsureDefaultBindings(bool forceReset = false)

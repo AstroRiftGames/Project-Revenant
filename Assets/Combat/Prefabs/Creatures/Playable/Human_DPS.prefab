@@ -449,7 +449,7 @@ GameObject:
   - component: {fileID: 8606000000000000023}
   - component: {fileID: 8606000000000000024}
   m_Layer: 10
-  m_Name: HumanUnit
+  m_Name: Human_DPS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -486,7 +486,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionIndicator: {fileID: 0}
-  _unitData: {fileID: 11400000, guid: 562dbf9170cb41f4e9c65b5f85e9c233, type: 2}
+  _unitData: {fileID: 11400000, guid: 7d2a6f8b9c104f31a1b2c3d4e5f10101, type: 2}
   _actionSource: {fileID: 0}
 --- !u!114 &8606000000000000002
 MonoBehaviour:
