@@ -28,7 +28,7 @@ MonoBehaviour:
   manaCostToAbsorbSoul: 1
   skill: {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1410, type: 2}
   stats:
-    maxHealth: 100
+    maxHealth: 150
     attackDamage: 2
     attackCooldown: 0.75
     attackRangeInCells: 1

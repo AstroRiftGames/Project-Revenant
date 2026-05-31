@@ -44,6 +44,7 @@ public class KnockbackSkillEffect : SkillEffect
             Vector3Int blockedCell = currentCell;
             bool hitBlocker = false;
 
+            Vector3Int previousCell = currentCell;
             for (int i = 1; i <= knockbackCells; i++)
             {
                 Vector3Int intermediateCell = currentCell + new Vector3Int(
@@ -51,7 +52,7 @@ public class KnockbackSkillEffect : SkillEffect
                     stepY * i,
                     0);
 
-                if (!grid.IsCellEnterable(intermediateCell, target))
+                if (!grid.IsStepAllowed(previousCell, intermediateCell, target))
                 {
                     blockedCell = intermediateCell;
                     hitBlocker = true;
@@ -59,6 +60,7 @@ public class KnockbackSkillEffect : SkillEffect
                 }
 
                 resolvedCell = intermediateCell;
+                previousCell = intermediateCell;
             }
 
             if (movement != null)

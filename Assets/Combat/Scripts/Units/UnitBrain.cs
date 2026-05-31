@@ -16,7 +16,7 @@ public class UnitBrain : MonoBehaviour
     private TargetingStrategy _targeting;
     private SkillCaster _skillCaster;
     private UnitAnimationController _animationController;
-    private Unit _currentTarget;
+    private Unit _basicActionTargetUnit;
     private UnitOperationalState _lastOperationalState = UnitOperationalState.Idle;
     private bool _hasLoggedMissingControllerBlock;
     private bool _hasLoggedDeploymentBlock;
@@ -61,7 +61,7 @@ public class UnitBrain : MonoBehaviour
 
     private void UpdateDecisionState()
     {
-        _currentTarget = _targeting.SelectBasicActionTarget(_unit, _unit.Action, _currentTarget);
+        _basicActionTargetUnit = _targeting.SelectBasicActionTarget(_unit, _unit.Action, _basicActionTargetUnit);
     }
 
     private void ExecuteDecision()
@@ -80,7 +80,7 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryUseSkillIntent()
     {
-        if (_skillCaster == null || !_skillCaster.IsSkillReady || !_skillCaster.TryUse(_currentTarget))
+        if (_skillCaster == null || !_skillCaster.IsSkillReady || !_skillCaster.TryUse(_basicActionTargetUnit))
             return false;
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
@@ -89,13 +89,13 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryExecuteBasicActionIntent()
     {
-        if (_currentTarget == null)
+        if (_basicActionTargetUnit == null)
             return false;
 
-        if (!_unit.Action.IsInRange(_unit, _currentTarget))
+        if (!_unit.Action.IsInRange(_unit, _basicActionTargetUnit))
             return false;
 
-        if (!_unit.Action.CanExecute(_unit, _currentTarget))
+        if (!_unit.Action.CanExecute(_unit, _basicActionTargetUnit))
             return false;
 
         ExecuteBasicAction();
@@ -107,56 +107,49 @@ public class UnitBrain : MonoBehaviour
         if (TryMoveToBasicActionRange())
             return;
 
-        if (ShouldRetargetAfterFailedMovement())
-        {
-            TryRetargetAfterFailedMovement();
-            return;
-        }
-
         TryMaintainSpacing();
     }
 
     private bool TryMoveToBasicActionRange()
     {
-        if (_currentTarget == null)
+        Unit moveTargetUnit = ResolveMoveTargetUnit();
+        if (moveTargetUnit == null)
             return false;
 
-        if (_unit.Action.IsInRange(_unit, _currentTarget))
+        if (_unit.Action.IsInRange(_unit, moveTargetUnit))
             return false;
 
         int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-        return _movement.MoveTowards(_currentTarget, preferredDistance);
+        return _movement.MoveTowards(moveTargetUnit, preferredDistance);
     }
 
-    private bool TryRetargetAfterFailedMovement()
+    private Unit ResolveMoveTargetUnit()
     {
-        if (_targeting == null || _currentTarget == null)
-            return false;
+        if (!CanResolveMoveTargetUnit())
+            return null;
 
-        Unit failedTarget = _currentTarget;
-        Unit alternateTarget = _targeting.SelectAlternativeBasicActionTarget(_unit, _unit.Action, failedTarget);
-        if (alternateTarget == null || ReferenceEquals(alternateTarget, failedTarget))
-            return false;
-
-        _currentTarget = alternateTarget;
-        return true;
+        return SpacingEvaluator.GetNearestVisibleHostile(_unit);
     }
 
-    private bool ShouldRetargetAfterFailedMovement()
+    private bool CanResolveMoveTargetUnit()
     {
-        return _currentTarget != null &&
-               !_unit.Action.IsInRange(_unit, _currentTarget);
+        return _unit != null &&
+               _unit.IsAlive &&
+               _unit.LifecycleState == UnitLifecycleState.Alive &&
+               _unit.RoomContext != null &&
+               _unit.RoomContext.RoomGrid != null &&
+               (_unit.StatusEffects == null || _unit.StatusEffects.CanMoveTowardTarget);
     }
 
     private void ExecuteBasicAction()
     {
-        _animationController?.SetAttackTarget(_currentTarget.Position);
+        _animationController?.SetAttackTarget(_basicActionTargetUnit.Position);
 
-        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_currentTarget)}.");
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_basicActionTargetUnit)}.");
         _unit.BeginBasicActionExecution();
         try
         {
-            _unit.Action.Execute(_unit, _currentTarget);
+            _unit.Action.Execute(_unit, _basicActionTargetUnit);
         }
         finally
         {
@@ -177,7 +170,6 @@ public class UnitBrain : MonoBehaviour
         if (nearestThreat == null)
             return true;
 
-        _currentTarget = nearestThreat;
         _movement.MoveAway(nearestThreat, FearDesiredDistanceInCells);
         return true;
     }
@@ -185,7 +177,7 @@ public class UnitBrain : MonoBehaviour
     private bool TryMaintainSpacing()
     {
         int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-        Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _currentTarget);
+        Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _basicActionTargetUnit);
         return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
     }
 

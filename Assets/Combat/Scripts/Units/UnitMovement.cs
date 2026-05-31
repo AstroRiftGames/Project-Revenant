@@ -22,8 +22,8 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private Vector2 _currentMovementDirection;
     
     private Vector3Int _stepOriginCell;
-    private Vector3Int _reservedDestinationCell;
-    private bool _hasReservedDestination;
+    private Vector3Int _reservedNextPathCell;
+    private bool _hasReservedNextPathCell;
     
     [SerializeField] private float _softBlockRetryDelay = 0.1f;
     [SerializeField] private float _hardBlockRetryDelay = 0.3f;
@@ -90,7 +90,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     public void SetGrid(RoomGrid grid)
     {
         bool gridChanged = !ReferenceEquals(_grid, grid);
-        bool requiresRuntimeReset = gridChanged || _hasActiveStep || _hasReservedDestination || _isMoving;
+        bool requiresRuntimeReset = gridChanged || _hasActiveStep || _hasReservedNextPathCell || _isMoving;
         if (requiresRuntimeReset)
             StopMovementAndReleaseReservation(snapToCurrentCell: false, invalidatePlanner: true);
         else
@@ -136,8 +136,8 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         }
 
         _stepOriginCell = originCell;
-        _reservedDestinationCell = destinationCell;
-        _hasReservedDestination = true;
+        _reservedNextPathCell = destinationCell;
+        _hasReservedNextPathCell = true;
 
         BeginVisualStep(originCell, destinationCell);
         return true;
@@ -153,7 +153,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (IsWithinRange(targetUnit, rangeInCells))
         {
-            Debug.Log($"[UnitMovement] {name} - DesiredCellBlockedByEnemy_AlreadyInRange: {targetUnit.name}");
+            Debug.Log($"[UnitMovement] {name} - MoveTargetAlreadyInRange: {targetUnit.name}");
             return false;
         }
 
@@ -482,7 +482,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         if (invalidatePlanner)
             Planner.InvalidatePathCache();
 
-        ReleaseActiveReservation();
+        ReleaseReservedNextPathCell();
         ClearActiveStepCells();
         ResetVisualStepRuntime();
 
@@ -490,12 +490,12 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             transform.position = _grid.CellToWorld(_currentCell);
     }
 
-    private void ReleaseActiveReservation()
+    private void ReleaseReservedNextPathCell()
     {
-        if (_hasReservedDestination)
+        if (_hasReservedNextPathCell)
             _grid?.OccupancyService.ReleaseReservation(_unit);
 
-        _hasReservedDestination = false;
+        _hasReservedNextPathCell = false;
     }
 
     private void ResetVisualStepRuntime()
@@ -509,8 +509,8 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     private void ClearActiveStepCells()
     {
         _stepOriginCell = default;
-        _reservedDestinationCell = default;
-        _hasReservedDestination = false;
+        _reservedNextPathCell = default;
+        _hasReservedNextPathCell = false;
     }
 
     private bool RelocateToCellInternal(Vector3Int cell)
@@ -638,8 +638,14 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private void UpdateStepPresentation()
     {
-        if (!_isMoving || !_hasActiveStep || _grid == null)
+        if (!_isMoving || !_hasActiveStep)
             return;
+
+        if (!CanContinueActiveMovement())
+        {
+            StopMovementAndReleaseReservation(snapToCurrentCell: true, invalidatePlanner: true);
+            return;
+        }
 
         float stepDuration = Mathf.Max(0.0001f, 1f / Mathf.Max(0.01f, _unit.MoveSpeed));
         _stepProgress = Mathf.Min(1f, _stepProgress + (Time.deltaTime / stepDuration));
@@ -655,39 +661,45 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     private void CommitStepOccupancy()
     {
-        if (_grid == null)
-        {
-            ResetVisualStepRuntime();
-            return;
-        }
-
-        if (!_hasActiveStep || !_hasReservedDestination)
-        {
-            ResetVisualStepRuntime();
-            return;
-        }
-
-        bool reservationStillOwned = _grid.OccupancyService.IsCellReservedBy(_reservedDestinationCell, _unit);
-        bool destinationStillEnterable = _grid.IsCellEnterable(_reservedDestinationCell, _unit);
-        bool destinationStillAllowed = _grid.IsStepAllowed(_stepOriginCell, _reservedDestinationCell, _unit);
-        bool destinationOccupiedByOther = _grid.OccupancyService.IsOccupied(_reservedDestinationCell, _unit);
-
-        if (!reservationStillOwned || !destinationStillEnterable || !destinationStillAllowed || destinationOccupiedByOther)
+        if (!_hasActiveStep || !_hasReservedNextPathCell)
         {
             StopMovementAndReleaseReservation(snapToCurrentCell: true, invalidatePlanner: true);
             return;
         }
 
-        _grid.OccupancyService.MoveOccupant(_unit, _reservedDestinationCell);
-        _currentCell = _reservedDestinationCell;
+        if (!CanContinueActiveMovement())
+        {
+            StopMovementAndReleaseReservation(snapToCurrentCell: true, invalidatePlanner: true);
+            return;
+        }
+
+        bool nextPathCellReservationStillOwned = _grid.OccupancyService.IsCellReservedBy(_reservedNextPathCell, _unit);
+        bool nextPathCellStillEnterable = _grid.IsCellEnterable(_reservedNextPathCell, _unit);
+        bool nextPathCellStillAllowed = _grid.IsStepAllowed(_stepOriginCell, _reservedNextPathCell, _unit);
+        bool nextPathCellOccupiedByOther = _grid.OccupancyService.IsOccupied(_reservedNextPathCell, _unit);
+
+        if (!nextPathCellReservationStillOwned || !nextPathCellStillEnterable || !nextPathCellStillAllowed || nextPathCellOccupiedByOther)
+        {
+            StopMovementAndReleaseReservation(snapToCurrentCell: true, invalidatePlanner: true);
+            return;
+        }
+
+        _grid.OccupancyService.MoveOccupant(_unit, _reservedNextPathCell);
+        _currentCell = _reservedNextPathCell;
         _hasCurrentCell = true;
 
         _grid.OccupancyService.ReleaseReservation(_unit);
 
-        Debug.Log($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedDestinationCell}");
+        Debug.Log($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedNextPathCell}");
 
         ResetVisualStepRuntime();
         ClearActiveStepCells();
+    }
+
+    private bool CanContinueActiveMovement()
+    {
+        return CanMoveOwner() &&
+               (_unit.StatusEffects == null || _unit.StatusEffects.CanMove);
     }
 
     private void ReleaseCurrentOccupancy()

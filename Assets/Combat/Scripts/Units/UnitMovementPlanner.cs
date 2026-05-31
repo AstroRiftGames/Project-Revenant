@@ -44,30 +44,30 @@ public sealed class UnitMovementPlanner
             return UnitMovementDecision.NoMove(UnitMovementPlanReason.InvalidRequest, originCell, originCell);
 
         Vector3Int targetCell = grid.WorldToCell(targetUnit.Position);
-        Vector3Int desiredCell = targetCell;
+        Vector3Int desiredAttackCell = targetCell;
         int resolvedRange = Mathf.Max(0, rangeInCells);
 
-        if (!grid.TryFindWalkableCellInRange(targetCell, originCell, resolvedRange, movingUnit, out desiredCell))
-            return UnitMovementDecision.NoMove(UnitMovementPlanReason.NoDesiredCell, desiredCell, originCell);
+        if (!grid.TryFindWalkableCellInRange(targetCell, originCell, resolvedRange, movingUnit, out desiredAttackCell))
+            return UnitMovementDecision.NoMove(UnitMovementPlanReason.NoDesiredAttackCell, desiredAttackCell, originCell);
 
-        if (!TryResolveBlockedDesiredCell(
+        if (!TryResolveBlockedDesiredAttackCell(
                 grid,
                 movingUnit,
                 debugName,
-                desiredCell,
+                desiredAttackCell,
                 targetCell,
                 originCell,
                 resolvedRange,
                 targetUnit,
                 out Vector3Int resolvedCell))
         {
-            return UnitMovementDecision.NoMove(UnitMovementPlanReason.DesiredCellBlocked, desiredCell, originCell);
+            return UnitMovementDecision.NoMove(UnitMovementPlanReason.DesiredAttackCellBlocked, desiredAttackCell, originCell);
         }
 
-        if (resolvedCell != desiredCell)
+        if (resolvedCell != desiredAttackCell)
         {
-            desiredCell = resolvedCell;
-            Debug.Log($"[UnitMovement] {debugName} - DesiredCellResolved: original={targetCell} resolved={desiredCell}");
+            desiredAttackCell = resolvedCell;
+            Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellResolved: original={targetCell} resolved={desiredAttackCell}");
         }
 
         bool pathChanged = RefreshPathCache(
@@ -76,7 +76,7 @@ public sealed class UnitMovementPlanner
             debugName,
             originCell,
             targetCell,
-            desiredCell,
+            desiredAttackCell,
             targetUnit,
             resolvedRange);
 
@@ -85,14 +85,14 @@ public sealed class UnitMovementPlanner
         {
             return UnitMovementDecision.NoMove(
                 UnitMovementPlanReason.NoStep,
-                desiredCell,
+                desiredAttackCell,
                 nextStep.Step,
                 pathChanged,
                 nextStep.UsedFallback);
         }
 
         return UnitMovementDecision.Move(
-            desiredCell,
+            desiredAttackCell,
             nextStep.Step,
             UnitMovementPlanReason.MoveTowardsTarget,
             pathChanged,
@@ -129,23 +129,23 @@ public sealed class UnitMovementPlanner
             usedFallback: nextStep.UsedFallback);
     }
 
-    private bool TryResolveBlockedDesiredCell(
+    private bool TryResolveBlockedDesiredAttackCell(
         RoomGrid grid,
         Unit movingUnit,
         string debugName,
-        Vector3Int desiredCell,
+        Vector3Int desiredAttackCell,
         Vector3Int targetCell,
         Vector3Int originCell,
         int rangeInCells,
         Unit targetUnit,
         out Vector3Int resolvedCell)
     {
-        resolvedCell = desiredCell;
+        resolvedCell = desiredAttackCell;
 
-        if (grid.OccupancyService.IsCellBlockedFor(movingUnit, desiredCell))
+        if (grid.OccupancyService.IsCellBlockedFor(movingUnit, desiredAttackCell))
         {
-            IGridOccupant blockingOccupant = grid.OccupancyService.GetBlockingOccupant(desiredCell, movingUnit);
-            IGridOccupant reservingOccupant = grid.OccupancyService.GetReservingOccupant(desiredCell);
+            IGridOccupant blockingOccupant = grid.OccupancyService.GetBlockingOccupant(desiredAttackCell, movingUnit);
+            IGridOccupant reservingOccupant = grid.OccupancyService.GetReservingOccupant(desiredAttackCell);
 
             Unit blockerAsUnit = blockingOccupant as Unit;
             bool isEnemyBlocker = blockerAsUnit != null && movingUnit.IsHostileTo(blockerAsUnit);
@@ -160,23 +160,23 @@ public sealed class UnitMovementPlanner
 
             if (isEnemyBlocker)
             {
-                Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByEnemy: {desiredCell} blocker={blockerAsUnit?.name}");
+                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy: {desiredAttackCell} blocker={blockerAsUnit?.name}");
 
-                if (grid.TryFindAttackPositionFromBlockedDesiredCell(desiredCell, targetCell, originCell, rangeInCells, movingUnit, targetUnit, out Vector3Int attackPosition))
+                if (grid.TryFindAttackPositionFromBlockedDesiredCell(desiredAttackCell, targetCell, originCell, rangeInCells, movingUnit, targetUnit, out Vector3Int attackPosition))
                 {
                     if (attackPosition == originCell)
                     {
-                        Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByEnemy_AlreadyInRange: can attack from current position");
+                        Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AlreadyInRange: can attack from current position");
                         resolvedCell = originCell;
                         return true;
                     }
 
-                    Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
+                    Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
                     resolvedCell = attackPosition;
                     return true;
                 }
 
-                Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByEnemy_NoValidAttackPosition");
+                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_NoValidAttackPosition");
                 return false;
             }
 
@@ -184,16 +184,16 @@ public sealed class UnitMovementPlanner
             {
                 string blockType = isAllyBlocker ? "Occupied" : "Reserved";
                 string blockerName = isAllyBlocker ? blockerAsUnit?.name : (reservingOccupant as Unit)?.name;
-                Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByAlly_{blockType}: {desiredCell} blocker={blockerName}");
+                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_{blockType}: {desiredAttackCell} blocker={blockerName}");
 
-                if (grid.TryFindNearbyAlternativeCell(desiredCell, targetCell, originCell, rangeInCells, movingUnit, out Vector3Int alternativeCell))
+                if (grid.TryFindNearbyAlternativeCell(desiredAttackCell, targetCell, originCell, rangeInCells, movingUnit, out Vector3Int alternativeCell))
                 {
-                    Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByAlly_RepositionNearby: {alternativeCell}");
+                    Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_RepositionNearby: {alternativeCell}");
                     resolvedCell = alternativeCell;
                     return true;
                 }
 
-                Debug.Log($"[UnitMovement] {debugName} - DesiredCellBlockedByAlly_NoNearbyCellFound");
+                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_NoNearbyCellFound");
                 return false;
             }
         }
@@ -311,7 +311,7 @@ public sealed class UnitMovementPlanner
         string debugName,
         Vector3Int originCell,
         Vector3Int targetCell,
-        Vector3Int desiredCell,
+        Vector3Int desiredAttackCell,
         Unit targetUnit,
         int rangeInCells)
     {
@@ -356,10 +356,10 @@ public sealed class UnitMovementPlanner
         _nextRepathTime = Time.time + _repathInterval;
 
         _cachedPath.Clear();
-        _cachedPath.AddRange(FindPath(grid, movingUnit, originCell, desiredCell));
+        _cachedPath.AddRange(FindPath(grid, movingUnit, originCell, desiredAttackCell));
 
         if (_cachedPath.Count > 0)
-            Debug.Log($"[UnitMovement] {debugName} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredCell}");
+            Debug.Log($"[UnitMovement] {debugName} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredAttackCell}");
 
         return true;
     }

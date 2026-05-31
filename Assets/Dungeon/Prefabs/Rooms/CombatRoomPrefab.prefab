@@ -3014,7 +3014,7 @@ MonoBehaviour:
       - Prefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010201, type: 3}
         Weight: 10
     - CategoryName: DPS Range
-      Weight: 55
+      Weight: 0
       Prefabs:
       - Prefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010201, type: 3}
         Weight: 50

@@ -370,6 +370,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (_roomContext == null)
             return;
 
+        CancelActiveUnitMovementOnEncounterResolved();
         CleanupStatusEffectsOnEncounterResolved();
 
         if (_outcome != CombatRoomOutcome.PlayerVictory)
@@ -389,6 +390,20 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
                 continue;
 
             unit.StatusEffects.ClearCombatEffects();
+        }
+    }
+
+    private void CancelActiveUnitMovementOnEncounterResolved()
+    {
+        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit unit = roomUnits[i];
+            if (!IsValidCombatant(unit))
+                continue;
+
+            UnitMovement movement = unit.GetComponent<UnitMovement>();
+            movement?.InterruptMovement();
         }
     }
 

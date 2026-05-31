@@ -4,8 +4,8 @@ public enum UnitMovementPlanReason
 {
     None,
     InvalidRequest,
-    NoDesiredCell,
-    DesiredCellBlocked,
+    NoDesiredAttackCell,
+    DesiredAttackCellBlocked,
     NoStep,
     MoveTowardsTarget,
     MoveAwayFromTarget
@@ -15,14 +15,14 @@ public readonly struct UnitMovementDecision
 {
     public UnitMovementDecision(
         bool hasMove,
-        Vector3Int desiredCell,
+        Vector3Int desiredAttackCell,
         Vector3Int nextStepCell,
         UnitMovementPlanReason reason,
         bool pathChanged = false,
         bool usedFallback = false)
     {
         HasMove = hasMove;
-        DesiredCell = desiredCell;
+        DesiredAttackCell = desiredAttackCell;
         NextStepCell = nextStepCell;
         Reason = reason;
         PathChanged = pathChanged;
@@ -30,7 +30,7 @@ public readonly struct UnitMovementDecision
     }
 
     public bool HasMove { get; }
-    public Vector3Int DesiredCell { get; }
+    public Vector3Int DesiredAttackCell { get; }
     public Vector3Int NextStepCell { get; }
     public UnitMovementPlanReason Reason { get; }
     public bool PathChanged { get; }
@@ -38,14 +38,14 @@ public readonly struct UnitMovementDecision
 
     public static UnitMovementDecision NoMove(
         UnitMovementPlanReason reason,
-        Vector3Int desiredCell,
+        Vector3Int desiredAttackCell,
         Vector3Int nextStepCell,
         bool pathChanged = false,
         bool usedFallback = false)
     {
         return new UnitMovementDecision(
             hasMove: false,
-            desiredCell: desiredCell,
+            desiredAttackCell: desiredAttackCell,
             nextStepCell: nextStepCell,
             reason: reason,
             pathChanged: pathChanged,
@@ -53,7 +53,7 @@ public readonly struct UnitMovementDecision
     }
 
     public static UnitMovementDecision Move(
-        Vector3Int desiredCell,
+        Vector3Int desiredAttackCell,
         Vector3Int nextStepCell,
         UnitMovementPlanReason reason,
         bool pathChanged = false,
@@ -61,7 +61,7 @@ public readonly struct UnitMovementDecision
     {
         return new UnitMovementDecision(
             hasMove: true,
-            desiredCell: desiredCell,
+            desiredAttackCell: desiredAttackCell,
             nextStepCell: nextStepCell,
             reason: reason,
             pathChanged: pathChanged,
