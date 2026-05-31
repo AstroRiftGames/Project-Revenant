@@ -30,15 +30,6 @@ public class SkillData : ScriptableObject
     [SerializeField] private ImpactCenterMode _impactCenterMode = ImpactCenterMode.PrimaryTarget;
     [SerializeField] private SkillExecutionMode _skillExecutionMode = SkillExecutionMode.Instant;
 
-    // Legacy bridge only. This is not the final declarative model.
-    // Splash = legacy composite, future Direct + SplashModifier.
-    // PiercingLine = legacy composite, future Line + PiercingModifier.
-    // SpawnMinions = legacy incorrect, future SummonUnitSkillEffect anchored to SkillContext.
-#pragma warning disable CS0618
-    [FormerlySerializedAs("_shape")]
-    [SerializeField] private SkillShape _legacyShape = SkillShape.SingleTarget;
-#pragma warning restore CS0618
-
     #endregion
 
     #region Effects
@@ -158,39 +149,6 @@ public class SkillData : ScriptableObject
 
         validationError = null;
         return true;
-    }
-
-    private void OnValidate()
-    {
-        if (TryGetLegacyShapeMigrationWarning(out string warning))
-            Debug.LogWarning(warning, this);
-    }
-
-    private bool TryGetLegacyShapeMigrationWarning(out string warning)
-    {
-#pragma warning disable CS0618
-        switch (_legacyShape)
-        {
-            case SkillShape.Splash:
-                warning =
-                    $"Skill '{name}' still serializes legacy shape 'Splash'. Migrate it to ImpactPattern.Direct + SplashSkillModifier.";
-                return true;
-
-            case SkillShape.PiercingLine:
-                warning =
-                    $"Skill '{name}' still serializes legacy shape 'PiercingLine'. Migrate it to ImpactPattern.Line + PiercingSkillModifier.";
-                return true;
-
-            case SkillShape.SpawnMinions:
-                warning =
-                    $"Skill '{name}' still serializes legacy shape 'SpawnMinions'. Migrate it to SummonUnitSkillEffect + SummonAnchorMode.";
-                return true;
-
-            default:
-                warning = null;
-                return false;
-        }
-#pragma warning restore CS0618
     }
 
     private static bool IsValidPrimaryTargetRequirement(PrimaryTargetRequirement value)

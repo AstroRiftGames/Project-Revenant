@@ -11,22 +11,57 @@ public class DamageBlinkView : MonoBehaviour
     private LifeController _lifeController;
     private UnitVisualMaterialController _visualMaterialController;
     private Coroutine _blinkCoroutine;
+    private bool _hasLoggedMissingVisualMaterialController;
 
     private void Awake()
     {
         _lifeController = GetComponent<LifeController>();
-        _visualMaterialController = GetComponent<UnitVisualMaterialController>();
-        if (_visualMaterialController == null)
-            _visualMaterialController = AddMissingVisualMaterialController();
+        _visualMaterialController = ResolveVisualMaterialController();
     }
 
-    private UnitVisualMaterialController AddMissingVisualMaterialController()
+    private UnitVisualMaterialController ResolveVisualMaterialController()
     {
+        if (TryGetComponent(out UnitVisualMaterialController visualMaterialController))
+            return visualMaterialController;
+
+        if (_hasLoggedMissingVisualMaterialController)
+            return null;
+
         Debug.LogWarning(
-            $"[{nameof(DamageBlinkView)}] '{name}' is missing {nameof(UnitVisualMaterialController)}. " +
-            "It was auto-added for legacy prefab compatibility. Add it to the prefab to keep damage blink setup explicit.",
+            $"[{nameof(DamageBlinkView)}] Missing visual authoring component '{nameof(UnitVisualMaterialController)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Damage blink feedback may degrade. Add it to the prefab root manually.",
             this);
-        return gameObject.AddComponent<UnitVisualMaterialController>();
+        _hasLoggedMissingVisualMaterialController = true;
+        return null;
+    }
+
+    private string ResolveScenePath()
+    {
+        var scene = gameObject.scene;
+        if (!scene.IsValid())
+            return "<invalid scene>";
+
+        if (!string.IsNullOrWhiteSpace(scene.path))
+            return scene.path;
+
+        return !string.IsNullOrWhiteSpace(scene.name) ? scene.name : "<runtime scene>";
+    }
+
+    private static string BuildHierarchyPath(Transform target)
+    {
+        if (target == null)
+            return "<missing transform>";
+
+        string path = target.name;
+        Transform current = target.parent;
+        while (current != null)
+        {
+            path = $"{current.name}/{path}";
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private void OnEnable()

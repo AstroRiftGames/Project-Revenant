@@ -77,18 +77,13 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         _recruitableState = GetComponent<RecruitableUnitState>();
         _affiliationState = GetComponent<UnitAffiliationState>();
         _skillCaster = GetComponent<SkillCaster>();
-        _statusEffectController = ResolveAuthoringComponent<StatusEffectController>(
-            "Add it to the prefab; it is required for status effects and combat stat modifiers.");
+        _statusEffectController = ResolveStatusEffectController();
 
-        ResolveAuthoringComponent<UnitVisualMaterialController>(
-            "Add it to the prefab if this unit should use unified material feedback.");
-        ResolveAuthoringComponent<StatusEffectVisualFeedback>(
-            "Add it to the prefab if this unit should show status and lifecycle feedback.");
+        ResolveVisualMaterialController();
+        ResolveStatusEffectVisualFeedback();
 
-        _selectionFeedbackView = ResolveAuthoringComponent<UnitSelectionFeedbackView>(
-            "Add it to the prefab to keep selection feedback setup explicit.");
-
-        _selectionFeedbackView.Configure(selectionIndicator);
+        _selectionFeedbackView = ResolveSelectionFeedbackView();
+        _selectionFeedbackView?.Configure(selectionIndicator);
         ValidateRequiredComponents();
     }
 
@@ -198,17 +193,85 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
             throw new InvalidOperationException($"[{nameof(Creature)}] Missing required runtime components on '{name}'.");
     }
 
-    private T ResolveAuthoringComponent<T>(string authoringGuidance) where T : Component
+    private StatusEffectController ResolveStatusEffectController()
     {
-        T component = GetComponent<T>();
-        if (component != null)
-            return component;
+        if (TryGetComponent(out StatusEffectController statusEffectController))
+            return statusEffectController;
+
+        Debug.LogError(
+            $"[{nameof(Creature)}] Missing required authoring component '{nameof(StatusEffectController)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Prefab is misconfigured; add it to the prefab root.",
+            this);
+        return null;
+    }
+
+    private UnitVisualMaterialController ResolveVisualMaterialController()
+    {
+        if (TryGetComponent(out UnitVisualMaterialController visualMaterialController))
+            return visualMaterialController;
 
         Debug.LogWarning(
-            $"[{nameof(Creature)}] '{name}' is missing {typeof(T).Name}. " +
-            $"It was auto-added for legacy prefab compatibility. {authoringGuidance}",
+            $"[{nameof(Creature)}] Missing visual authoring component '{nameof(UnitVisualMaterialController)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Visual feedback may degrade. Add it to the prefab root manually.",
             this);
-        return gameObject.AddComponent<T>();
+        return null;
+    }
+
+    private StatusEffectVisualFeedback ResolveStatusEffectVisualFeedback()
+    {
+        if (TryGetComponent(out StatusEffectVisualFeedback statusEffectVisualFeedback))
+            return statusEffectVisualFeedback;
+
+        Debug.LogWarning(
+            $"[{nameof(Creature)}] Missing visual authoring component '{nameof(StatusEffectVisualFeedback)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Status/corpse/recruit visual feedback may degrade. Add it to the prefab root manually.",
+            this);
+        return null;
+    }
+
+    private UnitSelectionFeedbackView ResolveSelectionFeedbackView()
+    {
+        UnitSelectionFeedbackView feedbackView = GetComponent<UnitSelectionFeedbackView>();
+        if (feedbackView != null)
+            return feedbackView;
+
+        Debug.LogError(
+            $"[{nameof(Creature)}] Missing required authoring component '{nameof(UnitSelectionFeedbackView)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Add it to the prefab root; the legacy runtime fallback was removed.",
+            this);
+        return null;
+    }
+
+    private string ResolveScenePath()
+    {
+        var scene = gameObject.scene;
+        if (!scene.IsValid())
+            return "<invalid scene>";
+
+        if (!string.IsNullOrWhiteSpace(scene.path))
+            return scene.path;
+
+        return !string.IsNullOrWhiteSpace(scene.name) ? scene.name : "<runtime scene>";
+    }
+
+    private static string BuildHierarchyPath(Transform target)
+    {
+        if (target == null)
+            return "<missing transform>";
+
+        string path = target.name;
+        Transform current = target.parent;
+        while (current != null)
+        {
+            path = $"{current.name}/{path}";
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private float ResolveFinalFloatStat(CombatStatType statType, float baseValue)

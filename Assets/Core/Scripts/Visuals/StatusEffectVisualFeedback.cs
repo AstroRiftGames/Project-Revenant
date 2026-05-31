@@ -17,6 +17,7 @@ public class StatusEffectVisualFeedback : MonoBehaviour
     private UnitDeathHandler _unitDeathHandler;
     private UnitVisualMaterialController _unitVisualMaterialController;
     private UnitVisualMaterialState _currentVisualState = (UnitVisualMaterialState)(-1);
+    private bool _hasLoggedMissingVisualMaterialController;
 
     private void Awake()
     {
@@ -141,18 +142,59 @@ public class StatusEffectVisualFeedback : MonoBehaviour
         _lifeController ??= GetComponent<LifeController>();
         _recruitableUnitState ??= GetComponent<RecruitableUnitState>();
         _unitDeathHandler ??= GetComponent<UnitDeathHandler>();
-        _unitVisualMaterialController ??= GetComponent<UnitVisualMaterialController>();
-        if (_unitVisualMaterialController == null)
-            _unitVisualMaterialController = AddMissingVisualMaterialController();
+        _unitVisualMaterialController ??= ResolveVisualMaterialController();
     }
 
-    private UnitVisualMaterialController AddMissingVisualMaterialController()
+    private UnitVisualMaterialController ResolveVisualMaterialController()
     {
+        if (TryGetComponent(out UnitVisualMaterialController visualMaterialController))
+            return visualMaterialController;
+
+        if (_unitVisualMaterialController == null)
+            LogMissingVisualMaterialController();
+
+        return null;
+    }
+
+    private void LogMissingVisualMaterialController()
+    {
+        if (_hasLoggedMissingVisualMaterialController)
+            return;
+
         Debug.LogWarning(
-            $"[{nameof(StatusEffectVisualFeedback)}] '{name}' is missing {nameof(UnitVisualMaterialController)}. " +
-            "It was auto-added for legacy prefab compatibility. Add it to the prefab to keep visual feedback setup explicit.",
+            $"[{nameof(StatusEffectVisualFeedback)}] Missing visual authoring component '{nameof(UnitVisualMaterialController)}' on '{name}'. " +
+            $"Object path: '{BuildHierarchyPath(transform)}'. Scene: '{ResolveScenePath()}'. " +
+            "Status and lifecycle visual feedback may degrade. Add it to the prefab root manually.",
             this);
-        return gameObject.AddComponent<UnitVisualMaterialController>();
+        _hasLoggedMissingVisualMaterialController = true;
+    }
+
+    private string ResolveScenePath()
+    {
+        var scene = gameObject.scene;
+        if (!scene.IsValid())
+            return "<invalid scene>";
+
+        if (!string.IsNullOrWhiteSpace(scene.path))
+            return scene.path;
+
+        return !string.IsNullOrWhiteSpace(scene.name) ? scene.name : "<runtime scene>";
+    }
+
+    private static string BuildHierarchyPath(Transform target)
+    {
+        if (target == null)
+            return "<missing transform>";
+
+        string path = target.name;
+        Transform current = target.parent;
+        while (current != null)
+        {
+            path = $"{current.name}/{path}";
+            current = current.parent;
+        }
+
+        return path;
     }
 
     private void ForceRefreshVisualState()
