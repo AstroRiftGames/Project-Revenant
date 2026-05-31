@@ -8,6 +8,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameStateManager _stateManager;
     public GameStateManager StateManager => _stateManager;
 
+    private CombatRoomController _currentEncounterController;
+
     private void Awake()
     {
         if (Instance == null)
@@ -46,6 +48,7 @@ public class GameManager : MonoBehaviour
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
         FloorManager.OnRoomEntered -= OnRoomEntered;
+        ClearCurrentEncounterSubscription();
         CombatRoomController.AnyCombatResolved -= OnAnyCombatResolved;
         BaseStation.OnStationUIRequestedGlobal -= OnStationUIRequestedGlobal;
         StationUIManager.OnAnyStationClosed -= OnStationClosed;
@@ -61,6 +64,8 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        ClearCurrentEncounterSubscription();
+
         if (scene.name == "SafeZone")
         {
             RequestStateChange(GameState.SafeZone);
@@ -73,31 +78,57 @@ public class GameManager : MonoBehaviour
 
     private void OnRoomEntered(RoomDoor door, GameObject nextRoom)
     {
-        if (nextRoom != null && nextRoom.TryGetComponent(out RoomContext roomContext))
+        if (nextRoom == null || !nextRoom.TryGetComponent(out RoomContext roomContext))
+            return;
+
+        if (_currentEncounterController != null &&
+            _currentEncounterController.IsCombatActive &&
+            (roomContext.CombatController == null || !ReferenceEquals(roomContext.CombatController, _currentEncounterController)))
         {
-            if (roomContext.IsCombatRoom)
-            {
-                RequestStateChange(GameState.Deployment);
-                if (roomContext.CombatController != null)
-                {
-                    roomContext.CombatController.CombatStarted -= OnCombatStarted;
-                    roomContext.CombatController.CombatStarted += OnCombatStarted;
-                }
-            }
-            else
-            {
-                RequestStateChange(GameState.ExploringDungeon);
-            }
+            Debug.LogWarning(
+                $"[{nameof(GameManager)}] Ignored room transition to '{nextRoom.name}' while encounter " +
+                $"'{_currentEncounterController.name}' is still in combat.",
+                this);
+            return;
         }
+
+        if (!roomContext.IsCombatRoom)
+        {
+            RefreshCurrentEncounterSubscription(null);
+            RequestStateChange(GameState.ExploringDungeon);
+            return;
+        }
+
+        RefreshCurrentEncounterSubscription(roomContext.CombatController);
+
+        if (roomContext.CombatController != null && roomContext.CombatController.IsResolved)
+        {
+            RequestStateChange(GameState.ExploringDungeon);
+            return;
+        }
+
+        if (roomContext.CombatController != null && roomContext.CombatController.IsCombatActive)
+        {
+            RequestStateChange(GameState.InCombat);
+            return;
+        }
+
+        RequestStateChange(GameState.Deployment);
     }
 
     private void OnCombatStarted(CombatRoomController controller)
     {
+        if (!ReferenceEquals(controller, _currentEncounterController))
+            return;
+
         RequestStateChange(GameState.InCombat);
     }
 
     private void OnAnyCombatResolved(CombatRoomController controller, CombatRoomOutcome outcome)
     {
+        if (!ReferenceEquals(controller, _currentEncounterController))
+            return;
+
         if (outcome == CombatRoomOutcome.PlayerVictory)
         {
             RequestStateChange(GameState.CombatResolved);
@@ -107,6 +138,30 @@ public class GameManager : MonoBehaviour
         {
             RequestStateChange(GameState.GameOver);
         }
+    }
+
+    private void RefreshCurrentEncounterSubscription(CombatRoomController nextController)
+    {
+        if (ReferenceEquals(_currentEncounterController, nextController))
+            return;
+
+        ClearCurrentEncounterSubscription();
+        _currentEncounterController = nextController;
+
+        if (_currentEncounterController == null)
+            return;
+
+        _currentEncounterController.CombatStarted -= OnCombatStarted;
+        _currentEncounterController.CombatStarted += OnCombatStarted;
+    }
+
+    private void ClearCurrentEncounterSubscription()
+    {
+        if (_currentEncounterController == null)
+            return;
+
+        _currentEncounterController.CombatStarted -= OnCombatStarted;
+        _currentEncounterController = null;
     }
 
     private void OnStationUIRequestedGlobal(BaseStation station, UIType uiType)

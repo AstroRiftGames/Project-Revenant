@@ -54,13 +54,13 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     private void OnEnable()
     {
-        LifeController.OnUnitDied += HandleUnitDied;
+        UnitDeathHandler.AnyDeathResolved += HandleUnitDeathResolved;
         FloorManager.OnRoomEntered += HandleRoomEntered;
     }
 
     private void OnDisable()
     {
-        LifeController.OnUnitDied -= HandleUnitDied;
+        UnitDeathHandler.AnyDeathResolved -= HandleUnitDeathResolved;
         FloorManager.OnRoomEntered -= HandleRoomEntered;
     }
 
@@ -80,6 +80,9 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         _outcome = CombatRoomOutcome.None;
         SetState(CombatRoomState.Combat);
         EvaluateEncounterOutcome();
+        if (IsResolved)
+            return true;
+
         CombatStarted?.Invoke(this);
         return true;
     }
@@ -91,7 +94,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
         _outcome = outcome;
         SetState(CombatRoomState.Resolved);
-        CleanupResolvedCombatRuntime();
+        CleanupRuntimeCombatState();
         LogDebug($"[{nameof(CombatRoomController)}] Room '{name}' resolved with outcome: {_outcome}.");
         CombatResolved?.Invoke(this, _outcome);
         AnyCombatResolved?.Invoke(this, _outcome);
@@ -156,12 +159,12 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         return _necromancer;
     }
 
-    private void HandleUnitDied(Unit unit)
+    private void HandleUnitDeathResolved(Unit unit)
     {
         if (!IsCombatActive || unit == null || _roomContext == null)
             return;
 
-        if (!ReferenceEquals(unit.RoomContext, _roomContext))
+        if (!IsUnitAssociatedWithThisRoom(unit))
             return;
 
         EvaluateEncounterOutcome();
@@ -172,10 +175,23 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (!IsCombatActive || _roomContext == null)
             return;
 
-        bool hasAliveAllies = false;
-        bool hasAliveEnemies = false;
-        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
+        CountAliveCombatants(out bool hasAliveAllies, out bool hasAliveEnemies);
+        if (IsEncounterStillContested(hasAliveAllies, hasAliveEnemies))
+            return;
 
+        CombatRoomOutcome outcome = ResolveOutcome(hasAliveAllies, hasAliveEnemies);
+        if (outcome == CombatRoomOutcome.None)
+            return;
+
+        TryResolveCombat(outcome);
+    }
+
+    private void CountAliveCombatants(out bool hasAliveAllies, out bool hasAliveEnemies)
+    {
+        hasAliveAllies = false;
+        hasAliveEnemies = false;
+
+        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
         for (int i = 0; i < roomUnits.Count; i++)
         {
             Unit unit = roomUnits[i];
@@ -187,15 +203,18 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             else if (unit.Team == UnitTeam.Enemy)
                 hasAliveEnemies = true;
 
-            if (hasAliveAllies && hasAliveEnemies)
+            if (IsEncounterStillContested(hasAliveAllies, hasAliveEnemies))
                 return;
         }
+    }
 
-        CombatRoomOutcome outcome = ResolveOutcome(hasAliveAllies, hasAliveEnemies);
-        if (outcome == CombatRoomOutcome.None)
-            return;
+    private bool IsUnitAssociatedWithThisRoom(Unit unit)
+    {
+        if (ReferenceEquals(unit.RoomContext, _roomContext))
+            return true;
 
-        TryResolveCombat(outcome);
+        Transform unitTransform = unit.transform;
+        return unitTransform != null && unitTransform.IsChildOf(_roomContext.transform);
     }
 
     private void HandleRoomEntered(RoomDoor enteredDoor, GameObject newRoom)
@@ -296,6 +315,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
                unit.LifecycleState == UnitLifecycleState.Alive;
     }
 
+    private static bool IsEncounterStillContested(bool hasAliveAllies, bool hasAliveEnemies)
+    {
+        return hasAliveAllies && hasAliveEnemies;
+    }
+
     private static CombatRoomOutcome ResolveOutcome(bool hasAliveAllies, bool hasAliveEnemies)
     {
         if (hasAliveAllies && !hasAliveEnemies)
@@ -341,21 +365,21 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         StateChanged?.Invoke(this, _state);
     }
 
-    private void CleanupResolvedCombatRuntime()
+    private void CleanupRuntimeCombatState()
     {
         if (_roomContext == null)
             return;
 
-        CleanupRoomStatusEffects();
+        CleanupStatusEffectsOnEncounterResolved();
 
         if (_outcome != CombatRoomOutcome.PlayerVictory)
             return;
 
-        CleanupSummonedMinionRuntime();
-        CleanupRoomProjectileRuntime();
+        CleanupSummonsOnVictory();
+        CleanupProjectilesOnVictory();
     }
 
-    private void CleanupRoomStatusEffects()
+    private void CleanupStatusEffectsOnEncounterResolved()
     {
         IReadOnlyList<Unit> roomUnits = _roomContext.Units;
         for (int i = 0; i < roomUnits.Count; i++)
@@ -368,7 +392,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         }
     }
 
-    private void CleanupSummonedMinionRuntime()
+    private void CleanupSummonsOnVictory()
     {
         CombatSummonedUnitRuntimeMarker[] summonedUnits =
             _roomContext.GetComponentsInChildren<CombatSummonedUnitRuntimeMarker>(includeInactive: true);
@@ -383,7 +407,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         }
     }
 
-    private void CleanupRoomProjectileRuntime()
+    private void CleanupProjectilesOnVictory()
     {
         CombatProjectileVisual[] roomProjectiles =
             _roomContext.GetComponentsInChildren<CombatProjectileVisual>(includeInactive: true);

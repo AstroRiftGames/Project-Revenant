@@ -9,6 +9,8 @@ public class UnitDeathHandler : MonoBehaviour
 {
     [SerializeField] private Behaviour[] _behavioursToDisableForRecruitableDeath;
 
+    public static event Action<Unit> AnyDeathResolved;
+
     private Unit _unit;
     private LifeController _lifeController;
     private RecruitableUnitState _recruitableState;
@@ -50,6 +52,7 @@ public class UnitDeathHandler : MonoBehaviour
         {
             Debug.LogError($"[{nameof(UnitDeathHandler)}] '{name}' missing RecruitableUnitState. Forcing default death.", this);
             ResolveDefaultDeath();
+            NotifyDeathResolved();
             return;
         }
 
@@ -61,6 +64,8 @@ public class UnitDeathHandler : MonoBehaviour
         {
             ResolveDefaultDeath();
         }
+
+        NotifyDeathResolved();
     }
 
     public void ResetDeathState(UnitLifecycleState state)
@@ -159,6 +164,11 @@ public class UnitDeathHandler : MonoBehaviour
     private void ClearCorpseOccupancy()
     {
         _unitMovement?.ClearCorpseOccupancy();
+    }
+
+    private void NotifyDeathResolved()
+    {
+        AnyDeathResolved?.Invoke(_unit);
     }
 
     public void ReviveUnit(int currentHealth)
