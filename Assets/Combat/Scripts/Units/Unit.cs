@@ -108,8 +108,7 @@ public class Unit : Creature, IGridOccupant
         if (RoomContext != null)
             return RoomContext.Units;
 
-        IReadOnlyList<Unit> debugUnits = CreatureDuelDebugUnitRegistry.GetUnitsFor(this);
-        return debugUnits ?? Array.Empty<Unit>();
+        return Array.Empty<Unit>();
     }
 
     public int GetPreferredDistance(IBasicAction action)

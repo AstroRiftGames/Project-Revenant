@@ -600,8 +600,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _overrideSkill: {fileID: 0}
   _maxAbilityCharge: 100
-  _chargePerSuccessfulBasicAttack: 25
-  _chargePerSuccessfulBasicHeal: 25
+  _chargePerSuccessfulBasicAttack: 20
+  _chargePerSuccessfulBasicHeal: 20
   _chargeFromKill: 20
   _chargeFromDamageTaken: 10
   _chargeFromNearbyAllySkillUsed: 15
