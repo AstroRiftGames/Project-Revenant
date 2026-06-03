@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 6430049374044482034}
   - component: {fileID: 8637702665299922559}
   - component: {fileID: 109119551132937470}
+  - component: {fileID: 6831077394928819853}
+  - component: {fileID: 1219231256296601993}
   m_Layer: 7
   m_Name: Corpse
   m_TagString: Untagged
@@ -47,6 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _unitToRecruit: {fileID: 11400000, guid: 7d2a6f8b9c104f31a1b2c3d4e5f10101, type: 2}
+  _grid: {fileID: 0}
+  _cellAnchor: {fileID: 0}
 --- !u!61 &109119551132937470
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -81,7 +85,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.05}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -91,8 +95,42 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.25, y: 0.5}
+  m_Size: {x: 0.25, y: 0.15}
   m_EdgeRadius: 0
+--- !u!114 &6831077394928819853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4508621981285705690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7d4f28f6dcb4b1aa2b2d2c5d52c7e31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _radiusInCells: 1
+  _avoidanceCost: 5
+  _blocksCenterCell: 1
+  _includeDiagonals: 1
+  _isActive: 1
+  _drawGizmos: 1
+  _cellAnchor: {fileID: 6430049374044482034}
+  _cellAnchorWorldOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &1219231256296601993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4508621981285705690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2516ab3dc03c9c41b228b2d99ac09bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _database: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
+  cursorType: 1
 --- !u!1 &5478209140570192134
 GameObject:
   m_ObjectHideFlags: 0

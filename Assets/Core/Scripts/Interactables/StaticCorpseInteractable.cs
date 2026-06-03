@@ -1,24 +1,55 @@
 using System;
 using UnityEngine;
 
-public class StaticCorpseInteractable : MonoBehaviour, IInteractable
+[DisallowMultipleComponent]
+public class StaticCorpseInteractable : MonoBehaviour, IInteractable, IGridOccupant, IRoomContextComponent
 {
     [SerializeField] private UnitData _unitToRecruit;
+    [SerializeField] private RoomGrid _grid;
+    [SerializeField] private Transform _cellAnchor;
     
     private bool _hasInteracted;
-
-    public bool IsInteractionAvailable => !_hasInteracted && _unitToRecruit != null;
+    private bool _isOccupancyRegistered;
+    private Necromancer _necromancer;
+    private bool _isInteractionAvailable;
 
     public event Action<bool> OnInteractionAvailabilityChanged;
 
+    public bool IsInteractionAvailable => _isInteractionAvailable;
+    public Vector3 OccupancyWorldPosition => GetAnchorWorldPosition();
+    public bool OccupiesCell => gameObject.activeInHierarchy && !_hasInteracted;
+    public bool BlocksMovement => true;
+
     private void OnEnable()
     {
-        OnInteractionAvailabilityChanged?.Invoke(IsInteractionAvailable);
+        TryRegisterOccupancy();
+        RefreshInteractionAvailability(forceEvent: true);
+    }
+
+    private void Start()
+    {
+        TryRegisterOccupancy();
+        RefreshInteractionAvailability(forceEvent: true);
+    }
+
+    private void Update()
+    {
+        RefreshInteractionAvailability(forceEvent: false);
     }
 
     private void OnDisable()
     {
-        OnInteractionAvailabilityChanged?.Invoke(false);
+        ReleaseOccupancy();
+        SetInteractionAvailability(false, forceEvent: true);
+    }
+
+    public void IntegrateWithRoom(RoomContext roomContext)
+    {
+        _grid = RoomGridResolver.ResolveFromContext(roomContext) ?? _grid;
+        _necromancer = null;
+
+        TryRegisterOccupancy();
+        RefreshInteractionAvailability(forceEvent: true);
     }
 
     public void Interact()
@@ -32,7 +63,8 @@ public class StaticCorpseInteractable : MonoBehaviour, IInteractable
             if (recruited)
             {
                 _hasInteracted = true;
-                OnInteractionAvailabilityChanged?.Invoke(false);
+                ReleaseOccupancy();
+                SetInteractionAvailability(false, forceEvent: true);
                 
                 // Disappear after interaction
                 gameObject.SetActive(false);
@@ -46,5 +78,46 @@ public class StaticCorpseInteractable : MonoBehaviour, IInteractable
         {
             Debug.LogError($"[{nameof(StaticCorpseInteractable)}] NecromancerParty Instance is null. Cannot recruit.", this);
         }
+    }
+
+    private void RefreshInteractionAvailability(bool forceEvent)
+    {
+        _necromancer = GridInteractionAvailability.ResolveNecromancer(_necromancer);
+
+        bool shouldBeAvailable =
+            !_hasInteracted &&
+            _unitToRecruit != null &&
+            GridInteractionAvailability.IsNecromancerAdjacent(_grid, _necromancer, GetAnchorWorldPosition());
+
+        SetInteractionAvailability(shouldBeAvailable, forceEvent);
+    }
+
+    private void SetInteractionAvailability(bool isAvailable, bool forceEvent)
+    {
+        if (!forceEvent && _isInteractionAvailable == isAvailable)
+            return;
+
+        _isInteractionAvailable = isAvailable;
+        OnInteractionAvailabilityChanged?.Invoke(_isInteractionAvailable);
+    }
+
+    private Vector3 GetAnchorWorldPosition()
+    {
+        if (_cellAnchor != null)
+            return _cellAnchor.position;
+
+        return transform.position;
+    }
+
+    private void TryRegisterOccupancy()
+    {
+        if (_grid != null && OccupiesCell)
+            _isOccupancyRegistered = StaticGridOccupancyUtility.TryRegister(_grid, this, _isOccupancyRegistered);
+    }
+
+    private void ReleaseOccupancy()
+    {
+        if (_grid != null)
+            _isOccupancyRegistered = StaticGridOccupancyUtility.Release(_grid, this, _isOccupancyRegistered);
     }
 }
