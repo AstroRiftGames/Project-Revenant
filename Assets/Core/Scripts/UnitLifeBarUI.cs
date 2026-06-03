@@ -5,7 +5,6 @@ public class UnitLifeBarUI : MonoBehaviour
 {
     [SerializeField] private Slider _lifeBar;
     [SerializeField] private GameObject _damageDealtPrefab;
-    [SerializeField] private UnitHealthBarEffectFeedback _effectFeedback;
     [SerializeField] private Color _allyColor = Color.blue;
     [SerializeField] private Color _enemyColor = Color.red;
 
@@ -13,7 +12,7 @@ public class UnitLifeBarUI : MonoBehaviour
     private Canvas _parentCanvas;
     private int _maxHP;
 
-    public void Initialize(LifeController lifeController, UnitAffiliationState affiliation, StatusEffectController statusEffectController, Canvas parentCanvas)
+    public void Initialize(LifeController lifeController, UnitAffiliationState affiliation, Canvas parentCanvas)
     {
         _lifeController = lifeController;
         _parentCanvas = parentCanvas;
@@ -32,22 +31,6 @@ public class UnitLifeBarUI : MonoBehaviour
         if (_lifeBar != null && _lifeBar.fillRect != null && _lifeBar.fillRect.TryGetComponent(out Image fillImage))
         {
             fillImage.color = isAlly ? _allyColor : _enemyColor;
-        }
-
-        if (_effectFeedback != null)
-        {
-            if (statusEffectController != null)
-            {
-                _effectFeedback.Initialize(statusEffectController);
-            }
-            else
-            {
-                Debug.LogWarning($"[{nameof(UnitLifeBarUI)}] No StatusEffectController provided. Cannot initialize effect feedback.", this);
-            }
-        }
-        else
-        {
-            Debug.LogWarning($"[{nameof(UnitLifeBarUI)}] EffectFeedback reference not assigned on {gameObject.name}. Visual feedback will not appear.", this);
         }
     }
 

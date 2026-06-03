@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 public class UnitInfoCanvas : MonoBehaviour
 {
     [SerializeField] private UnitLifeBarUI _lifeBarUI;
+    [SerializeField] private UnitHealthBarEffectFeedback _effectFeedback;
 
     private Canvas _canvas;
 
@@ -19,13 +19,25 @@ public class UnitInfoCanvas : MonoBehaviour
             _canvas.worldCamera = Camera.main;
         }
 
+        LifeController lifeController = GetComponentInParent<LifeController>();
+        UnitAffiliationState affiliation = GetComponentInParent<UnitAffiliationState>();
+        StatusEffectController statusEffectController = GetComponentInParent<StatusEffectController>();
+
         if (_lifeBarUI != null)
         {
-            LifeController lifeController = GetComponentInParent<LifeController>();
-            UnitAffiliationState affiliation = GetComponentInParent<UnitAffiliationState>();
-            StatusEffectController statusEffectController = GetComponentInParent<StatusEffectController>();
+            _lifeBarUI.Initialize(lifeController, affiliation, _canvas);
+        }
 
-            _lifeBarUI.Initialize(lifeController, affiliation, statusEffectController, _canvas);
+        if (_effectFeedback != null)
+        {
+            if (statusEffectController != null)
+            {
+                _effectFeedback.Initialize(statusEffectController);
+            }
+            else
+            {
+                Debug.LogWarning($"[{nameof(UnitInfoCanvas)}] No StatusEffectController found in parent. Cannot initialize effect feedback.", this);
+            }
         }
     }
 }
