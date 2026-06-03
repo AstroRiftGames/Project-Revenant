@@ -88,6 +88,7 @@ namespace PrefabDungeonGeneration
         [Header("Room Content Rules")]
         public RoomContentConfig CombatRoomConfig;
         public RoomContentConfig LootRoomConfig;
+        public RoomContentConfig StartRoomConfig;
 
         private RoomPrefabProfile _roomProfile;
         [SerializeField] private PrefabDungeonGenerator _dungeonGenerator;
@@ -177,9 +178,10 @@ namespace PrefabDungeonGeneration
                     return CombatRoomConfig;
                 case PDRoomType.Loot:
                     return LootRoomConfig;
+                case PDRoomType.Start:
+                    return StartRoomConfig;
                 case PDRoomType.Shop:
                 case PDRoomType.Altar:
-                case PDRoomType.Start:
                 default:
                     return null;
             }
