@@ -4,6 +4,7 @@ public class UnitInfoCanvas : MonoBehaviour
 {
     [SerializeField] private UnitLifeBarUI _lifeBarUI;
     [SerializeField] private UnitHealthBarEffectFeedback _effectFeedback;
+    [SerializeField] private UnitRoleFactionUI _roleFactionUI;
 
     private Canvas _canvas;
 
@@ -22,6 +23,7 @@ public class UnitInfoCanvas : MonoBehaviour
         LifeController lifeController = GetComponentInParent<LifeController>();
         UnitAffiliationState affiliation = GetComponentInParent<UnitAffiliationState>();
         StatusEffectController statusEffectController = GetComponentInParent<StatusEffectController>();
+        Creature creature = GetComponentInParent<Creature>();
 
         if (_lifeBarUI != null)
         {
@@ -38,6 +40,11 @@ public class UnitInfoCanvas : MonoBehaviour
             {
                 Debug.LogWarning($"[{nameof(UnitInfoCanvas)}] No StatusEffectController found in parent. Cannot initialize effect feedback.", this);
             }
+        }
+
+        if (_roleFactionUI != null && creature != null)
+        {
+            _roleFactionUI.Initialize(creature.GetUnitData());
         }
     }
 }
