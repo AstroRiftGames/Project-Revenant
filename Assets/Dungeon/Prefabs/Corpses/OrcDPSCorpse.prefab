@@ -8,10 +8,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3576124169359889823, guid: debe7aa23b8526846b02880444919bf4, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -1419860449, guid: 399fa0d76121d90438d370f4d8a5ef5b, type: 3}
     - target: {fileID: 4508621981285705690, guid: debe7aa23b8526846b02880444919bf4, type: 3}
       propertyPath: m_Name
       value: OrcDPSCorpse
