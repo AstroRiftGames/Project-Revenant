@@ -10,11 +10,16 @@ public class Necromancer : MonoBehaviour
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private float _moveSpeed = 5f;
     [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private Animator _animator;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
     [SerializeField] private KeyCode _startCombatKey = KeyCode.F;
     [SerializeField] private bool _debugCombatStartLogs = true;
     [SerializeField] private bool _drawHoveredCellGizmo = true;
     [SerializeField] private bool _drawClickedCellGizmo = true;
+
+    private static readonly int MoveXHash = Animator.StringToHash("MoveX");
+    private static readonly int MoveYHash = Animator.StringToHash("MoveY");
+
     private readonly Queue<Vector3Int> _remainingPathCells = new();
     private Vector3Int _currentCell;
     private bool _hasCurrentCell;
@@ -34,7 +39,8 @@ public class Necromancer : MonoBehaviour
 
     private void Awake()
     {
-        _spriteRenderer ??= GetComponent<SpriteRenderer>();
+        _spriteRenderer ??= GetComponentInChildren<SpriteRenderer>();
+        _animator ??= GetComponentInChildren<Animator>();
 
         if (_movementTileFeedback == null)
             _movementTileFeedback = GetComponent<MovementTileFeedbackController>();
@@ -94,6 +100,19 @@ public class Necromancer : MonoBehaviour
             return;
 
         Vector3 currentTarget = _grid.CellToWorld(_currentStepCell);
+        
+        Vector3 direction = (currentTarget - transform.position).normalized;
+        if (_animator != null && direction.sqrMagnitude > 0.001f)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            float snappedAngle = Mathf.Round(angle / 45f) * 45f;
+            float radians = snappedAngle * Mathf.Deg2Rad;
+            Vector2 snappedDir = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)).normalized;
+
+            _animator.SetFloat(MoveXHash, snappedDir.x);
+            _animator.SetFloat(MoveYHash, snappedDir.y);
+        }
+
         transform.position = Vector3.MoveTowards(transform.position, currentTarget, _moveSpeed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, currentTarget) > 0.001f)
