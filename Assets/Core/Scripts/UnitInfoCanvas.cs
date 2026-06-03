@@ -9,6 +9,8 @@ public class UnitInfoCanvas : MonoBehaviour
     private LifeController _LC;
     private Canvas _canvas;
     private int _maxHP;
+    [SerializeField] private Color _allyColor = Color.blue;
+    [SerializeField] private Color _enemyColor = Color.red;
 
     private void Awake()
     {
@@ -21,6 +23,11 @@ public class UnitInfoCanvas : MonoBehaviour
     {
         _canvas.worldCamera = Camera.main;
         _maxHP = _LC.MaxHealth;
+        
+        UnitAffiliationState affiliation = GetComponentInParent<UnitAffiliationState>();
+        bool isAlly = affiliation != null && affiliation.Team == UnitTeam.Ally;
+        _lifeBar.fillRect.GetComponent<Image>().color = isAlly ? _allyColor : _enemyColor;
+
         _lifeBar.maxValue = _maxHP;
         UpdateLifeBar(_maxHP);
 

@@ -120,6 +120,8 @@ MonoBehaviour:
   _lifeBar: {fileID: 7034366346279351748}
   DamageDealtPrefab: {fileID: 4326233653113426999, guid: aac7e63c414708840ab564d100722293, type: 3}
   _effectFeedback: {fileID: 546510351505273299}
+  _allyColor: {r: 0, g: 1, b: 0, a: 1}
+  _enemyColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!114 &546510351505273299
 MonoBehaviour:
   m_ObjectHideFlags: 0
