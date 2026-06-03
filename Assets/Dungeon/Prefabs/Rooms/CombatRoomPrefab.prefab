@@ -3033,6 +3033,10 @@ MonoBehaviour:
     SpawnCountRange: {x: 0, y: 0}
     FloorSpawnRanges: []
     Categories: []
+  StartRoomConfig:
+    SpawnCountRange: {x: 0, y: 0}
+    FloorSpawnRanges: []
+    Categories: []
   _dungeonGenerator: {fileID: 0}
 --- !u!114 &9175494840633092742
 MonoBehaviour:

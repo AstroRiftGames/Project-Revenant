@@ -1821,6 +1821,7 @@ GameObject:
   - component: {fileID: 4296291439879332514}
   - component: {fileID: -1078256696771541569}
   - component: {fileID: -839325759450826530}
+  - component: {fileID: 5948637432179864037}
   m_Layer: 0
   m_Name: StartRoomPrefab
   m_TagString: Untagged
@@ -1890,6 +1891,62 @@ MonoBehaviour:
   _roomProfile: {fileID: 0}
   _walkableTilemap: {fileID: 0}
   _blockedTilemap: {fileID: 0}
+--- !u!114 &5948637432179864037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4347932947661017972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93982e12882461b4589d4be8cde32b3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SpawnOffset: {x: 0, y: 0}
+  EdgePadding: 2
+  UseSeed: 0
+  RandomSeed: 0
+  CombatRoomConfig:
+    SpawnCountRange: {x: 0, y: 0}
+    FloorSpawnRanges: []
+    Categories: []
+  LootRoomConfig:
+    SpawnCountRange: {x: 0, y: 0}
+    FloorSpawnRanges: []
+    Categories: []
+  StartRoomConfig:
+    SpawnCountRange: {x: 1, y: 4}
+    FloorSpawnRanges:
+    - MinFloor: 0
+      SpawnCountRange: {x: 1, y: 3}
+    - MinFloor: 3
+      SpawnCountRange: {x: 2, y: 5}
+    - MinFloor: 5
+      SpawnCountRange: {x: 4, y: 7}
+    Categories:
+    - CategoryName: DPS
+      Weight: 50
+      Prefabs:
+      - Prefab: {fileID: 5688490691292883462, guid: e83c0d7b82941b54e8dcba012de663ab, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 3403866269831901304, guid: c0d47f6ed572f5a42bea09a623162b34, type: 3}
+        Weight: 50
+    - CategoryName: Tank
+      Weight: 25
+      Prefabs:
+      - Prefab: {fileID: 1661631172757311701, guid: 6b538e677ad935549a3a70fb5135f1db, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 3403866269831901304, guid: b18e18757f0b60446854b3ddf543fc51, type: 3}
+        Weight: 50
+    - CategoryName: Support
+      Weight: 25
+      Prefabs:
+      - Prefab: {fileID: 6855385283210237753, guid: 2b29303fd8d10e8439c6359c7ef4aa9a, type: 3}
+        Weight: 50
+      - Prefab: {fileID: 3403866269831901304, guid: afad71411fc649a4a972d1c72e38f608, type: 3}
+        Weight: 50
+  _dungeonGenerator: {fileID: 0}
 --- !u!1 &5554142844715840120
 GameObject:
   m_ObjectHideFlags: 0

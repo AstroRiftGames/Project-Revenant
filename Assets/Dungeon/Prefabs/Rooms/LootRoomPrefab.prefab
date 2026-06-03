@@ -2457,6 +2457,10 @@ MonoBehaviour:
         Weight: 25
       - Prefab: {fileID: 4776528938805947016, guid: 75bda3dcd8d58f5459b897a2141d914f, type: 3}
         Weight: 25
+  StartRoomConfig:
+    SpawnCountRange: {x: 0, y: 0}
+    FloorSpawnRanges: []
+    Categories: []
   _dungeonGenerator: {fileID: 0}
 --- !u!114 &9006617329820778224
 MonoBehaviour:
