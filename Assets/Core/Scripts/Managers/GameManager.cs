@@ -1,5 +1,7 @@
+using PrefabDungeonGeneration;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Core.Systems;
 
 public class GameManager : MonoBehaviour
 {
@@ -131,6 +133,7 @@ public class GameManager : MonoBehaviour
 
         if (outcome == CombatRoomOutcome.PlayerVictory)
         {
+            TryRecordBossFloorShortcut(controller);
             RequestStateChange(GameState.CombatResolved);
             RequestStateChange(GameState.ExploringDungeon);
         }
@@ -138,6 +141,31 @@ public class GameManager : MonoBehaviour
         {
             RequestStateChange(GameState.GameOver);
         }
+    }
+
+    /// <summary>
+    /// If the resolved room is a Boss room and we are on a shortcut-eligible floor (multiple of 5),
+    /// records the unlock in <see cref="ShortcutProgressService"/>.
+    /// </summary>
+    private void TryRecordBossFloorShortcut(CombatRoomController controller)
+    {
+        if (controller == null || controller.RoomProfile == null)
+            return;
+
+        if (controller.RoomProfile.RoomType != PDRoomType.Boss)
+            return;
+
+        if (ShortcutProgressService.Instance == null)
+            return;
+
+        PrefabDungeonGenerator generator = FindFirstObjectByType<PrefabDungeonGenerator>();
+        if (generator == null)
+        {
+            Debug.LogWarning($"[{nameof(GameManager)}] Boss floor cleared but PrefabDungeonGenerator not found – shortcut not recorded.");
+            return;
+        }
+
+        ShortcutProgressService.Instance.NotifyBossFloorCleared(generator.FloorNumber);
     }
 
     private void RefreshCurrentEncounterSubscription(CombatRoomController nextController)

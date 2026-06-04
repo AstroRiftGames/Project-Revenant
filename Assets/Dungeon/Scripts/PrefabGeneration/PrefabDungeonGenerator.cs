@@ -38,6 +38,15 @@ namespace PrefabDungeonGeneration
 
         private void Start()
         {
+            // Apply shortcut floor override if one was requested from the SafeZone.
+            if (Core.Systems.GameSceneManager.Instance != null &&
+                Core.Systems.GameSceneManager.Instance.PendingStartFloor > 1)
+            {
+                FloorNumber = Core.Systems.GameSceneManager.Instance.PendingStartFloor;
+                Core.Systems.GameSceneManager.Instance.ConsumePendingStartFloor();
+                Debug.Log($"[{nameof(PrefabDungeonGenerator)}] Starting dungeon at shortcut floor {FloorNumber}.");
+            }
+
             GenerateDungeon();
         }
 

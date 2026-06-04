@@ -10,6 +10,10 @@ namespace Interactables.Portals
     {
         [SerializeField] private RoomGrid _grid;
 
+        [Header("Shortcuts")]
+        [Tooltip("Assign the ShortcutFloorSelectUI panel from the SafeZone Canvas here.")]
+        [SerializeField] private ShortcutFloorSelectUI _floorSelectUI;
+
         private RoomContext _roomContext;
         private Necromancer _necromancer;
         private bool _isInteractionAvailable;
@@ -43,6 +47,18 @@ namespace Interactables.Portals
             if (!CanInteract())
                 return;
 
+            // If the player has unlocked shortcuts and the panel is assigned, show the
+            // floor-selection panel so they can choose where to start.
+            bool hasShortcuts = ShortcutProgressService.Instance != null &&
+                                ShortcutProgressService.Instance.UnlockedShortcuts.Count > 0;
+
+            if (hasShortcuts && _floorSelectUI != null)
+            {
+                _floorSelectUI.Open();
+                return;
+            }
+
+            // No shortcuts (or panel not wired) — load the dungeon immediately at floor 1.
             if (GameSceneManager.Instance != null)
             {
                 GameSceneManager.Instance.LoadDungeon();
@@ -84,3 +100,4 @@ namespace Interactables.Portals
         }
     }
 }
+
