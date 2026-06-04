@@ -5,6 +5,7 @@ using UnityEngine;
 public sealed class SkillDebugVfxPresenter : MonoBehaviour
 {
     [SerializeField] private bool _enabled = true;
+    [SerializeField] private bool _debugLogs;
     [SerializeField] private Transform _runtimeRoot;
     [SerializeField] private float _defaultDuration = 0.6f;
     [SerializeField] private float _primaryPointSize = 0.42f;
@@ -29,10 +30,14 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     [SerializeField] private Color _areaColor = new Color(1f, 0.82f, 0.22f, 0.9f);
     [SerializeField] private Color _bounceColor = new Color(0.75f, 0.95f, 1f, 0.95f);
     [SerializeField] private Color _lineColor = new Color(1f, 0.55f, 0.45f, 0.92f);
+    [SerializeField] private Color _knockbackColor = new Color(0.35f, 0.9f, 1f, 0.95f);
+
+    private readonly HashSet<string> _missingPrefabWarnings = new();
 
     private void OnEnable()
     {
         SkillCaster.AnySkillImpactsResolvedForVisuals += HandleSkillImpactsResolved;
+        LogDebug("Subscribed to SkillCaster.AnySkillImpactsResolvedForVisuals.");
     }
 
     private void OnDisable()
@@ -45,6 +50,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (!_enabled || skill == null || context == null)
             return;
 
+        LogDebug($"Received '{skill.DisplayName}' with {impacts?.Count ?? 0} impact(s).");
         PresentPattern(skill, context, impacts);
         PresentModifierFeedback(skill, context, impacts);
         PresentImpactMarkers(skill, context, impacts);
@@ -61,7 +67,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                     context.HasImpactCenterUnit ? context.ImpactCenterUnit : null,
                     context.HasImpactCenterUnit,
                     Mathf.Max(0.4f, skill.RadiusInCells),
-                    _areaColor,
+                    ResolveAreaColor(skill),
                     _defaultDuration);
                 break;
 
@@ -128,6 +134,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         Color primaryColor = ResolvePrimaryImpactColor(skill);
         Color secondaryColor = ResolveSecondaryImpactColor(skill);
+        bool presentSecondaryImpactMarkers = ShouldPresentSecondaryImpactMarkers(skill);
 
         for (int i = 0; i < impacts.Count; i++)
         {
@@ -140,11 +147,16 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             if (impact.IsPrimaryImpact)
             {
+                LogSpawn(_targetPointPrefab, "VFX_TargetPoint_Runtime", worldPosition);
                 SkillDebugVfxInstance instance = SpawnInstance(_targetPointPrefab, "VFX_TargetPoint_Runtime");
                 instance.ConfigureDiamond(worldPosition, targetUnit, targetUnit != null, _primaryPointSize, primaryColor, _defaultDuration);
                 continue;
             }
 
+            if (!presentSecondaryImpactMarkers)
+                continue;
+
+            LogSpawn(_impactSecondaryPrefab, "VFX_ImpactSecondary_Runtime", worldPosition);
             SkillDebugVfxInstance secondaryInstance = SpawnInstance(_impactSecondaryPrefab, "VFX_ImpactSecondary_Runtime");
             secondaryInstance.ConfigurePoint(worldPosition, targetUnit, targetUnit != null, _secondaryPointSize, secondaryColor, _defaultDuration);
         }
@@ -203,6 +215,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             if (impact == null || !impact.HasTargetUnit)
                 continue;
 
+            LogSpawn(_healPrefab, "VFX_Heal_Runtime", impact.TargetUnit.Position);
             SkillDebugVfxInstance instance = SpawnInstance(_healPrefab, "VFX_Heal_Runtime");
             instance.ConfigureCross(impact.TargetUnit.Position, impact.TargetUnit, true, 0.46f, 0.12f, _healColor, _defaultDuration);
         }
@@ -247,6 +260,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (knockbackCells <= 0)
             return;
 
+        float knockbackDistanceWorld = ResolveFractionalCellDistanceWorld(context, 0.3f);
         for (int i = 0; i < impacts.Count; i++)
         {
             SkillImpact impact = impacts[i];
@@ -258,9 +272,13 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             if (direction.sqrMagnitude < Mathf.Epsilon)
                 continue;
 
-            Vector3 end = impact.TargetUnit.Position + direction.normalized * knockbackCells;
+            UnitVisualBumpView bumpView = impact.TargetUnit.GetComponent<UnitVisualBumpView>();
+            if (bumpView != null && bumpView.TryPlayBump(direction.normalized, knockbackDistanceWorld, _defaultDuration))
+                continue;
+
+            Vector3 end = impact.TargetUnit.Position + direction.normalized * knockbackDistanceWorld;
             SkillDebugVfxInstance instance = SpawnInstance(_knockbackPrefab, "VFX_Knockback_Runtime");
-            instance.ConfigureArrow(impact.TargetUnit.Position, end, _lineWidth, _damageColor, _defaultDuration);
+            instance.ConfigureArrow(impact.TargetUnit.Position, end, _lineWidth, _knockbackColor, _defaultDuration);
         }
     }
 
@@ -314,6 +332,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         Color color,
         float duration)
     {
+        LogSpawn(_areaCirclePrefab, "VFX_AreaCircle_Runtime", worldPosition);
         SkillDebugVfxInstance instance = SpawnInstance(_areaCirclePrefab, "VFX_AreaCircle_Runtime");
         instance.ConfigureRing(worldPosition, targetUnit, followTarget, radius, _ringWidth, color, duration);
     }
@@ -327,6 +346,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (instance == null)
         {
+            WarnMissingPrefabOnce(fallbackName);
             GameObject gameObject = new GameObject(fallbackName);
             gameObject.transform.SetParent(parent, false);
             instance = gameObject.AddComponent<SkillDebugVfxInstance>();
@@ -334,6 +354,28 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         instance.gameObject.name = fallbackName;
         return instance;
+    }
+
+    private void WarnMissingPrefabOnce(string fallbackName)
+    {
+        if (!_missingPrefabWarnings.Add(fallbackName))
+            return;
+
+        Debug.LogWarning(
+            $"[SkillDebugVfxPresenter] Missing prefab for '{fallbackName}'. Using runtime fallback visual.",
+            this);
+    }
+
+    private void LogSpawn(SkillDebugVfxInstance prefab, string fallbackName, Vector3 worldPosition)
+    {
+        LogDebug(
+            $"Spawning '{(prefab != null ? prefab.name : fallbackName)}' at {worldPosition}.");
+    }
+
+    private void LogDebug(string message)
+    {
+        if (_debugLogs)
+            Debug.Log($"[SkillDebugVfxPresenter] {message}", this);
     }
 
     private static void InsertImpactByChainIndex(List<SkillImpact> orderedImpacts, SkillImpact impact)
@@ -378,17 +420,78 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (skill == null || skill.Effects == null)
             return _damageColor;
 
+        if (HasEffect<DamageSkillEffect>(skill))
+            return _damageColor;
+
+        ApplyStatusSkillEffect statusEffect = null;
+        bool hasHeal = false;
+        bool hasSummon = false;
+        bool hasKnockback = false;
         for (int i = 0; i < skill.Effects.Length; i++)
         {
             SkillEffect effect = skill.Effects[i];
             if (effect is HealSkillEffect)
-                return _healColor;
+                hasHeal = true;
+
+            if (statusEffect == null && effect is ApplyStatusSkillEffect applyStatusSkillEffect)
+                statusEffect = applyStatusSkillEffect;
 
             if (effect is SummonUnitSkillEffect)
-                return _summonColor;
+                hasSummon = true;
+
+            if (effect is KnockbackSkillEffect)
+                hasKnockback = true;
         }
 
+        if (hasHeal)
+            return _healColor;
+
+        if (statusEffect != null)
+            return ResolveStatusColor(statusEffect);
+
+        if (hasSummon)
+            return _summonColor;
+
+        if (hasKnockback)
+            return _knockbackColor;
+
         return _damageColor;
+    }
+
+    private Color ResolveAreaColor(SkillData skill)
+    {
+        if (skill == null || skill.Effects == null)
+            return _areaColor;
+
+        if (HasEffect<DamageSkillEffect>(skill))
+            return _areaColor;
+
+        ApplyStatusSkillEffect statusEffect = null;
+        bool hasHeal = false;
+        bool hasSummon = false;
+        for (int i = 0; i < skill.Effects.Length; i++)
+        {
+            SkillEffect effect = skill.Effects[i];
+            if (effect is HealSkillEffect)
+                hasHeal = true;
+
+            if (statusEffect == null && effect is ApplyStatusSkillEffect applyStatusSkillEffect)
+                statusEffect = applyStatusSkillEffect;
+
+            if (effect is SummonUnitSkillEffect)
+                hasSummon = true;
+        }
+
+        if (hasHeal)
+            return _healColor;
+
+        if (statusEffect != null)
+            return ResolveStatusColor(statusEffect);
+
+        if (hasSummon)
+            return _summonColor;
+
+        return _areaColor;
     }
 
     private Color ResolveSecondaryImpactColor(SkillData skill)
@@ -432,6 +535,31 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         }
 
         return _debuffColor;
+    }
+
+    private static bool ShouldPresentSecondaryImpactMarkers(SkillData skill)
+    {
+        if (HasEffect<DamageSkillEffect>(skill))
+            return true;
+
+        if (HasEffect<HealSkillEffect>(skill) || HasEffect<ApplyStatusSkillEffect>(skill))
+            return false;
+
+        return true;
+    }
+
+    private static bool HasEffect<TEffect>(SkillData skill) where TEffect : SkillEffect
+    {
+        if (skill == null || skill.Effects == null)
+            return false;
+
+        for (int i = 0; i < skill.Effects.Length; i++)
+        {
+            if (skill.Effects[i] is TEffect)
+                return true;
+        }
+
+        return false;
     }
 
     private static bool HasModifier<TModifier>(SkillData skill) where TModifier : SkillModifier
@@ -483,6 +611,14 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         Vector3 start = context.Caster.Position;
 
+        if (skill != null &&
+            skill.ImpactPattern == ImpactPattern.Line &&
+            HasModifier<PiercingSkillModifier>(skill) &&
+            TryResolveLineDirection(start, context, impacts, out Vector3 piercingDirection))
+        {
+            return start + piercingDirection * ResolveLineLengthWorld(skill, context);
+        }
+
         if (impacts != null && impacts.Count > 0)
         {
             SkillImpact lastImpact = impacts[0];
@@ -511,6 +647,72 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             direction.Normalize();
 
         return start + direction * Mathf.Max(1f, skill != null ? skill.LineLengthInCells : 1f);
+    }
+
+    private static bool TryResolveLineDirection(
+        Vector3 start,
+        SkillContext context,
+        IReadOnlyList<SkillImpact> impacts,
+        out Vector3 direction)
+    {
+        Vector3 targetPosition = context != null && context.HasPrimaryTarget
+            ? context.PrimaryTarget.Position
+            : ResolveFirstImpactWorldPosition(impacts, context);
+
+        direction = targetPosition - start;
+        direction.z = 0f;
+        if (direction.sqrMagnitude <= Mathf.Epsilon)
+            return false;
+
+        direction.Normalize();
+        return true;
+    }
+
+    private static Vector3 ResolveFirstImpactWorldPosition(IReadOnlyList<SkillImpact> impacts, SkillContext context)
+    {
+        if (impacts == null)
+            return ResolveImpactCenterWorldPosition(context);
+
+        for (int i = 0; i < impacts.Count; i++)
+        {
+            if (impacts[i] != null)
+                return ResolveImpactWorldPosition(impacts[i], context);
+        }
+
+        return ResolveImpactCenterWorldPosition(context);
+    }
+
+    private static float ResolveLineLengthWorld(SkillData skill, SkillContext context)
+    {
+        int lineLengthInCells = skill != null ? skill.LineLengthInCells : 0;
+        if (context == null || context.RoomGrid == null)
+            return Mathf.Max(1f, lineLengthInCells);
+
+        Vector2 cellWorldSize = context.RoomGrid.CellWorldSize;
+        float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
+        return Mathf.Max(0f, lineLengthInCells) * Mathf.Max(0.01f, cellStep);
+    }
+
+    private static float ResolveCellDistanceWorld(SkillContext context, int distanceInCells)
+    {
+        int resolvedDistanceInCells = Mathf.Max(0, distanceInCells);
+        if (context == null || context.RoomGrid == null)
+            return resolvedDistanceInCells;
+
+        Vector2 cellWorldSize = context.RoomGrid.CellWorldSize;
+        float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
+        return resolvedDistanceInCells * Mathf.Max(0.01f, cellStep);
+    }
+
+    private static float ResolveFractionalCellDistanceWorld(SkillContext context, float cellFraction)
+    {
+        float resolvedCellFraction = Mathf.Max(0f, cellFraction);
+        if (context == null || context.RoomGrid == null)
+            return resolvedCellFraction;
+
+        Vector2 cellWorldSize = context.RoomGrid.CellWorldSize;
+        float cellStep = Mathf.Max(Mathf.Abs(cellWorldSize.x), Mathf.Abs(cellWorldSize.y));
+        return resolvedCellFraction * Mathf.Max(0.01f, cellStep);
     }
 
     private static Vector3 ResolveSummonAnchorWorldPosition(SkillContext context, SummonUnitSkillEffect summonUnitSkillEffect)

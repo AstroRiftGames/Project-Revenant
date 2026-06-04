@@ -237,6 +237,7 @@ public class RoomGrid : MonoBehaviour
     [SerializeField] private bool _drawAvoidanceCosts;
     [SerializeField] private bool _drawLastPathDebug;
     [SerializeField] private bool _debugPathfindingLogs;
+    [SerializeField] private bool _debugMovementLogs;
     [SerializeField] private bool _useCustomIsometricDebugShape = true;
     [SerializeField] private Vector2 _isometricDebugCellSize = new(1f, 0.5f);
     [SerializeField] private Vector2Int _gizmoExtents = new(12, 12);
@@ -250,6 +251,7 @@ public class RoomGrid : MonoBehaviour
     public GridAvoidanceObstacleRegistry AvoidanceObstacleRegistry => ResolveAvoidanceObstacleRegistry();
     public RoomGridTopology Topology => _topology;
     public bool DebugPathfindingLogs => _debugPathfindingLogs;
+    public bool DebugMovementLogs => _debugMovementLogs;
 
     private void Awake()
     {
@@ -548,6 +550,12 @@ public class RoomGrid : MonoBehaviour
             _blockedCellsMask);
     }
 
+    private void LogMovementDebug(string message)
+    {
+        if (_debugMovementLogs)
+            Debug.Log(message, this);
+    }
+
     public bool IsCellInsideWalkableBounds(Vector3Int cell)
     {
         return _topology.IsCellInsideWalkableBounds(cell);
@@ -689,7 +697,7 @@ public class RoomGrid : MonoBehaviour
                     
                     if (neighborPenalty > 0)
                     {
-                        Debug.Log($"[RoomGrid] DesiredCellScored: {candidateCell} score={score} (dist={distanceToOrigin}, crowdPenalty={neighborPenalty}, rolePenalty={rolePenalty})");
+                        LogMovementDebug($"[RoomGrid] DesiredCellScored: {candidateCell} score={score} (dist={distanceToOrigin}, crowdPenalty={neighborPenalty}, rolePenalty={rolePenalty})");
                     }
                 }
             }
@@ -698,7 +706,7 @@ public class RoomGrid : MonoBehaviour
         if (found)
         {
             resultCell = bestCell;
-            Debug.Log($"[RoomGrid] DesiredCellChosen_BestScore: {resultCell} score={bestScore}");
+            LogMovementDebug($"[RoomGrid] DesiredCellChosen_BestScore: {resultCell} score={bestScore}");
         }
         
         return found;

@@ -448,6 +448,7 @@ GameObject:
   - component: {fileID: 8606000000000000022}
   - component: {fileID: 8606000000000000023}
   - component: {fileID: 8606000000000000024}
+  - component: {fileID: 8606000000000000025}
   m_Layer: 10
   m_Name: Human_Support
   m_TagString: Untagged
@@ -896,6 +897,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _partyMemberId: 
   _isFromNecromancerParty: 0
+--- !u!114 &8606000000000000025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5437173185435831237}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0a2f55c2f9a4db6b7eb0d7dc9f4c1a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _visualRoot: {fileID: 3957760073442153178}
 --- !u!1 &6439368086148701879
 GameObject:
   m_ObjectHideFlags: 0

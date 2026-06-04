@@ -38,7 +38,8 @@ public sealed class UnitMovementPlanner
         Vector3Int originCell,
         Unit targetUnit,
         int rangeInCells,
-        string debugName)
+        string debugName,
+        bool debugLogs = false)
     {
         if (grid == null || movingUnit == null || !IsCombatAliveTarget(targetUnit))
             return UnitMovementDecision.NoMove(UnitMovementPlanReason.InvalidRequest, originCell, originCell);
@@ -59,6 +60,7 @@ public sealed class UnitMovementPlanner
                 originCell,
                 resolvedRange,
                 targetUnit,
+                debugLogs,
                 out Vector3Int resolvedCell))
         {
             return UnitMovementDecision.NoMove(UnitMovementPlanReason.DesiredAttackCellBlocked, desiredAttackCell, originCell);
@@ -67,7 +69,7 @@ public sealed class UnitMovementPlanner
         if (resolvedCell != desiredAttackCell)
         {
             desiredAttackCell = resolvedCell;
-            Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellResolved: original={targetCell} resolved={desiredAttackCell}");
+            LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellResolved: original={targetCell} resolved={desiredAttackCell}");
         }
 
         bool pathChanged = RefreshPathCache(
@@ -78,9 +80,10 @@ public sealed class UnitMovementPlanner
             targetCell,
             desiredAttackCell,
             targetUnit,
-            resolvedRange);
+            resolvedRange,
+            debugLogs);
 
-        StepSelectionResult nextStep = GetNextStepTowards(grid, movingUnit, debugName, originCell);
+        StepSelectionResult nextStep = GetNextStepTowards(grid, movingUnit, debugName, originCell, debugLogs);
         if (nextStep.Step == originCell)
         {
             return UnitMovementDecision.NoMove(
@@ -138,6 +141,7 @@ public sealed class UnitMovementPlanner
         Vector3Int originCell,
         int rangeInCells,
         Unit targetUnit,
+        bool debugLogs,
         out Vector3Int resolvedCell)
     {
         resolvedCell = desiredAttackCell;
@@ -160,23 +164,23 @@ public sealed class UnitMovementPlanner
 
             if (isEnemyBlocker)
             {
-                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy: {desiredAttackCell} blocker={blockerAsUnit?.name}");
+                LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy: {desiredAttackCell} blocker={blockerAsUnit?.name}");
 
                 if (grid.TryFindAttackPositionFromBlockedDesiredCell(desiredAttackCell, targetCell, originCell, rangeInCells, movingUnit, targetUnit, out Vector3Int attackPosition))
                 {
                     if (attackPosition == originCell)
                     {
-                        Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AlreadyInRange: can attack from current position");
+                        LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AlreadyInRange: can attack from current position");
                         resolvedCell = originCell;
                         return true;
                     }
 
-                    Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
+                    LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_AttackFromNearestValid: {attackPosition}");
                     resolvedCell = attackPosition;
                     return true;
                 }
 
-                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_NoValidAttackPosition");
+                LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByEnemy_NoValidAttackPosition");
                 return false;
             }
 
@@ -184,16 +188,16 @@ public sealed class UnitMovementPlanner
             {
                 string blockType = isAllyBlocker ? "Occupied" : "Reserved";
                 string blockerName = isAllyBlocker ? blockerAsUnit?.name : (reservingOccupant as Unit)?.name;
-                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_{blockType}: {desiredAttackCell} blocker={blockerName}");
+                LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_{blockType}: {desiredAttackCell} blocker={blockerName}");
 
                 if (grid.TryFindNearbyAlternativeCell(desiredAttackCell, targetCell, originCell, rangeInCells, movingUnit, out Vector3Int alternativeCell))
                 {
-                    Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_RepositionNearby: {alternativeCell}");
+                    LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_RepositionNearby: {alternativeCell}");
                     resolvedCell = alternativeCell;
                     return true;
                 }
 
-                Debug.Log($"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_NoNearbyCellFound");
+                LogDebug(debugLogs, $"[UnitMovement] {debugName} - DesiredAttackCellBlockedByAlly_NoNearbyCellFound");
                 return false;
             }
         }
@@ -201,7 +205,7 @@ public sealed class UnitMovementPlanner
         return true;
     }
 
-    private StepSelectionResult GetNextStepTowards(RoomGrid grid, Unit movingUnit, string debugName, Vector3Int originCell)
+    private StepSelectionResult GetNextStepTowards(RoomGrid grid, Unit movingUnit, string debugName, Vector3Int originCell, bool debugLogs)
     {
         if (grid == null || movingUnit == null)
             return StepSelectionResult.NoStep(originCell);
@@ -215,7 +219,7 @@ public sealed class UnitMovementPlanner
                     return StepSelectionResult.FromPath(cachedNextStep);
             }
 
-            Debug.Log($"[UnitMovement] {debugName} - CachedStepInvalidated: {cachedNextStep}");
+            LogDebug(debugLogs, $"[UnitMovement] {debugName} - CachedStepInvalidated: {cachedNextStep}");
         }
 
         Vector3Int targetReference = _cachedTargetCell != Vector3Int.zero
@@ -313,7 +317,8 @@ public sealed class UnitMovementPlanner
         Vector3Int targetCell,
         Vector3Int desiredAttackCell,
         Unit targetUnit,
-        int rangeInCells)
+        int rangeInCells,
+        bool debugLogs)
     {
         bool targetChanged = _cachedTargetUnit != targetUnit;
         bool targetCellChanged = !_hasCachedTargetCell || _cachedTargetCell != targetCell;
@@ -347,7 +352,7 @@ public sealed class UnitMovementPlanner
             return false;
 
         if (invalidationReason != null)
-            Debug.Log($"[UnitMovement] {debugName} - PathInvalidated: {invalidationReason}");
+            LogDebug(debugLogs, $"[UnitMovement] {debugName} - PathInvalidated: {invalidationReason}");
 
         _cachedTargetUnit = targetUnit;
         _cachedTargetCell = targetCell;
@@ -359,7 +364,7 @@ public sealed class UnitMovementPlanner
         _cachedPath.AddRange(FindPath(grid, movingUnit, originCell, desiredAttackCell));
 
         if (_cachedPath.Count > 0)
-            Debug.Log($"[UnitMovement] {debugName} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredAttackCell}");
+            LogDebug(debugLogs, $"[UnitMovement] {debugName} - PathRecalculated: {_cachedPath.Count} steps from {originCell} to {desiredAttackCell}");
 
         return true;
     }
@@ -401,6 +406,12 @@ public sealed class UnitMovementPlanner
         return targetUnit != null &&
                targetUnit.IsAlive &&
                targetUnit.LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private static void LogDebug(bool debugLogs, string message)
+    {
+        if (debugLogs)
+            Debug.Log(message);
     }
 
     private readonly struct StepSelectionResult

@@ -9,6 +9,7 @@ public sealed class SkillDebugVfxInstance : MonoBehaviour
     [SerializeField] private Unit _target;
     [SerializeField] private Vector3 _worldPosition;
     [SerializeField] private Material _prototypeMaterial;
+    [SerializeField] private string _sortingLayerName = "UI";
     [SerializeField] private int _sortingOrder = 5000;
 
     private static Sprite _whiteSprite;
@@ -146,6 +147,7 @@ public sealed class SkillDebugVfxInstance : MonoBehaviour
         SpriteRenderer spriteRenderer = child.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = ResolveWhiteSprite();
         spriteRenderer.color = color;
+        spriteRenderer.sortingLayerName = ResolveSortingLayerName();
         spriteRenderer.sortingOrder = _sortingOrder;
 
         Material material = ResolveMaterial();
@@ -176,6 +178,7 @@ public sealed class SkillDebugVfxInstance : MonoBehaviour
         lineRenderer.endWidth = width;
         lineRenderer.startColor = color;
         lineRenderer.endColor = color;
+        lineRenderer.sortingLayerName = ResolveSortingLayerName();
         lineRenderer.sortingOrder = _sortingOrder;
 
         Material material = ResolveMaterial();
@@ -237,6 +240,13 @@ public sealed class SkillDebugVfxInstance : MonoBehaviour
         };
 
         return _fallbackMaterial;
+    }
+
+    private string ResolveSortingLayerName()
+    {
+        return string.IsNullOrWhiteSpace(_sortingLayerName)
+            ? "UI"
+            : _sortingLayerName;
     }
 
     private static Sprite ResolveWhiteSprite()

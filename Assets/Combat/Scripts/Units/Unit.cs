@@ -150,7 +150,7 @@ public class Unit : Creature, IGridOccupant
         _isExecutingBasicAction = false;
     }
 
-    // Debug/manual validation entry point for duel sandbox scenes.
+    // Debug/manual validation entry point for room-backed combat debug tools.
     // Reuses the live basic action pipeline without UnitBrain orchestration.
     public bool TryBasicActionForDebug(Unit forcedTarget)
     {
@@ -169,7 +169,7 @@ public class Unit : Creature, IGridOccupant
         }
     }
 
-    // Alias kept explicit for duel sandbox discoverability.
+    // Alias kept explicit for debug tool discoverability.
     public bool TryBasicAttackForDebug(Unit forcedTarget)
     {
         return TryBasicActionForDebug(forcedTarget);

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _allowSerializedGridFallback;
     [SerializeField] private float _repathInterval = 0.2f;
+    [SerializeField] private bool _debugMovementLogs;
 
     private Unit _unit;
     private UnitMovementPlanner _planner;
@@ -76,6 +78,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public bool IsMoving => _isMoving;
     public Vector2 CurrentMovementDirection => _currentMovementDirection;
+    private bool ShouldLogMovementDebug => _debugMovementLogs || (_grid != null && _grid.DebugMovementLogs);
 
     private UnitMovementPlanner Planner
     {
@@ -131,7 +134,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (!_grid.OccupancyService.TryReserveCell(destinationCell, _unit))
         {
-            Debug.Log($"[UnitMovement] {name} - ReservationFailed: {destinationCell}");
+            LogMovementDebug($"[UnitMovement] {name} - ReservationFailed: {destinationCell}");
             return false;
         }
 
@@ -153,7 +156,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (IsWithinRange(targetUnit, rangeInCells))
         {
-            Debug.Log($"[UnitMovement] {name} - MoveTargetAlreadyInRange: {targetUnit.name}");
+            LogMovementDebug($"[UnitMovement] {name} - MoveTargetAlreadyInRange: {targetUnit.name}");
             return false;
         }
 
@@ -167,7 +170,8 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             originCell,
             targetUnit,
             Mathf.Max(0, rangeInCells),
-            name);
+            name,
+            ShouldLogMovementDebug);
 
         if (!decision.HasMove)
             return false;
@@ -214,12 +218,19 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, rangeInCells);
     }
 
+    [Obsolete("ClearDestination only invalidates the movement path cache. Use ClearPathCache() to make that behavior explicit.")]
     public void ClearDestination()
     {
-        ClearPath();
+        ClearPathCache();
     }
 
+    [Obsolete("Use ClearPathCache() to make it clear active movement is not cancelled.")]
     public void ClearPath()
+    {
+        ClearPathCache();
+    }
+
+    public void ClearPathCache()
     {
         Planner.InvalidatePathCache();
     }
@@ -406,7 +417,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
     
     private bool ResolveDeadlock(DeadlockType type, Vector3Int originCell)
     {
-        Debug.Log($"[UnitMovement] {name} - DeadlockResolved: {type}");
+        LogMovementDebug($"[UnitMovement] {name} - DeadlockResolved: {type}");
         
         _recentFailedSteps.Clear();
         
@@ -422,7 +433,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
                 _sameStepFailureCount = 0;
                 _nextRetryTime = _deadlockCooldownEndTime;
                 
-                Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Started: {_deadlockCooldown}s");
+                LogMovementDebug($"[UnitMovement] {name} - DeadlockCooldown_Started: {_deadlockCooldown}s");
                 return false;
                 
             default:
@@ -438,7 +449,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         
         if (_isInDeadlock)
         {
-            Debug.Log($"[UnitMovement] {name} - DeadlockCooldown_Cleared");
+            LogMovementDebug($"[UnitMovement] {name} - DeadlockCooldown_Cleared");
             _isInDeadlock = false;
             _deadlockCooldownEndTime = 0f;
         }
@@ -561,7 +572,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             bool isOccupied = _grid.OccupancyService.IsOccupied(nextStep, _unit);
             bool isReserved = _grid.OccupancyService.IsCellReserved(nextStep, _unit);
             
-            Debug.Log($"[UnitMovement] {name} - StepBlocked: {(isOccupied ? "Occupied" : isReserved ? "Reserved" : "Unknown")} at {nextStep}");
+            LogMovementDebug($"[UnitMovement] {name} - StepBlocked: {(isOccupied ? "Occupied" : isReserved ? "Reserved" : "Unknown")} at {nextStep}");
             
             UpdateDeadlockState(originCell, nextStep);
             
@@ -569,7 +580,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             
             if (deadlockType != DeadlockType.None)
             {
-                Debug.Log($"[UnitMovement] {name} - DeadlockDetected: {deadlockType} | attempts: {_totalAttemptsWithoutProgress}, sameStep: {_sameStepFailureCount}");
+                LogMovementDebug($"[UnitMovement] {name} - DeadlockDetected: {deadlockType} | attempts: {_totalAttemptsWithoutProgress}, sameStep: {_sameStepFailureCount}");
                 return ResolveDeadlock(deadlockType, originCell);
             }
             
@@ -583,7 +594,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
                 if (_consecutiveBlockedSteps > _maxSoftRetries)
                 {
                     _nextRetryTime = Time.time + _hardBlockRetryDelay;
-                    Debug.Log($"[UnitMovement] {name} - SoftBlockEscalated: hard retry in {_hardBlockRetryDelay}s");
+                    LogMovementDebug($"[UnitMovement] {name} - SoftBlockEscalated: hard retry in {_hardBlockRetryDelay}s");
                 }
                 else
                 {
@@ -593,7 +604,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             else
             {
                 _nextRetryTime = Time.time + _hardBlockRetryDelay;
-                Debug.Log($"[UnitMovement] {name} - HardBlockCooldown: {_hardBlockRetryDelay}s");
+                LogMovementDebug($"[UnitMovement] {name} - HardBlockCooldown: {_hardBlockRetryDelay}s");
             }
             
             return false;
@@ -601,7 +612,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (!SetDestinationCell(nextStep))
         {
-            Debug.Log($"[UnitMovement] {name} - ReservationFailed at {nextStep}");
+            LogMovementDebug($"[UnitMovement] {name} - ReservationFailed at {nextStep}");
             Planner.InvalidatePathCache();
             return false;
         }
@@ -690,7 +701,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         _grid.OccupancyService.ReleaseReservation(_unit);
 
-        Debug.Log($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedNextPathCell}");
+        LogMovementDebug($"[UnitMovement] {name} - StepCommitted: {_stepOriginCell} -> {_reservedNextPathCell}");
 
         ResetVisualStepRuntime();
         ClearActiveStepCells();
@@ -722,5 +733,11 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
         if (ReferenceEquals(_registeredGrid, grid))
             _registeredGrid = null;
+    }
+
+    private void LogMovementDebug(string message)
+    {
+        if (ShouldLogMovementDebug)
+            Debug.Log(message, this);
     }
 }
