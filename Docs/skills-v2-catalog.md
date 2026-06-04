@@ -19,7 +19,7 @@ Catalogo activo: `Assets/Core/Data/Scriptable Objects/Combat/Skills/V2/`
 | `DPS_PiercingLineDamage` | DPS | `Line` | `Hostile` | `Hostile` | `RoleBasedOffensive` | `Effect_Damage_Medium` | `Modifier_Piercing` | `-` | `TestCase_DPS_PiercingLineDamage` | Implementado |
 | `DPS_MultiTargetDamage` | DPS | `MultiTarget` | `Hostile` | `Hostile` | `RoleBasedOffensive` | `Effect_Damage_Low` | `-` | `-` | `TestCase_DPS_MultiTargetDamage` | Implementado |
 | `DPS_DirectStun` | DPS | `Direct` | `Hostile` | `Hostile` | `RoleBasedOffensive` | `Effect_Damage_Low`, `Effect_ApplyStatus_Stun` | `-` | `Status_Stun` | `TestCase_DPS_DirectStun` | Implementado |
-| `Tank_AreaTaunt` | Tank | `Area` | `None` | `Hostile` | `None` | `Effect_ApplyStatus_Taunt` | `-` | `Status_Taunt` | `TestCase_Tank_AreaTaunt` | Implementado |
+| `Tank_AreaTaunt` | Tank | `Area` | `None` | `Hostile` | `None` | `Effect_ApplyStatus_Taunt` | `-` | `Status_Taunt` | `TestCase_Tank_AreaTaunt` | Provisional activo; Taunt requiere formalizacion en la matriz |
 | `Tank_AreaDamage` | Tank | `Area` | `None` | `Hostile` | `None` | `Effect_Damage_Medium` | `-` | `-` | `TestCase_Tank_AreaDamage` | Implementado |
 | `Tank_MultiTargetDamage` | Tank | `MultiTarget` | `Hostile` | `Hostile` | `RoleBasedOffensive` | `Effect_Damage_Low` | `-` | `-` | `TestCase_Tank_MultiTargetDamage` | Implementado |
 | `Tank_SpawnMinions` | Tank | `Direct` | `Self` | `Any` | `None` | `Effect_Summon_MinorMinion` | `-` | `-` | `TestCase_Tank_SpawnMinions` | Implementado |
