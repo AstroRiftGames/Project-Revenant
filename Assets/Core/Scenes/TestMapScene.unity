@@ -661,6 +661,8 @@ MonoBehaviour:
   _healPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10037, type: 3}
   _statusPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10038, type: 3}
   _knockbackPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10039, type: 3}
+  _shieldPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10040, type: 3}
+  _skillProjectileVisualPrefab: {fileID: 8751091524275981618, guid: 765ee64fbb4d4b15b4514672f18bf851, type: 3}
   _damageColor: {r: 1, g: 0.35, b: 0.2, a: 0.95}
   _healColor: {r: 0.3, g: 1, b: 0.45, a: 0.95}
   _buffColor: {r: 0.25, g: 0.75, b: 1, a: 0.95}
@@ -670,6 +672,7 @@ MonoBehaviour:
   _bounceColor: {r: 0.75, g: 0.95, b: 1, a: 0.95}
   _lineColor: {r: 1, g: 0.55, b: 0.45, a: 0.92}
   _knockbackColor: {r: 0.35, g: 0.9, b: 1, a: 0.95}
+  _shieldColor: {r: 0.45, g: 0.8, b: 1, a: 0.95}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

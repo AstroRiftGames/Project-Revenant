@@ -21,6 +21,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     [SerializeField] private SkillDebugVfxInstance _healPrefab;
     [SerializeField] private SkillDebugVfxInstance _statusPrefab;
     [SerializeField] private SkillDebugVfxInstance _knockbackPrefab;
+    [SerializeField] private SkillDebugVfxInstance _shieldPrefab;
+    [SerializeField] private CombatProjectileVisual _skillProjectileVisualPrefab;
     [Header("Debug Colors")]
     [SerializeField] private Color _damageColor = new Color(1f, 0.35f, 0.2f, 0.95f);
     [SerializeField] private Color _healColor = new Color(0.3f, 1f, 0.45f, 0.95f);
@@ -31,18 +33,22 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     [SerializeField] private Color _bounceColor = new Color(0.75f, 0.95f, 1f, 0.95f);
     [SerializeField] private Color _lineColor = new Color(1f, 0.55f, 0.45f, 0.92f);
     [SerializeField] private Color _knockbackColor = new Color(0.35f, 0.9f, 1f, 0.95f);
+    [SerializeField] private Color _shieldColor = new Color(0.45f, 0.8f, 1f, 0.95f);
 
     private readonly HashSet<string> _missingPrefabWarnings = new();
+    private readonly HashSet<StatusEffectController> _subscribedStatusControllers = new();
 
     private void OnEnable()
     {
         SkillCaster.AnySkillImpactsResolvedForVisuals += HandleSkillImpactsResolved;
+        SubscribeToStatusControllersInScene();
         LogDebug("Subscribed to SkillCaster.AnySkillImpactsResolvedForVisuals.");
     }
 
     private void OnDisable()
     {
         SkillCaster.AnySkillImpactsResolvedForVisuals -= HandleSkillImpactsResolved;
+        UnsubscribeFromStatusControllers();
     }
 
     private void HandleSkillImpactsResolved(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
@@ -50,11 +56,66 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (!_enabled || skill == null || context == null)
             return;
 
+        SubscribeToStatusControllers(context, impacts);
         LogDebug($"Received '{skill.DisplayName}' with {impacts?.Count ?? 0} impact(s).");
+        PresentProjectileTrajectory(skill, context, impacts);
         PresentPattern(skill, context, impacts);
         PresentModifierFeedback(skill, context, impacts);
         PresentImpactMarkers(skill, context, impacts);
         PresentEffectFeedback(skill, context, impacts);
+    }
+
+    private void HandleStatusEffectTickResolved(
+        StatusEffectController controller,
+        ActiveStatusEffect activeEffect,
+        int tickValue)
+    {
+        if (!_enabled || controller == null || activeEffect == null || activeEffect.Definition == null)
+            return;
+
+        Unit targetUnit = activeEffect.TargetUnit;
+        if (targetUnit == null || !targetUnit.gameObject.activeInHierarchy)
+            return;
+
+        switch (activeEffect.Definition.EffectType)
+        {
+            case StatusEffectType.DamageOverTime:
+                PresentDamageOverTimeTick(targetUnit);
+                break;
+
+            case StatusEffectType.HealOverTime:
+                PresentHealOverTimeTick(targetUnit);
+                break;
+        }
+    }
+
+    private void PresentProjectileTrajectory(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    {
+        if (skill == null ||
+            context == null ||
+            skill.Trajectory != SkillTrajectory.Projectile ||
+            _skillProjectileVisualPrefab == null)
+        {
+            return;
+        }
+
+        if (skill.ImpactPattern == ImpactPattern.Line || HasMultipleNonNullModifiers(skill))
+            return;
+
+        Unit caster = context.Caster;
+        if (caster == null)
+            return;
+
+        if (!TryResolveProjectileVisualTarget(context, impacts, out Transform targetTransform, out Vector3 fallbackPosition))
+            return;
+
+        Transform parent = _runtimeRoot != null ? _runtimeRoot : transform;
+        CombatProjectileVisual projectile = Instantiate(
+            _skillProjectileVisualPrefab,
+            caster.Position,
+            Quaternion.identity,
+            parent);
+        projectile.Launch(caster.Position, targetTransform, fallbackPosition);
     }
 
     private void PresentPattern(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
@@ -101,6 +162,23 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             {
                 int radius = explosiveModifier.ExplosionRadiusInCells;
                 float worldRadius = Mathf.Max(0.4f, radius > 0 ? radius : skill.RadiusInCells);
+
+                if (IsSimpleDirectExplosive(skill))
+                {
+                    SkillImpact primaryImpact = FindPrimaryImpact(impacts);
+                    if (primaryImpact != null)
+                    {
+                        SpawnAreaCircle(
+                            ResolveImpactWorldPosition(primaryImpact, context),
+                            primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
+                            primaryImpact.HasTargetUnit,
+                            worldRadius,
+                            _areaColor,
+                            _defaultDuration * 0.95f);
+                    }
+
+                    continue;
+                }
 
                 for (int impactIndex = 0; impacts != null && impactIndex < impacts.Count; impactIndex++)
                 {
@@ -197,6 +275,12 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             if (effect is KnockbackSkillEffect knockbackSkillEffect)
             {
                 PresentKnockbackFeedback(context, impacts, knockbackSkillEffect);
+                continue;
+            }
+
+            if (effect is ShieldSkillEffect)
+            {
+                PresentShieldFeedback(context, impacts);
             }
         }
 
@@ -280,6 +364,42 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             SkillDebugVfxInstance instance = SpawnInstance(_knockbackPrefab, "VFX_Knockback_Runtime");
             instance.ConfigureArrow(impact.TargetUnit.Position, end, _lineWidth, _knockbackColor, _defaultDuration);
         }
+    }
+
+    private void PresentShieldFeedback(SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    {
+        if (impacts == null)
+            return;
+
+        for (int i = 0; i < impacts.Count; i++)
+        {
+            SkillImpact impact = impacts[i];
+            if (impact == null)
+                continue;
+
+            Vector3 worldPosition = ResolveImpactWorldPosition(impact, context);
+            Unit targetUnit = impact.HasTargetUnit ? impact.TargetUnit : null;
+            SkillDebugVfxInstance instance = SpawnInstance(_shieldPrefab, "VFX_Shield_Runtime");
+            instance.ConfigureRing(worldPosition, targetUnit, targetUnit != null, 0.4f, _ringWidth, _shieldColor, _defaultDuration);
+        }
+    }
+
+    private void PresentDamageOverTimeTick(Unit targetUnit)
+    {
+        if (targetUnit == null)
+            return;
+
+        SkillDebugVfxInstance instance = SpawnInstance(_statusPrefab, "VFX_DoTTick_Runtime");
+        instance.ConfigureRing(targetUnit.Position, targetUnit, true, 0.24f, _ringWidth, _debuffColor, _defaultDuration * 0.65f);
+    }
+
+    private void PresentHealOverTimeTick(Unit targetUnit)
+    {
+        if (targetUnit == null)
+            return;
+
+        SkillDebugVfxInstance instance = SpawnInstance(_healPrefab, "VFX_HoTTick_Runtime");
+        instance.ConfigureCross(targetUnit.Position, targetUnit, true, 0.28f, 0.08f, _healColor, _defaultDuration * 0.65f);
     }
 
     private void PresentBounceLinks(IReadOnlyList<SkillImpact> impacts)
@@ -378,6 +498,57 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             Debug.Log($"[SkillDebugVfxPresenter] {message}", this);
     }
 
+    private void SubscribeToStatusControllers(SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    {
+        if (context != null)
+        {
+            SubscribeToStatusController(context.Caster != null ? context.Caster.StatusEffects : null);
+            SubscribeToStatusController(context.PrimaryTarget != null ? context.PrimaryTarget.StatusEffects : null);
+            SubscribeToStatusController(context.ImpactCenterUnit != null ? context.ImpactCenterUnit.StatusEffects : null);
+        }
+
+        if (impacts == null)
+            return;
+
+        for (int i = 0; i < impacts.Count; i++)
+        {
+            SkillImpact impact = impacts[i];
+            if (impact == null || !impact.HasTargetUnit)
+                continue;
+
+            SubscribeToStatusController(impact.TargetUnit.StatusEffects);
+        }
+    }
+
+    private void SubscribeToStatusControllersInScene()
+    {
+        StatusEffectController[] controllers = FindObjectsOfType<StatusEffectController>(false);
+
+        for (int i = 0; i < controllers.Length; i++)
+            SubscribeToStatusController(controllers[i]);
+    }
+
+    private void SubscribeToStatusController(StatusEffectController statusEffectController)
+    {
+        if (statusEffectController == null || !_subscribedStatusControllers.Add(statusEffectController))
+            return;
+
+        statusEffectController.EffectTickResolved += HandleStatusEffectTickResolved;
+    }
+
+    private void UnsubscribeFromStatusControllers()
+    {
+        foreach (StatusEffectController statusEffectController in _subscribedStatusControllers)
+        {
+            if (statusEffectController == null)
+                continue;
+
+            statusEffectController.EffectTickResolved -= HandleStatusEffectTickResolved;
+        }
+
+        _subscribedStatusControllers.Clear();
+    }
+
     private static void InsertImpactByChainIndex(List<SkillImpact> orderedImpacts, SkillImpact impact)
     {
         if (orderedImpacts == null || impact == null)
@@ -427,6 +598,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         bool hasHeal = false;
         bool hasSummon = false;
         bool hasKnockback = false;
+        bool hasShield = false;
         for (int i = 0; i < skill.Effects.Length; i++)
         {
             SkillEffect effect = skill.Effects[i];
@@ -441,6 +613,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             if (effect is KnockbackSkillEffect)
                 hasKnockback = true;
+
+            if (effect is ShieldSkillEffect)
+                hasShield = true;
         }
 
         if (hasHeal)
@@ -454,6 +629,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (hasKnockback)
             return _knockbackColor;
+
+        if (hasShield)
+            return _shieldColor;
 
         return _damageColor;
     }
@@ -470,6 +648,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         bool hasHeal = false;
         bool hasSummon = false;
         bool hasKnockback = false;
+        bool hasShield = false;
         for (int i = 0; i < skill.Effects.Length; i++)
         {
             SkillEffect effect = skill.Effects[i];
@@ -484,6 +663,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             if (effect is KnockbackSkillEffect)
                 hasKnockback = true;
+
+            if (effect is ShieldSkillEffect)
+                hasShield = true;
         }
 
         if (hasHeal)
@@ -497,6 +679,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (hasKnockback)
             return _knockbackColor;
+
+        if (hasShield)
+            return _shieldColor;
 
         return _areaColor;
     }
@@ -551,7 +736,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (HasEffect<HealSkillEffect>(skill) ||
             HasEffect<ApplyStatusSkillEffect>(skill) ||
-            HasEffect<KnockbackSkillEffect>(skill))
+            HasEffect<KnockbackSkillEffect>(skill) ||
+            HasEffect<ShieldSkillEffect>(skill))
             return false;
 
         return true;
@@ -583,6 +769,80 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool HasMultipleNonNullModifiers(SkillData skill)
+    {
+        if (skill == null || skill.Modifiers == null)
+            return false;
+
+        int modifierCount = 0;
+        for (int i = 0; i < skill.Modifiers.Length; i++)
+        {
+            if (skill.Modifiers[i] == null)
+                continue;
+
+            modifierCount++;
+            if (modifierCount > 1)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsSimpleDirectExplosive(SkillData skill)
+    {
+        if (skill == null ||
+            skill.ImpactPattern != ImpactPattern.Direct ||
+            skill.Modifiers == null)
+        {
+            return false;
+        }
+
+        int explosiveModifierCount = 0;
+        int modifierCount = 0;
+        for (int i = 0; i < skill.Modifiers.Length; i++)
+        {
+            SkillModifier modifier = skill.Modifiers[i];
+            if (modifier == null)
+                continue;
+
+            modifierCount++;
+            if (modifier is ExplosiveSkillModifier)
+                explosiveModifierCount++;
+        }
+
+        return modifierCount == 1 && explosiveModifierCount == 1;
+    }
+
+    private static bool TryResolveProjectileVisualTarget(
+        SkillContext context,
+        IReadOnlyList<SkillImpact> impacts,
+        out Transform targetTransform,
+        out Vector3 fallbackPosition)
+    {
+        targetTransform = null;
+        fallbackPosition = Vector3.zero;
+
+        if (context == null)
+            return false;
+
+        SkillImpact primaryImpact = FindPrimaryImpact(impacts);
+        if (primaryImpact != null)
+        {
+            if (primaryImpact.HasTargetUnit)
+            {
+                targetTransform = primaryImpact.TargetUnit.transform;
+                fallbackPosition = primaryImpact.TargetUnit.Position;
+                return true;
+            }
+
+            fallbackPosition = ResolveImpactWorldPosition(primaryImpact, context);
+            return true;
+        }
+
+        fallbackPosition = ResolveImpactCenterWorldPosition(context);
+        return true;
     }
 
     private static Vector3 ResolveImpactCenterWorldPosition(SkillContext context)

@@ -13,6 +13,7 @@ public class LifeController : MonoBehaviour, IDamageable
     private UnitDeathHandler _deathHandler;
     private RecruitableUnitState _recruitableState;
     private StatusEffectController _statusEffectController;
+    private ShieldController _shieldController;
     private UnitMovement _unitMovement;
     private readonly List<Unit> _aggressors = new();
     private bool _hasResolvedDeath;
@@ -37,6 +38,7 @@ public class LifeController : MonoBehaviour, IDamageable
         _recruitableState = GetComponent<RecruitableUnitState>();
         _deathHandler = GetComponent<UnitDeathHandler>();
         _statusEffectController = GetComponent<StatusEffectController>();
+        _shieldController = GetComponent<ShieldController>();
         _unitMovement = GetComponent<UnitMovement>();
 
         if (_recruitableState == null || _deathHandler == null)
@@ -70,10 +72,19 @@ public class LifeController : MonoBehaviour, IDamageable
                 _aggressors.Add(attacker);
         }
 
-        CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
+        int damageToHealth = amount;
+        ShieldController shieldController = ResolveShieldController();
+        if (shieldController != null)
+        {
+            damageToHealth = shieldController.AbsorbDamage(amount, out _);
+            if (damageToHealth <= 0)
+                return;
+        }
+
+        CurrentHealth = Mathf.Max(0, CurrentHealth - damageToHealth);
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
-        OnDamageTaken?.Invoke(amount);
+        OnDamageTaken?.Invoke(damageToHealth);
 
         if (_statusEffectController != null && _statusEffectController.HasInvisibility)
             _statusEffectController.RemoveEffectOfType(StatusEffectType.Invisibility);
@@ -177,6 +188,15 @@ public class LifeController : MonoBehaviour, IDamageable
     private bool CanReceiveCombatLifeEffect()
     {
         return IsAlive && LifecycleState == UnitLifecycleState.Alive;
+    }
+
+    private ShieldController ResolveShieldController()
+    {
+        if (_shieldController != null)
+            return _shieldController;
+
+        _shieldController = GetComponent<ShieldController>();
+        return _shieldController;
     }
 
     private static bool IsCombatAlive(Unit unit)
