@@ -469,6 +469,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         ApplyStatusSkillEffect statusEffect = null;
         bool hasHeal = false;
         bool hasSummon = false;
+        bool hasKnockback = false;
         for (int i = 0; i < skill.Effects.Length; i++)
         {
             SkillEffect effect = skill.Effects[i];
@@ -480,6 +481,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             if (effect is SummonUnitSkillEffect)
                 hasSummon = true;
+
+            if (effect is KnockbackSkillEffect)
+                hasKnockback = true;
         }
 
         if (hasHeal)
@@ -490,6 +494,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (hasSummon)
             return _summonColor;
+
+        if (hasKnockback)
+            return _knockbackColor;
 
         return _areaColor;
     }
@@ -542,7 +549,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (HasEffect<DamageSkillEffect>(skill))
             return true;
 
-        if (HasEffect<HealSkillEffect>(skill) || HasEffect<ApplyStatusSkillEffect>(skill))
+        if (HasEffect<HealSkillEffect>(skill) ||
+            HasEffect<ApplyStatusSkillEffect>(skill) ||
+            HasEffect<KnockbackSkillEffect>(skill))
             return false;
 
         return true;
