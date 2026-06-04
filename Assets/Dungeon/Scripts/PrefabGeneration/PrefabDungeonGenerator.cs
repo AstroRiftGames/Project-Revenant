@@ -106,10 +106,10 @@ namespace PrefabDungeonGeneration
             }
             FloorsCache[FloorNumber] = _currentFloor;
 
-            SpawnDungeon();
+            SpawnDungeon(clearOld);
         }
 
-        private void SpawnDungeon()
+        private void SpawnDungeon(bool enterStartRoom)
         {
             if (_currentFloor == null || _currentFloor.Rooms == null) return;
 
@@ -247,7 +247,9 @@ namespace PrefabDungeonGeneration
                     room.SetActive(false);
             }
 
-            if (_floorManager != null && LastGeneratedStartRoom != null && FloorNumber <= 1)
+            // Initial dungeon load (including shortcut starts on floor 5, 10, …).
+            // Next-floor transitions enter via NextFloorDoor after GenerateDungeon(false).
+            if (_floorManager != null && LastGeneratedStartRoom != null && enterStartRoom)
             {
                 _floorManager.EnterRoom(LastGeneratedStartRoom);
             }
