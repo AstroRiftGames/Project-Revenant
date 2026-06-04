@@ -240,6 +240,7 @@ namespace PrefabDungeonGeneration
                 return;
 
             LastGeneratedStartRoom = instantiatedRooms.OrderBy(pair => pair.Key).First().Value;
+            ConfigureStartRoomPreviousFloorDoor(LastGeneratedStartRoom, enable: !enterStartRoom);
 
             foreach (GameObject room in instantiatedRooms.Values)
             {
@@ -266,6 +267,16 @@ namespace PrefabDungeonGeneration
             }
 
             OnFloorGenerated?.Invoke(_currentFloor);
+        }
+
+        private static void ConfigureStartRoomPreviousFloorDoor(GameObject startRoom, bool enable)
+        {
+            if (startRoom == null)
+                return;
+
+            PreviousFloorDoor previousFloorDoor = startRoom.GetComponentInChildren<PreviousFloorDoor>(true);
+            if (previousFloorDoor != null)
+                previousFloorDoor.gameObject.SetActive(enable);
         }
 
         private string GetHierarchyPath(Transform root, Transform target)
