@@ -935,7 +935,7 @@ Transform:
   m_GameObject: {fileID: 1995739580}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -20}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1000,12 +1000,12 @@ MonoBehaviour:
   _camera: {fileID: 1995739582}
   _playableViewport:
     serializedVersion: 2
-    x: 0.02
-    y: 0.16
-    width: 0.76
-    height: 0.82
+    x: 0
+    y: 0
+    width: 1
+    height: 1
   _padding: 0
-  _minOrthographicSize: 2.7
+  _minOrthographicSize: 2
 --- !u!114 &1995739586
 MonoBehaviour:
   m_ObjectHideFlags: 0

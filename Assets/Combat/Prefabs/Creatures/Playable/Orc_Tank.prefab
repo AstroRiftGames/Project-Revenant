@@ -471,7 +471,7 @@ Transform:
   m_Children:
   - {fileID: 7394507162961540927}
   - {fileID: 3957760073442153178}
-  - {fileID: 7277160046580169210}
+  - {fileID: 4350868532927057869}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8606000000000000001
@@ -504,6 +504,7 @@ MonoBehaviour:
   _grid: {fileID: 0}
   _allowSerializedGridFallback: 0
   _repathInterval: 0.2
+  _debugMovementLogs: 0
   _softBlockRetryDelay: 0.1
   _hardBlockRetryDelay: 0.3
   _maxSoftRetries: 3
@@ -803,7 +804,7 @@ CapsuleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.3}
+  m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.25, y: 0.5}
   m_Direction: 0
 --- !u!114 &8606000000000000019
@@ -1092,7 +1093,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 7284378992913781619}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &7469835027749204210
+--- !u!1001 &4555080961214858949
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -1130,7 +1131,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0.5
+      value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1166,7 +1167,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.25
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1182,7 +1183,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1996474221388600014, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_Name
-      value: UI
+      value: UnitCanvas
       objectReference: {fileID: 0}
     - target: {fileID: 7810004696937924441, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1192,17 +1193,13 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8053348720653365363, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
-      propertyPath: m_PresetInfoIsWorld
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
---- !u!224 &7277160046580169210 stripped
+--- !u!224 &4350868532927057869 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
-  m_PrefabInstance: {fileID: 7469835027749204210}
+  m_PrefabInstance: {fileID: 4555080961214858949}
   m_PrefabAsset: {fileID: 0}

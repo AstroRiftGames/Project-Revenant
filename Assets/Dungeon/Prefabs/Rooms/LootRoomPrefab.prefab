@@ -3339,15 +3339,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Size.x
-      value: 12.126273
+      value: 11.004967
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Size.y
-      value: 7.2183886
+      value: 7.027528
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Offset.x
-      value: -0.010582447
+      value: 0.0132751465
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Offset.y

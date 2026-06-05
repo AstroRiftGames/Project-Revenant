@@ -39,13 +39,13 @@ MonoBehaviour:
     color: {r: 0.5411765, g: 0.36862746, b: 0.23137255, a: 1}
   roleIcons:
   - role: 0
-    icon: {fileID: -6221635561139988244, guid: 5755b1dec9a811244b6e600fa0c67ae8, type: 3}
+    icon: {fileID: 21300000, guid: 5755b1dec9a811244b6e600fa0c67ae8, type: 3}
     color: {r: 0.24313726, g: 0.4862745, b: 0.69411767, a: 1}
   - role: 1
-    icon: {fileID: 8606772957828517546, guid: 4e729847f877fce40abf45047f0ccde3, type: 3}
+    icon: {fileID: 21300000, guid: 4e729847f877fce40abf45047f0ccde3, type: 3}
     color: {r: 0.8392157, g: 0.27058825, b: 0.27058825, a: 1}
   - role: 2
-    icon: {fileID: 3423954634943380333, guid: b2f6bd360f67f2f4da25dd382c28b5fc, type: 3}
+    icon: {fileID: 21300000, guid: b2f6bd360f67f2f4da25dd382c28b5fc, type: 3}
     color: {r: 0.28627452, g: 0.7137255, b: 0.45882353, a: 1}
   statIcons:
   - stat: 0

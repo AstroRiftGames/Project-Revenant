@@ -357,7 +357,7 @@ MonoBehaviour:
     width: 1
     height: 1
   _padding: 0
-  _minOrthographicSize: 2.7
+  _minOrthographicSize: 2
 --- !u!114 &519420035
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -2147,6 +2147,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: RoomCameraBounds
       objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Size.x
+      value: 7.0014286
+      objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Size.y
+      value: 4.999308
+      objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.001121521
+      objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Offset.y
+      value: -0.48734307
+      objectReference: {fileID: 0}
     - target: {fileID: 6285691877413370358, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

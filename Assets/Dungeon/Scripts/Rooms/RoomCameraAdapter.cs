@@ -46,7 +46,10 @@ public sealed class RoomCameraAdapter : MonoBehaviour
         if (floorManager != null && floorManager.CurrentRoom != null)
         {
             FitToRoom(floorManager.CurrentRoom);
+            return;
         }
+
+        FitToActiveSceneBounds();
     }
 
     // -------------------------------------------------------------------------
@@ -130,6 +133,15 @@ public sealed class RoomCameraAdapter : MonoBehaviour
             return roomContext.RoomGrid;
 
         return roomGO.GetComponentInChildren<RoomGrid>(includeInactive: false);
+    }
+
+    private void FitToActiveSceneBounds()
+    {
+        RoomCameraBounds bounds = FindFirstObjectByType<RoomCameraBounds>(FindObjectsInactive.Exclude);
+        if (bounds == null)
+            return;
+
+        _fitter.FitToRoomBounds(bounds);
     }
 
     private void HandleRoomEntered(RoomDoor door, GameObject nextRoom)

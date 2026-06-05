@@ -98,6 +98,7 @@ MonoBehaviour:
   _drawAvoidanceCosts: 0
   _drawLastPathDebug: 0
   _debugPathfindingLogs: 0
+  _debugMovementLogs: 0
   _useCustomIsometricDebugShape: 1
   _isometricDebugCellSize: {x: 1, y: 0.5}
   _gizmoExtents: {x: 12, y: 12}
@@ -1722,12 +1723,20 @@ PrefabInstance:
       value: RoomCameraBounds
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Size.x
+      value: 7.009754
+      objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Size.y
-      value: 5.3200502
+      value: 4.984672
+      objectReference: {fileID: 0}
+    - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.0014100075
       objectReference: {fileID: 0}
     - target: {fileID: 5113523002036269477, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_Offset.y
-      value: -0.94472975
+      value: -0.97826743
       objectReference: {fileID: 0}
     - target: {fileID: 6285691877413370358, guid: 724a6145aee535447a702da013a61906, type: 3}
       propertyPath: m_LocalPosition.x
