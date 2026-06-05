@@ -330,6 +330,21 @@ public class RoomGrid : MonoBehaviour
         return _topology.TryGetCellVisualCornersWorld(cell, corners);
     }
 
+    public bool TryGetWorldBounds(out Bounds worldBounds, bool includeBlockedTilemap = true)
+    {
+        worldBounds = default;
+        bool hasBounds = false;
+        var corners = new Vector3[4];
+
+        if (_walkableTilemap != null)
+            hasBounds |= TryEncapsulateTilemapBounds(_walkableTilemap, corners, ref worldBounds, ref hasBounds);
+
+        if (includeBlockedTilemap && _blockedTilemap != null)
+            hasBounds |= TryEncapsulateTilemapBounds(_blockedTilemap, corners, ref worldBounds, ref hasBounds);
+
+        return hasBounds;
+    }
+
     public bool TryGetCellIsometricDebugCornersWorld(Vector3Int cell, Vector3[] corners)
     {
         if (corners == null || corners.Length < 4)
@@ -343,6 +358,54 @@ public class RoomGrid : MonoBehaviour
         corners[2] = center + Vector3.down * halfHeight;
         corners[3] = center + Vector3.left * halfWidth;
         return true;
+    }
+
+    private bool TryEncapsulateTilemapBounds(Tilemap tilemap, Vector3[] corners, ref Bounds worldBounds, ref bool hasBounds)
+    {
+        if (tilemap == null)
+            return false;
+
+        bool foundTile = false;
+        BoundsInt cellBounds = tilemap.cellBounds;
+
+        for (int x = cellBounds.xMin; x < cellBounds.xMax; x++)
+        {
+            for (int y = cellBounds.yMin; y < cellBounds.yMax; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+                if (!tilemap.HasTile(cell))
+                    continue;
+
+                foundTile = true;
+
+                if (TryGetCellVisualCornersWorld(cell, corners))
+                {
+                    for (int i = 0; i < corners.Length; i++)
+                        EncapsulatePoint(corners[i], ref worldBounds, ref hasBounds);
+                }
+                else
+                {
+                    Vector3 center = CellToWorld(cell);
+                    Vector2 cellWorldSize = CellWorldSize;
+                    EncapsulatePoint(center + new Vector3(-cellWorldSize.x * 0.5f, -cellWorldSize.y * 0.5f, 0f), ref worldBounds, ref hasBounds);
+                    EncapsulatePoint(center + new Vector3(cellWorldSize.x * 0.5f, cellWorldSize.y * 0.5f, 0f), ref worldBounds, ref hasBounds);
+                }
+            }
+        }
+
+        return foundTile;
+    }
+
+    private static void EncapsulatePoint(Vector3 point, ref Bounds worldBounds, ref bool hasBounds)
+    {
+        if (!hasBounds)
+        {
+            worldBounds = new Bounds(point, Vector3.zero);
+            hasBounds = true;
+            return;
+        }
+
+        worldBounds.Encapsulate(point);
     }
 
     public bool IsCellStaticallyWalkable(Vector3Int cell)

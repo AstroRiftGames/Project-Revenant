@@ -1,5 +1,4 @@
 using PrefabDungeonGeneration;
-using ProceduralDungeon;
 using UnityEngine;
 
 /// <summary>
@@ -19,10 +18,6 @@ public sealed class RoomCameraAdapter : MonoBehaviour
     [Header("References")]
     [SerializeField] private RoomCameraFitter _fitter;
 
-    [Tooltip("Optional. If assigned, this follow script will be disabled when the camera frames a room " +
-             "to prevent it from overriding the fitted position every LateUpdate.")]
-    [SerializeField] private IsometricCameraFollow _cameraFollow;
-
     // -------------------------------------------------------------------------
     // Unity lifecycle
     // -------------------------------------------------------------------------
@@ -30,7 +25,6 @@ public sealed class RoomCameraAdapter : MonoBehaviour
     private void Awake()
     {
         ResolveFitter();
-        ResolveCameraFollow();
     }
 
     private void OnEnable()
@@ -80,25 +74,63 @@ public sealed class RoomCameraAdapter : MonoBehaviour
             return;
         }
 
-        RoomCameraBounds bounds = roomGO.GetComponentInChildren<RoomCameraBounds>(includeInactive: false);
-
-        if (bounds == null)
-        {
-            Debug.LogWarning(
-                $"[RoomCameraAdapter] Room '{roomGO.name}' has no RoomCameraBounds child. " +
-                "Add a child GameObject with BoxCollider2D + RoomCameraBounds to frame this room. " +
-                "Camera will not be repositioned.",
-                this);
+        if (TryFitExplicitRoomBounds(roomGO))
             return;
-        }
 
-        DisableCameraFollow();
-        _fitter.FitToRoomBounds(bounds);
+        if (TryFitRoomGridBounds(roomGO))
+            return;
+
+        Debug.LogWarning(
+            $"[RoomCameraAdapter] Room '{roomGO.name}' has no RoomCameraBounds and no RoomGrid bounds. " +
+            "Add a child GameObject with BoxCollider2D + RoomCameraBounds, or configure RoomGrid tilemaps, " +
+            "to frame this room. Camera will not be repositioned.",
+            this);
     }
 
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    private bool TryFitExplicitRoomBounds(GameObject roomGO)
+    {
+        RoomCameraBounds bounds = roomGO.GetComponentInChildren<RoomCameraBounds>(includeInactive: false);
+        if (bounds == null)
+            return false;
+
+        _fitter.FitToRoomBounds(bounds);
+        return true;
+    }
+
+    private bool TryFitRoomGridBounds(GameObject roomGO)
+    {
+        RoomGrid roomGrid = ResolveRoomGrid(roomGO);
+        if (roomGrid == null)
+            return false;
+
+        if (!roomGrid.TryGetWorldBounds(out Bounds worldBounds))
+        {
+            Debug.LogWarning(
+                $"[RoomCameraAdapter] RoomGrid in room '{roomGO.name}' could not provide world bounds. " +
+                "Check that its walkable tilemap is configured and contains tiles.",
+                this);
+            return false;
+        }
+
+        _fitter.FitToBounds(worldBounds);
+        return true;
+    }
+
+    private static RoomGrid ResolveRoomGrid(GameObject roomGO)
+    {
+        if (roomGO == null)
+            return null;
+
+        RoomContext roomContext = roomGO.GetComponent<RoomContext>();
+        if (roomContext != null && roomContext.RoomGrid != null)
+            return roomContext.RoomGrid;
+
+        return roomGO.GetComponentInChildren<RoomGrid>(includeInactive: false);
+    }
 
     private void HandleRoomEntered(RoomDoor door, GameObject nextRoom)
     {
@@ -113,24 +145,6 @@ public sealed class RoomCameraAdapter : MonoBehaviour
         {
             FitToRoom(floorManager.CurrentRoom);
         }
-    }
-
-    private void DisableCameraFollow()
-    {
-        if (_cameraFollow != null && _cameraFollow.enabled)
-        {
-            _cameraFollow.enabled = false;
-            Debug.Log(
-                "[RoomCameraAdapter] IsometricCameraFollow disabled to allow room framing. " +
-                "Re-enable it manually if you need follow behaviour outside of rooms.",
-                this);
-        }
-    }
-
-    private void ResolveCameraFollow()
-    {
-        if (_cameraFollow == null)
-            _cameraFollow = GetComponent<IsometricCameraFollow>();
     }
 
     private void ResolveFitter()

@@ -210,7 +210,6 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
-  - component: {fileID: 519420033}
   - component: {fileID: 519420034}
   - component: {fileID: 519420035}
   m_Layer: 0
@@ -338,21 +337,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &519420033
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb94405bfa37d2c449491f8ac2a6423c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Target: {fileID: 0}
-  SmoothTime: 0.3
-  Offset: {x: 0, y: 0, z: -10}
 --- !u!114 &519420034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -368,12 +352,12 @@ MonoBehaviour:
   _camera: {fileID: 519420031}
   _playableViewport:
     serializedVersion: 2
-    x: 0.02
-    y: 0.16
-    width: 0.76
-    height: 0.82
-  _padding: 1.5
-  _minOrthographicSize: 5
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  _padding: 0
+  _minOrthographicSize: 2.7
 --- !u!114 &519420035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,7 +371,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _fitter: {fileID: 519420034}
-  _cameraFollow: {fileID: 0}
 --- !u!1 &1013076127
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,6 +417,8 @@ MonoBehaviour:
   _healPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10037, type: 3}
   _statusPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10038, type: 3}
   _knockbackPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10039, type: 3}
+  _shieldPrefab: {fileID: 0}
+  _skillProjectileVisualPrefab: {fileID: 0}
   _damageColor: {r: 1, g: 0.35, b: 0.2, a: 0.95}
   _healColor: {r: 0.3, g: 1, b: 0.45, a: 0.95}
   _buffColor: {r: 0.25, g: 0.75, b: 1, a: 0.95}
@@ -443,6 +428,7 @@ MonoBehaviour:
   _bounceColor: {r: 0.75, g: 0.95, b: 1, a: 0.95}
   _lineColor: {r: 1, g: 0.55, b: 0.45, a: 0.92}
   _knockbackColor: {r: 0.35, g: 0.9, b: 1, a: 0.95}
+  _shieldColor: {r: 0.45, g: 0.8, b: 1, a: 0.95}
 --- !u!4 &1013076129
 Transform:
   m_ObjectHideFlags: 0

@@ -1004,8 +1004,8 @@ MonoBehaviour:
     y: 0.16
     width: 0.76
     height: 0.82
-  _padding: 1.5
-  _minOrthographicSize: 5
+  _padding: 0
+  _minOrthographicSize: 2.7
 --- !u!114 &1995739586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1019,7 +1019,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _fitter: {fileID: 1995739585}
-  _cameraFollow: {fileID: 0}
 --- !u!114 &2017857388 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2258487823355580373, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
