@@ -92,7 +92,7 @@ Shader "ProjectRevenant/Sprites/Outline Highlight"
             }
 
             // 8-neighbour pixel-perfect outline.
-            // The overlay renders BEHIND the source sprite (sortingOrder - 1).
+            // The overlay renders behind the unit's source sprites.
             // We only colour transparent pixels that are adjacent to opaque ones;
             // the source sprite covers the interior automatically.
             half4 OutlineFragment(Varyings input) : SV_Target

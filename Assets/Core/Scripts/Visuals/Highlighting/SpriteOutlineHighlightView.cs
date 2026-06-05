@@ -127,7 +127,19 @@ public class SpriteOutlineHighlightView : MonoBehaviour
 
     private void CollectRenderers()
     {
-        _targetRenderers = GetComponentsInChildren<SpriteRenderer>(_includeInactiveChildren);
+        SpriteRenderer[] childRenderers = GetComponentsInChildren<SpriteRenderer>(_includeInactiveChildren);
+        List<SpriteRenderer> sourceRenderers = new(childRenderers.Length);
+
+        for (int i = 0; i < childRenderers.Length; i++)
+        {
+            SpriteRenderer renderer = childRenderers[i];
+            if (renderer == null || IsGeneratedOverlayRenderer(renderer))
+                continue;
+
+            sourceRenderers.Add(renderer);
+        }
+
+        _targetRenderers = sourceRenderers.ToArray();
     }
 
     private void EnsureOverlayRenderers()
@@ -138,7 +150,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         for (int i = 0; i < _targetRenderers.Length; i++)
         {
             SpriteRenderer sourceRenderer = _targetRenderers[i];
-            if (sourceRenderer == null || HasOverlayEntry(sourceRenderer))
+            if (sourceRenderer == null || IsGeneratedOverlayRenderer(sourceRenderer) || HasOverlayEntry(sourceRenderer))
                 continue;
 
             GameObject overlayObject = new($"{sourceRenderer.name}{OverlayObjectSuffix}");
@@ -206,7 +218,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         for (int i = _overlayEntries.Count - 1; i >= 0; i--)
         {
             OverlayEntry entry = _overlayEntries[i];
-            if (entry.SourceRenderer == null)
+            if (entry.SourceRenderer == null || IsGeneratedOverlayRenderer(entry.SourceRenderer))
             {
                 DestroyOverlayRenderer(entry);
                 _overlayEntries.RemoveAt(i);
@@ -218,12 +230,37 @@ public class SpriteOutlineHighlightView : MonoBehaviour
                 _overlayEntries.RemoveAt(i);
                 continue;
             }
-
-            SyncOverlayRenderer(entry);
         }
+
+        if (_overlayEntries.Count == 0)
+            return;
+
+        int overlaySortingOrder = CalculateOverlaySortingOrder();
+
+        for (int i = 0; i < _overlayEntries.Count; i++)
+            SyncOverlayRenderer(_overlayEntries[i], overlaySortingOrder);
     }
 
-    private void SyncOverlayRenderer(OverlayEntry entry)
+    private int CalculateOverlaySortingOrder()
+    {
+        int lowestSourceSortingOrder = int.MaxValue;
+
+        for (int i = 0; i < _overlayEntries.Count; i++)
+        {
+            SpriteRenderer sourceRenderer = _overlayEntries[i].SourceRenderer;
+            if (sourceRenderer == null || IsGeneratedOverlayRenderer(sourceRenderer))
+                continue;
+
+            lowestSourceSortingOrder = Mathf.Min(lowestSourceSortingOrder, sourceRenderer.sortingOrder);
+        }
+
+        if (lowestSourceSortingOrder == int.MaxValue)
+            return 0;
+
+        return lowestSourceSortingOrder - _sortingOrderOffset;
+    }
+
+    private void SyncOverlayRenderer(OverlayEntry entry, int overlaySortingOrder)
     {
         SpriteRenderer sourceRenderer = entry.SourceRenderer;
         SpriteRenderer overlayRenderer = entry.OverlayRenderer;
@@ -239,7 +276,7 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         overlayRenderer.maskInteraction = sourceRenderer.maskInteraction;
         overlayRenderer.spriteSortPoint = sourceRenderer.spriteSortPoint;
         overlayRenderer.sortingLayerID = sourceRenderer.sortingLayerID;
-        overlayRenderer.sortingOrder = sourceRenderer.sortingOrder + _sortingOrderOffset;
+        overlayRenderer.sortingOrder = overlaySortingOrder;
         overlayRenderer.color = new Color(1f, 1f, 1f, sourceRenderer.color.a);
         
         // Pass UV and scaling data to the material to generate synthetic padding without stretching the art
@@ -297,6 +334,11 @@ public class SpriteOutlineHighlightView : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool IsGeneratedOverlayRenderer(SpriteRenderer renderer)
+    {
+        return renderer != null && renderer.name.EndsWith(OverlayObjectSuffix, System.StringComparison.Ordinal);
     }
 
     private void DestroyOverlayRenderers()
