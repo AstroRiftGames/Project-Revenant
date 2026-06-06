@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
+  m_Name: Support_AreaSummonMinion_Debug
+  m_EditorClassIdentifier: 
+  _skillId: Support_AreaSummonMinion_Debug
+  _displayName: Support Area Summon Minion Debug
+  _description: Provisional debug summon for TestMapScene.
+  _icon: {fileID: 0}
+  _primaryTargetRequirement: 4
+  _impactTargetRequirement: 3
+  _targetSelectionMode: 0
+  _targetFallbackMode: 0
+  _requirements:
+    mustTargetInjured: 0
+  _trajectory: 0
+  _impactPattern: 1
+  _impactCenterMode: 2
+  _skillExecutionMode: 0
+  _effects:
+  - {fileID: 11400000, guid: c5d6e7f8091a2b3c4d5e6f708192a3b4, type: 2}
+  _modifiers: []
+  _castTime: 0
+  _rangeInCells: 4
+  _radiusInCells: 1
+  _lineLengthInCells: 1
+  _maxTargets: 1

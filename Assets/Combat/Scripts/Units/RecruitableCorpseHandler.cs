@@ -89,6 +89,9 @@ public class RecruitableCorpseHandler : MonoBehaviour
 
     private bool CanHandleCorpse()
     {
+        if (_unit != null && _unit.GetComponent<TemporaryCombatUnit>() != null)
+            return false;
+
         return !_hasHandledCorpse && _state.CanInteractWithCorpse;
     }
 

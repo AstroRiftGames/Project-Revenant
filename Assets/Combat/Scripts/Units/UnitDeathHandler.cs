@@ -56,6 +56,13 @@ public class UnitDeathHandler : MonoBehaviour
             return;
         }
 
+        if (GetComponent<TemporaryCombatUnit>() != null)
+        {
+            ResolveDefaultDeath();
+            NotifyDeathResolved();
+            return;
+        }
+
         if (_unit != null && _unit.IsEnemy)
         {
             LeaveRecruitableCorpse();

@@ -241,6 +241,9 @@ public class SkillCaster : MonoBehaviour
         if (deadUnit == null || !IsOwnerCombatAlive() || _unit.Role != UnitRole.DPS)
             return;
 
+        if (deadUnit.GetComponent<TemporaryCombatUnit>() != null)
+            return;
+
         Unit killer = deadUnit.GetLastAttacker();
         if (!ReferenceEquals(killer, _unit))
             return;

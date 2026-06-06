@@ -71,6 +71,12 @@ public class SummonUnitSkillEffect : SkillEffect
         if (runtimeMarker == null)
             runtimeMarker = instance.AddComponent<CombatSummonedUnitRuntimeMarker>();
 
+        TemporaryCombatUnit temporaryCombatUnit = instance.GetComponent<TemporaryCombatUnit>();
+        if (temporaryCombatUnit == null)
+            temporaryCombatUnit = instance.AddComponent<TemporaryCombatUnit>();
+
+        temporaryCombatUnit.Initialize(caster, skill);
+
         summonedUnit.SetAffiliation(caster.Team, caster.Faction);
 
         if (instance.TryGetComponent(out UnitMovement movement))

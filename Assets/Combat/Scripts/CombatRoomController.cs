@@ -372,11 +372,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
         CancelActiveUnitMovementOnEncounterResolved();
         CleanupStatusEffectsOnEncounterResolved();
+        CleanupTemporaryCombatUnits();
 
         if (_outcome != CombatRoomOutcome.PlayerVictory)
             return;
 
-        CleanupSummonsOnVictory();
         CleanupProjectilesOnVictory();
     }
 
@@ -407,18 +407,45 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         }
     }
 
-    private void CleanupSummonsOnVictory()
+    private void CleanupTemporaryCombatUnits()
     {
+        var temporaryUnits = new HashSet<int>();
+
+        TemporaryCombatUnit[] tempCombatUnits = _roomContext.GetComponentsInChildren<TemporaryCombatUnit>(includeInactive: true);
+        for (int i = 0; i < tempCombatUnits.Length; i++)
+        {
+            TemporaryCombatUnit temporaryCombatUnit = tempCombatUnits[i];
+            if (temporaryCombatUnit == null)
+                continue;
+
+            GameObject unitObject = temporaryCombatUnit.gameObject;
+            if (unitObject == null)
+                continue;
+
+            int instanceId = unitObject.GetInstanceID();
+            if (!temporaryUnits.Add(instanceId))
+                continue;
+
+            Destroy(unitObject);
+        }
+
         CombatSummonedUnitRuntimeMarker[] summonedUnits =
             _roomContext.GetComponentsInChildren<CombatSummonedUnitRuntimeMarker>(includeInactive: true);
-
         for (int i = 0; i < summonedUnits.Length; i++)
         {
             CombatSummonedUnitRuntimeMarker summonedUnit = summonedUnits[i];
             if (summonedUnit == null)
                 continue;
 
-            Destroy(summonedUnit.gameObject);
+            GameObject unitObject = summonedUnit.gameObject;
+            if (unitObject == null)
+                continue;
+
+            int instanceId = unitObject.GetInstanceID();
+            if (!temporaryUnits.Add(instanceId))
+                continue;
+
+            Destroy(unitObject);
         }
     }
 

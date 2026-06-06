@@ -41,6 +41,9 @@ public class NecromancerRoomExperienceTracker : MonoBehaviour
         if (unit == null || unit.Team != UnitTeam.Enemy)
             return;
 
+        if (unit.GetComponent<TemporaryCombatUnit>() != null)
+            return;
+
         RoomContext roomContext = unit.RoomContext;
         CombatRoomController combatController = roomContext != null ? roomContext.CombatController : null;
         if (combatController == null || !combatController.IsCombatActive)

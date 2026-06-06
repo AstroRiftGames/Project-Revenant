@@ -21,7 +21,7 @@ Provisional:
 
 Debug/deprecated:
 - MultiTarget y multi-modifier existen, pero son advanced/debug hasta definir contrato.
-- Summon existe en runtime, pero no queda ningun `SkillData` V2 activo para Summon hasta redisenarlo como Area/Zone.
+- Summon existe en runtime y tiene un caso provisional/debug para `TestMapScene` (`Support_AreaSummonMinion_Debug`), pero no queda ningun `SkillData` V2 activo para uso real hasta redisenarlo como Area/Zone.
 - Assets legacy `SE_*` fueron eliminados y quedan fuera de Skills V2.
 - Prefabs genericos/legacy `HumanUnit`, `OrcUnit`, `Enemy*` y `Ally*` no forman parte del flujo real.
 
@@ -110,6 +110,7 @@ Falta:
 - `KnockbackSkillEffect`: empuja unidades en gameplay despues del evento visual.
 - `ShieldSkillEffect`: aplica shield temporal.
 - `SummonUnitSkillEffect`: existe en runtime, pero no hay assets V2 activos de Summon; requiere rediseno de skill valida Area/Zone antes de uso real.
+- `SummonUnitSkillEffect`: existe en runtime; el asset provisional/debug `Support_AreaSummonMinion_Debug` sirve solo para `TestMapScene` y valida `GroundCell + Area` contra `VFX_Summon` pre-effect. El summon real sigue pendiente de decision de diseno.
 - DoT/HoT: se modelan como status con ticks periodicos.
 
 ## 5. Modifiers Implementados
@@ -134,18 +135,20 @@ Falta:
 - Status/Buff/Debuff: `VFX_Status` con color buff o debuff.
 - DoT/HoT: pulso pequeno por `StatusEffectController.EffectTickResolved`.
 - Projectile: visual-only usando `CombatProjectileVisual`; no retrasa effects ni confirma arrival.
+- Summon: `VFX_Summon` es pre-effect y muestra la intencion del cast, no la celda final garantizada.
 
 ## 7. Tool de Prueba
 
 - `TestMapScene` contiene `CombatDebugVisuals` con `SkillDebugVfxPresenter` y prefabs placeholder asignados.
 - `CreatureCombatDebugTool` permite spawnear criaturas, asignar team, attach al grid, forzar carga, castear skill sobre target/celda, ejecutar basic attack, matar y limpiar.
+- `TestMapScene` incluye un spawn entry debug con `Summoned_MinorMinion_Debug` para validar el summon provisional sin tocar criaturas reales.
 - Esta tool permite probar skills y VFX sin flujo completo de combate.
 - Las pruebas de criaturas deben usar los prefabs activos `Human_*` y `Orc_*` por rol. Las variantes futuras deben crearse a partir de esos prefabs, no desde prefabs genericos legacy.
 
 ## 8. Provisional / Debug / Deprecated
 
 - `Tank_AreaTaunt`: provisional activa hasta formalizar Taunt en matriz.
-- Summon: runtime existente, pero los assets invalidos `Support_SpawnMinions`, `Tank_SpawnMinions` y `Effect_Summon_MinorMinion` fueron eliminados; debe redisenarse como Area/Zone antes de volver al catalogo.
+- Summon: runtime existente, con provisional/debug `Support_AreaSummonMinion_Debug` para `TestMapScene`; los assets invalidos `Support_SpawnMinions`, `Tank_SpawnMinions` y `Effect_Summon_MinorMinion` fueron eliminados y el summon real sigue pendiente de decision de diseno/balance.
 - MultiTarget: runtime parcial, pero no formalizado para criatura real.
 - Multi-modifier: permitido tecnicamente, pero advanced/debug hasta tener semantica y metadata visual.
 - Legacy `SE_*` y `Skills/Deprecated`: eliminados del proyecto tras confirmar que no tenian referencias reales externas.
@@ -162,7 +165,57 @@ Falta:
 - GroundCell no tiene UI real de seleccion.
 - Persistent, Periodic, Expandable y Accumulative no tienen runtime.
 
-## 10. Proximos Pasos
+## 10. Summoned Minions / Temporary Combat Units
+
+Definicion:
+- Un minion invocado es una `Unit` temporal creada por una skill.
+- Usa infraestructura de `Unit` solo para combate y grid.
+- No forma parte del roster ni del sistema de criaturas persistentes.
+
+Puede:
+- ocupar celda
+- bloquear movimiento
+- recibir dano
+- morir
+- heredar `team` y `faction` del caster
+- tener `owner/caster`
+- atacar o usar comportamiento simple si se decide
+- ser limpiado al finalizar combate
+
+No puede:
+- entrar a party
+- ser reclutado
+- dejar corpse reclutable
+- participar en `FusionStation`
+- persistir fuera del combate
+- dar recompensas, economia o essence como criatura normal
+- usar skills propias por defecto
+- ocupar slots de formacion
+
+Runtime actual:
+- `SummonUnitSkillEffect` instancia `UnitData.unitPrefab`.
+- Asigna `team` y `faction` del caster.
+- Usa `UnitMovement.AttachToGridAtCell`.
+- Usa `CombatSummonedUnitRuntimeMarker`.
+- `VFX_Summon` es pre-effect y muestra la intencion, no la celda final garantizada.
+
+Riesgos actuales:
+- Una summon tratada como `Creature` normal puede entrar en corpse, recruit, party o fusion.
+- El cleanup debe garantizar eliminacion en cualquier `CombatRoomState.Resolved`, no solo en victoria.
+- Los listeners de muerte y recompensa deben ignorar summons cuando el contrato se formalice.
+
+Decision tecnica futura:
+- Agregar un componente pequeno como `TemporaryCombatUnit` o `SummonedMinionController`.
+- Debe guardar `OwnerUnit`, `SourceSkill` y una `despawn policy`.
+- No debe reemplazar `Unit` ni reescribir la arquitectura de combate.
+
+Estado de `Support_AreaSummonMinion_Debug`:
+- Skill debug/provisional.
+- Usa `GroundCell + Area + TargetCell`.
+- No esta asignada a criaturas reales.
+- Sirve solo para validar `TestMapScene` y `CreatureCombatDebugTool`.
+
+## 11. Proximos Pasos
 
 1. Formalizar Summon como Area/Zone.
 2. Formalizar MultiTarget.

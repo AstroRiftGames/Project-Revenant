@@ -119,6 +119,37 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &125554014
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 125554015}
+  m_Layer: 0
+  m_Name: AllyPos4
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &125554015
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 125554014}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.02, y: -1.76, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &244335341
 GameObject:
   m_ObjectHideFlags: 0
@@ -189,6 +220,14 @@ MonoBehaviour:
   - prefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010203, type: 3}
     team: 0
     spawnCellMarker: {fileID: 1610736304}
+    cell: {x: 0, y: 0}
+  - prefab: {fileID: 5437173185435831237, guid: f3c2a1b0987645d1a2b3c4d5e6f70819, type: 3}
+    team: 1
+    spawnCellMarker: {fileID: 125554015}
+    cell: {x: 8, y: 2}
+  - prefab: {fileID: 168480000053724679, guid: b1c2d3e4f5061728394a5b6c7d8e9f01, type: 3}
+    team: 1
+    spawnCellMarker: {fileID: 125554015}
     cell: {x: 0, y: 0}
   _spawnedUnits: []
   _selectedCaster: {fileID: 0}
@@ -594,7 +633,7 @@ Transform:
   m_GameObject: {fileID: 2112130536}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.02, y: -1.76, z: 0}
+  m_LocalPosition: {x: -0.54, y: -0.97, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -683,6 +722,7 @@ SceneRoots:
   - {fileID: 411691702}
   - {fileID: 312413282}
   - {fileID: 2112130537}
+  - {fileID: 125554015}
   - {fileID: 1246374366}
   - {fileID: 1914634368}
   - {fileID: 1610736304}
