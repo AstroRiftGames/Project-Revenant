@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: EnemySummoner
   displayName: Enemy Summoner
   isFusion: 0
-  unitPrefab: {fileID: 2718856880987165290, guid: 4dcb49064f0040b7bd8842f055258b88, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010203, type: 3}
   team: 0
   role: 2
   combatStyle: 2

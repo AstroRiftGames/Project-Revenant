@@ -12,6 +12,8 @@ Implementado:
 - DoT/HoT mediante status con ticks periodicos.
 - Modifiers runtime: Splash, Piercing, Bounce y Explosive.
 - Placeholder VFX/debug para impacts, status, shield, knockback, DoT/HoT y projectile visual-only.
+- Prefabs reales activos de criaturas: `Human_DPS`, `Human_Tank`, `Human_Support`, `Orc_DPS`, `Orc_Tank` y `Orc_Support`.
+- Catalogo SkillData V2 normalizado en carpetas `Role_DPS`, `Role_Tank` y `Role_Support`.
 
 Provisional:
 - `Tank_AreaTaunt` esta activo, pero Taunt debe formalizarse en la matriz.
@@ -19,8 +21,9 @@ Provisional:
 
 Debug/deprecated:
 - MultiTarget y multi-modifier existen, pero son advanced/debug hasta definir contrato.
-- Summon existe en runtime, pero los assets actuales no son validos para uso real.
-- Assets legacy `SE_*` quedan fuera de Skills V2.
+- Summon existe en runtime, pero no queda ningun `SkillData` V2 activo para Summon hasta redisenarlo como Area/Zone.
+- Assets legacy `SE_*` fueron eliminados y quedan fuera de Skills V2.
+- Prefabs genericos/legacy `HumanUnit`, `OrcUnit`, `Enemy*` y `Ally*` no forman parte del flujo real.
 
 Falta:
 - Projectile gameplay real.
@@ -67,7 +70,6 @@ Falta:
 | Tank_AreaShield | Area | Ally | Shield | - | Activa |
 | Tank_AreaTaunt | Area | Hostile | Taunt | - | Provisional activa |
 | Tank_MultiTargetDamage | MultiTarget | Hostile | Damage | - | Debug/advanced |
-| Tank_SpawnMinions | Direct | Self | Summon | - | Deprecated/invalid |
 
 ### Support
 
@@ -89,7 +91,6 @@ Falta:
 | Support_DirectHealOverTime | Direct | Ally | HealOverTime | - | Activa |
 | Support_AreaHealOverTime | Area | Ally | HealOverTime | - | Activa |
 | Support_EnemyDebuffDefense | Direct | Hostile | DebuffDefense | - | Debug/advanced |
-| Support_SpawnMinions | Direct | Self | Summon | - | Deprecated/invalid |
 
 ## 3. Runtime
 
@@ -108,7 +109,7 @@ Falta:
 - `ApplyStatusSkillEffect`: aplica status, incluidos buff, debuff, taunt, stun, slow, DoT y HoT.
 - `KnockbackSkillEffect`: empuja unidades en gameplay despues del evento visual.
 - `ShieldSkillEffect`: aplica shield temporal.
-- `SummonUnitSkillEffect`: existe, pero requiere rediseno de skill valida Area/Zone antes de uso real.
+- `SummonUnitSkillEffect`: existe en runtime, pero no hay assets V2 activos de Summon; requiere rediseno de skill valida Area/Zone antes de uso real.
 - DoT/HoT: se modelan como status con ticks periodicos.
 
 ## 5. Modifiers Implementados
@@ -139,14 +140,15 @@ Falta:
 - `TestMapScene` contiene `CombatDebugVisuals` con `SkillDebugVfxPresenter` y prefabs placeholder asignados.
 - `CreatureCombatDebugTool` permite spawnear criaturas, asignar team, attach al grid, forzar carga, castear skill sobre target/celda, ejecutar basic attack, matar y limpiar.
 - Esta tool permite probar skills y VFX sin flujo completo de combate.
+- Las pruebas de criaturas deben usar los prefabs activos `Human_*` y `Orc_*` por rol. Las variantes futuras deben crearse a partir de esos prefabs, no desde prefabs genericos legacy.
 
 ## 8. Provisional / Debug / Deprecated
 
 - `Tank_AreaTaunt`: provisional activa hasta formalizar Taunt en matriz.
-- Summon: runtime existente, pero `Support_SpawnMinions` y `Tank_SpawnMinions` son invalidas como `Direct/Self`; deben redisenarse como Area/Zone.
+- Summon: runtime existente, pero los assets invalidos `Support_SpawnMinions`, `Tank_SpawnMinions` y `Effect_Summon_MinorMinion` fueron eliminados; debe redisenarse como Area/Zone antes de volver al catalogo.
 - MultiTarget: runtime parcial, pero no formalizado para criatura real.
 - Multi-modifier: permitido tecnicamente, pero advanced/debug hasta tener semantica y metadata visual.
-- Legacy `SE_*`: no deben usarse para Skills V2.
+- Legacy `SE_*` y `Skills/Deprecated`: eliminados del proyecto tras confirmar que no tenian referencias reales externas.
 - Documentacion vieja fragmentada: reemplazada por este overview cuando este presente en el repo.
 
 ## 9. Limitaciones Conocidas
@@ -159,14 +161,10 @@ Falta:
 - CastTime/Channel no tienen VFX dedicado.
 - GroundCell no tiene UI real de seleccion.
 - Persistent, Periodic, Expandable y Accumulative no tienen runtime.
-- El catalogo esta dividido entre carpetas `Role_*` y carpetas `DPS`, `Tank`, `Support`.
 
 ## 10. Proximos Pasos
 
-1. Actualizar y normalizar el catalogo real de assets.
-2. Confirmar `ShieldController` y `UnitVisualBumpView` en prefabs reales si faltan.
-3. Limpiar assets legacy/deprecated que no deban quedar en catalogo activo.
-4. Formalizar Summon como Area/Zone.
-5. Formalizar MultiTarget.
-6. Agregar metadata de origen de impactos para modifiers.
-7. Implementar modifiers avanzados solo despues de definir semantica.
+1. Formalizar Summon como Area/Zone.
+2. Formalizar MultiTarget.
+3. Agregar metadata de origen de impactos para modifiers.
+4. Implementar modifiers avanzados solo despues de definir semantica.

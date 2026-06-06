@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: EnemyDpsMelee2
   displayName: Enemy DPS Melee
   isFusion: 0
-  unitPrefab: {fileID: 2323190928215289116, guid: 40a1ab1eaf2aa2243a39221ba0c5b645, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010201, type: 3}
   team: 0
   role: 1
   combatStyle: 1

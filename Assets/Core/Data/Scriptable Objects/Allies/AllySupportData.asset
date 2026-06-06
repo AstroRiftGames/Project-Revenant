@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: AllySupport
   displayName: Support
   isFusion: 0
-  unitPrefab: {fileID: 752399050272230644, guid: 0431511c4e63224409b66ffe98bb0e28, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010103, type: 3}
   team: 1
   role: 2
   combatStyle: 2

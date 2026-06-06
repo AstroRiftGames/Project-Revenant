@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: DPSData
   displayName: DPS Ranged
   isFusion: 0
-  unitPrefab: {fileID: 7803597328171877914, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010101, type: 3}
   team: 1
   role: 1
   combatStyle: 2

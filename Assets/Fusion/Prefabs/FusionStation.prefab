@@ -204,7 +204,7 @@ MonoBehaviour:
   _remainsOnFailure: 1
   _fusionRemainsItem: {fileID: 11400000, guid: c02ca72091aaa30478a88b9809d2eed8, type: 2}
   _fusionStoneItem: {fileID: 11400000, guid: 7310a9d310830034c968c7f5bdd02e73, type: 2}
-  _neutralCreaturePrefab: {fileID: 7803597328171877914, guid: df915f41001d2584b8abcbeb251d2062, type: 3}
+  _neutralCreaturePrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010101, type: 3}
 --- !u!114 &8852243671046182951
 MonoBehaviour:
   m_ObjectHideFlags: 0

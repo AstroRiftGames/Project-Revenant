@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: Tank2
   displayName: Tank 2
   isFusion: 0
-  unitPrefab: {fileID: 2776671400952486295, guid: 45f174a8ef9e1b54797580e2f3d6e8cc, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010202, type: 3}
   team: 0
   role: 0
   combatStyle: 1

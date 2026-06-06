@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: EnemyDpsRanged2
   displayName: Enemy DPS Ranged
   isFusion: 0
-  unitPrefab: {fileID: 1093855413220510189, guid: f21b485c48cb58f4abc9dee82bb349ea, type: 3}
+  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010201, type: 3}
   team: 0
   role: 1
   combatStyle: 2
