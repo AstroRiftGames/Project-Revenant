@@ -8,7 +8,7 @@ public class Necromancer : MonoBehaviour
 {
     [SerializeField] private NecromancerData _data;
     [SerializeField] private RoomGrid _grid;
-    [SerializeField] private float _moveSpeed = 5f;
+    [SerializeField] private float _moveSpeed = 1f;
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private Animator _animator;
     [SerializeField] private MovementTileFeedbackController _movementTileFeedback;
@@ -19,6 +19,7 @@ public class Necromancer : MonoBehaviour
 
     private static readonly int MoveXHash = Animator.StringToHash("MoveX");
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
+    private static readonly int IsIdleHash = Animator.StringToHash("IsIdle");
 
     private readonly Queue<Vector3Int> _remainingPathCells = new();
     private Vector3Int _currentCell;
@@ -187,6 +188,7 @@ public class Necromancer : MonoBehaviour
         }
 
         _currentStepCell = _remainingPathCells.Dequeue();
+        _animator.SetBool(IsIdleHash, false);
         _isMoving = true;
     }
 
@@ -326,6 +328,7 @@ public class Necromancer : MonoBehaviour
     private void StopMovement()
     {
         _remainingPathCells.Clear();
+        _animator.SetBool(IsIdleHash, true);
         _isMoving = false;
         _hasDestinationCell = false;
         _currentStepCell = Vector3Int.zero;

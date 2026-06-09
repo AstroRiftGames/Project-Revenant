@@ -488,7 +488,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: 179cda59bf1edba47842adcd98a6ecfe, type: 2}
   _grid: {fileID: 0}
-  _moveSpeed: 5
+  _moveSpeed: 1
   _spriteRenderer: {fileID: 4311825657026345189}
   _animator: {fileID: 8776445667688998498}
   _movementTileFeedback: {fileID: 8099833755549800280}

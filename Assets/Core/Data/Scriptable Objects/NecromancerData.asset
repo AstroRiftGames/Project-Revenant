@@ -15,4 +15,4 @@ MonoBehaviour:
   _necromancerId: Necromancer
   _displayName: Necromancer
   _sprite: {fileID: 21300000, guid: 673af43bb818ab24cb26cdf7e9f79ec6, type: 3}
-  _moveSpeed: 5
+  _moveSpeed: 1
