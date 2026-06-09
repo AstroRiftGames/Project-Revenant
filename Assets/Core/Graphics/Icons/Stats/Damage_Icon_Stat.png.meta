@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: b207119c16d1bb44a83160c9d5ecd6eb
+guid: 62ba647ea5e72ae4abd45147079de457
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4289201707420406139
-    second: Icon-Evasion_0
+      213: -9053370892960100374
+    second: Icon-Damage_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,12 +113,12 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icon-Evasion_0
+      name: Icon-Damage_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 9
         y: 0
-        width: 32
+        width: 14
         height: 32
       alignment: 0
       pivot: {x: 0, y: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b71dacc4a3e468b30800000000000000
-      internalID: 4289201707420406139
+      spriteID: aef8041c327fb5280800000000000000
+      internalID: -9053370892960100374
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Icon-Evasion_0: 4289201707420406139
+      Icon-Damage_0: -9053370892960100374
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
