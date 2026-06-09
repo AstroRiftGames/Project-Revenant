@@ -21,18 +21,26 @@ namespace ProjectRevenant.UI
                 BackgroundImage.color = GetColorForRoomType(roomNode.RoomType);
             }
 
-            if (RoomIconImage != null && iconDatabase != null)
+            if (RoomIconImage != null)
             {
-                (Sprite icon, Color color) = iconDatabase.GetRoomIcon(roomNode.RoomType);
-                if (icon != null)
+                if (iconDatabase == null)
                 {
-                    RoomIconImage.sprite = icon;
-                    RoomIconImage.color = color;
-                    RoomIconImage.enabled = true;
+                    iconDatabase = Data.GameIconDatabase.LoadFromResources();
                 }
-                else
+
+                if (iconDatabase != null)
                 {
-                    RoomIconImage.enabled = false;
+                    (Sprite icon, Color color) = iconDatabase.GetRoomIcon(roomNode.RoomType);
+                    if (icon != null)
+                    {
+                        RoomIconImage.sprite = icon;
+                        RoomIconImage.color = color;
+                        RoomIconImage.enabled = true;
+                    }
+                    else
+                    {
+                        RoomIconImage.enabled = false;
+                    }
                 }
             }
 

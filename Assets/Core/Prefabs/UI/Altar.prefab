@@ -652,7 +652,7 @@ MonoBehaviour:
   _stationController: {fileID: 0}
   _mainPanel: {fileID: 190649604552552378}
   _closeMainButton: {fileID: 333499880804817669}
-  _iconDatabase: {fileID: 11400000, guid: ef13445337a73b54ea2bde42f89de657, type: 2}
+  _iconDatabase: {fileID: 11400000, guid: 30a69d77b869abd43a30a4e809428ba4, type: 2}
   _sacrificeTitleText: {fileID: 4121334651963191777}
   _sacrificeButton: {fileID: 781807772687730045}
   _requirementsContainer: {fileID: 4956539212412429164}

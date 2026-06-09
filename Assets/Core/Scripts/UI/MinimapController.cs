@@ -36,6 +36,22 @@ namespace ProjectRevenant.UI
             _floorManager = FindFirstObjectByType<FloorManager>();
             
             if (MinimapRoot == null) MinimapRoot = gameObject;
+
+            ResolveIconDatabase();
+        }
+
+        private void ResolveIconDatabase()
+        {
+            if (IconDatabase != null)
+                return;
+
+            IconDatabase = Data.GameIconDatabase.LoadFromResources();
+            if (IconDatabase == null)
+            {
+                Debug.LogWarning(
+                    $"[{nameof(MinimapController)}] GameIconDatabase is not assigned and could not be loaded from Resources.",
+                    this);
+            }
         }
 
         private void OnEnable()
