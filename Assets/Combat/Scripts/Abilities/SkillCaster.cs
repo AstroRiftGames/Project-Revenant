@@ -41,6 +41,7 @@ public class SkillCaster : MonoBehaviour
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
     public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillImpactsResolvedForVisuals;
+    public event Action<float> OnAbilityChargeChanged;
 
     public SkillData Skill => ResolveSkill();
     public bool HasSkill => Skill != null;
@@ -165,6 +166,11 @@ public class SkillCaster : MonoBehaviour
         float previousCharge = _state.CurrentCharge;
         _state.AddCharge(amount);
 
+        if (Mathf.Approximately(_state.CurrentCharge, previousCharge))
+            return;
+
+        OnAbilityChargeChanged?.Invoke(_state.CurrentCharge);
+
         if (_state.CurrentCharge > previousCharge)
         {
             LogDebug(
@@ -175,7 +181,11 @@ public class SkillCaster : MonoBehaviour
 
     public void ResetAbilityCharge()
     {
+        if (Mathf.Approximately(_state.CurrentCharge, 0f))
+            return;
+
         _state.ResetCharge();
+        OnAbilityChargeChanged?.Invoke(_state.CurrentCharge);
     }
 
     public void InterruptCast()
