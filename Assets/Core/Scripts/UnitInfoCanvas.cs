@@ -3,6 +3,7 @@ using UnityEngine;
 public class UnitInfoCanvas : MonoBehaviour
 {
     [SerializeField] private UnitLifeBarUI _lifeBarUI;
+    [SerializeField] private UnitAbilityChargeBarUI _abilityChargeBarUI;
     [SerializeField] private UnitHealthBarEffectFeedback _effectFeedback;
     [SerializeField] private UnitRoleFactionUI _roleFactionUI;
 
@@ -28,6 +29,12 @@ public class UnitInfoCanvas : MonoBehaviour
         if (_lifeBarUI != null)
         {
             _lifeBarUI.Initialize(lifeController, affiliation, _canvas);
+        }
+
+        SkillCaster skillCaster = GetComponentInParent<SkillCaster>();
+        if (_abilityChargeBarUI != null)
+        {
+            _abilityChargeBarUI.Initialize(skillCaster);
         }
 
         if (_effectFeedback != null)
