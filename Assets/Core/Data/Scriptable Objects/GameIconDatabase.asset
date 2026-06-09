@@ -49,34 +49,34 @@ MonoBehaviour:
     color: {r: 0.28627452, g: 0.7137255, b: 0.45882353, a: 1}
   statIcons:
   - stat: 0
-    icon: {fileID: 1512316786106143848, guid: 89e7f0c986d026b43bf4f58d07963728, type: 3}
+    icon: {fileID: 21300000, guid: 89e7f0c986d026b43bf4f58d07963728, type: 3}
     color: {r: 0.6509804, g: 0.22745098, b: 0.22745098, a: 1}
   - stat: 1
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 21300000, guid: 62ba647ea5e72ae4abd45147079de457, type: 3}
     color: {r: 0.72156864, g: 0.36862746, b: 0.09411765, a: 1}
   - stat: 2
-    icon: {fileID: 3203138601777514715, guid: bb3dde74e66e45b4e8f960b0b8d0383d, type: 3}
+    icon: {fileID: 21300000, guid: bb3dde74e66e45b4e8f960b0b8d0383d, type: 3}
     color: {r: 0.6509804, g: 0.54509807, b: 0.16470589, a: 1}
   - stat: 3
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 21300000, guid: 104612d5556b6534b84f02dc8f0017ad, type: 3}
     color: {r: 0.1764706, g: 0.5686275, b: 0.65882355, a: 1}
   - stat: 4
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 21300000, guid: 7db61d00c099f1b4c964609db7c45299, type: 3}
     color: {r: 0.5566038, g: 0.5566038, b: 0.5566038, a: 1}
   - stat: 5
-    icon: {fileID: 2489143269020037237, guid: 10b3fc8e9da71eb488e408c0943c5a9e, type: 3}
+    icon: {fileID: 21300000, guid: 10b3fc8e9da71eb488e408c0943c5a9e, type: 3}
     color: {r: 0.40392157, g: 0.6117647, b: 0.18039216, a: 1}
   - stat: 6
-    icon: {fileID: 4289201707420406139, guid: b207119c16d1bb44a83160c9d5ecd6eb, type: 3}
+    icon: {fileID: 21300000, guid: b207119c16d1bb44a83160c9d5ecd6eb, type: 3}
     color: {r: 0.4392157, g: 0.2509804, b: 0.54901963, a: 1}
   - stat: 7
-    icon: {fileID: 21300000, guid: 953e21da8e9ad1f4c9df15470e4856d2, type: 3}
+    icon: {fileID: 21300000, guid: fe0ff2e24931e3e4a945efc34129e4e6, type: 3}
     color: {r: 0.30588236, g: 0.34901962, b: 0.4, a: 1}
   - stat: 8
-    icon: {fileID: 6057387042745037111, guid: 21c14782a84b24742ae8e829a4d029d6, type: 3}
+    icon: {fileID: 21300000, guid: 21c14782a84b24742ae8e829a4d029d6, type: 3}
     color: {r: 0.17254902, g: 0.6039216, b: 0.4862745, a: 1}
   - stat: 9
-    icon: {fileID: 778664977074735268, guid: 832ac64fd51e86746be987915a1f2e94, type: 3}
+    icon: {fileID: 21300000, guid: 832ac64fd51e86746be987915a1f2e94, type: 3}
     color: {r: 0.25490198, g: 0.49803922, b: 0.72156864, a: 1}
   roomIcons:
   - roomType: 0
@@ -105,10 +105,10 @@ MonoBehaviour:
     icon: {fileID: -2117330891, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
     color: {r: 0.7803922, g: 0.7803922, b: 0.7803922, a: 1}
   - effectType: 8
-    icon: {fileID: 346562733, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    icon: {fileID: 21300000, guid: 9c646463a754f9f4595b9013e2a96753, type: 3}
     color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
   - effectType: 9
-    icon: {fileID: 660192405, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    icon: {fileID: 21300000, guid: 77f0817a6fcb4314d8cf2d24da2b8d10, type: 3}
     color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
   - effectType: 11
     icon: {fileID: -1955340270, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
@@ -126,7 +126,7 @@ MonoBehaviour:
     icon: {fileID: 1051590419, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
     color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
   - effectType: 0
-    icon: {fileID: 46911886, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    icon: {fileID: 21300000, guid: 4f1bd60a1f9f1b64b8149da26d8c58d0, type: 3}
     color: {r: 0.44705886, g: 0.9725491, b: 0.9725491, a: 1}
   - effectType: 1
     icon: {fileID: 304482522, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
