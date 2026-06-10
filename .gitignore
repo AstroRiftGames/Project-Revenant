@@ -97,3 +97,6 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Creature Variant Lab temporary assets
+/[Aa]ssets/[Cc]ore/[Dd]ata/[Ss]criptable [Oo]bjects/[Cc]reatures/[Gg]enerated/_LabTemp/

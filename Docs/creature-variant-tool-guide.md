@@ -1,153 +1,116 @@
-# Creature Variant Tool Guide
+# Guía de Uso: Creature Variant Lab
 
-The **Creature Variant Tool** is a comprehensive, editor-friendly window in the Unity Editor designed to streamline the cataloging, searching, generation, and validation of creature variant assets generated from the V2 Skill Composition system.
-
----
-
-## 1. What is the Tool?
-* **Name**: Creature Variant Tool
-* **Menu Path**: `Tools/Creatures/Creature Variant Tool`
-* **Purpose**: Allows designers and developers to view, search, filter, generate/regenerate, and validate all playable and enemy creature variants from a single workspace.
+El **Creature Variant Lab** es una herramienta avanzada del Unity Editor diseñada como un entorno de experimentación (laboratorio). Permite componer habilidades, crear variantes de criaturas de forma dinámica, spawnearlas directamente en la escena de pruebas (`TestMapScene`) para validar su comportamiento en tiempo real, y guardarlas como variantes permanentes de producción si así se desea.
 
 ---
 
-## 2. Core Concepts
-A creature variant is a combination of a base template (defining stats and visuals) and a formal skill composition:
-* **Faction**: `Human` or `Orc`
-* **Role**: `DPS`, `Tank`, or `Support`
-* **Skill Composition**: A combination of Delivery (Impact Pattern), Effect, and Modifiers.
-
-### Variant Naming Formula
-$$\text{Faction} + \text{Role} + \text{SkillNameWithoutRolePrefix} \rightarrow \text{VariantName}$$
-
-* **Example**: `Human` + `DPS` + `DirectDamage` $\rightarrow$ `Human_DPS_DirectDamage`
+## 1. ¿Qué es la Tool?
+* **Nombre:** Creature Variant Lab
+* **Ubicación:** `Tools/Creatures/Creature Variant Lab`
+* **Propósito:** Permitir a los diseñadores componer y probar cualquier combinación de facción, rol y skill composition en runtime sin necesidad de crear assets de antemano o navegar por la estructura del proyecto.
 
 ---
 
-## 3. Catalog Structure
-The variants are organized under `Assets/Core/Data/Scriptable Objects/Creatures/Generated/`:
-* `Generated/Human/`: Active Human variants grouped by role.
-* `Generated/Orc/`: Active Orc variants grouped by role.
-* `Generated/_Excluded/`: Inactive/Experimental variants that do not meet production requirements.
+## 2. Bloques de la Herramienta
 
-### Catalog Stats
-* **Active Variants**: **54** (27 Human, 27 Orc)
-* **Excluded Variants**: **38** (19 Human, 19 Orc)
-* **Status**: **0 Invalid Active Variants**
+La ventana del laboratorio está dividida en los siguientes bloques funcionales:
 
-> [!IMPORTANT]
-> Assets placed in the `_Excluded/` directory are not indexed by recruitment pools or standard encounters unless explicitly configured for experimental testing.
+### A. Unit Setup (Configuración de la Unidad)
+Configura la criatura que servirá de contenedor para la habilidad:
+* **Faction:** `Human` u `Orc`.
+* **Role:** `DPS`, `Tank` o `Support`.
+* **Team para Test:** `Ally` (Aliado) u `Enemy` (Enemigo).
+* **Prefab y Plantilla base:** Se resuelven de manera automática según la combinación de Facción y Rol elegida:
+  * *Human DPS:* `HumanSlayerData.asset` + `Human_DPS.prefab`
+  * *Human Tank:* `HumanBruteData.asset` + `Human_Tank.prefab`
+  * *Human Support:* `HumanShamanData.asset` + `Human_Support.prefab`
+  * *Orc DPS:* `OrcSlayerData.asset` + `Orc_DPS.prefab`
+  * *Orc Tank:* `OrcBruteData.asset` + `Orc_Tank.prefab`
+  * *Orc Support:* `OrcShamanData.asset` + `Orc_Support.prefab`
+* **Overrides Manuales (Opcional):** Permite arrastrar manualmente un prefab o un template `UnitData` personalizado para sobreescribir la resolución automática.
 
----
+### B. Skill Composition Setup (Composición de Habilidad)
+Permite diseñar la habilidad en base al sistema de **Skill Composition**:
+* **Delivery:** `Direct` (impacto único), `Area` (circular) o `Line` (recta).
+* **Primary Target Requirement:** Requisitos de objetivo primario (`None`, `Hostile`, `Ally`, `Self`, `GroundCell`).
+* **Effect:** Tipo de efecto a ejecutar (`Damage`, `Heal`, `Shield`, `Stun`, `Slow`, `PoisonBurn`, `Haste`, `StrengthBuff`, `HealOverTime`, `Summon`, `Knockback`).
+* **Modifier:** Modificadores físicos o espaciales (`None`, `Splash`, `Penetrating`, `Bounce`, `Explosive`, `Persistent`, `Periodic`).
+* **Status Effect Definition:** Este campo aparece dinámicamente si el efecto seleccionado aplica estados alterados. Permite elegir de una lista desplegable cualquier `StatusEffectDefinition` existente en el proyecto.
+* **Parámetros Contextuales:** Campos numéricos y de referencia que se habilitan dinámicamente según la combinación elegida (daño, duración, ticks, radio de área, rango, distancia de empuje, unidad a invocar, rebotes máximos, etc.).
 
-## 4. Filters Available
-The tool provides filters to quickly browse variants:
-* **Faction**: `All`, `Human`, or `Orc`
-* **Role**: `All`, `DPS`, `Tank`, or `Support`
-* **Delivery**: `All`, `Direct` (Single Target), `Area` (Splash/Radius), or `Line`
-* **Effect**: `All`, `Damage`, `Heal`, `Shield`, `Status`, `Summon`, or `Knockback`
-* **Status Subtype**: `All`, `Stun`, `Slow`, `PoisonBurn`, `Haste`, `StrengthBuff`, or `HealOverTime` (ticks)
-* **Modifier**: `All`, `None`, `Splash`, `Penetrating`, `Bounce`, `Explosive`, `Periodic`, or `Persistent`
-* **Search Text**: Filters results by variant or skill name (case-insensitive).
-* **Show Excluded Toggle**: If checked, reveals the 38 experimental variants in `_Excluded/`.
+### C. Validation Preview (Integridad en Tiempo Real)
+Antes de spawnear o guardar la unidad, la herramienta ejecuta en tiempo real las reglas de integridad de Skills V2:
+* **Errores Bloqueantes (Rojo):** Impiden el spawneo y guardado (ej. incompatibilidad de rol-patrón, falta de `StatusEffectDefinition` en estados, duración <= 0 en escudos).
+* **Advertencias (Amarillo):** Informan sobre configuraciones experimentales o no terminadas (ej. efecto `Summon` o modificadores `Bounce`/`Explosive` marcados como no listos para producción, advertencias de [Rule 7] y [Rule 8] sobre modificadores faltantes).
 
----
+### D. Test Actions (Pruebas en Runtime)
+Permite spawnear la unidad configurada en la escena actual:
+* **Spawn Test Unit As Ally / Enemy:** Genera temporalmente la variante y la coloca en el grid de la escena.
+* **Spawn Opponent Dummy:** Spawnea un objetivo estático de pruebas del equipo enemigo (`Debug_Target_Enemy`).
+* **Clear Spawned Test Units:** Elimina todas las unidades spawneadas por la herramienta y limpia sus registros.
+* **Select Spawned Unit:** Selecciona y hace foco en la última unidad spawneada en la jerarquía.
+* **Log Runtime State:** Imprime en la consola el estado de combate, vida, equipo y carga de habilidad de todas las unidades del mapa de pruebas.
+* **Clear Lab Temp Assets:** Elimina del disco los archivos generados temporalmente durante las pruebas.
 
-## 5. Result Columns
-The variants table lists:
-1. **Variant name**: The name of the variant asset.
-2. **Faction**: The unit's faction.
-3. **Role**: The combat role (DPS/Tank/Support).
-4. **Skill**: The official skill name.
-5. **Delivery**: The impact pattern.
-6. **Effects**: List of effects with values/duration.
-7. **Modifiers**: List of modifiers applied.
-8. **State**: `Active` (green) or `Excluded` (grey).
-
----
-
-## 6. Action Buttons
-* **Top Header Buttons**:
-  * **Generate / Regenerate Variants**: Re-runs the generator script to create new variants or update existing ones based on templates.
-  * **Validate Variants**: Runs the validation suite over all active variants, verifying prefabs and skill-role matches.
-  * **Refresh Browser**: Re-scans disk assets to update the table contents.
-* **Row Actions**:
-  * **Select**: Selects the variant asset in the Unity Inspector.
-  * **Ping U**: Highlights the `UnitData` asset in the Project window.
-  * **Ping S**: Highlights the `SkillData` asset in the Project window.
-  * **Copy**: Copies the database path of the variant asset to the clipboard.
+### E. Save Actions (Guardado Persistente)
+* **Find Matching Generated Variant:** Escanea el catálogo en disco para comprobar si ya existe un asset `UnitData` de producción que tenga exactamente la misma combinación de facción, rol y composición de skill.
+* **Ping Matching Variant:** Si existe una coincidencia, la busca y la selecciona en la ventana Project.
+* **Save As Generated Variant:** Permite guardar la composición de forma permanente:
+  1. Escribe un nombre único para la habilidad (sin el prefijo del rol).
+  2. Crea un asset de habilidad permanente en `Assets/Core/Data/Scriptable Objects/Combat/Skills/Role_{Rol}/`.
+  3. Crea un asset de variante `UnitData` permanente en `Assets/Core/Data/Scriptable Objects/Creatures/Generated/{Faction}/{Role}/` bajo la convención: `{Faction}_{Role}_{NombreHabilidad}`.
+  4. Pide confirmación al usuario antes de sobreescribir cualquier asset existente.
 
 ---
 
-## 7. Recommended Search Workflows
-Use the dropdown filters to find specific variants:
-* **To find `Human_DPS_DirectDamage`**:
-  Select Faction `Human`, Role `DPS`, Delivery `Direct`, Effect `Damage`, Modifier `None`.
-* **To find `Orc_Tank_AreaSlow`**:
-  Select Faction `Orc`, Role `Tank`, Delivery `Area`, Effect `Status`, Status Subtype `Slow`.
-* **To find `Human_Support_AreaBuffSpeed`**:
-  Select Faction `Human`, Role `Support`, Delivery `Area`, Effect `Status`, Status Subtype `Haste`.
+## 3. Funcionamiento de Pruebas Temporales vs Guardado
+
+Para evitar llenar el proyecto de archivos basura al experimentar con distintas composiciones, la herramienta diferencia ambos flujos:
+
+1. **Flujo de Pruebas Temporales (Spawneo):**
+   * Al pulsar *Spawn*, la herramienta crea assets temporales en la carpeta:
+     `Assets/Core/Data/Scriptable Objects/Creatures/Generated/_LabTemp/`
+   * Estos archivos (`LabTemp_Skill.asset` y `LabTemp_UnitData.asset`) son ignorados por el sistema de control de versiones Git, ya que están declarados en `.gitignore`.
+   * El laboratorio permite probar infinitas combinaciones modificando parámetros en la UI y presionando Spawn consecutivamente.
+   * Puedes limpiar la carpeta temporal en cualquier momento con el botón **Clear Lab Temp Assets**.
+
+2. **Flujo de Guardado Persistente (Save):**
+   * Se guarda como una variante de producción definitiva.
+   * Pasa a formar parte del catálogo de variantes activas en las carpetas de facción correspondientes.
+   * Los assets son versionados por Git y quedan listos para su uso en la campaña principal y encounters.
 
 ---
 
-## 8. Encounter Design Guidelines
-When designing encounters:
-1. Use the **Creature Variant Tool** to browse available active combat behaviors.
-2. Use the **Copy** action to get the exact path of the `UnitData` asset to insert into your level/encounter config.
-3. Keep initial pools small to balance gameplay before scaling.
-4. **Do not use `_Excluded` variants** in main level encounters.
+## 4. Cómo Probar en `TestMapScene`
 
-### Recommended Early Enemy Pool
-* `Orc_DPS_DirectDamage` (Standard melee damage dealer)
-* `Orc_DPS_DirectKnockback` (Melee with knockback control)
-* `Orc_Tank_AreaShield` (Applies shield to nearby allies)
-* `Orc_Tank_AreaSlow` (Slowing presence)
-* `Orc_Support_AllyHeal` (Heals wounded enemies)
-* `Orc_Support_AreaShield` (Buffer backline)
+1. Abre la escena de pruebas en Unity: `Assets/Core/Scenes/TestMapScene.unity`.
+2. Entra en **Play Mode**.
+3. Abre el laboratorio en `Tools/Creatures/Creature Variant Lab`.
+4. Define la configuración de tu unidad y habilidad en los bloques **A** y **B**.
+5. Asegúrate de que no haya errores bloqueantes en el bloque **C**.
+6. Presiona **Spawn Test Unit As Ally** o **Enemy**. La herramienta la colocará automáticamente en una celda libre cercana y la integrará en el `RoomContext` y la navegación del grid.
+   > [!IMPORTANT]
+   > El **único lugar autorizado y funcional** para spawnear o crear unidades de prueba en la escena es el **Creature Variant Lab**.
+7. Puedes usar el componente `CreatureCombatDebugTool` presente en el GameObject de la escena para controlar el combate en runtime (seleccionar caster/target, forzar cargas de energía, ordenar ataques manuales, o realizar auditorías de movimiento de las unidades activas).
+   * *Nota:* `CreatureCombatDebugTool` ya **no expone listas de pre-spawneo ni botones para instanciar nuevas unidades desde su Inspector**, previniendo la duplicidad de responsabilidades; ahora actúa estrictamente como un controlador y visualizador runtime/debug.
 
 ---
 
-## 9. Recruitment Flow Guidelines
-When integrating variants into the player's recruitment mechanics:
-* Implement recruitment based on the **exact variant name** defeated in combat.
-* Maintain a pool of **permitted active variants** for character selection.
-* **Avoid permitting `_Excluded` variants** as they might cause runtime issues or visual glitches.
+## 5. Catálogo Persistente y Reglas de Exclusión
+
+* **Directorio `Generated/`:** Contiene las variantes oficiales del juego.
+* **Directorio `_Excluded/`:** Almacena variantes experimentales o que han quedado obsoletas por cambios de diseño.
+* **Métricas de Salud del Catálogo:** Para que el proyecto esté en un estado libre de errores antes de integraciones y commits, la suite de validación de producción debe reportar:
+  * **Variantes Activas:** Exactamente 54.
+  * **Variantes Inválidas:** 0.
+  * **Violaciones Críticas de Metadatos:** 0.
+  * **Gaps de Runtime:** 0.
 
 ---
 
-## 10. When to Use "Generate / Regenerate"
-Only run the generator in these situations:
-* After adding a new `Official` skill to a role folder.
-* After updating the properties of an existing base UnitData template.
-* After changing variant naming conventions or folder hierarchies.
-* *Do not run it if you only want to search or read paths.*
-
----
-
-## 11. When to Use "Validate Variants"
-Run the validator in these situations:
-* Immediately after generating/regenerating variants.
-* Before integrating variants into encounters or recruitment pools.
-* Before pushing/committing changes to git.
-
----
-
-## 12. Best Practices & Restrictions (What NOT to Do)
-> [!CAUTION]
-> Avoid these common pitfalls to maintain catalog sanity.
-
-* **No Manual Overwrites**: Do not modify generated variant assets directly in the Inspector. If stats or skills need changing, change the base UnitData template or the underlying SkillData asset, then run **Generate / Regenerate**.
-* **No Manual Filesystem Movement**: Do not drag generated variant assets to other folders via the filesystem. Use the generator tools to categorize and move obsolete ones to `_Excluded/` automatically.
-* **No Experimental Integration**: Do not use `_Excluded/` variants in production campaigns.
-* **No Duplication**: Do not duplicate variants manually to create new ones; always define a new `SkillData` asset first.
-* **No Legacy Backend Reintroduction**: Do not attempt to assign old `SkillEffect` or `SkillModifier` components. All configurations must be done via the V2 Skill Composition system.
-
----
-
-## 13. Healthy Catalog Baseline
-A healthy project state must meet the following criteria:
-* **Active Variants**: exactly 54.
-* **Invalid Active Variants**: 0.
-* **Validate Composition Metadata**: 0 critical violations (Rules 1-6, 9-10).
-* **Validate Composition Runtime Readiness**: 0 active gaps.
-* `_Excluded` variants are hidden by default in the tool browser.
+## 6. Qué NO Hacer (Restricciones y Buenas Prácticas)
+* **No edites directamente assets temporales en _LabTemp:** Estos archivos se sobrescriben en cada acción de spawneo. Configura los valores desde la UI del laboratorio.
+* **No muevas manualmente variantes persistentes:** Deja que las herramientas organicen las carpetas para evitar romper las referencias automáticas.
+* **No integres variantes de `_Excluded/` en producción:** Esos assets no son estables.
+* **No agregues la carpeta `_LabTemp/` a tus commits de Git:** Está protegida en el `.gitignore`.
+* **No reintroduzcas clases legacy:** Toda la lógica debe estar configurada bajo el sistema unificado de **Skill Composition**.
