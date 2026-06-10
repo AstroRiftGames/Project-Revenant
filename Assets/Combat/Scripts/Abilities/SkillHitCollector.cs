@@ -64,7 +64,6 @@ public static class SkillHitCollector
 
         if (collectedTargets)
         {
-            ApplyModifiersToImpacts(skillContext, results);
             return true;
         }
 
@@ -625,28 +624,7 @@ public static class SkillHitCollector
         TryAddUniqueImpact(results, SkillImpact.CreateAreaPoint(worldPosition, 0, true));
     }
 
-    private static void ApplyModifiersToImpacts(SkillContext skillContext, List<SkillImpact> results)
-    {
-        if (skillContext == null || results == null)
-            return;
 
-        SkillData skill = skillContext.Skill;
-        if (skill == null)
-            return;
-
-        SkillModifier[] modifiers = skill.Modifiers;
-        if (modifiers != null)
-        {
-            for (int i = 0; i < modifiers.Length; i++)
-            {
-                SkillModifier modifier = modifiers[i];
-                if (modifier == null)
-                    continue;
-
-                modifier.ModifyImpacts(skillContext, skill, results);
-            }
-        }
-    }
 
     private static TargetRelation ResolveImpactTargetRelation(ImpactTargetRequirement targetRequirement)
     {
@@ -765,19 +743,15 @@ public static class SkillHitCollector
         if (skill == null)
             return false;
 
-        SkillEffect[] effects = skill.Effects;
+        var effects = skill.CompositionEffects;
         if (effects == null || effects.Length == 0)
             return false;
 
         bool foundEffect = false;
         for (int i = 0; i < effects.Length; i++)
         {
-            SkillEffect effect = effects[i];
-            if (effect == null)
-                continue;
-
             foundEffect = true;
-            if (effect is not SummonUnitSkillEffect)
+            if (effects[i].EffectKind != SkillEffectKind.Summon)
                 return false;
         }
 

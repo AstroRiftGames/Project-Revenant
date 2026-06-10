@@ -20,8 +20,6 @@ MonoBehaviour:
   _impactTargetRequirement: 3
   _targetSelectionMode: 0
   _targetFallbackMode: 0
-  _requirements:
-    mustTargetInjured: 0
   _trajectory: 0
   _impactPattern: 1
   _impactCenterMode: 2
@@ -29,6 +27,18 @@ MonoBehaviour:
   _effects:
   - {fileID: 11400000, guid: c5d6e7f8091a2b3c4d5e6f708192a3b4, type: 2}
   _modifiers: []
+  _compositionEffects:
+  - _effectKind: 8
+    _value: 1
+    _duration: 0
+    _interval: 0
+    _maxStacks: 1
+    _summonedUnit: {fileID: 11400000, guid: e4d5c6b7a8914203b4c5d6e7f8091a2b, type: 2}
+    _statusDefinition: {fileID: 0}
+    _summonAnchorMode: 3
+  _compositionModifierKinds: 
+  _compositionModifierData: []
+  _compositionState: 1
   _castTime: 0
   _rangeInCells: 4
   _radiusInCells: 1

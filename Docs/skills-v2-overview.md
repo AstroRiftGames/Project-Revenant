@@ -1,223 +1,125 @@
-# Skills V2 Overview
+# Skill Composition System (Overview)
 
-Este documento es la fuente de verdad principal para el estado actual del sistema Skills V2. Describe lo que existe hoy en runtime, assets, VFX placeholder y herramientas de prueba. No describe el diseno ideal ni reemplaza la matriz externa de compatibilidad.
+Este documento es la fuente de verdad principal para el sistema **Skill Composition** (anteriormente Skills V2). Describe el modelo unificado de habilidades, los assets activos y las herramientas de prueba en runtime.
 
-## 1. Estado Actual
+---
 
-Skills V2 soporta como base habilidades `Hitscan` con ejecucion `Instant`, `CastTime` y `Channel` a nivel de datos/runtime. La cobertura validada esta centrada en `Hitscan` + `Instant`.
+## 1. El Concepto de "Skill Composition"
 
-Implementado:
-- Resolucion de impactos por `Direct`, `Area`, `Line` y `MultiTarget`.
-- Effects runtime: Damage, Heal, ApplyStatus, Knockback, Shield y Summon.
-- DoT/HoT mediante status con ticks periodicos.
-- Modifiers runtime: Splash, Piercing, Bounce y Explosive.
-- Placeholder VFX/debug para impacts, status, shield, knockback, DoT/HoT y projectile visual-only.
-- Prefabs reales activos de criaturas: `Human_DPS`, `Human_Tank`, `Human_Support`, `Orc_DPS`, `Orc_Tank` y `Orc_Support`.
-- Catalogo SkillData V2 normalizado en carpetas `Role_DPS`, `Role_Tank` y `Role_Support`.
+El sistema unifica el comportamiento de combate bajo un único concepto: una habilidad se define por cómo se compone su comportamiento, su entrega y sus efectos. Toda la lógica del sistema está estructurada en cuatro aspectos principales:
 
-Provisional:
-- `Tank_AreaTaunt` esta activo, pero Taunt debe formalizarse en la matriz.
-- `Projectile` existe como dato, pero no como gameplay real.
+1. **Cómo impacta (Targeting / Delivery)**:
+   Define cómo se propagan e impactan los efectos en el espacio/grid.
+   * **Direct**: Impacto directo al objetivo primario.
+   * **Area**: Impacto en un radio o zona circular.
+   * **Line**: Impacto a lo largo de una línea recta.
 
-Debug/deprecated:
-- MultiTarget y multi-modifier existen, pero son advanced/debug hasta definir contrato.
-- Summon existe en runtime y tiene un caso provisional/debug para `TestMapScene` (`Support_AreaSummonMinion_Debug`), pero no queda ningun `SkillData` V2 activo para uso real hasta redisenarlo como Area/Zone.
-- Assets legacy `SE_*` fueron eliminados y quedan fuera de Skills V2.
-- Prefabs genericos/legacy `HumanUnit`, `OrcUnit`, `Enemy*` y `Ally*` no forman parte del flujo real.
+2. **Qué hace (Effects)**:
+   Representa las acciones de gameplay directas aplicadas a los objetivos impactados.
+   * **Damage**: Resta vida a la unidad.
+   * **Heal**: Restaura vida a la unidad.
+   * **Shield**: Aplica un escudo temporal de absorción de daño.
+   * **Status**: Aplica estados alterados (como Stun, Slow, Haste, StrengthBuff, Poison/Burn DoT, HoT).
+     * > [!NOTE]
+     * `StatusEffectDefinition` no es un sistema aparte; es simplemente el asset de configuración que los efectos de tipo **Status** usan para definir su duración, ticks e intensidad.
+   * **Summon**: Invoca un esbirro o aliado temporal en el combate.
+   * **Knockback**: Empuja físicamente a la unidad en el grid.
 
-Falta:
-- Projectile gameplay real.
-- UI final de shield.
-- VFX de CastTime/Channel.
-- UI real para `GroundCell`.
-- Runtime para Persistent, Periodic, Expandable y Accumulative como modifiers avanzados.
+3. **Cómo se modifica (Modifiers)**:
+   Altera el patrón de impacto base para encadenar, propagar o expandir los efectos.
+   * **Splash**: Propaga daño/efectos a celdas adyacentes al impacto.
+   * **Penetrating**: Permite al patrón atravesar múltiples objetivos en línea.
+   * **Bounce**: Rebota de un objetivo a otro cercano de forma consecutiva.
+   * **Explosive**: Detona una explosión de área en los puntos de impacto.
+     * > [!NOTE]
+     * Los parámetros como el número máximo de rebotes (`BounceMaxBounces`) o el radio de explosión (`ExplosiveRadiusInCells`) son parámetros internos de los modifiers, no subsistemas independientes.
+   * **Periodic**: Añade resolución periódica de efectos.
+   * **Persistent**: Mantiene zonas o efectos bloqueando celdas.
 
-## 2. Catalogo Activo
+4. **Quién la ejecuta (Runtime Execution)**:
+   * Toda la ejecución en runtime es administrada de forma centralizada por el [SkillCompositionRuntimeExecutor](file:///C:/Users/Dani/OneDrive/Documentos/GitHub/Project-Revenant/Assets/Combat/Scripts/Abilities/SkillCompositionRuntimeExecutor.cs).
+
+---
+
+## 2. Catálogo Activo
 
 ### DPS
 
-| Skill | Pattern | Target | Effect | Modifier | Estado |
-| --- | --- | --- | --- | --- | --- |
-| DPS_DirectDamage | Direct | Hostile | Damage | - | Activa |
-| DPS_DirectSplashDamage | Direct | Hostile | Damage | Splash | Activa |
-| DPS_DirectExplosiveDamage | Direct | Hostile | Damage | Explosive | Activa |
-| DPS_DirectBounceDamage | Direct | Hostile | Damage | Bounce | Activa |
-| DPS_DirectStun | Direct | Hostile | Damage + Stun | - | Activa |
-| DPS_LineDamage | Line | Hostile | Damage | - | Activa |
-| DPS_PiercingLineDamage | Line | Hostile | Damage | Piercing | Activa |
-| DPS_AreaDamage | Area | Hostile | Damage | - | Activa |
-| DPS_AreaStun | Area | Hostile | Damage + Stun | - | Activa |
-| DPS_AreaSlow | Area | Hostile | Slow | - | Activa |
-| DPS_DirectKnockback | Direct | Hostile | Knockback | - | Activa |
-| DPS_DirectPoison | Direct | Hostile | Poison DoT | - | Activa |
-| DPS_AreaBurn | Area | Hostile | Burn DoT | - | Activa |
-| DPS_LinePiercingExplosiveDamage | Line | Hostile | Damage | Piercing + Explosive | Debug/advanced |
-| DPS_MultiTargetDamage | MultiTarget | Hostile | Damage | - | Debug/advanced |
+| Habilidad | Delivery | Efectos | Modifiers | Estado |
+|---|---|---|---|---|
+| **DPS_DirectDamage** | Direct | Damage | - | Activa |
+| **DPS_DirectSplashDamage** | Direct | Damage | Splash | Activa |
+| **DPS_DirectExplosiveDamage** | Direct | Damage | Explosive | Activa |
+| **DPS_DirectBounceDamage** | Direct | Damage | Bounce | Activa |
+| **DPS_DirectStun** | Direct | Damage + Status (Stun) | - | Activa |
+| **DPS_LineDamage** | Line | Damage | - | Activa |
+| **DPS_PiercingLineDamage** | Line | Damage | Penetrating | Activa |
+| **DPS_AreaDamage** | Area | Damage | - | Activa |
+| **DPS_AreaStun** | Area | Damage + Status (Stun) | - | Activa |
+| **DPS_AreaSlow** | Area | Status (Slow) | - | Activa |
+| **DPS_DirectKnockback** | Direct | Knockback | - | Activa |
+| **DPS_DirectPoison** | Direct | Status (Poison DoT) | - | Activa |
+| **DPS_AreaBurn** | Area | Status (Burn DoT) | - | Activa |
 
 ### Tank
 
-| Skill | Pattern | Target | Effect | Modifier | Estado |
-| --- | --- | --- | --- | --- | --- |
-| Tank_DirectDamage | Direct | Hostile | Damage | - | Activa |
-| Tank_AreaDamage | Area | Hostile | Damage | - | Activa |
-| Tank_DirectStun | Direct | Hostile | Stun | - | Activa |
-| Tank_AreaStun | Area | Hostile | Stun | - | Activa |
-| Tank_DirectSlow | Direct | Hostile | Slow | - | Activa |
-| Tank_AreaSlow | Area | Hostile | Slow | - | Activa |
-| Tank_DirectKnockback | Direct | Hostile | Knockback | - | Activa |
-| Tank_AreaKnockback | Area | Hostile | Knockback | - | Activa |
-| Tank_DirectShield | Direct | Ally | Shield | - | Activa |
-| Tank_AreaShield | Area | Ally | Shield | - | Activa |
-| Tank_AreaTaunt | Area | Hostile | Taunt | - | Provisional activa |
-| Tank_MultiTargetDamage | MultiTarget | Hostile | Damage | - | Debug/advanced |
+| Habilidad | Delivery | Efectos | Modifiers | Estado |
+|---|---|---|---|---|
+| **Tank_DirectDamage** | Direct | Damage | - | Activa |
+| **Tank_AreaDamage** | Area | Damage | - | Activa |
+| **Tank_DirectStun** | Direct | Status (Stun) | - | Activa |
+| **Tank_AreaStun** | Area | Status (Stun) | - | Activa |
+| **Tank_DirectSlow** | Direct | Status (Slow) | - | Activa |
+| **Tank_AreaSlow** | Area | Status (Slow) | - | Activa |
+| **Tank_DirectKnockback** | Direct | Knockback | - | Activa |
+| **Tank_AreaKnockback** | Area | Knockback | - | Activa |
+| **Tank_DirectShield** | Direct | Shield | - | Activa |
+| **Tank_AreaShield** | Area | Shield | - | Activa |
 
 ### Support
 
-| Skill | Pattern | Target | Effect | Modifier | Estado |
-| --- | --- | --- | --- | --- | --- |
-| Support_AllyHeal | Direct | Ally | Heal | - | Activa |
-| Support_AreaHeal | Area | Ally | Heal | - | Activa |
-| Support_SelfHeal | Direct | Self | Heal | - | Activa |
-| Support_AllyBuffDamage | Direct | Ally | BuffDamage | - | Activa |
-| Support_AreaBuffDamage | Area | Ally | BuffDamage | - | Activa |
-| Support_DirectBuffSpeed | Direct | Ally | BuffMoveSpeed | - | Activa |
-| Support_AreaBuffSpeed | Area | Ally | BuffMoveSpeed | - | Activa |
-| Support_DirectSlow | Direct | Hostile | Slow | - | Activa |
-| Support_AreaSlow | Area | Hostile | Slow | - | Activa |
-| Support_DirectStun | Direct | Hostile | Stun | - | Activa |
-| Support_AreaStun | Area | Hostile | Stun | - | Activa |
-| Support_DirectShield | Direct | Ally | Shield | - | Activa |
-| Support_AreaShield | Area | Ally | Shield | - | Activa |
-| Support_DirectHealOverTime | Direct | Ally | HealOverTime | - | Activa |
-| Support_AreaHealOverTime | Area | Ally | HealOverTime | - | Activa |
-| Support_EnemyDebuffDefense | Direct | Hostile | DebuffDefense | - | Debug/advanced |
+| Habilidad | Delivery | Efectos | Modifiers | Estado |
+|---|---|---|---|---|
+| **Support_AllyHeal** | Direct | Heal | - | Activa |
+| **Support_AreaHeal** | Area | Heal | - | Activa |
+| **Support_SelfHeal** | Direct | Heal | - | Activa |
+| **Support_AllyBuffDamage** | Direct | Status (StrengthBuff) | - | Activa |
+| **Support_AreaBuffDamage** | Area | Status (StrengthBuff) | - | Activa |
+| **Support_DirectBuffSpeed** | Direct | Status (Haste) | - | Activa |
+| **Support_AreaBuffSpeed** | Area | Status (Haste) | - | Activa |
+| **Support_DirectSlow** | Direct | Status (Slow) | - | Activa |
+| **Support_AreaSlow** | Area | Status (Slow) | - | Activa |
+| **Support_DirectStun** | Direct | Status (Stun) | - | Activa |
+| **Support_AreaStun** | Area | Status (Stun) | - | Activa |
+| **Support_DirectShield** | Direct | Shield | - | Activa |
+| **Support_AreaShield** | Area | Shield | - | Activa |
+| **Support_DirectHealOverTime** | Direct | Status (HoT) | - | Activa |
+| **Support_AreaHealOverTime** | Area | Status (HoT) | - | Activa |
+| **Support_AreaSummonMinion_Debug** | Area | Summon | - | Debug/Provisional |
 
-## 3. Runtime
+---
 
-- `SkillCaster`: valida carga y contexto, resuelve impactos, emite eventos visuales y aplica effects. `AnySkillImpactsResolvedForVisuals` se emite antes de aplicar effects.
-- `SkillHitCollector`: construye impactos por pattern y aplica modifiers.
-- `SkillEffect`: contrato base para aplicar comportamiento por impacto.
-- `SkillModifier`: transforma o agrega impactos antes de los effects.
-- `StatusEffectController`: mantiene status activos, expiracion y ticks periodicos.
-- `LifeController`: centraliza dano, curacion, muerte y consumo de shield antes de HP.
-- `ShieldController`: mantiene escudo temporal, absorbe dano entrante y expira por tiempo.
+## 3. Dinámica del Sistema de Ejecución
 
-## 4. Effects Implementados
+El componente [SkillCaster](file:///C:/Users/Dani/OneDrive/Documentos/GitHub/Project-Revenant/Assets/Combat/Scripts/Abilities/SkillCaster.cs) actúa como el orquestador en runtime.
 
-- `DamageSkillEffect`: aplica dano via `LifeController.TakeDamage`.
-- `HealSkillEffect`: aplica curacion via `LifeController.Heal`.
-- `ApplyStatusSkillEffect`: aplica status, incluidos buff, debuff, taunt, stun, slow, DoT y HoT.
-- `KnockbackSkillEffect`: empuja unidades en gameplay despues del evento visual.
-- `ShieldSkillEffect`: aplica shield temporal.
-- `SummonUnitSkillEffect`: existe en runtime, pero no hay assets V2 activos de Summon; requiere rediseno de skill valida Area/Zone antes de uso real.
-- `SummonUnitSkillEffect`: existe en runtime; el asset provisional/debug `Support_AreaSummonMinion_Debug` sirve solo para `TestMapScene` y valida `GroundCell + Area` contra `VFX_Summon` pre-effect. El summon real sigue pendiente de decision de diseno.
-- DoT/HoT: se modelan como status con ticks periodicos.
+* **Único Motor de Ejecución**: Toda la ejecución de habilidades se canaliza de forma exclusiva a través de `SkillCompositionRuntimeExecutor`, el cual lee y aplica directamente la configuración declarativa de **Skill Composition**.
+* **Remoción del Backend Legacy**: La infraestructura antigua (`SkillEffect`, `SkillModifier` y sus sub-clases) ha sido completamente removida, dejando una arquitectura unificada, limpia de dependencias redundantes.
 
-## 5. Modifiers Implementados
+---
 
-- `SplashSkillModifier`: agrega impactos secundarios alrededor del impacto primario.
-- `PiercingSkillModifier`: agrega impactos sobre una linea.
-- `BounceSkillModifier`: encadena impactos y usa `ChainIndex` para orden visual.
-- `ExplosiveSkillModifier`: agrega impactos alrededor de centros de explosion. El caso Direct + Explosive simple se representa como una sola explosion en el impacto primario.
+## 4. Variantes de Criaturas y Assets Generados
 
-## 6. Placeholder VFX
+El balance y variantes de combate se administran mediante el catálogo unificado en:
+* **Assets Base**: Viven en `Assets/Core/Data/Scriptable Objects/Allies/` (6 plantillas base).
+* **Variantes Generadas**: 54 variantes localizadas en `Assets/Core/Data/Scriptable Objects/Creatures/Generated/` que representan las combinaciones del catálogo para Humanos y Orcos por cada rol.
 
-`SkillDebugVfxPresenter` es debug/placeholder, no VFX final. Escucha eventos de skill y ticks de status.
+---
 
-- Direct: `VFX_TargetPoint` sobre el impacto primario, color por efecto dominante.
-- Area: `VFX_AreaCircle` en el centro resuelto, color por efecto dominante. No fabrica primary artificial.
-- Line: linea hasta impacto real; Line + Piercing se extiende a `LineLengthInCells`.
-- Splash: target primario, circulo en primary y markers secundarios.
-- Explosive simple: un circulo en primary y markers secundarios.
-- Bounce: primary marker, secundarios y `VFX_BounceLink` entre impactos por `ChainIndex`.
-- Knockback: color cyan, `UnitVisualBumpView` como feedback principal y `VFX_Knockback` como fallback.
-- Shield: color celeste, `VFX_Shield` sobre objetivos.
-- Status/Buff/Debuff: `VFX_Status` con color buff o debuff.
-- DoT/HoT: pulso pequeno por `StatusEffectController.EffectTickResolved`.
-- Projectile: visual-only usando `CombatProjectileVisual`; no retrasa effects ni confirma arrival.
-- Summon: `VFX_Summon` es pre-effect y muestra la intencion del cast, no la celda final garantizada.
+## 5. Herramientas de Validación y Pruebas
 
-## 7. Tool de Prueba
+Para garantizar que los assets de skill no pierdan consistencia ni introduzcan gaps de datos, se disponen de las siguientes herramientas de validación accesibles desde el menú del Editor:
 
-- `TestMapScene` contiene `CombatDebugVisuals` con `SkillDebugVfxPresenter` y prefabs placeholder asignados.
-- `CreatureCombatDebugTool` permite spawnear criaturas, asignar team, attach al grid, forzar carga, castear skill sobre target/celda, ejecutar basic attack, matar y limpiar.
-- `TestMapScene` incluye un spawn entry debug con `Summoned_MinorMinion_Debug` para validar el summon provisional sin tocar criaturas reales.
-- Esta tool permite probar skills y VFX sin flujo completo de combate.
-- Las pruebas de criaturas deben usar los prefabs activos `Human_*` y `Orc_*` por rol. Las variantes futuras deben crearse a partir de esos prefabs, no desde prefabs genericos legacy.
-
-## 8. Provisional / Debug / Deprecated
-
-- `Tank_AreaTaunt`: provisional activa hasta formalizar Taunt en matriz.
-- Summon: runtime existente, con provisional/debug `Support_AreaSummonMinion_Debug` para `TestMapScene`; los assets invalidos `Support_SpawnMinions`, `Tank_SpawnMinions` y `Effect_Summon_MinorMinion` fueron eliminados y el summon real sigue pendiente de decision de diseno/balance.
-- MultiTarget: runtime parcial, pero no formalizado para criatura real.
-- Multi-modifier: permitido tecnicamente, pero advanced/debug hasta tener semantica y metadata visual.
-- Legacy `SE_*` y `Skills/Deprecated`: eliminados del proyecto tras confirmar que no tenian referencias reales externas.
-- Documentacion vieja fragmentada: reemplazada por este overview cuando este presente en el repo.
-
-## 9. Limitaciones Conocidas
-
-- `Projectile` no es gameplay real.
-- El evento VFX de skill ocurre antes de aplicar effects.
-- `SkillImpact` no expone origen de modifier, por lo que multi-modifier no puede representarse con precision.
-- `Area` ignora `MaxTargets`; `MaxTargets = 1` en Area es confuso.
-- Shield no tiene UI final.
-- CastTime/Channel no tienen VFX dedicado.
-- GroundCell no tiene UI real de seleccion.
-- Persistent, Periodic, Expandable y Accumulative no tienen runtime.
-
-## 10. Summoned Minions / Temporary Combat Units
-
-Definicion:
-- Un minion invocado es una `Unit` temporal creada por una skill.
-- Usa infraestructura de `Unit` solo para combate y grid.
-- No forma parte del roster ni del sistema de criaturas persistentes.
-
-Puede:
-- ocupar celda
-- bloquear movimiento
-- recibir dano
-- morir
-- heredar `team` y `faction` del caster
-- tener `owner/caster`
-- atacar o usar comportamiento simple si se decide
-- ser limpiado al finalizar combate
-
-No puede:
-- entrar a party
-- ser reclutado
-- dejar corpse reclutable
-- participar en `FusionStation`
-- persistir fuera del combate
-- dar recompensas, economia o essence como criatura normal
-- usar skills propias por defecto
-- ocupar slots de formacion
-
-Runtime actual:
-- `SummonUnitSkillEffect` instancia `UnitData.unitPrefab`.
-- Asigna `team` y `faction` del caster.
-- Usa `UnitMovement.AttachToGridAtCell`.
-- Usa `CombatSummonedUnitRuntimeMarker`.
-- `VFX_Summon` es pre-effect y muestra la intencion, no la celda final garantizada.
-
-Riesgos actuales:
-- Una summon tratada como `Creature` normal puede entrar en corpse, recruit, party o fusion.
-- El cleanup debe garantizar eliminacion en cualquier `CombatRoomState.Resolved`, no solo en victoria.
-- Los listeners de muerte y recompensa deben ignorar summons cuando el contrato se formalice.
-
-Decision tecnica futura:
-- Agregar un componente pequeno como `TemporaryCombatUnit` o `SummonedMinionController`.
-- Debe guardar `OwnerUnit`, `SourceSkill` y una `despawn policy`.
-- No debe reemplazar `Unit` ni reescribir la arquitectura de combate.
-
-Estado de `Support_AreaSummonMinion_Debug`:
-- Skill debug/provisional.
-- Usa `GroundCell + Area + TargetCell`.
-- No esta asignada a criaturas reales.
-- Sirve solo para validar `TestMapScene` y `CreatureCombatDebugTool`.
-
-## 11. Proximos Pasos
-
-1. Formalizar Summon como Area/Zone.
-2. Formalizar MultiTarget.
-3. Agregar metadata de origen de impactos para modifiers.
-4. Implementar modifiers avanzados solo despues de definir semantica.
+1. **Validate Composition Metadata**: Evalúa reglas de integridad de la estructura.
+2. **Validate Composition Runtime Readiness**: Reporta la preparación para runtime de cada skill del catálogo.
+3. **TestMapScene & Debugger**: La escena `TestMapScene` y la herramienta `CreatureCombatDebugTool` permiten validar visualmente la ejecución de impactos, VFX de placeholder y comportamiento en runtime sin interferir con la campaña real.

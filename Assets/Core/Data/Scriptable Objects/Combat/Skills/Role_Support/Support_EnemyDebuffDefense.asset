@@ -20,16 +20,17 @@ MonoBehaviour:
   _impactTargetRequirement: 0
   _targetSelectionMode: 6
   _targetFallbackMode: 1
-  _requirements:
-    mustTargetInjured: 0
   _trajectory: 0
   _impactPattern: 0
   _impactCenterMode: 0
   _skillExecutionMode: 0
-  _legacyShape: 0
   _effects:
   - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1212, type: 2}
   _modifiers: []
+  _compositionEffects: []
+  _compositionModifierKinds: 
+  _compositionModifierData: []
+  _compositionState: 3
   _castTime: 0
   _rangeInCells: 5
   _radiusInCells: 1

@@ -4,6 +4,7 @@ using UnityEditorInternal;
 #endif
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [System.Serializable]
 public class CreatureSpawnEntry
@@ -22,6 +23,10 @@ public class CreatureCombatDebugTool : MonoBehaviour
     }
     [SerializeField] private RoomContext _roomContext;
     [SerializeField] private RoomGrid _roomGrid;
+    [SerializeField] private Tilemap _walkableTilemap;
+    [SerializeField] private Tilemap _blockedTilemap;
+    [SerializeField] private bool _configureGridOnEnable;
+    [SerializeField] private bool _startCombatOnEnable;
     [SerializeField] private List<CreatureSpawnEntry> _spawnEntries = new();
 
     [Header("Runtime State")]
@@ -41,6 +46,7 @@ public class CreatureCombatDebugTool : MonoBehaviour
     private void OnEnable()
     {
         ResolveReferences();
+        ConfigureDebugRoom();
     }
 
     public void ResolveReferences()
@@ -68,6 +74,16 @@ public class CreatureCombatDebugTool : MonoBehaviour
         bool valid = true;
         if (_roomContext == null) { Debug.LogWarning("[CreatureCombatDebugTool] VALIDATE: RoomContext is null."); valid = false; }
         if (_roomGrid == null) { Debug.LogWarning("[CreatureCombatDebugTool] VALIDATE: RoomGrid is null."); valid = false; }
+        if (_configureGridOnEnable && _walkableTilemap == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] VALIDATE: Grid auto-configuration is enabled but the walkable Tilemap is null.");
+            valid = false;
+        }
+        if (_startCombatOnEnable && (_roomContext == null || _roomContext.CombatController == null))
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] VALIDATE: Combat auto-start is enabled but no CombatRoomController is resolved.");
+            valid = false;
+        }
         for (int i = 0; i < _spawnEntries.Count; i++)
         {
             CreatureSpawnEntry e = _spawnEntries[i];
@@ -88,6 +104,34 @@ public class CreatureCombatDebugTool : MonoBehaviour
                 Debug.Log($"[CreatureCombatDebugTool] VALIDATE: Entry [{i}] '{el}' uses manual cell ({e.cell.x}, {e.cell.y}).");
         }
         if (valid) Debug.Log("[CreatureCombatDebugTool] VALIDATE: Setup looks valid.");
+    }
+
+    private void ConfigureDebugRoom()
+    {
+        if (_configureGridOnEnable)
+        {
+            if (_roomGrid == null || _walkableTilemap == null)
+            {
+                Debug.LogWarning("[CreatureCombatDebugTool] Cannot configure debug grid without RoomGrid and walkable Tilemap.", this);
+            }
+            else
+            {
+                _roomGrid.Configure(_walkableTilemap, _blockedTilemap);
+            }
+        }
+
+        if (!_startCombatOnEnable)
+            return;
+
+        CombatRoomController combatController = _roomContext != null ? _roomContext.CombatController : null;
+        if (combatController == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] Cannot start debug combat because no CombatRoomController is resolved.", this);
+            return;
+        }
+
+        if (combatController.IsDeploymentActive)
+            combatController.TryStartCombat();
     }
 
     private Vector3Int ResolveSpawnCell(CreatureSpawnEntry entry)
@@ -357,6 +401,98 @@ public class CreatureCombatDebugTool : MonoBehaviour
         Debug.Log("[CreatureCombatDebugTool] == End ==");
     }
 
+    [ContextMenu("Log Movement Audit")]
+    public void LogMovementAudit()
+    {
+        if (_roomGrid == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] Movement audit requires a RoomGrid.", this);
+            return;
+        }
+
+        Debug.Log("[CreatureCombatDebugTool] == Movement Audit ==", this);
+        for (int i = 0; i < _spawnedUnits.Count; i++)
+        {
+            Unit unit = _spawnedUnits[i];
+            if (unit == null)
+                continue;
+
+            LogUnitMovementAudit(unit);
+        }
+        Debug.Log("[CreatureCombatDebugTool] == End Movement Audit ==", this);
+    }
+
+    private void LogUnitMovementAudit(Unit unit)
+    {
+        UnitMovement movement = unit.GetComponent<UnitMovement>();
+        TargetingStrategy targeting = unit.GetComponent<TargetingStrategy>();
+        SkillCaster skillCaster = unit.GetComponent<SkillCaster>();
+        IBasicAction action = unit.Action;
+
+        if (movement == null || !movement.TryGetLogicalCell(out Vector3Int unitCell))
+        {
+            Debug.Log($"[CreatureCombatDebugTool] {unit.name}: no logical movement cell.", unit);
+            return;
+        }
+
+        Unit basicTarget = targeting != null
+            ? targeting.SelectBasicActionTarget(unit, action, null)
+            : null;
+        Unit moveTarget = SpacingEvaluator.GetNearestVisibleHostile(unit);
+
+        string basicTargetInfo = FormatTargetAudit(unit, unitCell, basicTarget, action != null ? action.RangeInCells : 0);
+        string moveTargetInfo = FormatTargetAudit(unit, unitCell, moveTarget, action != null ? action.PreferredDistanceInCells : 0);
+        SkillData skill = skillCaster != null ? skillCaster.Skill : null;
+        string skillInfo = skill != null
+            ? $"{skill.DisplayName} range={skill.RangeInCells} charge={skillCaster.CurrentCharge:F0}/{skillCaster.MaxCharge:F0}"
+            : "none";
+
+        string pathInfo = BuildPathAudit(unit, unitCell, moveTarget, action);
+
+        Debug.Log(
+            $"[CreatureCombatDebugTool] {unit.name} cell={unitCell} basicRange={action?.RangeInCells ?? 0} " +
+            $"preferredDistance={action?.PreferredDistanceInCells ?? 0} moving={movement.IsMoving} | " +
+            $"basicTarget={basicTargetInfo} | moveTarget={moveTargetInfo} | skill={skillInfo} | {pathInfo}",
+            unit);
+    }
+
+    private string FormatTargetAudit(Unit source, Vector3Int sourceCell, Unit target, int rangeInCells)
+    {
+        if (target == null)
+            return "none";
+
+        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(_roomGrid, target);
+        int distance = GridNavigationUtility.GetCellDistance(sourceCell, targetCell);
+        bool inRange = GridNavigationUtility.IsWithinCellRange(sourceCell, targetCell, rangeInCells);
+        return $"{target.name} cell={targetCell} distance={distance} range={rangeInCells} inRange={inRange}";
+    }
+
+    private string BuildPathAudit(Unit unit, Vector3Int originCell, Unit moveTarget, IBasicAction action)
+    {
+        if (moveTarget == null || action == null)
+            return "path=not-requested";
+
+        Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(_roomGrid, moveTarget);
+        int preferredDistance = unit.GetPreferredDistance(action);
+        if (GridNavigationUtility.IsWithinCellRange(originCell, targetCell, action.RangeInCells))
+            return "path=not-needed";
+
+        if (!_roomGrid.TryFindWalkableCellInRange(
+                targetCell,
+                originCell,
+                preferredDistance,
+                unit,
+                out Vector3Int desiredAttackCell))
+        {
+            return $"path=failed reason=no-desired-cell targetCell={targetCell}";
+        }
+
+        List<Vector3Int> path = GridPathfinder.FindPath(_roomGrid, originCell, desiredAttackCell, unit);
+        return path.Count > 1
+            ? $"path=found desiredCell={desiredAttackCell} cells={path.Count} next={path[1]}"
+            : $"path=failed desiredCell={desiredAttackCell}";
+    }
+
     private bool AssertSelectedCaster(out SkillCaster caster)
     {
         caster = null;
@@ -387,11 +523,59 @@ public class CreatureCombatDebugTool : MonoBehaviour
 }
 
 #if UNITY_EDITOR
+internal static class GeneratedVariantCache
+{
+    private static List<UnitData> _cached;
+    private static string[] _cachedGuids;
+
+    public static IReadOnlyList<UnitData> Load()
+    {
+        if (_cached == null)
+            Refresh();
+        return _cached;
+    }
+
+    public static void Refresh()
+    {
+        _cachedGuids = AssetDatabase.FindAssets("t:UnitData", new[] { "Assets/Core/Data/Scriptable Objects/Creatures/Generated" });
+        var excludedGuids = new HashSet<string>();
+        string excludedPath = "Assets/Core/Data/Scriptable Objects/Creatures/Generated/_Excluded";
+        string[] excludedAssets = AssetDatabase.FindAssets("t:UnitData", new[] { excludedPath });
+        foreach (string g in excludedAssets)
+            excludedGuids.Add(g);
+
+        _cached = new List<UnitData>();
+        foreach (string guid in _cachedGuids)
+        {
+            if (excludedGuids.Contains(guid))
+                continue;
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            UnitData data = AssetDatabase.LoadAssetAtPath<UnitData>(path);
+            if (data != null)
+                _cached.Add(data);
+        }
+    }
+
+    public static UnitFaction ParseFaction(UnitData data)
+    {
+        string path = AssetDatabase.GetAssetPath(data);
+        if (path.Contains("/Human/", System.StringComparison.OrdinalIgnoreCase))
+            return UnitFaction.Human;
+        if (path.Contains("/Orc/", System.StringComparison.OrdinalIgnoreCase))
+            return UnitFaction.Orc;
+        return UnitFaction.None;
+    }
+}
+
 [CustomEditor(typeof(CreatureCombatDebugTool))]
 internal class CreatureCombatDebugToolEditor : Editor
 {
     private SerializedProperty _roomContextProp;
     private SerializedProperty _roomGridProp;
+    private SerializedProperty _walkableTilemapProp;
+    private SerializedProperty _blockedTilemapProp;
+    private SerializedProperty _configureGridOnEnableProp;
+    private SerializedProperty _startCombatOnEnableProp;
     private SerializedProperty _spawnEntriesProp;
     private SerializedProperty _selectedCasterProp;
     private SerializedProperty _selectedTargetProp;
@@ -403,6 +587,10 @@ internal class CreatureCombatDebugToolEditor : Editor
     {
         _roomContextProp = serializedObject.FindProperty("_roomContext");
         _roomGridProp = serializedObject.FindProperty("_roomGrid");
+        _walkableTilemapProp = serializedObject.FindProperty("_walkableTilemap");
+        _blockedTilemapProp = serializedObject.FindProperty("_blockedTilemap");
+        _configureGridOnEnableProp = serializedObject.FindProperty("_configureGridOnEnable");
+        _startCombatOnEnableProp = serializedObject.FindProperty("_startCombatOnEnable");
         _spawnEntriesProp = serializedObject.FindProperty("_spawnEntries");
         _selectedCasterProp = serializedObject.FindProperty("_selectedCaster");
         _selectedTargetProp = serializedObject.FindProperty("_selectedTarget");
@@ -430,6 +618,8 @@ internal class CreatureCombatDebugToolEditor : Editor
         DrawManualActionsSection(tool);
         EditorGUILayout.Space(4);
         DrawSpawnedUnitsSection(tool);
+        EditorGUILayout.Space(4);
+        DrawGeneratedVariantBrowser(tool);
 
         serializedObject.ApplyModifiedProperties();
     }
@@ -439,6 +629,10 @@ internal class CreatureCombatDebugToolEditor : Editor
         EditorGUILayout.LabelField("1. Context", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(_roomContextProp);
         EditorGUILayout.PropertyField(_roomGridProp);
+        EditorGUILayout.PropertyField(_walkableTilemapProp);
+        EditorGUILayout.PropertyField(_blockedTilemapProp);
+        EditorGUILayout.PropertyField(_configureGridOnEnableProp);
+        EditorGUILayout.PropertyField(_startCombatOnEnableProp);
 
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Auto Find Context", GUILayout.Height(22)))
@@ -593,6 +787,10 @@ internal class CreatureCombatDebugToolEditor : Editor
         {
             tool.LogCurrentState();
         }
+        if (GUILayout.Button("Log Movement Audit", GUILayout.Height(22)))
+        {
+            tool.LogMovementAudit();
+        }
 
         EditorGUI.EndDisabledGroup();
     }
@@ -676,5 +874,274 @@ internal class CreatureCombatDebugToolEditor : Editor
 
         EditorGUILayout.EndVertical();
     }
+
+    #region Generated Variant Browser
+
+    private enum VariantFactionFilter { All, Human, Orc }
+    private enum VariantRoleFilter { All, DPS, Tank, Support }
+
+    private VariantFactionFilter _variantFactionFilter = VariantFactionFilter.All;
+    private VariantRoleFilter _variantRoleFilter = VariantRoleFilter.All;
+    private string _variantSearchFilter = string.Empty;
+    private Vector2 _variantScrollPos;
+    private bool _showVariantBrowser = true;
+
+    private void DrawGeneratedVariantBrowser(CreatureCombatDebugTool tool)
+    {
+        EditorGUILayout.LabelField("6. Generated Variant Browser", EditorStyles.boldLabel);
+
+        List<UnitData> allVariants;
+        try
+        {
+            allVariants = GeneratedVariantCache.Load() as List<UnitData>;
+        }
+        catch
+        {
+            EditorGUILayout.HelpBox("Failed to load generated variants. Check Console.", MessageType.Warning);
+            return;
+        }
+
+        if (allVariants == null || allVariants.Count == 0)
+        {
+            EditorGUILayout.HelpBox("No generated variants found.", MessageType.Info);
+            if (GUILayout.Button("Refresh Cache", GUILayout.Height(20)))
+                GeneratedVariantCache.Refresh();
+            return;
+        }
+
+        EditorGUILayout.BeginHorizontal();
+        _showVariantBrowser = EditorGUILayout.Foldout(_showVariantBrowser, $"Variants ({allVariants.Count})", true);
+        if (GUILayout.Button("Refresh", GUILayout.Width(60), GUILayout.Height(18)))
+            GeneratedVariantCache.Refresh();
+        EditorGUILayout.EndHorizontal();
+
+        if (!_showVariantBrowser)
+            return;
+
+        EditorGUILayout.Space(2);
+
+        _variantFactionFilter = (VariantFactionFilter)EditorGUILayout.EnumPopup("Faction", _variantFactionFilter);
+        _variantRoleFilter = (VariantRoleFilter)EditorGUILayout.EnumPopup("Role", _variantRoleFilter);
+        _variantSearchFilter = EditorGUILayout.TextField("Search", _variantSearchFilter);
+
+        EditorGUILayout.Space(2);
+        EditorGUILayout.LabelField("Results", EditorStyles.miniBoldLabel);
+
+        var filtered = new List<UnitData>();
+        foreach (UnitData v in allVariants)
+        {
+            if (v == null)
+                continue;
+
+            UnitFaction faction = GeneratedVariantCache.ParseFaction(v);
+            if (_variantFactionFilter == VariantFactionFilter.Human && faction != UnitFaction.Human)
+                continue;
+            if (_variantFactionFilter == VariantFactionFilter.Orc && faction != UnitFaction.Orc)
+                continue;
+
+            if (_variantRoleFilter == VariantRoleFilter.DPS && v.role != UnitRole.DPS)
+                continue;
+            if (_variantRoleFilter == VariantRoleFilter.Tank && v.role != UnitRole.Tank)
+                continue;
+            if (_variantRoleFilter == VariantRoleFilter.Support && v.role != UnitRole.Support)
+                continue;
+
+            string search = _variantSearchFilter.Trim().ToLowerInvariant();
+            if (!string.IsNullOrEmpty(search))
+            {
+                bool nameMatch = v.name.ToLowerInvariant().Contains(search);
+                bool skillMatch = v.skill != null && v.skill.DisplayName.ToLowerInvariant().Contains(search);
+                if (!nameMatch && !skillMatch)
+                    continue;
+            }
+
+            filtered.Add(v);
+        }
+
+        if (filtered.Count == 0)
+        {
+            EditorGUILayout.HelpBox("No variants match the current filters.", MessageType.Info);
+            return;
+        }
+
+        float rowHeight = EditorGUIUtility.singleLineHeight * 3 + 10f;
+        _variantScrollPos = EditorGUILayout.BeginScrollView(_variantScrollPos, GUILayout.MaxHeight(400));
+
+        for (int i = 0; i < filtered.Count; i++)
+        {
+            UnitData v = filtered[i];
+            DrawVariantRow(tool, v, i);
+        }
+
+        EditorGUILayout.EndScrollView();
+    }
+
+    private void DrawVariantRow(CreatureCombatDebugTool tool, UnitData variant, int index)
+    {
+        UnitFaction faction = GeneratedVariantCache.ParseFaction(variant);
+        string factionStr = faction == UnitFaction.Human ? "Human" : faction == UnitFaction.Orc ? "Orc" : "?";
+        string roleStr = variant.role.ToString();
+        string skillStr = variant.skill != null ? variant.skill.DisplayName : "No Skill";
+        string prefabStr = variant.unitPrefab != null ? variant.unitPrefab.name : "No Prefab";
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+        EditorGUILayout.LabelField($"[{index}] {variant.name}", EditorStyles.miniBoldLabel);
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.LabelField($"Faction: {factionStr}  |  Role: {roleStr}  |  Prefab: {prefabStr}", EditorStyles.miniLabel);
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.LabelField($"Skill: {skillStr}", EditorStyles.miniLabel);
+
+        bool inPlayMode = EditorApplication.isPlaying;
+        EditorGUI.BeginDisabledGroup(!inPlayMode);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Spawn as Ally", GUILayout.Height(22)))
+        {
+            SpawnGeneratedVariant(tool, variant, UnitTeam.Ally);
+        }
+        if (GUILayout.Button("Spawn as Enemy", GUILayout.Height(22)))
+        {
+            SpawnGeneratedVariant(tool, variant, UnitTeam.Enemy);
+        }
+        EditorGUILayout.EndHorizontal();
+        EditorGUI.EndDisabledGroup();
+
+        EditorGUILayout.EndVertical();
+    }
+
+    private void SpawnGeneratedVariant(CreatureCombatDebugTool tool, UnitData variant, UnitTeam team)
+    {
+        if (variant == null || variant.unitPrefab == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] Variant has no prefab assigned.");
+            return;
+        }
+
+        RoomGrid grid = tool.ContextGrid;
+        RoomContext ctx = tool.ContextRoom;
+        if (grid == null || ctx == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] RoomGrid or RoomContext not assigned.");
+            return;
+        }
+
+        Vector3 spawnPos = grid.CellToWorld(Vector3Int.zero);
+        GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(variant.unitPrefab, ctx.transform);
+        if (instance == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] Failed to instantiate prefab.");
+            return;
+        }
+
+        instance.name = $"{variant.name}_Spawned";
+        instance.transform.position = spawnPos;
+
+        Unit unit = instance.GetComponent<Unit>();
+        if (unit == null)
+        {
+            Debug.LogWarning("[CreatureCombatDebugTool] Prefab has no Unit component.");
+            Object.DestroyImmediate(instance);
+            return;
+        }
+
+        var unitSO = new SerializedObject(unit);
+        unitSO.FindProperty("_unitData").objectReferenceValue = variant;
+        unitSO.ApplyModifiedProperties();
+
+        SkillCaster skillCaster = unit.GetComponent<SkillCaster>();
+        if (skillCaster != null)
+        {
+            var skillSO = new SerializedObject(skillCaster);
+            skillSO.FindProperty("_overrideSkill").objectReferenceValue = variant.skill;
+            skillSO.ApplyModifiedProperties();
+
+            typeof(SkillCaster).GetField("_resolvedSkill",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(skillCaster, null);
+        }
+
+        typeof(Creature).GetMethod("Initialize",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.Invoke(unit, new object[] { variant });
+
+        unit.SetAffiliation(team, unit.Faction);
+
+        RecruitableUnitState lifeState = instance.GetComponent<RecruitableUnitState>();
+        if (lifeState != null && lifeState.CurrentState != UnitLifecycleState.Alive)
+            lifeState.SetState(UnitLifecycleState.Alive);
+
+        int spawnCount = tool.SpawnedUnits.Count;
+        if (!TrySnapToGrid(instance, grid, out Vector3Int cell))
+        {
+            cell = FindClosestEmptyCell(grid, unit);
+            if (!TrySnapToCell(instance, grid, cell))
+            {
+                Debug.LogWarning($"[CreatureCombatDebugTool] Could not place '{variant.name}' on grid.");
+                Object.DestroyImmediate(instance);
+                return;
+            }
+        }
+
+        ctx.RegisterUnit(unit);
+        var spawnedList = (List<Unit>)typeof(CreatureCombatDebugTool)
+            .GetField("_spawnedUnits", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(tool);
+        spawnedList?.Add(unit);
+
+        Debug.Log($"[CreatureCombatDebugTool] Spawned generated variant '{variant.name}' ({team}) at cell ({cell.x},{cell.y}).");
+    }
+
+    private static bool TrySnapToGrid(GameObject instance, RoomGrid grid, out Vector3Int cell)
+    {
+        cell = Vector3Int.zero;
+        UnitMovement movement = instance.GetComponent<UnitMovement>();
+        if (movement == null)
+            return false;
+
+        movement.SetGrid(grid);
+        movement.ForceSyncToWorldPosition(instance.transform.position);
+
+        if (!movement.TryGetLogicalCell(out cell))
+        {
+            Vector3Int nearest = grid.WorldToCell(instance.transform.position);
+            if (!movement.AttachToGridAtCell(grid, nearest))
+                return false;
+            cell = nearest;
+        }
+        return true;
+    }
+
+    private static bool TrySnapToCell(GameObject instance, RoomGrid grid, Vector3Int cell)
+    {
+        UnitMovement movement = instance.GetComponent<UnitMovement>();
+        if (movement == null)
+            return false;
+
+        movement.SetGrid(grid);
+        return movement.AttachToGridAtCell(grid, cell);
+    }
+
+    private static Vector3Int FindClosestEmptyCell(RoomGrid grid, Unit unit)
+    {
+        for (int r = 0; r < 10; r++)
+        {
+            for (int dx = -r; dx <= r; dx++)
+            {
+                for (int dy = -r; dy <= r; dy++)
+                {
+                    if (Mathf.Abs(dx) != r && Mathf.Abs(dy) != r)
+                        continue;
+                    Vector3Int candidate = new Vector3Int(dx, dy, 0);
+                    if (grid.IsCellWalkable(candidate, unit))
+                        return candidate;
+                }
+            }
+        }
+        return Vector3Int.zero;
+    }
+
+    #endregion
 }
 #endif

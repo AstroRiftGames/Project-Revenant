@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
   m_Name: Tank_DirectKnockback
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _skillId: Tank_DirectKnockback
   _displayName: Tank Direct Knockback
   _description: Prototype direct hostile knockback.
@@ -20,16 +20,25 @@ MonoBehaviour:
   _impactTargetRequirement: 0
   _targetSelectionMode: 6
   _targetFallbackMode: 1
-  _requirements:
-    mustTargetInjured: 0
   _trajectory: 0
   _impactPattern: 0
   _impactCenterMode: 0
   _skillExecutionMode: 0
-  _legacyShape: 0
   _effects:
   - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1214, type: 2}
   _modifiers: []
+  _compositionEffects:
+  - _effectKind: 9
+    _value: 1
+    _duration: 0
+    _interval: 0
+    _maxStacks: 1
+    _summonedUnit: {fileID: 0}
+    _statusDefinition: {fileID: 0}
+    _summonAnchorMode: 2
+  _compositionModifierKinds: 
+  _compositionModifierData: []
+  _compositionState: 0
   _castTime: 0
   _rangeInCells: 4
   _radiusInCells: 1

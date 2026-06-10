@@ -19,8 +19,6 @@ public class SkillData : ScriptableObject
     [SerializeField] private ImpactTargetRequirement _impactTargetRequirement = ImpactTargetRequirement.Hostile;
     [SerializeField] private TargetSelectionMode _targetSelectionMode = TargetSelectionMode.RoleBasedOffensive;
     [SerializeField] private TargetFallbackMode _targetFallbackMode = TargetFallbackMode.Retarget;
-    [SerializeField] private SkillRequirements _requirements = new();
-
     #endregion
 
     #region Delivery
@@ -34,8 +32,11 @@ public class SkillData : ScriptableObject
 
     #region Effects
 
-    [SerializeField] private SkillEffect[] _effects;
-    [SerializeField] private SkillModifier[] _modifiers;
+    [Header("Composition")]
+    [SerializeField] private SkillCompositionEffect[] _compositionEffects;
+    [SerializeField] private SkillModifierKind[] _compositionModifierKinds;
+    [SerializeField] private SkillCompositionModifierData[] _compositionModifierData;
+    [SerializeField] private SkillCompositionState _compositionState = SkillCompositionState.Official;
 
     #endregion
 
@@ -65,8 +66,6 @@ public class SkillData : ScriptableObject
     public ImpactTargetRequirement ImpactTargetRequirement => _impactTargetRequirement;
     public TargetSelectionMode TargetSelectionMode => _targetSelectionMode;
     public TargetFallbackMode TargetFallbackMode => _targetFallbackMode;
-    public SkillRequirements Requirements => _requirements;
-
     #endregion
 
     #region Delivery Properties
@@ -80,8 +79,10 @@ public class SkillData : ScriptableObject
 
     #region Effect Properties
 
-    public SkillEffect[] Effects => _effects;
-    public SkillModifier[] Modifiers => _modifiers;
+    public SkillCompositionEffect[] CompositionEffects => _compositionEffects;
+    public SkillModifierKind[] CompositionModifierKinds => _compositionModifierKinds;
+    public SkillCompositionModifierData[] CompositionModifierData => _compositionModifierData;
+    public SkillCompositionState CompositionState => _compositionState;
 
     #endregion
 

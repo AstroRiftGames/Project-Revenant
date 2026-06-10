@@ -93,7 +93,7 @@ public readonly struct TargetingPolicy
             requiresTarget: true,
             allowSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
             requireSelf: primaryTargetRequirement == PrimaryTargetRequirement.Self,
-            requireInjured: skill.Requirements != null && skill.Requirements.RequiresInjuredTarget);
+            requireInjured: false);
         return true;
     }
 

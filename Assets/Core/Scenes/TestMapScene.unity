@@ -196,6 +196,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _roomContext: {fileID: 1142683599}
   _roomGrid: {fileID: 1867572631}
+  _walkableTilemap: {fileID: 3000000010}
+  _blockedTilemap: {fileID: 3000000011}
+  _configureGridOnEnable: 1
+  _startCombatOnEnable: 1
   _spawnEntries:
   - prefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010101, type: 3}
     team: 1
@@ -577,6 +581,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 557ca6e5003637f42ab544a77d62ce9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1839735485 &3000000010 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 3184769969460405456, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}
+  m_PrefabInstance: {fileID: 1142683594}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1839735485 &3000000011 stripped
+Tilemap:
+  m_CorrespondingSourceObject: {fileID: 4739156440369314545, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}
+  m_PrefabInstance: {fileID: 1142683594}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1914634367
 GameObject:
   m_ObjectHideFlags: 0

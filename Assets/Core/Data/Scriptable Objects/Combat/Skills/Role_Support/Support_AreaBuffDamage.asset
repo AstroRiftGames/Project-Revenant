@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c1b4f8e2d6a4b7391c0e5f7a2b3d941, type: 3}
   m_Name: Support_AreaBuffDamage
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   _skillId: Support_AreaBuffDamage
   _displayName: Support Area Buff Damage
   _description: Prototype allied area damage buff around caster.
@@ -20,16 +20,25 @@ MonoBehaviour:
   _impactTargetRequirement: 1
   _targetSelectionMode: 0
   _targetFallbackMode: 0
-  _requirements:
-    mustTargetInjured: 0
   _trajectory: 0
   _impactPattern: 1
   _impactCenterMode: 1
   _skillExecutionMode: 0
-  _legacyShape: 0
   _effects:
   - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1211, type: 2}
   _modifiers: []
+  _compositionEffects:
+  - _effectKind: 4
+    _value: 20
+    _duration: 4
+    _interval: 0
+    _maxStacks: 1
+    _summonedUnit: {fileID: 0}
+    _statusDefinition: {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1106, type: 2}
+    _summonAnchorMode: 2
+  _compositionModifierKinds: 
+  _compositionModifierData: []
+  _compositionState: 0
   _castTime: 0
   _rangeInCells: 0
   _radiusInCells: 2

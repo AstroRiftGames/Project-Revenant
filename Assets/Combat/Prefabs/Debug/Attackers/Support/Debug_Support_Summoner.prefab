@@ -246,7 +246,7 @@ MonoBehaviour:
   _chargeFromDamageTaken: 10
   _chargeFromNearbyAllySkillUsed: 15
   _nearbyAllySkillChargeRadius: 3.5
-  _debugLogs: 1
+  _debugLogs: 0
 --- !u!114 &1184974837264015502
 MonoBehaviour:
   m_ObjectHideFlags: 0

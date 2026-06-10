@@ -37,11 +37,14 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private readonly HashSet<string> _missingPrefabWarnings = new();
     private readonly HashSet<StatusEffectController> _subscribedStatusControllers = new();
+    private readonly List<StatusEffectController> _staleStatusControllers = new();
+    private float _nextSubscriptionCleanupTime;
 
     private void OnEnable()
     {
         SkillCaster.AnySkillImpactsResolvedForVisuals += HandleSkillImpactsResolved;
         SubscribeToStatusControllersInScene();
+        _nextSubscriptionCleanupTime = Time.unscaledTime + 1f;
         LogDebug("Subscribed to SkillCaster.AnySkillImpactsResolvedForVisuals.");
     }
 
@@ -49,6 +52,33 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     {
         SkillCaster.AnySkillImpactsResolvedForVisuals -= HandleSkillImpactsResolved;
         UnsubscribeFromStatusControllers();
+    }
+
+    private void Update()
+    {
+        if (Time.unscaledTime < _nextSubscriptionCleanupTime)
+            return;
+
+        _nextSubscriptionCleanupTime = Time.unscaledTime + 1f;
+        RemoveDestroyedStatusControllers();
+    }
+
+    [ContextMenu("Log Runtime VFX State")]
+    private void LogRuntimeVfxState()
+    {
+        RemoveDestroyedStatusControllers();
+
+        Transform root = _runtimeRoot != null ? _runtimeRoot : transform;
+        int vfxCount = root.GetComponentsInChildren<SkillDebugVfxInstance>(includeInactive: true).Length;
+        int projectileCount = root.GetComponentsInChildren<CombatProjectileVisual>(includeInactive: true).Length;
+        int temporaryUnitCount = FindObjectsByType<TemporaryCombatUnit>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None).Length;
+
+        Debug.Log(
+            $"[SkillDebugVfxPresenter] Runtime state: subscribedStatusControllers={_subscribedStatusControllers.Count}, " +
+            $"vfxInstances={vfxCount}, projectiles={projectileCount}, temporaryUnits={temporaryUnitCount}.",
+            this);
     }
 
     private void HandleSkillImpactsResolved(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
@@ -99,7 +129,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             return;
         }
 
-        if (skill.ImpactPattern == ImpactPattern.Line || HasMultipleNonNullModifiers(skill))
+        if (skill.ImpactPattern == ImpactPattern.Line || (skill.CompositionModifierKinds != null && skill.CompositionModifierKinds.Length > 1))
             return;
 
         Unit caster = context.Caster;
@@ -140,67 +170,70 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private void PresentModifierFeedback(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
-        if (skill.Modifiers == null || skill.Modifiers.Length == 0)
+        if (skill.CompositionModifierKinds == null || skill.CompositionModifierKinds.Length == 0)
             return;
 
-        for (int i = 0; i < skill.Modifiers.Length; i++)
+        for (int i = 0; i < skill.CompositionModifierKinds.Length; i++)
         {
-            SkillModifier modifier = skill.Modifiers[i];
-            if (modifier == null)
-                continue;
-
-            if (modifier is SplashSkillModifier)
+            switch (skill.CompositionModifierKinds[i])
             {
-                SkillImpact primaryImpact = FindPrimaryImpact(impacts);
-                Vector3 center = ResolveImpactWorldPosition(primaryImpact, context);
-                Unit centerUnit = primaryImpact != null && primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null;
-                SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), _areaColor, _defaultDuration);
-                continue;
-            }
-
-            if (modifier is ExplosiveSkillModifier explosiveModifier)
-            {
-                int radius = explosiveModifier.ExplosionRadiusInCells;
-                float worldRadius = Mathf.Max(0.4f, radius > 0 ? radius : skill.RadiusInCells);
-
-                if (IsSimpleDirectExplosive(skill))
+                case SkillModifierKind.Splash:
                 {
                     SkillImpact primaryImpact = FindPrimaryImpact(impacts);
-                    if (primaryImpact != null)
+                    Vector3 center = ResolveImpactWorldPosition(primaryImpact, context);
+                    Unit centerUnit = primaryImpact != null && primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null;
+                    SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), _areaColor, _defaultDuration);
+                    break;
+                }
+
+                case SkillModifierKind.Explosive:
+                {
+                    float worldRadius = Mathf.Max(0.4f, skill.RadiusInCells);
+
+                    bool isSimpleDirect = skill.ImpactPattern == ImpactPattern.Direct &&
+                        skill.CompositionModifierKinds.Length == 1 &&
+                        skill.CompositionModifierKinds[0] == SkillModifierKind.Explosive;
+
+                    if (isSimpleDirect)
                     {
+                        SkillImpact primaryImpact = FindPrimaryImpact(impacts);
+                        if (primaryImpact != null)
+                        {
+                            SpawnAreaCircle(
+                                ResolveImpactWorldPosition(primaryImpact, context),
+                                primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
+                                primaryImpact.HasTargetUnit,
+                                worldRadius,
+                                _areaColor,
+                                _defaultDuration * 0.95f);
+                        }
+
+                        break;
+                    }
+
+                    for (int impactIndex = 0; impacts != null && impactIndex < impacts.Count; impactIndex++)
+                    {
+                        SkillImpact impact = impacts[impactIndex];
+                        if (impact == null)
+                            continue;
+
                         SpawnAreaCircle(
-                            ResolveImpactWorldPosition(primaryImpact, context),
-                            primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
-                            primaryImpact.HasTargetUnit,
+                            ResolveImpactWorldPosition(impact, context),
+                            impact.HasTargetUnit ? impact.TargetUnit : null,
+                            impact.HasTargetUnit,
                             worldRadius,
                             _areaColor,
                             _defaultDuration * 0.95f);
                     }
 
-                    continue;
+                    break;
                 }
 
-                for (int impactIndex = 0; impacts != null && impactIndex < impacts.Count; impactIndex++)
+                case SkillModifierKind.Bounce:
                 {
-                    SkillImpact impact = impacts[impactIndex];
-                    if (impact == null)
-                        continue;
-
-                    SpawnAreaCircle(
-                        ResolveImpactWorldPosition(impact, context),
-                        impact.HasTargetUnit ? impact.TargetUnit : null,
-                        impact.HasTargetUnit,
-                        worldRadius,
-                        _areaColor,
-                        _defaultDuration * 0.95f);
+                    PresentBounceLinks(impacts);
+                    break;
                 }
-
-                continue;
-            }
-
-            if (modifier is BounceSkillModifier)
-            {
-                PresentBounceLinks(impacts);
             }
         }
     }
@@ -242,45 +275,46 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private void PresentEffectFeedback(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
-        if (skill.Effects == null || skill.Effects.Length == 0)
+        if (skill.CompositionEffects == null || skill.CompositionEffects.Length == 0)
             return;
 
         bool hasSummonFeedback = false;
+        bool hasStatusFeedback = false;
 
-        for (int effectIndex = 0; effectIndex < skill.Effects.Length; effectIndex++)
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            SkillEffect effect = skill.Effects[effectIndex];
-            if (effect == null)
-                continue;
+            SkillCompositionEffect compositionEffect = skill.CompositionEffects[i];
 
-            if (effect is HealSkillEffect)
+            switch (compositionEffect.EffectKind)
             {
-                PresentHealFeedback(context, impacts);
-                continue;
-            }
+                case SkillEffectKind.Heal:
+                    PresentHealFeedback(context, impacts);
+                    break;
 
-            if (effect is ApplyStatusSkillEffect applyStatusSkillEffect)
-            {
-                PresentStatusFeedback(context, impacts, applyStatusSkillEffect);
-                continue;
-            }
+                case SkillEffectKind.Haste:
+                case SkillEffectKind.StrengthBuff:
+                case SkillEffectKind.Slow:
+                case SkillEffectKind.Stun:
+                case SkillEffectKind.PoisonBurn:
+                    if (!hasStatusFeedback)
+                    {
+                        PresentStatusFeedback(context, impacts, skill);
+                        hasStatusFeedback = true;
+                    }
+                    break;
 
-            if (effect is SummonUnitSkillEffect summonUnitSkillEffect)
-            {
-                PresentSummonFeedback(context, summonUnitSkillEffect);
-                hasSummonFeedback = true;
-                continue;
-            }
+                case SkillEffectKind.Summon:
+                    PresentSummonFeedback(context, skill);
+                    hasSummonFeedback = true;
+                    break;
 
-            if (effect is KnockbackSkillEffect knockbackSkillEffect)
-            {
-                PresentKnockbackFeedback(context, impacts, knockbackSkillEffect);
-                continue;
-            }
+                case SkillEffectKind.Knockback:
+                    PresentKnockbackFeedback(context, impacts, skill);
+                    break;
 
-            if (effect is ShieldSkillEffect)
-            {
-                PresentShieldFeedback(context, impacts);
+                case SkillEffectKind.Shield:
+                    PresentShieldFeedback(context, impacts);
+                    break;
             }
         }
 
@@ -308,12 +342,12 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     private void PresentStatusFeedback(
         SkillContext context,
         IReadOnlyList<SkillImpact> impacts,
-        ApplyStatusSkillEffect applyStatusSkillEffect)
+        SkillData skill)
     {
-        if (impacts == null || applyStatusSkillEffect == null)
+        if (impacts == null || skill == null)
             return;
 
-        Color statusColor = ResolveStatusColor(applyStatusSkillEffect);
+        Color statusColor = ResolveStatusColor(skill);
         for (int i = 0; i < impacts.Count; i++)
         {
             SkillImpact impact = impacts[i];
@@ -325,22 +359,23 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         }
     }
 
-    private void PresentSummonFeedback(SkillContext context, SummonUnitSkillEffect summonUnitSkillEffect)
+    private void PresentSummonFeedback(SkillContext context, SkillData skill)
     {
-        Vector3 worldPosition = ResolveSummonAnchorWorldPosition(context, summonUnitSkillEffect);
+        Vector3 worldPosition = ResolveSummonAnchorWorldPosition(context);
+        int spawnRange = CompositionEffectValue(skill, SkillEffectKind.Summon);
         SkillDebugVfxInstance instance = SpawnInstance(_summonPrefab, "VFX_Summon_Runtime");
-        instance.ConfigureRing(worldPosition, null, false, Mathf.Max(0.45f, summonUnitSkillEffect.SpawnRangeInCells), _ringWidth, _summonColor, _defaultDuration + 0.15f);
+        instance.ConfigureRing(worldPosition, null, false, Mathf.Max(0.45f, spawnRange), _ringWidth, _summonColor, _defaultDuration + 0.15f);
     }
 
     private void PresentKnockbackFeedback(
         SkillContext context,
         IReadOnlyList<SkillImpact> impacts,
-        KnockbackSkillEffect knockbackSkillEffect)
+        SkillData skill)
     {
-        if (impacts == null || context == null || knockbackSkillEffect == null || context.Caster == null)
+        if (impacts == null || context == null || skill == null || context.Caster == null)
             return;
 
-        int knockbackCells = knockbackSkillEffect.KnockbackCells;
+        int knockbackCells = CompositionEffectValue(skill, SkillEffectKind.Knockback);
         if (knockbackCells <= 0)
             return;
 
@@ -522,7 +557,9 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private void SubscribeToStatusControllersInScene()
     {
-        StatusEffectController[] controllers = FindObjectsOfType<StatusEffectController>(false);
+        StatusEffectController[] controllers = FindObjectsByType<StatusEffectController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
 
         for (int i = 0; i < controllers.Length; i++)
             SubscribeToStatusController(controllers[i]);
@@ -530,10 +567,28 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private void SubscribeToStatusController(StatusEffectController statusEffectController)
     {
+        RemoveDestroyedStatusControllers();
+
         if (statusEffectController == null || !_subscribedStatusControllers.Add(statusEffectController))
             return;
 
         statusEffectController.EffectTickResolved += HandleStatusEffectTickResolved;
+    }
+
+    private void RemoveDestroyedStatusControllers()
+    {
+        _staleStatusControllers.Clear();
+
+        foreach (StatusEffectController statusEffectController in _subscribedStatusControllers)
+        {
+            if (statusEffectController == null)
+                _staleStatusControllers.Add(statusEffectController);
+        }
+
+        for (int i = 0; i < _staleStatusControllers.Count; i++)
+            _subscribedStatusControllers.Remove(_staleStatusControllers[i]);
+
+        _staleStatusControllers.Clear();
     }
 
     private void UnsubscribeFromStatusControllers()
@@ -588,41 +643,55 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private Color ResolvePrimaryImpactColor(SkillData skill)
     {
-        if (skill == null || skill.Effects == null)
+        if (skill == null || skill.CompositionEffects == null)
             return _damageColor;
 
-        if (HasEffect<DamageSkillEffect>(skill))
+        if (HasCompositionEffect(skill, SkillEffectKind.Damage))
             return _damageColor;
 
-        ApplyStatusSkillEffect statusEffect = null;
         bool hasHeal = false;
         bool hasSummon = false;
         bool hasKnockback = false;
         bool hasShield = false;
-        for (int i = 0; i < skill.Effects.Length; i++)
+        bool hasStatus = false;
+
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            SkillEffect effect = skill.Effects[i];
-            if (effect is HealSkillEffect)
-                hasHeal = true;
+            SkillCompositionEffect effect = skill.CompositionEffects[i];
 
-            if (statusEffect == null && effect is ApplyStatusSkillEffect applyStatusSkillEffect)
-                statusEffect = applyStatusSkillEffect;
+            switch (effect.EffectKind)
+            {
+                case SkillEffectKind.Heal:
+                    hasHeal = true;
+                    break;
 
-            if (effect is SummonUnitSkillEffect)
-                hasSummon = true;
+                case SkillEffectKind.Haste:
+                case SkillEffectKind.StrengthBuff:
+                case SkillEffectKind.Slow:
+                case SkillEffectKind.Stun:
+                case SkillEffectKind.PoisonBurn:
+                    hasStatus = true;
+                    break;
 
-            if (effect is KnockbackSkillEffect)
-                hasKnockback = true;
+                case SkillEffectKind.Summon:
+                    hasSummon = true;
+                    break;
 
-            if (effect is ShieldSkillEffect)
-                hasShield = true;
+                case SkillEffectKind.Knockback:
+                    hasKnockback = true;
+                    break;
+
+                case SkillEffectKind.Shield:
+                    hasShield = true;
+                    break;
+            }
         }
 
         if (hasHeal)
             return _healColor;
 
-        if (statusEffect != null)
-            return ResolveStatusColor(statusEffect);
+        if (hasStatus)
+            return ResolveStatusColor(skill);
 
         if (hasSummon)
             return _summonColor;
@@ -638,41 +707,55 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private Color ResolveAreaColor(SkillData skill)
     {
-        if (skill == null || skill.Effects == null)
+        if (skill == null || skill.CompositionEffects == null)
             return _areaColor;
 
-        if (HasEffect<DamageSkillEffect>(skill))
+        if (HasCompositionEffect(skill, SkillEffectKind.Damage))
             return _areaColor;
 
-        ApplyStatusSkillEffect statusEffect = null;
         bool hasHeal = false;
         bool hasSummon = false;
         bool hasKnockback = false;
         bool hasShield = false;
-        for (int i = 0; i < skill.Effects.Length; i++)
+        bool hasStatus = false;
+
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            SkillEffect effect = skill.Effects[i];
-            if (effect is HealSkillEffect)
-                hasHeal = true;
+            SkillCompositionEffect effect = skill.CompositionEffects[i];
 
-            if (statusEffect == null && effect is ApplyStatusSkillEffect applyStatusSkillEffect)
-                statusEffect = applyStatusSkillEffect;
+            switch (effect.EffectKind)
+            {
+                case SkillEffectKind.Heal:
+                    hasHeal = true;
+                    break;
 
-            if (effect is SummonUnitSkillEffect)
-                hasSummon = true;
+                case SkillEffectKind.Haste:
+                case SkillEffectKind.StrengthBuff:
+                case SkillEffectKind.Slow:
+                case SkillEffectKind.Stun:
+                case SkillEffectKind.PoisonBurn:
+                    hasStatus = true;
+                    break;
 
-            if (effect is KnockbackSkillEffect)
-                hasKnockback = true;
+                case SkillEffectKind.Summon:
+                    hasSummon = true;
+                    break;
 
-            if (effect is ShieldSkillEffect)
-                hasShield = true;
+                case SkillEffectKind.Knockback:
+                    hasKnockback = true;
+                    break;
+
+                case SkillEffectKind.Shield:
+                    hasShield = true;
+                    break;
+            }
         }
 
         if (hasHeal)
             return _healColor;
 
-        if (statusEffect != null)
-            return ResolveStatusColor(statusEffect);
+        if (hasStatus)
+            return ResolveStatusColor(skill);
 
         if (hasSummon)
             return _summonColor;
@@ -688,40 +771,36 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private Color ResolveSecondaryImpactColor(SkillData skill)
     {
-        if (HasModifier<BounceSkillModifier>(skill))
+        if (HasCompositionModifier(skill, SkillModifierKind.Bounce))
             return _bounceColor;
 
-        if (HasModifier<ExplosiveSkillModifier>(skill) || HasModifier<SplashSkillModifier>(skill))
+        if (HasCompositionModifier(skill, SkillModifierKind.Explosive) || HasCompositionModifier(skill, SkillModifierKind.Splash))
             return _areaColor;
 
         return ResolvePrimaryImpactColor(skill);
     }
 
-    private Color ResolveStatusColor(ApplyStatusSkillEffect applyStatusSkillEffect)
+    private Color ResolveStatusColor(SkillData skill)
     {
-        if (applyStatusSkillEffect == null || applyStatusSkillEffect.StatusDefinitions == null)
+        if (skill == null || skill.CompositionEffects == null)
             return _debuffColor;
 
-        for (int i = 0; i < applyStatusSkillEffect.StatusDefinitions.Length; i++)
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            StatusEffectDefinition definition = applyStatusSkillEffect.StatusDefinitions[i];
-            if (definition == null)
-                continue;
+            SkillCompositionEffect effect = skill.CompositionEffects[i];
 
-            switch (definition.EffectType)
+            switch (effect.EffectKind)
             {
-                case StatusEffectType.Heal:
-                case StatusEffectType.HealOverTime:
+                case SkillEffectKind.Heal:
                     return _healColor;
 
-                case StatusEffectType.StatModifierBuff:
+                case SkillEffectKind.Haste:
+                case SkillEffectKind.StrengthBuff:
                     return _buffColor;
 
-                case StatusEffectType.Taunt:
-                case StatusEffectType.Stun:
-                case StatusEffectType.DamageOverTime:
-                case StatusEffectType.StatModifierDebuff:
-                default:
+                case SkillEffectKind.Slow:
+                case SkillEffectKind.Stun:
+                case SkillEffectKind.PoisonBurn:
                     return _debuffColor;
             }
         }
@@ -731,88 +810,62 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
     private static bool ShouldPresentSecondaryImpactMarkers(SkillData skill)
     {
-        if (HasEffect<DamageSkillEffect>(skill))
+        if (HasCompositionEffect(skill, SkillEffectKind.Damage))
             return true;
 
-        if (HasEffect<HealSkillEffect>(skill) ||
-            HasEffect<ApplyStatusSkillEffect>(skill) ||
-            HasEffect<KnockbackSkillEffect>(skill) ||
-            HasEffect<ShieldSkillEffect>(skill))
+        if (HasCompositionEffect(skill, SkillEffectKind.Heal) ||
+            HasCompositionEffect(skill, SkillEffectKind.Haste) ||
+            HasCompositionEffect(skill, SkillEffectKind.StrengthBuff) ||
+            HasCompositionEffect(skill, SkillEffectKind.Slow) ||
+            HasCompositionEffect(skill, SkillEffectKind.Stun) ||
+            HasCompositionEffect(skill, SkillEffectKind.PoisonBurn) ||
+            HasCompositionEffect(skill, SkillEffectKind.Knockback) ||
+            HasCompositionEffect(skill, SkillEffectKind.Shield))
             return false;
 
         return true;
     }
 
-    private static bool HasEffect<TEffect>(SkillData skill) where TEffect : SkillEffect
+    private static bool HasCompositionEffect(SkillData skill, SkillEffectKind kind)
     {
-        if (skill == null || skill.Effects == null)
+        if (skill == null || skill.CompositionEffects == null)
             return false;
 
-        for (int i = 0; i < skill.Effects.Length; i++)
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            if (skill.Effects[i] is TEffect)
+            if (skill.CompositionEffects[i].EffectKind == kind)
                 return true;
         }
 
         return false;
     }
 
-    private static bool HasModifier<TModifier>(SkillData skill) where TModifier : SkillModifier
+    private static bool HasCompositionModifier(SkillData skill, SkillModifierKind kind)
     {
-        if (skill == null || skill.Modifiers == null)
+        if (skill == null || skill.CompositionModifierKinds == null)
             return false;
 
-        for (int i = 0; i < skill.Modifiers.Length; i++)
+        for (int i = 0; i < skill.CompositionModifierKinds.Length; i++)
         {
-            if (skill.Modifiers[i] is TModifier)
+            if (skill.CompositionModifierKinds[i] == kind)
                 return true;
         }
 
         return false;
     }
 
-    private static bool HasMultipleNonNullModifiers(SkillData skill)
+    private static int CompositionEffectValue(SkillData skill, SkillEffectKind kind)
     {
-        if (skill == null || skill.Modifiers == null)
-            return false;
+        if (skill == null || skill.CompositionEffects == null)
+            return 0;
 
-        int modifierCount = 0;
-        for (int i = 0; i < skill.Modifiers.Length; i++)
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
         {
-            if (skill.Modifiers[i] == null)
-                continue;
-
-            modifierCount++;
-            if (modifierCount > 1)
-                return true;
+            if (skill.CompositionEffects[i].EffectKind == kind)
+                return skill.CompositionEffects[i].Value;
         }
 
-        return false;
-    }
-
-    private static bool IsSimpleDirectExplosive(SkillData skill)
-    {
-        if (skill == null ||
-            skill.ImpactPattern != ImpactPattern.Direct ||
-            skill.Modifiers == null)
-        {
-            return false;
-        }
-
-        int explosiveModifierCount = 0;
-        int modifierCount = 0;
-        for (int i = 0; i < skill.Modifiers.Length; i++)
-        {
-            SkillModifier modifier = skill.Modifiers[i];
-            if (modifier == null)
-                continue;
-
-            modifierCount++;
-            if (modifier is ExplosiveSkillModifier)
-                explosiveModifierCount++;
-        }
-
-        return modifierCount == 1 && explosiveModifierCount == 1;
+        return 0;
     }
 
     private static bool TryResolveProjectileVisualTarget(
@@ -882,7 +935,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         if (skill != null &&
             skill.ImpactPattern == ImpactPattern.Line &&
-            HasModifier<PiercingSkillModifier>(skill) &&
+            HasCompositionModifier(skill, SkillModifierKind.Penetrating) &&
             TryResolveLineDirection(start, context, impacts, out Vector3 piercingDirection))
         {
             return start + piercingDirection * ResolveLineLengthWorld(skill, context);
@@ -984,29 +1037,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         return resolvedCellFraction * Mathf.Max(0.01f, cellStep);
     }
 
-    private static Vector3 ResolveSummonAnchorWorldPosition(SkillContext context, SummonUnitSkillEffect summonUnitSkillEffect)
+    private static Vector3 ResolveSummonAnchorWorldPosition(SkillContext context)
     {
-        if (context == null || summonUnitSkillEffect == null)
-            return Vector3.zero;
-
-        switch (summonUnitSkillEffect.AnchorMode)
-        {
-            case SummonAnchorMode.AroundCaster:
-                return context.Caster != null ? context.Caster.Position : context.ImpactCenterWorld;
-
-            case SummonAnchorMode.AroundPrimaryTarget:
-                return context.PrimaryTarget != null ? context.PrimaryTarget.Position : context.ImpactCenterWorld;
-
-            case SummonAnchorMode.AroundImpactCenter:
-                return ResolveImpactCenterWorldPosition(context);
-
-            case SummonAnchorMode.AtTargetCell:
-                if (context.HasTargetCell && context.RoomGrid != null)
-                    return context.RoomGrid.CellToWorld(new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0));
-                return context.ImpactCenterWorld;
-
-            default:
-                return context.Caster != null ? context.Caster.Position : context.ImpactCenterWorld;
-        }
+        return ResolveImpactCenterWorldPosition(context);
     }
 }

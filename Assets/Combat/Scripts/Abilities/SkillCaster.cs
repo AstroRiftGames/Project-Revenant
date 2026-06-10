@@ -867,7 +867,7 @@ public class SkillCaster : MonoBehaviour
         if (!UnitTargetValidator.IsSkillTargetSelectable(_unit, primaryTarget, skill))
             return false;
 
-        return skill.Requirements == null || skill.Requirements.AreSkillSpecificRequirementsMet(_unit, primaryTarget);
+        return true;
     }
 
     private bool IsSkillContextInRange(SkillContext skillContext)
@@ -952,21 +952,13 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
             return false;
 
-        SkillEffect[] effects = skill.Effects;
-        if (effects == null || effects.Length == 0)
-            return false;
-
-        bool anyApplied = false;
-        for (int effectIndex = 0; effectIndex < effects.Length; effectIndex++)
+        if (SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string gapMessage))
         {
-            SkillEffect effect = effects[effectIndex];
-            if (effect == null)
-                continue;
-
-            anyApplied |= effect.Apply(skillContext, impact);
+            return SkillCompositionRuntimeExecutor.ExecuteEffects(skill, skillContext, impact);
         }
 
-        return anyApplied;
+        Debug.LogError($"[SkillCompositionRuntimeExecutor Error] Skill '{skill.name}' is not ready for composition runtime. Reason: {gapMessage}");
+        return false;
     }
 
     private Unit FindFallbackPrimaryTarget(SkillData skill)
