@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: b207119c16d1bb44a83160c9d5ecd6eb
+guid: 7db61d00c099f1b4c964609db7c45299
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4289201707420406139
-    second: Icon-Evasion_0
+      213: -1221063345054586281
+    second: Icon-AttackDistance_0
+  - first:
+      213: 5084798590837369018
+    second: Icon-AttackDistance_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icon-Evasion_0
+      name: Icon-AttackDistance_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 24
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b71dacc4a3e468b30800000000000000
-      internalID: 4289201707420406139
+      spriteID: 75a65cd6b59ed0fe0800000000000000
+      internalID: -1221063345054586281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Icon-AttackDistance_1
+      rect:
+        serializedVersion: 2
+        x: 21
+        y: 21
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab8a441c065d09640800000000000000
+      internalID: 5084798590837369018
       vertices: []
       indices: 
       edges: []
@@ -148,7 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Icon-Evasion_0: 4289201707420406139
+      Icon-AttackDistance_0: -1221063345054586281
+      Icon-AttackDistance_1: 5084798590837369018
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
