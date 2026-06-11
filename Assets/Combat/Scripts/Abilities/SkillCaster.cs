@@ -1022,15 +1022,10 @@ public class SkillCaster : MonoBehaviour
     private void OnSkillCastSucceeded(SkillData skill, Unit primaryTarget)
     {
         ConsumeChargeOnSuccess(skill);
-        BreakInvisibilityAfterSkillUse();
         NotifySkillUsed(skill, ResolvePopupAnchorUnit(skill, primaryTarget));
     }
 
-    private void BreakInvisibilityAfterSkillUse()
-    {
-        if (_unit != null && _unit.StatusEffects != null && _unit.StatusEffects.HasInvisibility)
-            _unit.StatusEffects.RemoveEffectOfType(StatusEffectType.Invisibility);
-    }
+
 
     private void ConsumeChargeOnSuccess(SkillData skill)
     {

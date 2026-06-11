@@ -573,11 +573,12 @@ public class CreatureVariantLabWindow : EditorWindow
             }
             else
             {
-                StatusEffectType expectedType = StatusEffectType.Stun;
-                if (_effect == LabEffectKind.Slow) expectedType = StatusEffectType.StatModifierDebuff;
-                else if (_effect == LabEffectKind.PoisonBurn) expectedType = StatusEffectType.DamageOverTime;
-                else if (_effect == LabEffectKind.HealOverTime) expectedType = StatusEffectType.HealOverTime;
-                else if (_effect == LabEffectKind.Haste || _effect == LabEffectKind.StrengthBuff) expectedType = StatusEffectType.StatModifierBuff;
+                SkillEffectKind expectedType = SkillEffectKind.Stun;
+                if (_effect == LabEffectKind.Slow) expectedType = SkillEffectKind.Slow;
+                else if (_effect == LabEffectKind.PoisonBurn) expectedType = SkillEffectKind.PoisonBurn;
+                else if (_effect == LabEffectKind.HealOverTime) expectedType = SkillEffectKind.Heal;
+                else if (_effect == LabEffectKind.Haste) expectedType = SkillEffectKind.Haste;
+                else if (_effect == LabEffectKind.StrengthBuff) expectedType = SkillEffectKind.StrengthBuff;
 
                 if (_statusDefinition.EffectType != expectedType)
                 {

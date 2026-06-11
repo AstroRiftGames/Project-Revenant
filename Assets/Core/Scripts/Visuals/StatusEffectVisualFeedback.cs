@@ -237,23 +237,14 @@ public class StatusEffectVisualFeedback : MonoBehaviour
 
 return definition.EffectType switch
         {
-            StatusEffectType.Stun => StatusVisualStyle.Stun,
-            StatusEffectType.Sleep => StatusVisualStyle.Stun,
-            StatusEffectType.Silence => StatusVisualStyle.Debuff,
-            StatusEffectType.Fear => StatusVisualStyle.Debuff,
-            StatusEffectType.Taunt => StatusVisualStyle.Debuff,
-            StatusEffectType.Heal => StatusVisualStyle.HealOverTime,
-            StatusEffectType.HealOverTime => StatusVisualStyle.HealOverTime,
-            StatusEffectType.DamageOverTime when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
-            StatusEffectType.DamageOverTime => StatusVisualStyle.DamageOverTime,
-            StatusEffectType.StatModifierBuff => StatusVisualStyle.Buff,
-            StatusEffectType.StatModifierDebuff => StatusVisualStyle.Debuff,
-            StatusEffectType.Invisibility => StatusVisualStyle.Invisible,
-            StatusEffectType.Invincibility => StatusVisualStyle.Invincible,
-            StatusEffectType.Incorruptible => StatusVisualStyle.Incorruptible,
-            StatusEffectType.Berserk => StatusVisualStyle.Buff,
-            StatusEffectType.LifeSteal => StatusVisualStyle.LifeSteal,
-            StatusEffectType.Knockback => StatusVisualStyle.Knockback,
+            SkillEffectKind.Stun => StatusVisualStyle.Stun,
+            SkillEffectKind.Heal => StatusVisualStyle.HealOverTime,
+            SkillEffectKind.PoisonBurn when definition.DurationMode == StatusEffectDurationMode.PermanentUntilDeath => StatusVisualStyle.DamageOverTimePermanent,
+            SkillEffectKind.PoisonBurn => StatusVisualStyle.DamageOverTime,
+            SkillEffectKind.StrengthBuff => StatusVisualStyle.Buff,
+            SkillEffectKind.Haste => StatusVisualStyle.Buff,
+            SkillEffectKind.Slow => StatusVisualStyle.Debuff,
+            SkillEffectKind.Knockback => StatusVisualStyle.Knockback,
             _ => StatusVisualStyle.None
         };
     }

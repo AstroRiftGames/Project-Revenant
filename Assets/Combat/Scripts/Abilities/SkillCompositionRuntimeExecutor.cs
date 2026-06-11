@@ -187,14 +187,7 @@ public static class SkillCompositionRuntimeExecutor
         int damageAmount = Mathf.Max(0, effect.Value);
         hitUnit.TakeDamage(damageAmount, caster);
 
-        if (caster.StatusEffects != null && caster.StatusEffects.HasLifeSteal)
-        {
-            float healPercent = caster.StatusEffects.GetEffectStrength(StatusEffectType.LifeSteal);
-            int healAmount = Mathf.RoundToInt(damageAmount * healPercent);
-            LifeController casterLife = caster.GetComponent<LifeController>();
-            if (healAmount > 0 && casterLife != null)
-                casterLife.Heal(healAmount, hitUnit);
-        }
+
 
         return true;
     }

@@ -18,7 +18,7 @@ public class StatusEffectDefinition : ScriptableObject
 {
     [SerializeField] private string _effectId;
     [SerializeField] private string _displayName;
-    [SerializeField] private StatusEffectType _effectType;
+    [SerializeField] private SkillEffectKind _effectType;
     [SerializeField] private StatusEffectDurationMode _durationMode = StatusEffectDurationMode.Timed;
     [SerializeField] private EffectStackingMode _stackingMode = EffectStackingMode.RefreshDuration;
     [SerializeField] private float _durationSeconds = 3f;
@@ -35,7 +35,7 @@ public class StatusEffectDefinition : ScriptableObject
 
     public string EffectId => _effectId;
     public string DisplayName => string.IsNullOrWhiteSpace(_displayName) ? name : _displayName;
-    public StatusEffectType EffectType => _effectType;
+    public SkillEffectKind EffectType => _effectType;
     public StatusEffectDurationMode DurationMode => _durationMode;
     public EffectStackingMode StackingMode => _stackingMode;
     public float DurationSeconds => Mathf.Max(0f, _durationSeconds);
@@ -51,12 +51,12 @@ public class StatusEffectDefinition : ScriptableObject
 
 public bool HasTimedDuration => _durationMode == StatusEffectDurationMode.Timed;
     public bool HasPeriodicTicks =>
-        (_effectType == StatusEffectType.HealOverTime || _effectType == StatusEffectType.DamageOverTime) &&
+        (_effectType == SkillEffectKind.Heal || _effectType == SkillEffectKind.PoisonBurn) &&
         TickIntervalSeconds > 0f;
-    public bool BlocksActions => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
-    public bool RestrictsMovement => _effectType == StatusEffectType.Stun || _effectType == StatusEffectType.Sleep;
-    public bool IsHeal => _effectType == StatusEffectType.Heal || _effectType == StatusEffectType.HealOverTime;
-    public bool AffectsStats => _effectType == StatusEffectType.StatModifierBuff || _effectType == StatusEffectType.StatModifierDebuff;
-    public bool IsStateEffect => _effectType == StatusEffectType.Invisibility || _effectType == StatusEffectType.Invincibility || _effectType == StatusEffectType.Incorruptible;
-    public bool IsModifierEffect => _effectType == StatusEffectType.Berserk || _effectType == StatusEffectType.LifeSteal || _effectType == StatusEffectType.Knockback;
+    public bool BlocksActions => _effectType == SkillEffectKind.Stun;
+    public bool RestrictsMovement => _effectType == SkillEffectKind.Stun;
+    public bool IsHeal => _effectType == SkillEffectKind.Heal;
+    public bool AffectsStats => _effectType == SkillEffectKind.StrengthBuff || _effectType == SkillEffectKind.Haste || _effectType == SkillEffectKind.Slow;
+    public bool IsStateEffect => _effectType == SkillEffectKind.Shield;
+    public bool IsModifierEffect => _effectType == SkillEffectKind.Knockback;
 }

@@ -42,7 +42,7 @@ namespace Data
         [Serializable]
         public struct EffectIcon
         {
-            public StatusEffectType effectType;
+            public SkillEffectKind effectType;
             public Sprite icon;
             public Color color;
         }
@@ -114,7 +114,7 @@ namespace Data
             return (null, Color.white);
         }
 
-        public (Sprite, Color) GetEffectIcon(StatusEffectType effectType)
+        public (Sprite, Color) GetEffectIcon(SkillEffectKind effectType)
         {
             foreach (var entry in effectsIcons)
                 if (entry.effectType == effectType) return (entry.icon, entry.color);

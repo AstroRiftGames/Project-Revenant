@@ -62,9 +62,6 @@ public class LifeController : MonoBehaviour, IDamageable
         if (!CanReceiveCombatLifeEffect() || amount <= 0)
             return;
 
-        if (_statusEffectController != null && _statusEffectController.HasInvincibility)
-            return;
-
         if (source is Unit attacker && IsCombatAlive(attacker) && attacker != _unit)
         {
             LastAttacker = attacker;
@@ -85,9 +82,6 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(damageToHealth);
-
-        if (_statusEffectController != null && _statusEffectController.HasInvisibility)
-            _statusEffectController.RemoveEffectOfType(StatusEffectType.Invisibility);
 
         if (CurrentHealth == 0)
             ResolveDeath();

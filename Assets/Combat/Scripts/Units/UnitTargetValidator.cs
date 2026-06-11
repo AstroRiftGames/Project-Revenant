@@ -55,8 +55,7 @@ public static class UnitTargetValidator
         if (policy.RequireDetectable && !isSelfTarget && !source.CanDetect(target))
             return false;
 
-        if (!policy.AllowInvisible && target.StatusEffects != null && target.StatusEffects.HasInvisibility)
-            return false;
+
 
         if (policy.RequireInjured && target.CurrentHealth >= target.MaxHealth)
             return false;

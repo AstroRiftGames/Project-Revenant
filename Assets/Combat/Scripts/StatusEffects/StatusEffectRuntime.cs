@@ -100,11 +100,4 @@ public sealed class ActiveStatusEffect
         return true;
     }
 
-    public bool CanBeWokenByAttack(float now)
-    {
-        if (Definition == null || Definition.EffectType != StatusEffectType.Sleep)
-            return false;
-
-        return now >= AppliedAt + SleepWakeProtectionSeconds;
-    }
 }

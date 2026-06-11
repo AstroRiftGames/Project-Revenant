@@ -109,11 +109,11 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
         switch (activeEffect.Definition.EffectType)
         {
-            case StatusEffectType.DamageOverTime:
+            case SkillEffectKind.PoisonBurn:
                 PresentDamageOverTimeTick(targetUnit);
                 break;
 
-            case StatusEffectType.HealOverTime:
+            case SkillEffectKind.Heal:
                 PresentHealOverTimeTick(targetUnit);
                 break;
         }

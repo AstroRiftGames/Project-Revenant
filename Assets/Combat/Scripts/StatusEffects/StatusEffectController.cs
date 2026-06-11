@@ -22,26 +22,17 @@ public class StatusEffectController : MonoBehaviour
     public event Action<StatusEffectController, ActiveStatusEffect, StatusEffectRemovalReason> EffectRemoved;
 
     public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
-    public bool HasStun => HasEffect(StatusEffectType.Stun);
-    public bool HasSilence => HasEffect(StatusEffectType.Silence);
-    public bool HasFear => HasEffect(StatusEffectType.Fear);
-    public bool HasSleep => HasEffect(StatusEffectType.Sleep);
-    public bool HasTaunt => HasEffect(StatusEffectType.Taunt);
-    public bool HasInvisibility => HasEffect(StatusEffectType.Invisibility);
-    public bool HasInvincibility => HasEffect(StatusEffectType.Invincibility);
-    public bool HasIncorruptible => HasEffect(StatusEffectType.Incorruptible);
-    public bool HasBerserk => HasEffect(StatusEffectType.Berserk);
-    public bool HasLifeSteal => HasEffect(StatusEffectType.LifeSteal);
-    public bool HasKnockback => HasEffect(StatusEffectType.Knockback);
+    public bool HasStun => HasEffect(SkillEffectKind.Stun);
+    public bool HasKnockback => HasEffect(SkillEffectKind.Knockback);
     public bool CanAct => !HasBlockingActionEffect();
     public bool CanMove => !HasMovementRestriction();
-    public bool CanAttack => !HasStun && !HasFear && !HasSleep;
-    public bool CanUseSkills => !HasStun && !HasFear && !HasSleep && !HasSilence && !HasBerserk;
-    public bool CanMoveTowardTarget => !HasStun && !HasFear && !HasSleep;
-    public bool ShouldFlee => HasFear;
+    public bool CanAttack => !HasStun;
+    public bool CanUseSkills => !HasStun;
+    public bool CanMoveTowardTarget => !HasStun;
+    public bool ShouldFlee => false;
     public bool RestrictsMovement => HasMovementRestriction();
-    public bool PreventsSkillCharge => IsSourceOfEffectInCurrentRoom(StatusEffectType.Taunt);
-    public bool IsImmuneToControl => HasIncorruptible;
+    public bool PreventsSkillCharge => false;
+    public bool IsImmuneToControl => false;
 
     private void Awake()
     {
@@ -106,7 +97,7 @@ public class StatusEffectController : MonoBehaviour
         }
     }
 
-    public bool HasEffect(StatusEffectType effectType)
+    public bool HasEffect(SkillEffectKind effectType)
     {
         for (int i = 0; i < _activeEffects.Count; i++)
         {
@@ -121,7 +112,7 @@ public class StatusEffectController : MonoBehaviour
         return false;
     }
 
-    public float GetEffectStrength(StatusEffectType effectType)
+    public float GetEffectStrength(SkillEffectKind effectType)
     {
         for (int i = 0; i < _activeEffects.Count; i++)
         {
@@ -173,7 +164,6 @@ public class StatusEffectController : MonoBehaviour
 
     public void HandleIncomingAttack()
     {
-        RemoveSleepEffectsWokenByAttack(Time.time, StatusEffectRemovalReason.Explicit);
     }
 
     public void HandleOwnerDeath()
@@ -238,10 +228,7 @@ public class StatusEffectController : MonoBehaviour
         if (application.Definition == null)
             return true;
 
-        StatusEffectType effectType = application.Definition.EffectType;
-
-        if (effectType == StatusEffectType.Sleep && HasSleep)
-            return true;
+        SkillEffectKind effectType = application.Definition.EffectType;
 
         if (IsImmuneToControl && IsControlEffect(effectType))
             return true;
@@ -249,13 +236,10 @@ public class StatusEffectController : MonoBehaviour
         return false;
     }
 
-    private bool IsControlEffect(StatusEffectType effectType)
+    private bool IsControlEffect(SkillEffectKind effectType)
     {
-        return effectType == StatusEffectType.Stun ||
-               effectType == StatusEffectType.Sleep ||
-               effectType == StatusEffectType.Fear ||
-               effectType == StatusEffectType.Silence ||
-               effectType == StatusEffectType.Taunt;
+        return effectType == SkillEffectKind.Stun ||
+               effectType == SkillEffectKind.Slow;
     }
 
     private void ProcessPeriodicTicks(float now)
@@ -291,11 +275,11 @@ public class StatusEffectController : MonoBehaviour
     {
         switch (activeEffect.Definition.EffectType)
         {
-            case StatusEffectType.HealOverTime:
+            case SkillEffectKind.Heal:
                 _lifeController.Heal(tickValue, activeEffect.SourceUnit);
                 return true;
 
-            case StatusEffectType.DamageOverTime:
+            case SkillEffectKind.PoisonBurn:
                 _lifeController.TakeDamage(tickValue, activeEffect.SourceUnit);
                 return true;
 
@@ -325,12 +309,12 @@ public class StatusEffectController : MonoBehaviour
             EffectRemoved?.Invoke(this, activeEffect, reason);
     }
 
-    public void RemoveEffectOfType(StatusEffectType effectType)
+    public void RemoveEffectOfType(SkillEffectKind effectType)
     {
         RemoveEffectsOfType(effectType, StatusEffectRemovalReason.Explicit);
     }
 
-    private void RemoveEffectsOfType(StatusEffectType effectType, StatusEffectRemovalReason reason)
+    private void RemoveEffectsOfType(SkillEffectKind effectType, StatusEffectRemovalReason reason)
     {
         for (int i = _activeEffects.Count - 1; i >= 0; i--)
         {
@@ -342,17 +326,7 @@ public class StatusEffectController : MonoBehaviour
         }
     }
 
-    private void RemoveSleepEffectsWokenByAttack(float now, StatusEffectRemovalReason reason)
-    {
-        for (int i = _activeEffects.Count - 1; i >= 0; i--)
-        {
-            ActiveStatusEffect activeEffect = _activeEffects[i];
-            if (activeEffect == null || !activeEffect.CanBeWokenByAttack(now))
-                continue;
 
-            RemoveEffect(activeEffect, reason);
-        }
-    }
 
     private bool HasMovementRestriction()
     {
@@ -387,21 +361,6 @@ public class StatusEffectController : MonoBehaviour
     private bool TryResolveForcedTarget(out Unit forcedTarget)
     {
         forcedTarget = null;
-
-        for (int i = _activeEffects.Count - 1; i >= 0; i--)
-        {
-            ActiveStatusEffect activeEffect = _activeEffects[i];
-            if (activeEffect == null || activeEffect.Definition == null || activeEffect.Definition.EffectType != StatusEffectType.Taunt)
-                continue;
-
-            Unit sourceUnit = activeEffect.SourceUnit;
-            if (!IsValidForcedTarget(sourceUnit))
-                continue;
-
-            forcedTarget = sourceUnit;
-            return true;
-        }
-
         return false;
     }
 
@@ -421,7 +380,7 @@ public class StatusEffectController : MonoBehaviour
         if (activeEffect == null || activeEffect.Definition == null || _lifeController == null)
             return;
 
-        if (activeEffect.Definition.EffectType != StatusEffectType.Heal)
+        if (activeEffect.Definition.EffectType != SkillEffectKind.Heal)
             return;
 
         int healAmount = Mathf.Max(0, activeEffect.Definition.TickValue);
@@ -429,7 +388,7 @@ public class StatusEffectController : MonoBehaviour
             _lifeController.Heal(healAmount, activeEffect.SourceUnit);
     }
 
-    private bool IsSourceOfEffectInCurrentRoom(StatusEffectType effectType)
+    private bool IsSourceOfEffectInCurrentRoom(SkillEffectKind effectType)
     {
         if (_unit == null || _unit.RoomContext == null)
             return false;
@@ -451,7 +410,7 @@ public class StatusEffectController : MonoBehaviour
         return false;
     }
 
-    private bool HasEffectFromSource(StatusEffectType effectType, Unit sourceUnit)
+    private bool HasEffectFromSource(SkillEffectKind effectType, Unit sourceUnit)
     {
         if (sourceUnit == null)
             return false;

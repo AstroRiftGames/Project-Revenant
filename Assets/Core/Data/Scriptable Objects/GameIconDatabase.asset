@@ -101,54 +101,42 @@ MonoBehaviour:
     icon: {fileID: 6850221415465856317, guid: a9e0f81eda245134b8b31862ad70faee, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
   effectsIcons:
-  - effectType: 2
-    icon: {fileID: -2117330891, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.7803922, g: 0.7803922, b: 0.7803922, a: 1}
-  - effectType: 8
-    icon: {fileID: 21300000, guid: 9c646463a754f9f4595b9013e2a96753, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 9
-    icon: {fileID: 21300000, guid: 77f0817a6fcb4314d8cf2d24da2b8d10, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 11
-    icon: {fileID: -1955340270, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 3
-    icon: {fileID: -1607625663, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 12
-    icon: {fileID: -1621868104, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 6
-    icon: {fileID: 740849941, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
-  - effectType: 10
-    icon: {fileID: 1051590419, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 0}
   - effectType: 0
-    icon: {fileID: 21300000, guid: 4f1bd60a1f9f1b64b8149da26d8c58d0, type: 3}
-    color: {r: 0.44705886, g: 0.9725491, b: 0.9725491, a: 1}
-  - effectType: 1
-    icon: {fileID: 304482522, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.42352945, g: 0.39607847, b: 0.8352942, a: 1}
-  - effectType: 4
-    icon: {fileID: 1469165617, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.654902, g: 0.27450982, b: 0.27450982, a: 1}
-  - effectType: 5
-    icon: {fileID: 1917766832, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 1}
-  - effectType: 7
     icon: {fileID: 1987025352, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.9568628, g: 0.40000004, b: 0.40000004, a: 1}
-  - effectType: 13
-    icon: {fileID: 1665512247, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78823537, g: 0.7411765, b: 0.38823533, a: 1}
-  - effectType: 14
-    icon: {fileID: -585239033, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.74509805, g: 0.52156866, b: 0.8588236, a: 1}
-  - effectType: 15
-    icon: {fileID: 529311738, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
-    color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 1}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 1
+    icon: {fileID: 1917766832, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 2
+    icon: {fileID: -1955340270, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 3
+    icon: {fileID: 46911886, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 4
+    icon: {fileID: 21300000, guid: cb4d8aa4585bf8c47b2720f5830d48ec, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 5
+    icon: {fileID: 21300000, guid: 6403fba1d67706543bc7d29e39ad524c, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 6
+    icon: {fileID: 21300000, guid: 46d24afc9e2958a4d85ff8d4129874a8, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 7
+    icon: {fileID: 21300000, guid: a90f1aa1b126b924e858ab5508b8040a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 8
+    icon: {fileID: 1469165617, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 9
+    icon: {fileID: -2117330891, guid: 7c0e5a2608ef28c44b986272d966ee1a, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 10
+    icon: {fileID: 21300000, guid: cb4d8aa4585bf8c47b2720f5830d48ec, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 11
+    icon: {fileID: 21300000, guid: 9e7a2638c0f03dc408bb8accab3fdb83, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   cursorIcons:
   - cursorType: 0
     icon: {fileID: 2800000, guid: 2d6841ef3c41be144ad9221ca3aa0fd9, type: 3}

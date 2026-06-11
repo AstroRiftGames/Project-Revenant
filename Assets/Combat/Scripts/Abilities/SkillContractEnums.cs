@@ -70,7 +70,9 @@ public enum SkillEffectKind
     Stun,              // Stun
     PoisonBurn,        // Veneno/Quemadura
     Summon,            // Invocar
-    Knockback          // Empuje
+    Knockback,         // Empuje
+    Buff,              // Buff para aumentar stats
+    Debuff,            // Debuff para reducir stats
 }
 
 public enum SkillModifierKind

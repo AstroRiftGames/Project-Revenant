@@ -1,22 +1,4 @@
-public enum StatusEffectType
-{
-    Stun,
-    Silence,
-    Fear,
-    Sleep,
-    Taunt,
-    Heal,
-    HealOverTime,
-    DamageOverTime,
-    StatModifierBuff,
-    StatModifierDebuff,
-    Invisibility,
-    Invincibility,
-    Incorruptible,
-    Berserk,
-    LifeSteal,
-    Knockback
-}
+
 
 public enum StatusEffectDurationMode
 {
