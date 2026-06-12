@@ -15,7 +15,10 @@ namespace Core.Audio.Data
 
         [Header("Playback")]
         [SerializeField, Range(0f, 1f)] private float _volume = 1f;
+        [SerializeField] private bool _useRandomPitch;
         [SerializeField, Range(0.1f, 3f)] private float _pitch = 1f;
+        [SerializeField, Range(0.1f, 3f)] private float _minPitch = 0.9f;
+        [SerializeField, Range(0.1f, 3f)] private float _maxPitch = 1.1f;
         [SerializeField] private bool _loop;
 
         [Header("Spatial Audio")]
@@ -27,7 +30,7 @@ namespace Core.Audio.Data
         public AudioClip Clip        => _clip;
         public AudioChannel Channel  => _channel;
         public float Volume          => _volume;
-        public float Pitch           => _pitch;
+        public float Pitch           => _useRandomPitch ? Random.Range(_minPitch, _maxPitch) : _pitch;
         public bool Loop             => _loop;
         public bool SpatialSound     => _spatialSound;
         public float SpatialBlend    => _spatialSound ? _spatialBlend : 0f;

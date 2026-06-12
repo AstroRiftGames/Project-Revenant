@@ -110,7 +110,20 @@ namespace Core.Audio.Editor
 
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(so.FindProperty("_volume"), new GUIContent("Volume"));
-                EditorGUILayout.PropertyField(so.FindProperty("_pitch"),  new GUIContent("Pitch"));
+                
+                SerializedProperty useRandomPitchProp = so.FindProperty("_useRandomPitch");
+                EditorGUILayout.PropertyField(useRandomPitchProp, new GUIContent("Random Pitch"));
+                
+                if (useRandomPitchProp.boolValue)
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("_minPitch"), new GUIContent("Min Pitch"));
+                    EditorGUILayout.PropertyField(so.FindProperty("_maxPitch"), new GUIContent("Max Pitch"));
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(so.FindProperty("_pitch"),  new GUIContent("Pitch"));
+                }
+                
                 bool dirty = EditorGUI.EndChangeCheck();
 
                 if (dirty)
