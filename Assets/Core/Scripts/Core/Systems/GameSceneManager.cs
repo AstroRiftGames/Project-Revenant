@@ -38,6 +38,20 @@ namespace Core.Systems
             }
         }
 
+        private void Start()
+        {
+            // Ensure music plays if the game is launched directly in a specific scene
+            string activeScene = SceneManager.GetActiveScene().name;
+            if (activeScene == _safeZoneSceneName)
+            {
+                AudioService.Instance?.PlayMusic(_safeZoneMusic);
+            }
+            else if (activeScene == _dungeonSceneName)
+            {
+                AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
+            }
+        }
+
         private void OnEnable()
         {
             FloorManager.OnRoomEntered += OnRoomEntered;
