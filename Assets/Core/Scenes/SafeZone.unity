@@ -798,13 +798,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: -3969600961375825813, guid: 3fa06c8a7ad230d44812eb5c9f84ea79, type: 3}
-      propertyPath: _dungeonMusic
+      propertyPath: _musicSet
       value: 
-      objectReference: {fileID: 11400000, guid: 67f8feadb51ca354696473ac1da7732b, type: 2}
-    - target: {fileID: -3969600961375825813, guid: 3fa06c8a7ad230d44812eb5c9f84ea79, type: 3}
-      propertyPath: _safeZoneMusic
-      value: 
-      objectReference: {fileID: 11400000, guid: e89c7eb687a7f7b47ad35bf2dec7a0d9, type: 2}
+      objectReference: {fileID: 11400000, guid: 6273d868f2fff094bb7ffac3e11b210e, type: 2}
     - target: {fileID: 5432890157942907123, guid: 3fa06c8a7ad230d44812eb5c9f84ea79, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

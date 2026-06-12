@@ -46,3 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _safeZoneSceneName: SafeZone
   _dungeonSceneName: Dungeon
+  _safeZoneMusic: {fileID: 11400000, guid: e89c7eb687a7f7b47ad35bf2dec7a0d9, type: 2}
+  _dungeonExplorationMusic: {fileID: 11400000, guid: 800f30580c93bea448bb6d80ed34274a, type: 2}
+  _dungeonCombatMusic: {fileID: 11400000, guid: 67f8feadb51ca354696473ac1da7732b, type: 2}

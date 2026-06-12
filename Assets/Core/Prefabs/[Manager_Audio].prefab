@@ -207,5 +207,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _musicSource: {fileID: 3211478090808638396}
-  _fadeDuration: 0.5
+  _fadeDuration: 1.5
   _sfxPoolRoot: {fileID: 9001565824297761942}

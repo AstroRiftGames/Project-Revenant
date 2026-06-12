@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
-  m_Name: SafeZoneClip_Music
+  m_Name: Dungeon_Combat_Music
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: e49bb6fefca510b4ea393de8033bcdd8, type: 3}
+  _clip: {fileID: 8300000, guid: f2d763112b4c512498c0ed3490c732fd, type: 3}
   _channel: 1
   _volume: 1
   _pitch: 1
