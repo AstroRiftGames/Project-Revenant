@@ -1,3 +1,4 @@
+using Core.Audio;
 using System;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ public class DoorInteractable : MonoBehaviour, IInteractable, IGridOccupant
     [SerializeField] private RoomDoor _structuralDoor;
     [SerializeField] private RoomGrid _grid;
     [SerializeField] private bool _blocksMovement = true;
+    [SerializeField] private AudioClipSetPlayer _audioClipPlayer;
 
     private RoomContext _roomContext;
     private Necromancer _necromancer;
@@ -53,6 +55,7 @@ public class DoorInteractable : MonoBehaviour, IInteractable, IGridOccupant
             return;
 
         _structuralDoor.TriggerStructuralInteraction();
+        _audioClipPlayer.Play("Interaction");
     }
 
     private bool CanInteract()
