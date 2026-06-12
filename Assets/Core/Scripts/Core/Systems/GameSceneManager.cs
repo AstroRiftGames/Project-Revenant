@@ -15,9 +15,10 @@ namespace Core.Systems
         [SerializeField] private string _dungeonSceneName = "Dungeon";
 
         [Header("Zone Music")]
-        [SerializeField] private AudioClipConfig _safeZoneMusic;
-        [SerializeField] private AudioClipConfig _dungeonExplorationMusic;
-        [SerializeField] private AudioClipConfig _dungeonCombatMusic;
+        [SerializeField] private AudioClipSet _musicSet;
+        [SerializeField] private string _safeZoneMusicKey = "SafeZone";
+        [SerializeField] private string _dungeonExplorationMusicKey = "DungeonExploration";
+        [SerializeField] private string _dungeonCombatMusicKey = "DungeonCombat";
 
         /// <summary>
         /// The floor number the dungeon should start at on the next load.
@@ -44,11 +45,19 @@ namespace Core.Systems
             string activeScene = SceneManager.GetActiveScene().name;
             if (activeScene == _safeZoneSceneName)
             {
-                AudioService.Instance?.PlayMusic(_safeZoneMusic);
+                PlayMusic(_safeZoneMusicKey);
             }
             else if (activeScene == _dungeonSceneName)
             {
-                AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
+                PlayMusic(_dungeonExplorationMusicKey);
+            }
+        }
+
+        private void PlayMusic(string key)
+        {
+            if (_musicSet != null && _musicSet.TryGetClip(key, out AudioClipConfig config))
+            {
+                AudioService.Instance?.PlayMusic(config);
             }
         }
 
@@ -69,11 +78,11 @@ namespace Core.Systems
 
             if (roomContext.IsCombatRoom)
             {
-                AudioService.Instance?.PlayMusic(_dungeonCombatMusic);
+                PlayMusic(_dungeonCombatMusicKey);
             }
             else
             {
-                AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
+                PlayMusic(_dungeonExplorationMusicKey);
             }
         }
 
@@ -85,7 +94,7 @@ namespace Core.Systems
                 return;
             }
 
-            AudioService.Instance?.PlayMusic(_safeZoneMusic);
+            PlayMusic(_safeZoneMusicKey);
             Debug.Log($"[GameSceneManager] Loading Safe Zone Scene: {_safeZoneSceneName}");
             SceneManager.LoadScene(_safeZoneSceneName);
         }
@@ -110,7 +119,7 @@ namespace Core.Systems
             }
 
             PendingStartFloor = Mathf.Max(1, startFloor);
-            AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
+            PlayMusic(_dungeonExplorationMusicKey);
             Debug.Log($"[GameSceneManager] Loading Dungeon Scene: {_dungeonSceneName} (start floor: {PendingStartFloor})");
             SceneManager.LoadScene(_dungeonSceneName);
         }
