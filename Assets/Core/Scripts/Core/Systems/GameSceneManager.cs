@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,6 +13,10 @@ namespace Core.Systems
         [Header("Scene Names")]
         [SerializeField] private string _safeZoneSceneName = "SafeZone";
         [SerializeField] private string _dungeonSceneName = "Dungeon";
+
+        [Header("Zone Music")]
+        [SerializeField] private AudioClipConfig _safeZoneMusic;
+        [SerializeField] private AudioClipConfig _dungeonMusic;
 
         /// <summary>
         /// The floor number the dungeon should start at on the next load.
@@ -38,7 +44,8 @@ namespace Core.Systems
                 Debug.LogWarning("[GameSceneManager] Safe Zone scene name is not configured.");
                 return;
             }
-            
+
+            AudioService.Instance?.PlayMusic(_safeZoneMusic);
             Debug.Log($"[GameSceneManager] Loading Safe Zone Scene: {_safeZoneSceneName}");
             SceneManager.LoadScene(_safeZoneSceneName);
         }
@@ -63,6 +70,7 @@ namespace Core.Systems
             }
 
             PendingStartFloor = Mathf.Max(1, startFloor);
+            AudioService.Instance?.PlayMusic(_dungeonMusic);
             Debug.Log($"[GameSceneManager] Loading Dungeon Scene: {_dungeonSceneName} (start floor: {PendingStartFloor})");
             SceneManager.LoadScene(_dungeonSceneName);
         }
