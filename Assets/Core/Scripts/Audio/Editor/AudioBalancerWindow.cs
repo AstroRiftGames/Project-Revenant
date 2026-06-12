@@ -96,7 +96,7 @@ namespace Core.Audio.Editor
                     EditorGUILayout.LabelField(config.name, EditorStyles.boldLabel);
 
                     if (GUILayout.Button("Select", GUILayout.Width(60)))
-                        Selection.activeObject = config;
+                        UnityEditor.Selection.activeObject = config;
 
                     if (GUILayout.Button("▶ Preview", GUILayout.Width(72)))
                         PreviewClip(config);
