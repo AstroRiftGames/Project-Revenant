@@ -16,7 +16,8 @@ namespace Core.Systems
 
         [Header("Zone Music")]
         [SerializeField] private AudioClipConfig _safeZoneMusic;
-        [SerializeField] private AudioClipConfig _dungeonMusic;
+        [SerializeField] private AudioClipConfig _dungeonExplorationMusic;
+        [SerializeField] private AudioClipConfig _dungeonCombatMusic;
 
         /// <summary>
         /// The floor number the dungeon should start at on the next load.
@@ -34,6 +35,31 @@ namespace Core.Systems
             else
             {
                 Destroy(gameObject);
+            }
+        }
+
+        private void OnEnable()
+        {
+            FloorManager.OnRoomEntered += OnRoomEntered;
+        }
+
+        private void OnDisable()
+        {
+            FloorManager.OnRoomEntered -= OnRoomEntered;
+        }
+
+        private void OnRoomEntered(RoomDoor door, GameObject nextRoom)
+        {
+            if (nextRoom == null || !nextRoom.TryGetComponent(out RoomContext roomContext))
+                return;
+
+            if (roomContext.IsCombatRoom)
+            {
+                AudioService.Instance?.PlayMusic(_dungeonCombatMusic);
+            }
+            else
+            {
+                AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
             }
         }
 
@@ -70,7 +96,7 @@ namespace Core.Systems
             }
 
             PendingStartFloor = Mathf.Max(1, startFloor);
-            AudioService.Instance?.PlayMusic(_dungeonMusic);
+            AudioService.Instance?.PlayMusic(_dungeonExplorationMusic);
             Debug.Log($"[GameSceneManager] Loading Dungeon Scene: {_dungeonSceneName} (start floor: {PendingStartFloor})");
             SceneManager.LoadScene(_dungeonSceneName);
         }

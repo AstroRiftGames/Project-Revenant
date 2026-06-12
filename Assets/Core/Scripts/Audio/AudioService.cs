@@ -114,6 +114,10 @@ namespace Core.Audio
                 return;
             }
 
+            // Ignore if we are already playing the exact same clip
+            if (_musicSource.isPlaying && _musicSource.clip == config.Clip)
+                return;
+
             if (_musicFadeCoroutine != null)
                 StopCoroutine(_musicFadeCoroutine);
 
