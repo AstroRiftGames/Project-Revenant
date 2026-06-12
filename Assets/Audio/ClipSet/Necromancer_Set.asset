@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 728a85a61c347c5428b474ae08c051fb, type: 3}
-  m_Name: ClipSet_Test
+  m_Name: Necromancer_Set
   m_EditorClassIdentifier: 
   _entries:
-  - Key: Interaction
-    Config: {fileID: 11400000, guid: ae9e8fd7a67fcfa4cba06b408e71402b, type: 2}
+  - Key: Footstep
+    Config: {fileID: 11400000, guid: ed10f596f5399124babc6387eef2f857, type: 2}

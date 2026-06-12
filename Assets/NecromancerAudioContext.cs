@@ -5,9 +5,9 @@ using UnityEngine;
 public class NecromancerAudioContext : MonoBehaviour
 {
     [SerializeField] AudioClipSet AudioClipSet;
-    public void PlayStepSFX()
+    public void PlayFootstepSFX()
     {
-        AudioClipSet.TryGetClip("Interaction", out AudioClipConfig clip);
+        AudioClipSet.TryGetClip("Footstep", out AudioClipConfig clip);
         AudioService.Instance.PlaySFX(clip, transform.position);
     }
 }
