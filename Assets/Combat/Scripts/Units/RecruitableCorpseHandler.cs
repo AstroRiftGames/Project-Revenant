@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -55,6 +57,9 @@ public class RecruitableCorpseHandler : MonoBehaviour
             RefundMana(manaCost);
             return false;
         }
+
+        unitData.AudioSet.TryGetClip("Recruitment", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, _unit.transform.position);
 
         ReviveRecruitedUnit(member);
         _partyContext ??= NecromancerPartyContext.Current;

@@ -19,3 +19,5 @@ MonoBehaviour:
     Config: {fileID: 11400000, guid: d798d2a031151434f8f3595f1cb2c23a, type: 2}
   - Key: Death
     Config: {fileID: 11400000, guid: 284f70ecda6e8d54aa4b9ea7c7b21252, type: 2}
+  - Key: Skill Cast
+    Config: {fileID: 11400000, guid: 728599240b720cb4182e230191a18b5e, type: 2}
