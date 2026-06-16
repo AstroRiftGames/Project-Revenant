@@ -325,6 +325,12 @@ public class Necromancer : MonoBehaviour
         return started;
     }
 
+    public void CancelMovementForCombatStart()
+    {
+        ResetMovementContext();
+        SnapToGrid();
+    }
+
     private void StopMovement()
     {
         _remainingPathCells.Clear();

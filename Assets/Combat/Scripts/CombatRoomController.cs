@@ -79,6 +79,11 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
         _outcome = CombatRoomOutcome.None;
         SetState(CombatRoomState.Combat);
+
+        Necromancer necromancer = ResolveNecromancer();
+        if (necromancer != null)
+            necromancer.CancelMovementForCombatStart();
+
         EvaluateEncounterOutcome();
         if (IsResolved)
             return true;
