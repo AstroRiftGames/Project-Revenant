@@ -55,7 +55,7 @@ public class DoorInteractable : MonoBehaviour, IInteractable, IGridOccupant
             return;
 
         _structuralDoor.TriggerStructuralInteraction();
-        _audioClipPlayer.Play("Interaction");
+        _audioClipPlayer.Play("Room Transition");
     }
 
     private bool CanInteract()

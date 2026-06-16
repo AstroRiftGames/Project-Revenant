@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
-  m_Name: Unit_Soul-Absorption_SFX
+  m_Name: Dungeon_Room-Transition_SFX
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: 395ed6d1a897e7b4aae41e449cfaad4d, type: 3}
+  _clip: {fileID: 8300000, guid: b21adb8e8bf110d4c8d1b5b59a8947ec, type: 3}
   _channel: 0
   _volume: 1
-  _useRandomPitch: 1
+  _useRandomPitch: 0
   _pitch: 1
-  _minPitch: 0.8
-  _maxPitch: 1.2
+  _minPitch: 1
+  _maxPitch: 1
   _loop: 0
-  _spatialSound: 1
-  _spatialBlend: 1
+  _spatialSound: 0
+  _spatialBlend: 0
   _minDistance: 1
   _maxDistance: 500

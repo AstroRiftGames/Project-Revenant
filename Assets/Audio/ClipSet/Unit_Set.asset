@@ -21,3 +21,5 @@ MonoBehaviour:
     Config: {fileID: 11400000, guid: 284f70ecda6e8d54aa4b9ea7c7b21252, type: 2}
   - Key: Skill Cast
     Config: {fileID: 11400000, guid: 728599240b720cb4182e230191a18b5e, type: 2}
+  - Key: Soul Absorption
+    Config: {fileID: 11400000, guid: 4528654d4122ed7428fd35a1682f2070, type: 2}
