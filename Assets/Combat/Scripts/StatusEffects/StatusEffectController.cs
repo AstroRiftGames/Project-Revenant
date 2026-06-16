@@ -12,6 +12,7 @@ public class StatusEffectController : MonoBehaviour
     private Unit _unit;
     private LifeController _lifeController;
     private UnitMovement _unitMovement;
+    private SkillCaster _skillCaster;
     private readonly List<ActiveStatusEffect> _activeEffects = new();
     private bool _runtimeStoppedByDeath;
 
@@ -39,6 +40,7 @@ public class StatusEffectController : MonoBehaviour
         _unit = GetComponent<Unit>();
         _lifeController = GetComponent<LifeController>();
         _unitMovement = GetComponent<UnitMovement>();
+        _skillCaster = GetComponent<SkillCaster>();
     }
 
     private void Update()
@@ -371,6 +373,9 @@ public class StatusEffectController : MonoBehaviour
 
         if (activeEffect.Definition.RestrictsMovement)
             _unitMovement?.InterruptMovement();
+
+        if (activeEffect.Definition.BlocksActions)
+            _skillCaster?.InterruptCast();
 
         TryApplyImmediateLifeEffect(activeEffect);
     }
