@@ -984,7 +984,48 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
+        SkillData skillData = skillContext.Skill;
+        if (skillData != null && RequiresOccupiableGroundCell(skillData))
+        {
+            if (roomGrid.IsCellHardBlocked(targetCell))
+            {
+                if (logFailure)
+                {
+                    LogDebug(
+                        $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skillData.DisplayName}' target cell " +
+                        $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is not walkable for a summon placement.");
+                }
+                return false;
+            }
+
+            if (!roomGrid.OccupancyService.IsCellFreeForPlacement(targetCell))
+            {
+                if (logFailure)
+                {
+                    LogDebug(
+                        $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skillData.DisplayName}' target cell " +
+                        $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is occupied or reserved.");
+                }
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    private static bool RequiresOccupiableGroundCell(SkillData skill)
+    {
+        SkillCompositionEffect[] effects = skill.CompositionEffects;
+        if (effects == null || effects.Length == 0)
+            return false;
+
+        for (int i = 0; i < effects.Length; i++)
+        {
+            if (effects[i].EffectKind == SkillEffectKind.Summon)
+                return true;
+        }
+
+        return false;
     }
 
     private bool HasValidImpactCenter(SkillContext skillContext, bool logFailure)

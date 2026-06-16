@@ -138,6 +138,11 @@ public class GridOccupancyTracker : MonoBehaviour
         return IsOccupied(cell, occupant) || IsCellReserved(cell, occupant);
     }
 
+    public bool IsCellFreeForPlacement(Vector3Int cell)
+    {
+        return !IsOccupied(cell) && !IsCellReserved(cell);
+    }
+
     public void ReleaseOccupant(IGridOccupant occupant)
     {
         if (occupant == null)
