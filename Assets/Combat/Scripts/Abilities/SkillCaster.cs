@@ -1210,6 +1210,17 @@ public class SkillCaster : MonoBehaviour
         if (_unit == null || skill == null)
             return null;
 
+        if (IsOffensiveTargetSelectionMode(skill.TargetSelectionMode))
+        {
+            if (_unit.StatusEffects != null && _unit.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
+            {
+                if (CanUseUnitAsPrimaryTarget(skill, forcedTarget))
+                    return forcedTarget;
+
+                return null;
+            }
+        }
+
         IReadOnlyList<Unit> roomUnits = _unit.GetRoomUnits();
         Func<Unit, bool> canChoosePrimaryTarget = candidate => CanUseUnitAsPrimaryTarget(skill, candidate);
 
@@ -1224,6 +1235,14 @@ public class SkillCaster : MonoBehaviour
             TargetSelectionMode.RoleBasedOffensive => TargetingStrategy.SelectBestOffensiveTarget(_unit, currentTarget, roomUnits, canChoosePrimaryTarget),
             _ => null
         };
+    }
+
+    private static bool IsOffensiveTargetSelectionMode(TargetSelectionMode mode)
+    {
+        return mode == TargetSelectionMode.Closest ||
+               mode == TargetSelectionMode.LowestHealth ||
+               mode == TargetSelectionMode.HighestBasicDamage ||
+               mode == TargetSelectionMode.RoleBasedOffensive;
     }
 
     private bool CanApplyAbilityCharge()

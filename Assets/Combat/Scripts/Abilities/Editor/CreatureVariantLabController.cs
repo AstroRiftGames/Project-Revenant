@@ -26,6 +26,8 @@ public class CreatureVariantLabController
 
     public void Validate()
     {
+        AutoResolveStatusDefinition();
+
         _validationIssues.Clear();
         _matchingVariant = null;
 
@@ -236,6 +238,75 @@ public class CreatureVariantLabController
         return selectedIndex > 0 && selectedIndex <= definitions.Count
             ? definitions[selectedIndex - 1]
             : null;
+    }
+
+    public void AutoResolveStatusDefinition()
+    {
+        bool usesStatus = SkillCompositionMapper.IsStatusEffect(_state.effect);
+        if (!usesStatus)
+        {
+            _state.statusDefinition = null;
+            return;
+        }
+
+        SkillEffectKind expectedKind = ResolveExpectedSkillEffectKind(_state.effect);
+        if (_state.statusDefinition != null && _state.statusDefinition.EffectType == expectedKind)
+            return;
+
+        var defs = new List<StatusEffectDefinition>();
+        var names = new List<string>();
+        CreatureVariantAssetService.LoadStatusDefinitions(defs, names);
+
+        _state.statusDefinition = FindCompatibleStatusDefinition(_state.effect, defs);
+    }
+
+    public void OnEffectChanged(LabEffectKind previousEffect, LabEffectKind newEffect, List<StatusEffectDefinition> definitions)
+    {
+        AutoResolveStatusDefinition();
+    }
+
+    public string GetStatusAutoResolveMessage(LabEffectKind effect, List<StatusEffectDefinition> definitions)
+    {
+        if (!SkillCompositionMapper.IsStatusEffect(effect))
+            return null;
+
+        SkillEffectKind expectedKind = ResolveExpectedSkillEffectKind(effect);
+        int compatibleCount = 0;
+        foreach (var def in definitions)
+        {
+            if (def != null && def.EffectType == expectedKind)
+                compatibleCount++;
+        }
+
+        if (compatibleCount == 0)
+            return $"No StatusEffectDefinition found for {effect}.";
+        if (compatibleCount > 1)
+            return $"Multiple StatusEffectDefinitions found for {effect}. Select one.";
+        return null;
+    }
+
+    private SkillEffectKind ResolveExpectedSkillEffectKind(LabEffectKind effect)
+    {
+        SkillEffectKind kind = SkillCompositionMapper.ToSkillEffectKind(effect);
+        if (effect == LabEffectKind.HealOverTime)
+            kind = SkillEffectKind.Heal;
+        return kind;
+    }
+
+    private StatusEffectDefinition FindCompatibleStatusDefinition(LabEffectKind effect, List<StatusEffectDefinition> definitions)
+    {
+        SkillEffectKind expectedKind = ResolveExpectedSkillEffectKind(effect);
+        StatusEffectDefinition found = null;
+        int count = 0;
+        foreach (var def in definitions)
+        {
+            if (def != null && def.EffectType == expectedKind)
+            {
+                found = def;
+                count++;
+            }
+        }
+        return count == 1 ? found : null;
     }
 
     public void OnPlayModeStateChanged()

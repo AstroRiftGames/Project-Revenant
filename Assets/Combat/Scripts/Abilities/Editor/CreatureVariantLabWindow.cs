@@ -85,8 +85,8 @@ public class CreatureVariantLabWindow : EditorWindow
     private void OnEnable()
     {
         LoadConfig();
-        LoadStatusDefinitions();
         EnsureController();
+        LoadStatusDefinitions();
         Validate();
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         EditorApplication.hierarchyChanged += OnHierarchyChanged;
@@ -131,6 +131,10 @@ public class CreatureVariantLabWindow : EditorWindow
     private void Validate()
     {
         _controller?.Validate();
+        if (_controller != null && _state != null)
+        {
+            _selectedStatusIndex = _controller.ResolveSelectedStatusIndex(_state.statusDefinition, _statusDefinitions);
+        }
     }
 
     private void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -411,8 +415,15 @@ public class CreatureVariantLabWindow : EditorWindow
         EditorGUI.BeginChangeCheck();
         _state.delivery = (ImpactPattern)EditorGUILayout.EnumPopup(new GUIContent("Delivery", Tips.Delivery), _state.delivery);
         _state.primaryTarget = (PrimaryTargetRequirement)EditorGUILayout.EnumPopup(new GUIContent("Target", Tips.PrimaryTarget), _state.primaryTarget);
+        LabEffectKind previousEffect = _state.effect;
         _state.effect = (LabEffectKind)EditorGUILayout.EnumPopup(new GUIContent("Effect", Tips.Effect), _state.effect);
         _state.modifier = (LabModifierKind)EditorGUILayout.EnumPopup(new GUIContent("Modifier", Tips.Modifier), _state.modifier);
+
+        if (_state.effect != previousEffect)
+        {
+            _controller.OnEffectChanged(previousEffect, _state.effect, _statusDefinitions);
+            _selectedStatusIndex = _controller.ResolveSelectedStatusIndex(_state.statusDefinition, _statusDefinitions);
+        }
 
         if (SkillCompositionMapper.HasNumericValue(_state.effect))
         {
@@ -424,8 +435,22 @@ public class CreatureVariantLabWindow : EditorWindow
         bool usesStatus = SkillCompositionMapper.IsStatusEffect(_state.effect);
         if (usesStatus)
         {
+            EditorGUI.BeginChangeCheck();
             _selectedStatusIndex = EditorGUILayout.Popup(new GUIContent("Status", Tips.Status), _selectedStatusIndex, _statusNames.ToArray());
-            _state.statusDefinition = _controller.ResolveStatusDefinition(_selectedStatusIndex, _statusDefinitions);
+            if (EditorGUI.EndChangeCheck())
+            {
+                _state.statusDefinition = _controller.ResolveStatusDefinition(_selectedStatusIndex, _statusDefinitions);
+            }
+
+            if (_state.statusDefinition == null)
+            {
+                string autoResolveMsg = _controller.GetStatusAutoResolveMessage(_state.effect, _statusDefinitions);
+                if (!string.IsNullOrEmpty(autoResolveMsg))
+                {
+                    MessageType msgType = autoResolveMsg.Contains("No StatusEffectDefinition found") ? MessageType.Error : MessageType.Warning;
+                    EditorGUILayout.HelpBox(autoResolveMsg, msgType);
+                }
+            }
         }
         if (usesStatus || _state.effect == LabEffectKind.Shield)
             _state.duration = EditorGUILayout.FloatField(new GUIContent("Duration", Tips.Duration), _state.duration);

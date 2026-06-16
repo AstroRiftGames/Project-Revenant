@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
+using UnityEngine;
 
 public static class SkillCompositionParameterValidatorTests
 {
@@ -80,5 +81,46 @@ public static class SkillCompositionParameterValidatorTests
             if (issue.severity == ValidationSeverity.Error && issue.message.Contains("no runtime implementation"))
                 found = true;
         Assert.IsTrue(found);
+    }
+
+    [Test]
+    public static void ValidateEffectParameters_TauntNullStatus_AddsClearError()
+    {
+        var state = new CreatureVariantLabState 
+        { 
+            effect = LabEffectKind.Taunt, 
+            statusDefinition = null 
+        };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateEffectParameters(state, issues);
+        bool found = false;
+        foreach (var issue in issues)
+            if (issue.severity == ValidationSeverity.Error && issue.message.Contains("No StatusEffectDefinition found for Taunt"))
+                found = true;
+        Assert.IsTrue(found);
+    }
+
+    [Test]
+    public static void ValidateEffectParameters_TauntValidStatus_Passes()
+    {
+        var mockStatus = ScriptableObject.CreateInstance<StatusEffectDefinition>();
+        var field = typeof(StatusEffectDefinition).GetField("_effectType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        field.SetValue(mockStatus, SkillEffectKind.Taunt);
+
+        var state = new CreatureVariantLabState 
+        { 
+            effect = LabEffectKind.Taunt, 
+            statusDefinition = mockStatus 
+        };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateEffectParameters(state, issues);
+        
+        bool hasError = false;
+        foreach (var issue in issues)
+            if (issue.severity == ValidationSeverity.Error)
+                hasError = true;
+                
+        Assert.IsFalse(hasError);
+        UnityEngine.Object.DestroyImmediate(mockStatus);
     }
 }

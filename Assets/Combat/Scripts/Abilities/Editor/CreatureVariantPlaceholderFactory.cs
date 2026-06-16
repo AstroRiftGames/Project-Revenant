@@ -80,6 +80,8 @@ public static class CreatureVariantPlaceholderFactory
         stats.FindPropertyRelative("visionRange").floatValue = 5f;
         so.FindProperty("manaCostToRecruit").intValue = 0;
         so.FindProperty("manaCostToAbsorbSoul").intValue = 0;
+        so.FindProperty("AudioSet").objectReferenceValue = 
+            UnityEditor.AssetDatabase.LoadAssetAtPath<Core.Audio.Data.AudioClipSet>("Assets/Audio/ClipSet/Unit_Set.asset");
         so.ApplyModifiedProperties();
         return data;
     }

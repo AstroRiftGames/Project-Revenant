@@ -142,7 +142,14 @@ public static class SkillCompositionParameterValidator
     {
         if (state.statusDefinition == null)
         {
-            issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "A StatusEffectDefinition is required for status effects."));
+            if (state.effect == LabEffectKind.Taunt)
+            {
+                issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "No StatusEffectDefinition found for Taunt."));
+            }
+            else
+            {
+                issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, $"No StatusEffectDefinition assigned for {state.effect}."));
+            }
             return;
         }
 

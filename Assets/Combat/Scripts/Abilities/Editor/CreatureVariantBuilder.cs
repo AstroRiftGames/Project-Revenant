@@ -62,6 +62,30 @@ public static class CreatureVariantBuilder
         unitSO.FindProperty("displayName").stringValue = CreatureVariantNameSanitizer.SanitizeDisplayName(state.unitName);
         unitSO.FindProperty("skill").objectReferenceValue = skill;
 
+        Core.Audio.Data.AudioClipSet audioSet = null;
+        Sprite sprite = null;
+        if (prefab != null)
+        {
+            Unit prefabUnit = prefab.GetComponent<Unit>();
+            if (prefabUnit != null)
+            {
+                UnitData prefabData = prefabUnit.GetUnitData();
+                if (prefabData != null)
+                {
+                    audioSet = prefabData.AudioSet;
+                    sprite = prefabData.sprite;
+                }
+            }
+        }
+
+        if (audioSet == null)
+        {
+            audioSet = UnityEditor.AssetDatabase.LoadAssetAtPath<Core.Audio.Data.AudioClipSet>("Assets/Audio/ClipSet/Unit_Set.asset");
+        }
+
+        unitSO.FindProperty("AudioSet").objectReferenceValue = audioSet;
+        unitSO.FindProperty("sprite").objectReferenceValue = sprite;
+
         unitSO.ApplyModifiedProperties();
     }
 

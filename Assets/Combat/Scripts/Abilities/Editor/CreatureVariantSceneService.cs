@@ -226,6 +226,7 @@ public class CreatureVariantSceneService
 
     public string SpawnTestUnit(CreatureVariantLabState state, CreatureVariantLabConfig config, SkillData tempSkill, UnitData tempUnit, GameObject prefab, string unitLabel)
     {
+        EnsureAudioServiceInstance();
         UnitTeam team = state.team;
         var debugTool = DebugTool;
         if (debugTool == null)
@@ -324,6 +325,7 @@ public class CreatureVariantSceneService
 
     public string SpawnDummy(CreatureVariantLabConfig config, UnitTeam opponentTeam)
     {
+        EnsureAudioServiceInstance();
         UnitTeam dummyTeam = opponentTeam == UnitTeam.Ally ? UnitTeam.Enemy : UnitTeam.Ally;
         var debugTool = DebugTool;
         if (debugTool == null)
@@ -567,5 +569,14 @@ public class CreatureVariantSceneService
         }
 
         return candidates;
+    }
+
+    private void EnsureAudioServiceInstance()
+    {
+        if (Core.Audio.AudioService.Instance == null)
+        {
+            var go = new GameObject("[Temp_AudioService]");
+            go.AddComponent<Core.Audio.AudioService>();
+        }
     }
 }

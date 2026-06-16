@@ -170,7 +170,7 @@ public static class SkillCompositionEditorTools
                 if (compEff.EffectKind == SkillEffectKind.Slow || compEff.EffectKind == SkillEffectKind.Stun ||
                     compEff.EffectKind == SkillEffectKind.Haste || compEff.EffectKind == SkillEffectKind.StrengthBuff ||
                     compEff.EffectKind == SkillEffectKind.PoisonBurn || compEff.EffectKind == SkillEffectKind.Heal ||
-                    compEff.EffectKind == SkillEffectKind.Shield)
+                    compEff.EffectKind == SkillEffectKind.Shield || compEff.EffectKind == SkillEffectKind.Taunt)
                 {
                     if (compEff.Duration > 0f)
                         hasStatusWithDuration = true;
@@ -315,6 +315,7 @@ public static class SkillCompositionEditorTools
                         case SkillEffectKind.Slow:
                         case SkillEffectKind.Stun:
                         case SkillEffectKind.PoisonBurn:
+                        case SkillEffectKind.Taunt:
                             if (compEff.StatusDefinition != null)
                                 report.AppendLine($"  OK [{compEff.EffectKind}]: StatusDefinition '{compEff.StatusDefinition.name}' reference present");
                             else
