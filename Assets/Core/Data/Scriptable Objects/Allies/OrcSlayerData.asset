@@ -38,3 +38,4 @@ MonoBehaviour:
     defense: 0
     moveSpeed: 1.3
     visionRange: 4
+  AudioSet: {fileID: 11400000, guid: d12ed62a4cc7d4c4db183aeafac3b098, type: 2}

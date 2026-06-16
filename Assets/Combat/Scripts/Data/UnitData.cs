@@ -1,3 +1,4 @@
+using Core.Audio.Data;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -54,4 +55,5 @@ public class UnitData : ScriptableObject
     public int manaCostToAbsorbSoul = 1;
     public SkillData skill;
     public UnitStatsData stats = new();
+    public AudioClipSet AudioSet;
 }

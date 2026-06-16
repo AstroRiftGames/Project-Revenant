@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -56,6 +58,8 @@ public class RecruitableCorpseHandler : MonoBehaviour
             return false;
         }
 
+        unitData.AudioSet.TryGetClip("Recruitment", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, _unit.transform.position);
         ReviveRecruitedUnit(member);
         _partyContext ??= NecromancerPartyContext.Current;
         _partyContext?.TrackDeployedUnit(gameObject, member.PartyMemberId);
@@ -80,6 +84,9 @@ public class RecruitableCorpseHandler : MonoBehaviour
         int manaCost = Mathf.Max(0, unitData != null ? unitData.manaCostToAbsorbSoul : 0);
         if (!TrySpendMana(manaCost, "absorb soul"))
             return false;
+
+        unitData.AudioSet.TryGetClip("Soul Absorption", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, _unit.transform.position);
 
         _soulContext.AwardSouls(soulReward);
         _deathHandler.FinishSoulAbsorb();
