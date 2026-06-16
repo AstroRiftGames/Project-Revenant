@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using UnityEngine;
 
 [RequireComponent(typeof(Unit))]
@@ -144,6 +146,8 @@ public class UnitBrain : MonoBehaviour
     private void ExecuteBasicAction()
     {
         _animationController?.SetAttackTarget(_basicActionTargetUnit.Position);
+        _unit.GetUnitData().AudioSet.TryGetClip("Attack", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, transform.position);
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_basicActionTargetUnit)}.");
         _unit.BeginBasicActionExecution();
