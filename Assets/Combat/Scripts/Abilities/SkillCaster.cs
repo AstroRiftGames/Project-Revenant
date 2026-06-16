@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -381,6 +383,10 @@ public class SkillCaster : MonoBehaviour
         LogDebug(
             $"[SkillCaster] {FormatOwnerIdentity()} began cast for '{skill.DisplayName}' " +
             $"with context {FormatSkillContext(skillContext)}. Cast time: {_castRemainingTime:F2}s.");
+
+        _unit.GetUnitData().AudioSet.TryGetClip("Skill Cast", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, _unit.transform.position);
+
         return true;
     }
 
