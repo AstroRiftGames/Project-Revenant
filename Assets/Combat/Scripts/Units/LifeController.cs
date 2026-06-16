@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using Core.Audio;
+using Core.Audio.Data;
 
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(RecruitableUnitState))]
@@ -82,6 +84,8 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(damageToHealth);
+        _unit.GetUnitData().AudioSet.TryGetClip("Damage Taken", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, transform.position);
 
         if (CurrentHealth == 0)
             ResolveDeath();
