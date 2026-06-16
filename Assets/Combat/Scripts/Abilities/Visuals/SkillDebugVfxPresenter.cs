@@ -182,7 +182,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                     SkillImpact primaryImpact = FindPrimaryImpact(impacts);
                     Vector3 center = ResolveImpactWorldPosition(primaryImpact, context);
                     Unit centerUnit = primaryImpact != null && primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null;
-                    SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), _areaColor, _defaultDuration);
+                    SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), ResolveAreaColor(skill), _defaultDuration);
                     break;
                 }
 
@@ -204,7 +204,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                                 primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
                                 primaryImpact.HasTargetUnit,
                                 worldRadius,
-                                _areaColor,
+                                ResolveAreaColor(skill),
                                 _defaultDuration * 0.95f);
                         }
 
@@ -222,7 +222,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                             impact.HasTargetUnit ? impact.TargetUnit : null,
                             impact.HasTargetUnit,
                             worldRadius,
-                            _areaColor,
+                            ResolveAreaColor(skill),
                             _defaultDuration * 0.95f);
                     }
 
@@ -796,11 +796,14 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
                 case SkillEffectKind.Haste:
                 case SkillEffectKind.StrengthBuff:
+                case SkillEffectKind.Buff:
                     return _buffColor;
 
                 case SkillEffectKind.Slow:
                 case SkillEffectKind.Stun:
                 case SkillEffectKind.PoisonBurn:
+                case SkillEffectKind.Debuff:
+                case SkillEffectKind.StatModifierDebuff:
                     return _debuffColor;
             }
         }
@@ -820,7 +823,10 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             HasCompositionEffect(skill, SkillEffectKind.Stun) ||
             HasCompositionEffect(skill, SkillEffectKind.PoisonBurn) ||
             HasCompositionEffect(skill, SkillEffectKind.Knockback) ||
-            HasCompositionEffect(skill, SkillEffectKind.Shield))
+            HasCompositionEffect(skill, SkillEffectKind.Shield) ||
+            HasCompositionEffect(skill, SkillEffectKind.Buff) ||
+            HasCompositionEffect(skill, SkillEffectKind.Debuff) ||
+            HasCompositionEffect(skill, SkillEffectKind.StatModifierDebuff))
             return false;
 
         return true;

@@ -112,23 +112,91 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryMoveToBasicActionRange()
     {
-        Unit moveTargetUnit = ResolveMoveTargetUnit();
+        Unit moveTargetUnit = ResolveMoveTargetUnit(out int preferredDistance);
         if (moveTargetUnit == null)
             return false;
 
-        if (_unit.Action.IsInRange(_unit, moveTargetUnit))
+        if (_movement.IsWithinRange(moveTargetUnit, preferredDistance))
             return false;
 
-        int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
         return _movement.MoveTowards(moveTargetUnit, preferredDistance);
     }
 
-    private Unit ResolveMoveTargetUnit()
+    private Unit ResolveMoveTargetUnit(out int preferredDistance)
     {
+        preferredDistance = 0;
         if (!CanResolveMoveTargetUnit())
             return null;
 
+        if (TryResolveSupportMoveTarget(out Unit supportTarget, out preferredDistance))
+            return supportTarget;
+
+        preferredDistance = _unit.GetPreferredDistance(_unit.Action);
         return SpacingEvaluator.GetNearestVisibleHostile(_unit);
+    }
+
+    private bool TryResolveSupportMoveTarget(out Unit supportTarget, out int preferredDistance)
+    {
+        supportTarget = null;
+        preferredDistance = 0;
+        if (_unit.Role != UnitRole.Support)
+            return false;
+
+        if (_basicActionTargetUnit != null && _unit.Action.TargetRelation == TargetRelation.Ally)
+        {
+            supportTarget = _basicActionTargetUnit;
+            preferredDistance = _unit.GetPreferredDistance(_unit.Action);
+            return true;
+        }
+
+        SkillData skill = _skillCaster != null ? _skillCaster.Skill : null;
+        if (skill == null || skill.ImpactTargetRequirement != ImpactTargetRequirement.Ally)
+            return false;
+
+        bool requiresInjuredTarget = HasHealEffect(skill);
+        System.Func<Unit, bool> canChooseTarget = candidate =>
+            UnitTargetValidator.IsTargetSelectable(
+                _unit,
+                candidate,
+                new TargetingPolicy(
+                    TargetRelation.Ally,
+                    allowSelf: false,
+                    requireInjured: requiresInjuredTarget));
+
+        supportTarget = requiresInjuredTarget
+            ? TargetingStrategy.SelectBestHealingAllyTarget(
+                _unit,
+                null,
+                TargetingStrategy.GetRoomCandidates(_unit),
+                canChooseTarget)
+            : TargetingStrategy.SelectBestBuffAllyTarget(
+                _unit,
+                null,
+                TargetingStrategy.GetRoomCandidates(_unit),
+                canChooseTarget);
+
+        if (supportTarget == null)
+            return false;
+
+        preferredDistance = skill.ImpactCenterMode == ImpactCenterMode.Caster
+            ? skill.RadiusInCells
+            : skill.RangeInCells;
+        return true;
+    }
+
+    private static bool HasHealEffect(SkillData skill)
+    {
+        SkillCompositionEffect[] effects = skill != null ? skill.CompositionEffects : null;
+        if (effects == null)
+            return false;
+
+        for (int i = 0; i < effects.Length; i++)
+        {
+            if (effects[i].EffectKind == SkillEffectKind.Heal)
+                return true;
+        }
+
+        return false;
     }
 
     private bool CanResolveMoveTargetUnit()

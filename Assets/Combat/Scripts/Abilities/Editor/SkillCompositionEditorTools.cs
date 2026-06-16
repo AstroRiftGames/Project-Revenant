@@ -69,13 +69,18 @@ public static class SkillCompositionEditorTools
 
         report.AppendLine();
         report.AppendLine("=== SUMMARY ===");
+        int criticalMetadataViolations = 0;
         for (int i = 1; i <= 10; i++)
         {
             if (i == 10 || rules[i] > 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 || i == 9)
             {
                 report.AppendLine($"Rule {i}: {rules[i]} cases");
             }
+
+            if (i != 7 && i != 8)
+                criticalMetadataViolations += rules[i];
         }
+        report.AppendLine($"Critical Metadata Violations: {criticalMetadataViolations}");
 
         string finalReport = report.ToString();
         Debug.Log(finalReport);
@@ -250,6 +255,13 @@ public static class SkillCompositionEditorTools
 
             report.AppendLine($"  Composition Effects: {compEffectCount}");
 
+            if (skill.CompositionState == SkillCompositionState.Official &&
+                !SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string runtimeGap))
+            {
+                skillsWithGaps++;
+                report.AppendLine($"  GAP [Runtime]: {runtimeGap}");
+            }
+
             // Build lookup for modifier data by kind
             var modifierDataByKind = new Dictionary<SkillModifierKind, SkillCompositionModifierData>();
             if (skill.CompositionModifierData != null)
@@ -373,6 +385,7 @@ public static class SkillCompositionEditorTools
         report.AppendLine($"Total skills examined: {totalSkills}");
         report.AppendLine($"Official skills: {officialSkills}");
         report.AppendLine($"Skills with gaps: {skillsWithGaps}");
+        report.AppendLine($"Runtime Gaps: {skillsWithGaps}");
         report.AppendLine($"Total composition effects: {totalEffectsComposition}");
         report.AppendLine();
         report.AppendLine("--- Effect Kind Usage (across all skills) ---");
@@ -398,6 +411,6 @@ public static class SkillCompositionEditorTools
         System.IO.File.WriteAllText(reportPath, report.ToString());
         Debug.Log(report.ToString());
         EditorUtility.DisplayDialog("Composition Runtime Readiness",
-            $"Report generated with {gapEffects.Count + gapModifiers.Count} gap(s).\nSee Console and Temp/CompositionRuntimeReadinessReport.txt for details.", "OK");
+            $"Report generated with {skillsWithGaps} official runtime gap(s).\nSee Console and Temp/CompositionRuntimeReadinessReport.txt for details.", "OK");
     }
 }

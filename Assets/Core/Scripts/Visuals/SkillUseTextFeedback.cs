@@ -12,7 +12,13 @@ public class SkillUseTextFeedback : MonoBehaviour
     [SerializeField] private Color _impactSkillColor = new(1f, 0.72f, 0.2f, 1f);
     [SerializeField] private Color _selfSkillColor = new(0.35f, 1f, 0.55f, 1f);
 
+    [Header("Status Colors")]
+    [SerializeField] private Color _statusBuffColor = new(0.25f, 0.75f, 1f, 1f);
+    [SerializeField] private Color _statusDebuffColor = new(0.72f, 0.35f, 0.95f, 1f);
+    [SerializeField] private Color _statusHealColor = new(0.3f, 1f, 0.45f, 1f);
+
     [Header("Debug")]
+    [SerializeField] private bool _debugOnly = true;
     [SerializeField] private bool _debugLogs;
 
     private SkillCaster _skillCaster;
@@ -51,6 +57,9 @@ public class SkillUseTextFeedback : MonoBehaviour
     {
         LogDebug($"[SkillUseTextFeedback] {FormatOwnerIdentity()} received SkillUsed for '{skill?.DisplayName ?? "Unknown"}'.");
 
+        if (_debugOnly)
+            return;
+
         if (skill == null)
             return;
 
@@ -61,6 +70,18 @@ public class SkillUseTextFeedback : MonoBehaviour
         }
 
         CreatePopup(popupAnchor, skill.DisplayName, ResolvePopupColor(caster, popupAnchor));
+
+        if (skill.CompositionEffects != null)
+        {
+            for (int i = 0; i < skill.CompositionEffects.Length; i++)
+            {
+                StatusEffectDefinition statusDef = skill.CompositionEffects[i].StatusDefinition;
+                if (statusDef == null || string.IsNullOrWhiteSpace(statusDef.ApplyPopupText))
+                    continue;
+
+                CreatePopup(popupAnchor, statusDef.ApplyPopupText, ResolveStatusPopupColor(skill.CompositionEffects[i].EffectKind));
+            }
+        }
     }
 
     private Color ResolvePopupColor(Unit caster, Unit popupAnchor)
@@ -68,6 +89,30 @@ public class SkillUseTextFeedback : MonoBehaviour
         return popupAnchor != null && ReferenceEquals(popupAnchor, caster)
             ? _selfSkillColor
             : _impactSkillColor;
+    }
+
+    private Color ResolveStatusPopupColor(SkillEffectKind effectKind)
+    {
+        switch (effectKind)
+        {
+            case SkillEffectKind.Heal:
+                return _statusHealColor;
+
+            case SkillEffectKind.Haste:
+            case SkillEffectKind.StrengthBuff:
+            case SkillEffectKind.Buff:
+                return _statusBuffColor;
+
+            case SkillEffectKind.Slow:
+            case SkillEffectKind.Stun:
+            case SkillEffectKind.PoisonBurn:
+            case SkillEffectKind.Debuff:
+            case SkillEffectKind.StatModifierDebuff:
+                return _statusDebuffColor;
+
+            default:
+                return _impactSkillColor;
+        }
     }
 
     private void CreatePopup(Unit anchorUnit, string message, Color color)

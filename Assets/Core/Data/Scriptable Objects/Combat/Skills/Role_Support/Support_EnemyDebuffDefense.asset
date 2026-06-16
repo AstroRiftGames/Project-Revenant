@@ -27,10 +27,18 @@ MonoBehaviour:
   _effects:
   - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1212, type: 2}
   _modifiers: []
-  _compositionEffects: []
+  _compositionEffects:
+  - _effectKind: 12
+    _value: 0
+    _duration: 4
+    _interval: 0
+    _maxStacks: 1
+    _summonedUnit: {fileID: 0}
+    _statusDefinition: {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1108, type: 2}
+    _summonAnchorMode: 2
   _compositionModifierKinds: 
   _compositionModifierData: []
-  _compositionState: 3
+  _compositionState: 0
   _castTime: 0
   _rangeInCells: 5
   _radiusInCells: 1

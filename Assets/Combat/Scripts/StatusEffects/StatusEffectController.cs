@@ -280,7 +280,7 @@ public class StatusEffectController : MonoBehaviour
                 return true;
 
             case SkillEffectKind.PoisonBurn:
-                _lifeController.TakeDamage(tickValue, activeEffect.SourceUnit);
+                _lifeController.TakeDamage(tickValue, activeEffect.SourceUnit, true);
                 return true;
 
             default:

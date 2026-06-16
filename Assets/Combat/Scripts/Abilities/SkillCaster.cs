@@ -39,6 +39,170 @@ public class SkillCaster : MonoBehaviour
     private Unit _castingTarget;
     private float _castRemainingTime;
 
+#if UNITY_EDITOR
+    // Editor-only hook for Creature Variant Lab. Overrides the resolved skill
+    // so the spawned unit uses the Lab's composition at runtime.
+    public void ForceOverrideSkillForEditor(SkillData skill)
+    {
+        if (skill == null)
+        {
+            Debug.LogWarning("[SkillCaster] ForceOverrideSkillForEditor called with null skill. Override skipped.");
+            return;
+        }
+        _overrideSkill = skill;
+        _resolvedSkill = null;
+    }
+
+    public bool TryUseForDebug(Unit combatTarget, out string rejectReason)
+    {
+        rejectReason = null;
+        SkillData skill = ResolveSkill();
+
+        if (_unit == null) { rejectReason = "caster unit is not resolved."; return false; }
+        if (skill == null) { rejectReason = "no skill assigned."; return false; }
+        if (!skill.TryValidateDeclarativeContract(out string contractError)) { rejectReason = $"skill data is invalid: {contractError}."; return false; }
+        if (IsCasting) { rejectReason = $"already casting '{_castingSkill.DisplayName}'."; return false; }
+        if (!IsOwnerCombatAlive()) { rejectReason = "caster is not alive or not in Alive lifecycle state."; return false; }
+        if (IsOwnerSkillBlockedByStatus()) { rejectReason = "status effect blocks skill usage (stunned or action-blocked)."; return false; }
+        if (!ResolveSkillReadiness(skill)) { rejectReason = $"insufficient charge ({_state.CurrentCharge:F0}/{_state.MaxCharge:F0})."; return false; }
+
+        if (!TryBuildSkillContext(skill, combatTarget, default, false, out SkillContext skillContext))
+        {
+            rejectReason = BuildContextBuildRejectionReason(skill, combatTarget);
+            return false;
+        }
+
+        if (!TryValidateSkillContext(skillContext))
+        {
+            rejectReason = BuildContextValidationRejectionReason(skillContext);
+            return false;
+        }
+
+        if (!IsSkillContextInRange(skillContext))
+        {
+            rejectReason = BuildRangeRejectionReason(skillContext);
+            return false;
+        }
+
+        if (!BeginCast(skillContext)) { rejectReason = "internal error: could not begin cast."; return false; }
+        if (!ShouldCompleteCastImmediately(skill)) return true;
+        if (!CompleteCast()) { rejectReason = "cast completed but no impacts or effects were applied."; return false; }
+        return true;
+    }
+
+    private string BuildContextBuildRejectionReason(SkillData skill, Unit combatTarget)
+    {
+        if (RequiresUnitPrimaryTarget(skill))
+        {
+            if (combatTarget == null)
+                return $"skill requires {skill.PrimaryTargetRequirement} target but none was provided.";
+            return BuildTargetRejectionReason(skill, combatTarget, _unit);
+        }
+        return "skill context could not be built.";
+    }
+
+    private string BuildContextValidationRejectionReason(SkillContext skillContext)
+    {
+        if (skillContext == null || skillContext.Skill == null || skillContext.Caster == null)
+            return "skill context is null or incomplete.";
+
+        SkillData skill = skillContext.Skill;
+        if (RequiresUnitPrimaryTarget(skill) && !skillContext.HasPrimaryTarget)
+            return $"skill '{skill.DisplayName}' resolved no valid primary target.";
+
+        if (RequiresUnitPrimaryTarget(skill) && skillContext.HasPrimaryTarget && !CanUseUnitAsPrimaryTarget(skill, skillContext.PrimaryTarget))
+            return BuildTargetRejectionReason(skill, skillContext.PrimaryTarget, skillContext.Caster);
+
+        if (!RequiresUnitPrimaryTarget(skill) && skillContext.HasPrimaryTarget)
+            return $"skill '{skill.DisplayName}' should not carry a primary unit target.";
+
+        if ((skill.PrimaryTargetRequirement == PrimaryTargetRequirement.GroundCell || skill.ImpactCenterMode == ImpactCenterMode.TargetCell) && !skillContext.HasTargetCell)
+            return $"skill '{skill.DisplayName}' requires a target cell as impact center.";
+
+        if (!HasValidImpactCenter(skillContext, false))
+            return $"skill '{skill.DisplayName}' has no valid impact center (mode: {skill.ImpactCenterMode}).";
+
+        return $"skill '{skill.DisplayName}' context validation failed.";
+    }
+
+    private string BuildRangeRejectionReason(SkillContext skillContext)
+    {
+        if (skillContext == null || skillContext.Caster == null || skillContext.Skill == null)
+            return "target out of range (missing context).";
+
+        SkillData skill = skillContext.Skill;
+        int rangeInCells = skill.RangeInCells;
+        Unit caster = skillContext.Caster;
+
+        if (skillContext.HasPrimaryTarget)
+        {
+            Unit target = skillContext.PrimaryTarget;
+            RoomGrid grid = skillContext.RoomGrid;
+            if (grid != null)
+            {
+                Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(grid, caster);
+                Vector3Int targetCell = GridUnitCellUtility.ResolveUnitCell(grid, target);
+                int distance = GridNavigationUtility.GetCellDistance(casterCell, targetCell);
+                return $"target out of range. Required range: {rangeInCells}, distance: {distance}.";
+            }
+            float worldDist = Vector3.Distance(caster.Position, target.Position);
+            return $"target out of range. Required range: {rangeInCells}, world distance: {worldDist:F1}.";
+        }
+
+        if (skillContext.HasTargetCell)
+            return $"target cell out of range. Required range: {rangeInCells}.";
+
+        return $"no valid target for range check. Required range: {rangeInCells}.";
+    }
+
+    private static string BuildTargetRejectionReason(SkillData skill, Unit target, Unit caster)
+    {
+        if (target == null)
+            return $"skill requires {skill.PrimaryTargetRequirement} target but none was provided.";
+
+        if (caster != null && !caster.IsAlive)
+            return $"caster is not alive.";
+
+        if (target.LifecycleState != UnitLifecycleState.Alive)
+            return $"target '{target.name}' is not in Alive lifecycle state (current: {target.LifecycleState}).";
+
+        if (!TargetingPolicy.TryCreateForSkill(skill, out TargetingPolicy policy))
+            return $"skill data has no targeting policy for {skill.PrimaryTargetRequirement}.";
+
+        if (policy.RequireSelf && !ReferenceEquals(caster, target))
+            return $"skill requires self-targeting but target is '{target.name}'.";
+
+        if (!policy.AllowSelf && ReferenceEquals(caster, target))
+            return "skill does not allow self-targeting.";
+
+        if (policy.RequireActive && !target.gameObject.activeInHierarchy)
+            return $"target '{target.name}' is not active in hierarchy.";
+
+        if (!target.IsAlive)
+            return $"target '{target.name}' is not alive.";
+
+        if (policy.RequireSameRoom && caster != null && !ReferenceEquals(caster.RoomContext, target.RoomContext))
+            return $"target '{target.name}' is in a different room.";
+
+        if (policy.RequireDetectable && !ReferenceEquals(caster, target) && caster != null && !caster.CanDetect(target))
+            return $"target '{target.name}' is not detectable by caster.";
+
+        if (policy.RequireInjured && target.CurrentHealth >= target.MaxHealth)
+            return $"target '{target.name}' is at full health but skill requires injured target.";
+
+        if (caster != null)
+        {
+            bool isHostile = caster.IsHostileTo(target);
+            if (policy.Relationship == TargetRelation.Hostile && !isHostile)
+                return $"target '{target.name}' is not hostile to caster. Skill requires {TargetRelation.Hostile} relationship.";
+            if (policy.Relationship == TargetRelation.Ally && isHostile)
+                return $"target '{target.name}' is hostile to caster. Skill requires {TargetRelation.Ally} relationship.";
+        }
+
+        return $"target '{target.name}' failed targeting validation for {skill.PrimaryTargetRequirement}.";
+    }
+#endif
+
     public event Action<Unit, SkillData, Unit> SkillUsed;
     public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillImpactsResolvedForVisuals;
     public event Action<float> OnAbilityChargeChanged;
@@ -915,6 +1079,7 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
+        SkillCompositionRuntimeExecutor.ExecuteModifiers(skillContext, skillContext.Skill, _impactsHit);
         return true;
     }
 

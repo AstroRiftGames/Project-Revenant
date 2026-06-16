@@ -16,13 +16,13 @@ MonoBehaviour:
   _displayName: Tank Area Slow
   _description: Prototype hostile area slow around caster.
   _icon: {fileID: 0}
-  _primaryTargetRequirement: 1
+  _primaryTargetRequirement: 0
   _impactTargetRequirement: 0
-  _targetSelectionMode: 6
-  _targetFallbackMode: 1
+  _targetSelectionMode: 0
+  _targetFallbackMode: 0
   _trajectory: 0
   _impactPattern: 1
-  _impactCenterMode: 0
+  _impactCenterMode: 1
   _skillExecutionMode: 0
   _effects:
   - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1215, type: 2}

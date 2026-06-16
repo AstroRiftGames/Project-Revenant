@@ -89,15 +89,40 @@ public class CreatureCombatDebugTool : MonoBehaviour
         if (!_startCombatOnEnable)
             return;
 
+        TryStartCombatIfReady();
+    }
+
+    public bool TryStartCombatIfReady()
+    {
         CombatRoomController combatController = _roomContext != null ? _roomContext.CombatController : null;
-        if (combatController == null)
+        if (combatController == null || _roomContext == null)
         {
             Debug.LogWarning("[CreatureCombatDebugTool] Cannot start debug combat because no CombatRoomController is resolved.", this);
-            return;
+            return false;
         }
 
-        if (combatController.IsDeploymentActive)
-            combatController.TryStartCombat();
+        bool hasAlly = false;
+        bool hasEnemy = false;
+        IReadOnlyList<Unit> roomUnits = _roomContext.Units;
+        for (int i = 0; i < roomUnits.Count; i++)
+        {
+            Unit unit = roomUnits[i];
+            if (unit == null || !unit.IsAlive || unit.LifecycleState != UnitLifecycleState.Alive)
+                continue;
+
+            if (unit.Team == UnitTeam.Ally)
+                hasAlly = true;
+            else if (unit.Team == UnitTeam.Enemy)
+                hasEnemy = true;
+        }
+
+        if (!hasAlly || !hasEnemy)
+            return false;
+
+        if (combatController.IsResolved)
+            combatController.ResetEncounter();
+
+        return combatController.IsDeploymentActive && combatController.TryStartCombat();
     }
 
 
@@ -120,6 +145,12 @@ public class CreatureCombatDebugTool : MonoBehaviour
         _spawnedUnits.Clear();
         ClearDeadSelection();
         Debug.Log("[CreatureCombatDebugTool] Cleared all spawned units.");
+    }
+
+    public void RegisterSpawnedUnit(Unit unit)
+    {
+        if (unit != null && !_spawnedUnits.Contains(unit))
+            _spawnedUnits.Add(unit);
     }
 
     public void DestroySpawnedUnit(Unit unit)
@@ -210,8 +241,16 @@ public class CreatureCombatDebugTool : MonoBehaviour
 
         caster.AddAbilityCharge(caster.MaxCharge);
         string skillName = caster.Skill != null ? caster.Skill.DisplayName : "None";
+#if UNITY_EDITOR
+        bool result = caster.TryUseForDebug(_selectedTarget, out string rejectReason);
+        if (result)
+            Debug.Log($"[CreatureCombatDebugTool] Cast skill '{skillName}' from '{_selectedCaster.name}' on '{_selectedTarget.name}': started.");
+        else
+            Debug.LogWarning($"[CreatureCombatDebugTool] Cast skill '{skillName}' from '{_selectedCaster.name}' on '{_selectedTarget.name}' rejected: {rejectReason}");
+#else
         bool result = caster.TryUse(_selectedTarget);
         Debug.Log($"[CreatureCombatDebugTool] Cast skill '{skillName}' from '{_selectedCaster.name}' on '{_selectedTarget.name}': {(result ? "started" : "rejected")}.");
+#endif
     }
 
     [ContextMenu("Cast Selected Skill On Cell")]
@@ -402,6 +441,32 @@ public class CreatureCombatDebugTool : MonoBehaviour
 [CustomEditor(typeof(CreatureCombatDebugTool))]
 internal class CreatureCombatDebugToolEditor : Editor
 {
+    private static class Tips
+    {
+        public const string RoomContext = "Room registry used to discover and control existing runtime units.";
+        public const string RoomGrid = "Grid used for logical cells, movement and cell-targeted skills.";
+        public const string Walkable = "Optional walkable Tilemap used only when Configure Grid On Enable is active.";
+        public const string Blocked = "Optional blocked Tilemap used only for debug grid configuration.";
+        public const string ConfigureGrid = "Reconfigures RoomGrid from the assigned Tilemaps when this component enables.";
+        public const string StartCombat = "Attempts to start combat after both an alive Ally and Enemy are registered.";
+        public const string AutoFind = "Finds RoomContext and RoomGrid in the active scene. It does not create units.";
+        public const string Validate = "Logs missing context, grid or combat setup without changing gameplay.";
+        public const string Caster = "Existing runtime unit that will cast skills or basic attacks.";
+        public const string Target = "Existing runtime unit that receives target-based debug actions.";
+        public const string TargetCell = "Grid cell used by Cast Skill on Cell.";
+        public const string ClearSelection = "Clears caster and target references only.";
+        public const string FirstAlly = "Uses the first alive Ally spawned by Creature Variant Lab as caster.";
+        public const string FirstEnemy = "Uses the first alive Enemy or dummy spawned by Creature Variant Lab as target.";
+        public const string ForceCharge = "Fills the selected caster's current skill charge for runtime testing.";
+        public const string CastTarget = "Forces full charge and asks SkillCaster to cast its current skill on the selected target.";
+        public const string CastCell = "Forces full charge and asks SkillCaster to cast its current skill on Selected Target Cell.";
+        public const string BasicAttack = "Requests a debug basic attack from the selected caster to the selected target.";
+        public const string KillTarget = "Applies lethal debug damage to the selected target.";
+        public const string LogState = "Logs context, spawned units, health, selection and skill charge.";
+        public const string LogMovement = "Logs logical cells, targeting ranges and pathfinding diagnostics.";
+        public const string ClearUnits = "Removes only units registered as spawned by Creature Variant Lab.";
+    }
+
     private SerializedProperty _roomContextProp;
     private SerializedProperty _roomGridProp;
     private SerializedProperty _walkableTilemapProp;
@@ -412,6 +477,7 @@ internal class CreatureCombatDebugToolEditor : Editor
     private SerializedProperty _selectedTargetProp;
     private SerializedProperty _selectedTargetCellProp;
     private bool _showSpawnedUnits = true;
+    private bool _showAdvancedDebug;
 
     private void OnEnable()
     {
@@ -424,6 +490,19 @@ internal class CreatureCombatDebugToolEditor : Editor
         _selectedCasterProp = serializedObject.FindProperty("_selectedCaster");
         _selectedTargetProp = serializedObject.FindProperty("_selectedTarget");
         _selectedTargetCellProp = serializedObject.FindProperty("_selectedTargetCell");
+        EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        EditorApplication.hierarchyChanged += Repaint;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+        EditorApplication.hierarchyChanged -= Repaint;
+    }
+
+    private void OnPlayModeStateChanged(PlayModeStateChange state)
+    {
+        Repaint();
     }
 
     public override void OnInspectorGUI()
@@ -431,6 +510,116 @@ internal class CreatureCombatDebugToolEditor : Editor
         CreatureCombatDebugTool tool = (CreatureCombatDebugTool)target;
         serializedObject.Update();
 
+        if (tool.SpawnedUnits.Count == 0)
+        {
+            EditorGUILayout.HelpBox(
+                "No test units found.\nSpawn units from Creature Variant Lab first.",
+                MessageType.Info);
+        }
+        else
+        {
+            EditorGUILayout.LabelField($"Test Units: {tool.SpawnedUnits.Count}", EditorStyles.miniBoldLabel);
+            EditorGUILayout.PropertyField(_selectedCasterProp, new GUIContent("Caster", Tips.Caster));
+            EditorGUILayout.PropertyField(_selectedTargetProp, new GUIContent("Target", Tips.Target));
+            EditorGUILayout.PropertyField(_selectedTargetCellProp, new GUIContent("Target Cell", Tips.TargetCell));
+
+            DrawQuickSelection(tool);
+            DrawPrimaryCombatActions(tool);
+        }
+
+        _showAdvancedDebug = EditorGUILayout.Foldout(_showAdvancedDebug, "Advanced Debug", true);
+        if (_showAdvancedDebug)
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            DrawContextSection(tool);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button(new GUIContent("Log Movement Audit", Tips.LogMovement)))
+                tool.LogMovementAudit();
+            if (GUILayout.Button(new GUIContent("Clear Spawned Units", Tips.ClearUnits)))
+            {
+                tool.ClearSpawned();
+                serializedObject.Update();
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+        }
+
+        serializedObject.ApplyModifiedProperties();
+    }
+
+    private void DrawQuickSelection(CreatureCombatDebugTool tool)
+    {
+        bool inPlayMode = EditorApplication.isPlaying;
+        bool hasAlly = HasAliveUnit(tool, UnitTeam.Ally);
+        bool hasEnemy = HasAliveUnit(tool, UnitTeam.Enemy);
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUI.BeginDisabledGroup(!inPlayMode || !hasAlly);
+        if (GUILayout.Button(new GUIContent("First Ally", Tips.FirstAlly)))
+        {
+            tool.UseFirstAllyAsCaster();
+            serializedObject.Update();
+        }
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!inPlayMode || !hasEnemy);
+        if (GUILayout.Button(new GUIContent("First Enemy", Tips.FirstEnemy)))
+        {
+            tool.UseFirstEnemyAsTarget();
+            serializedObject.Update();
+        }
+        EditorGUI.EndDisabledGroup();
+        if (GUILayout.Button(new GUIContent("Clear", Tips.ClearSelection)))
+        {
+            tool.ClearSelection();
+            serializedObject.Update();
+        }
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void DrawPrimaryCombatActions(CreatureCombatDebugTool tool)
+    {
+        string casterReason = GetCasterBlockReason(tool);
+        string targetReason = GetTargetBlockReason(tool);
+        string contextReason = GetContextBlockReason(tool);
+        string targetActionReason = FirstReason(contextReason, casterReason, targetReason);
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(casterReason));
+        if (GUILayout.Button(new GUIContent("Force Charge", DisabledTip(Tips.ForceCharge, casterReason)), GUILayout.Height(26)))
+            tool.ForceFullSkillChargeOnCaster();
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(targetActionReason));
+        if (GUILayout.Button(new GUIContent("Cast Skill", DisabledTip(Tips.CastTarget, targetActionReason)), GUILayout.Height(26)))
+            tool.CastSelectedSkillOnTarget();
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(targetActionReason));
+        if (GUILayout.Button(new GUIContent("Basic Attack", DisabledTip(Tips.BasicAttack, targetActionReason))))
+            tool.BasicAttackOnTarget();
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(targetReason));
+        if (GUILayout.Button(new GUIContent("Kill Target", DisabledTip(Tips.KillTarget, targetReason))))
+            tool.KillTarget(tool.SelectedTarget);
+        EditorGUI.EndDisabledGroup();
+        if (GUILayout.Button(new GUIContent("Log State", Tips.LogState)))
+            tool.LogCurrentState();
+        EditorGUILayout.EndHorizontal();
+
+        DrawReason(targetActionReason);
+    }
+
+    private void DrawLegacyInspector()
+    {
+        CreatureCombatDebugTool tool = (CreatureCombatDebugTool)target;
+        serializedObject.Update();
+
+        EditorGUILayout.HelpBox("This tool controls spawned runtime units. Use Creature Variant Lab to create them.", MessageType.Info);
+        DrawRuntimeSummary(tool);
+        EditorGUILayout.Space(6);
         DrawContextSection(tool);
         EditorGUILayout.Space(4);
         DrawSelectionSection(tool);
@@ -442,24 +631,119 @@ internal class CreatureCombatDebugToolEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 
+    private void DrawRuntimeSummary(CreatureCombatDebugTool tool)
+    {
+        int allies = 0;
+        int enemies = 0;
+        for (int i = 0; i < tool.SpawnedUnits.Count; i++)
+        {
+            Unit unit = tool.SpawnedUnits[i];
+            if (unit == null)
+                continue;
+            if (unit.Team == UnitTeam.Ally)
+                allies++;
+            else if (unit.Team == UnitTeam.Enemy)
+                enemies++;
+        }
+
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.LabelField("Runtime Summary", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Play Mode", EditorApplication.isPlaying ? "Active" : "Not active");
+        EditorGUILayout.LabelField("Units", $"Allies: {allies} | Enemies: {enemies}");
+        EditorGUILayout.LabelField("Selected caster", tool.SelectedCaster != null ? tool.SelectedCaster.name : "None");
+        EditorGUILayout.LabelField("Selected target", tool.SelectedTarget != null ? tool.SelectedTarget.name : "None");
+        EditorGUILayout.EndVertical();
+    }
+
+    private static bool HasAliveUnit(CreatureCombatDebugTool tool, UnitTeam team)
+    {
+        for (int i = 0; i < tool.SpawnedUnits.Count; i++)
+        {
+            Unit unit = tool.SpawnedUnits[i];
+            if (unit != null && unit.Team == team && unit.IsAlive)
+                return true;
+        }
+        return false;
+    }
+
+    private static string GetContextBlockReason(CreatureCombatDebugTool tool)
+    {
+        if (!EditorApplication.isPlaying)
+            return "Blocked: not in Play Mode.";
+        if (tool.ContextRoom == null)
+            return "Blocked: RoomContext is missing.";
+        if (tool.ContextGrid == null)
+            return "Blocked: RoomGrid is missing.";
+        if (tool.ContextRoom.CombatController == null)
+            return "Blocked: CombatRoomController is missing.";
+        return null;
+    }
+
+    private static string GetCasterBlockReason(CreatureCombatDebugTool tool)
+    {
+        if (!EditorApplication.isPlaying)
+            return "Blocked: not in Play Mode.";
+        if (tool.SelectedCaster == null)
+            return "Blocked: no caster selected.";
+        if (!tool.SelectedCaster.IsAlive)
+            return "Blocked: selected caster is dead.";
+
+        SkillCaster caster = tool.SelectedCaster.GetComponent<SkillCaster>();
+        if (caster == null || caster.Skill == null)
+            return "Blocked: selected caster has no available skill.";
+        return null;
+    }
+
+    private static string GetTargetBlockReason(CreatureCombatDebugTool tool)
+    {
+        if (!EditorApplication.isPlaying)
+            return "Blocked: not in Play Mode.";
+        if (tool.SelectedTarget == null)
+            return "Blocked: no target selected.";
+        if (!tool.SelectedTarget.IsAlive)
+            return "Blocked: selected target is dead.";
+        return null;
+    }
+
+    private static string FirstReason(params string[] reasons)
+    {
+        for (int i = 0; i < reasons.Length; i++)
+        {
+            if (!string.IsNullOrEmpty(reasons[i]))
+                return reasons[i];
+        }
+        return null;
+    }
+
+    private static string DisabledTip(string tooltip, string reason)
+    {
+        return string.IsNullOrEmpty(reason) ? tooltip : $"{tooltip}\n\n{reason}";
+    }
+
+    private static void DrawReason(string reason)
+    {
+        if (!string.IsNullOrEmpty(reason))
+            EditorGUILayout.LabelField(reason, EditorStyles.wordWrappedMiniLabel);
+    }
+
     private void DrawContextSection(CreatureCombatDebugTool tool)
     {
         EditorGUILayout.LabelField("1. Context", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(_roomContextProp);
-        EditorGUILayout.PropertyField(_roomGridProp);
-        EditorGUILayout.PropertyField(_walkableTilemapProp);
-        EditorGUILayout.PropertyField(_blockedTilemapProp);
-        EditorGUILayout.PropertyField(_configureGridOnEnableProp);
-        EditorGUILayout.PropertyField(_startCombatOnEnableProp);
+        EditorGUILayout.PropertyField(_roomContextProp, new GUIContent("Room Context", Tips.RoomContext));
+        EditorGUILayout.PropertyField(_roomGridProp, new GUIContent("Room Grid", Tips.RoomGrid));
+        EditorGUILayout.PropertyField(_walkableTilemapProp, new GUIContent("Walkable Tilemap", Tips.Walkable));
+        EditorGUILayout.PropertyField(_blockedTilemapProp, new GUIContent("Blocked Tilemap", Tips.Blocked));
+        EditorGUILayout.PropertyField(_configureGridOnEnableProp, new GUIContent("Configure Grid On Enable", Tips.ConfigureGrid));
+        EditorGUILayout.PropertyField(_startCombatOnEnableProp, new GUIContent("Start Combat On Enable", Tips.StartCombat));
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Auto Find Context", GUILayout.Height(22)))
+        if (GUILayout.Button(new GUIContent("Auto Find Context", Tips.AutoFind), GUILayout.Height(22)))
         {
             tool.AutoFindContext();
             EditorUtility.SetDirty(target);
             serializedObject.Update();
         }
-        if (GUILayout.Button("Validate Setup", GUILayout.Height(22)))
+        if (GUILayout.Button(new GUIContent("Validate Setup", Tips.Validate), GUILayout.Height(22)))
         {
             tool.ValidateSetup();
         }
@@ -471,24 +755,28 @@ internal class CreatureCombatDebugToolEditor : Editor
     private void DrawSelectionSection(CreatureCombatDebugTool tool)
     {
         EditorGUILayout.LabelField("3. Selection", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(_selectedCasterProp);
-        EditorGUILayout.PropertyField(_selectedTargetProp);
-        EditorGUILayout.PropertyField(_selectedTargetCellProp);
+        EditorGUILayout.PropertyField(_selectedCasterProp, new GUIContent("Selected Caster", Tips.Caster));
+        EditorGUILayout.PropertyField(_selectedTargetProp, new GUIContent("Selected Target", Tips.Target));
+        EditorGUILayout.PropertyField(_selectedTargetCellProp, new GUIContent("Selected Target Cell", Tips.TargetCell));
 
         EditorGUILayout.BeginHorizontal();
         bool inPlayMode = EditorApplication.isPlaying;
-        if (GUILayout.Button("Clear Selection", GUILayout.Height(22)))
+        if (GUILayout.Button(new GUIContent("Clear Selection", Tips.ClearSelection), GUILayout.Height(22)))
         {
             tool.ClearSelection();
             serializedObject.Update();
         }
-        EditorGUI.BeginDisabledGroup(!inPlayMode);
-        if (GUILayout.Button("First Ally as Caster", GUILayout.Height(22)))
+        bool hasAlly = HasAliveUnit(tool, UnitTeam.Ally);
+        bool hasEnemy = HasAliveUnit(tool, UnitTeam.Enemy);
+        EditorGUI.BeginDisabledGroup(!inPlayMode || !hasAlly);
+        if (GUILayout.Button(new GUIContent("First Ally as Caster", DisabledTip(Tips.FirstAlly, !inPlayMode ? "Blocked: not in Play Mode." : !hasAlly ? "Blocked: no alive Ally is available." : null)), GUILayout.Height(22)))
         {
             tool.UseFirstAllyAsCaster();
             serializedObject.Update();
         }
-        if (GUILayout.Button("First Enemy as Target", GUILayout.Height(22)))
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!inPlayMode || !hasEnemy);
+        if (GUILayout.Button(new GUIContent("First Enemy as Target", DisabledTip(Tips.FirstEnemy, !inPlayMode ? "Blocked: not in Play Mode." : !hasEnemy ? "Blocked: no alive Enemy is available." : null)), GUILayout.Height(22)))
         {
             tool.UseFirstEnemyAsTarget();
             serializedObject.Update();
@@ -501,51 +789,71 @@ internal class CreatureCombatDebugToolEditor : Editor
     {
         EditorGUILayout.LabelField("4. Manual Actions", EditorStyles.boldLabel);
         bool inPlayMode = EditorApplication.isPlaying;
-        EditorGUI.BeginDisabledGroup(!inPlayMode);
+        string casterReason = GetCasterBlockReason(tool);
+        string targetReason = GetTargetBlockReason(tool);
+        string contextReason = GetContextBlockReason(tool);
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Force Charge", GUILayout.Height(24)))
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(casterReason));
+        if (GUILayout.Button(new GUIContent("Force Charge", DisabledTip(Tips.ForceCharge, casterReason)), GUILayout.Height(24)))
         {
             tool.ForceFullSkillChargeOnCaster();
         }
-        if (GUILayout.Button("Cast Skill on Target", GUILayout.Height(24)))
+        EditorGUI.EndDisabledGroup();
+
+        string castTargetReason = FirstReason(!inPlayMode ? "Blocked: not in Play Mode." : null, contextReason, casterReason, targetReason);
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(castTargetReason));
+        if (GUILayout.Button(new GUIContent("Cast Skill on Target", DisabledTip(Tips.CastTarget, castTargetReason)), GUILayout.Height(24)))
         {
             tool.CastSelectedSkillOnTarget();
         }
-        if (GUILayout.Button("Cast Skill on Cell", GUILayout.Height(24)))
+        EditorGUI.EndDisabledGroup();
+
+        string castCellReason = FirstReason(!inPlayMode ? "Blocked: not in Play Mode." : null, contextReason, casterReason);
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(castCellReason));
+        if (GUILayout.Button(new GUIContent("Cast Skill on Cell", DisabledTip(Tips.CastCell, castCellReason)), GUILayout.Height(24)))
         {
             tool.CastSelectedSkillOnCell();
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Basic Attack Target", GUILayout.Height(24)))
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(castTargetReason));
+        if (GUILayout.Button(new GUIContent("Basic Attack Target", DisabledTip(Tips.BasicAttack, castTargetReason)), GUILayout.Height(24)))
         {
             tool.BasicAttackOnTarget();
         }
-        if (GUILayout.Button("Kill Selected Target", GUILayout.Height(24)))
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!string.IsNullOrEmpty(targetReason));
+        if (GUILayout.Button(new GUIContent("Kill Selected Target", DisabledTip(Tips.KillTarget, targetReason)), GUILayout.Height(24)))
         {
             tool.KillTarget(tool.SelectedTarget);
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Log Current State", GUILayout.Height(22)))
+        if (GUILayout.Button(new GUIContent("Log Current State", Tips.LogState), GUILayout.Height(22)))
         {
             tool.LogCurrentState();
         }
-        if (GUILayout.Button("Log Movement Audit", GUILayout.Height(22)))
+        EditorGUI.BeginDisabledGroup(!inPlayMode || tool.ContextGrid == null);
+        if (GUILayout.Button(new GUIContent("Log Movement Audit", DisabledTip(Tips.LogMovement, !inPlayMode ? "Blocked: not in Play Mode." : tool.ContextGrid == null ? "Blocked: RoomGrid is missing." : null)), GUILayout.Height(22)))
         {
             tool.LogMovementAudit();
         }
-        if (GUILayout.Button("Clear Spawned Units", GUILayout.Height(22)))
+        EditorGUI.EndDisabledGroup();
+        EditorGUI.BeginDisabledGroup(!inPlayMode || tool.SpawnedUnits.Count == 0);
+        if (GUILayout.Button(new GUIContent("Clear Spawned Units", DisabledTip(Tips.ClearUnits, !inPlayMode ? "Blocked: not in Play Mode." : tool.SpawnedUnits.Count == 0 ? "Blocked: no lab-spawned units exist." : null)), GUILayout.Height(22)))
         {
             tool.ClearSpawned();
             serializedObject.Update();
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.EndHorizontal();
 
-        EditorGUI.EndDisabledGroup();
+        DrawReason(castTargetReason);
     }
 
     private void DrawSpawnedUnitsSection(CreatureCombatDebugTool tool)
@@ -555,7 +863,9 @@ internal class CreatureCombatDebugToolEditor : Editor
         int count = tool.SpawnedUnits.Count;
         if (count == 0)
         {
-            EditorGUILayout.HelpBox("No spawned units. Use the Creature Variant Lab to spawn units.", MessageType.Info);
+            EditorGUILayout.HelpBox(
+                "No spawned units.\n1. Open Creature Variant Lab.\n2. Enter Play Mode.\n3. Spawn Test Unit.\n4. Spawn Opponent Dummy.",
+                MessageType.Info);
             return;
         }
 
@@ -600,22 +910,22 @@ internal class CreatureCombatDebugToolEditor : Editor
         bool inPlayMode = EditorApplication.isPlaying;
         EditorGUI.BeginDisabledGroup(!inPlayMode);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Set as Caster", GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
+        if (GUILayout.Button(new GUIContent("Set as Caster", Tips.Caster), GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
         {
             tool.AssignSelectedCaster(unit);
             serializedObject.Update();
         }
-        if (GUILayout.Button("Set as Target", GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
+        if (GUILayout.Button(new GUIContent("Set as Target", Tips.Target), GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
         {
             tool.AssignSelectedTarget(unit);
             serializedObject.Update();
         }
-        if (GUILayout.Button("Kill", GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
+        if (GUILayout.Button(new GUIContent("Kill", Tips.KillTarget), GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
         {
             tool.KillTarget(unit);
             serializedObject.Update();
         }
-        if (GUILayout.Button("Destroy", GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
+        if (GUILayout.Button(new GUIContent("Destroy", "Removes this lab-spawned runtime unit and unregisters it from RoomContext."), GUILayout.Width(btnWidth), GUILayout.Height(lineHeight)))
         {
             tool.DestroySpawnedUnit(unit);
             serializedObject.Update();

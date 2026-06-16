@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3957760073442153178}
   - component: {fileID: 3746043680875141128}
-  - component: {fileID: 9706000000000000006}
+  - component: {fileID: 9223372036854775807}
   m_Layer: 0
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -59,6 +59,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &9223372036854775807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207868459264756139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dbb4dc9248f4a2f914d1ad83980fef1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1957911122123118832
 GameObject:
   m_ObjectHideFlags: 0
@@ -626,6 +638,10 @@ MonoBehaviour:
   _popupOffset: {x: 0, y: 0.85, z: 0}
   _impactSkillColor: {r: 1, g: 0.72, b: 0.2, a: 1}
   _selfSkillColor: {r: 0.35, g: 1, b: 0.55, a: 1}
+  _statusBuffColor: {r: 0.25, g: 0.75, b: 1, a: 1}
+  _statusDebuffColor: {r: 0.72, g: 0.35, b: 0.95, a: 1}
+  _statusHealColor: {r: 0.3, g: 1, b: 0.45, a: 1}
+  _debugOnly: 1
   _debugLogs: 0
 --- !u!114 &8606000000000000011
 MonoBehaviour:
@@ -1186,6 +1202,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: UnitCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 3605932933185909678, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3605932933185909678, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7810004696937924441, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1193,6 +1217,10 @@ PrefabInstance:
     - target: {fileID: 7810004696937924441, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8053348720653365363, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1204,15 +1232,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
   m_PrefabInstance: {fileID: 8416711345462439359}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9706000000000000006
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1207868459264756139}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9dbb4dc9248f4a2f914d1ad83980fef1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:

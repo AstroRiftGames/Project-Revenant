@@ -73,6 +73,7 @@ public enum SkillEffectKind
     Knockback,         // Empuje
     Buff,              // Buff para aumentar stats
     Debuff,            // Debuff para reducir stats
+    StatModifierDebuff // Debuff de estadística genérico
 }
 
 public enum SkillModifierKind

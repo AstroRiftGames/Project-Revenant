@@ -26,7 +26,7 @@ MonoBehaviour:
   softCurrencyRewardOnSoulAbsorb: 1
   manaCostToRecruit: 1
   manaCostToAbsorbSoul: 1
-  skill: {fileID: 11400000, guid: e8983afebd674b8285e64c15e39695c3, type: 2}
+  skill: {fileID: 11400000, guid: 8b245b2b9d2d4e5c9a0fb1c3f6520101, type: 2}
   stats:
     maxHealth: 75
     attackDamage: 3

@@ -59,6 +59,11 @@ public class LifeController : MonoBehaviour, IDamageable
 
     public void TakeDamage(int amount, IUnit source = null)
     {
+        TakeDamage(amount, source, false);
+    }
+
+    public void TakeDamage(int amount, IUnit source, bool bypassShields)
+    {
         if (!CanReceiveCombatLifeEffect() || amount <= 0)
             return;
 
@@ -70,12 +75,15 @@ public class LifeController : MonoBehaviour, IDamageable
         }
 
         int damageToHealth = amount;
-        ShieldController shieldController = ResolveShieldController();
-        if (shieldController != null)
+        if (!bypassShields)
         {
-            damageToHealth = shieldController.AbsorbDamage(amount, out _);
-            if (damageToHealth <= 0)
-                return;
+            ShieldController shieldController = ResolveShieldController();
+            if (shieldController != null)
+            {
+                damageToHealth = shieldController.AbsorbDamage(amount, out _);
+                if (damageToHealth <= 0)
+                    return;
+            }
         }
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - damageToHealth);

@@ -48,7 +48,10 @@ public static class SkillCompositionRuntimeExecutor
                          effect.EffectKind == SkillEffectKind.StrengthBuff ||
                          effect.EffectKind == SkillEffectKind.Slow ||
                          effect.EffectKind == SkillEffectKind.Stun ||
-                         effect.EffectKind == SkillEffectKind.PoisonBurn)
+                         effect.EffectKind == SkillEffectKind.PoisonBurn ||
+                         effect.EffectKind == SkillEffectKind.Buff ||
+                         effect.EffectKind == SkillEffectKind.Debuff ||
+                         effect.EffectKind == SkillEffectKind.StatModifierDebuff)
                 {
                     if (effect.StatusDefinition == null)
                     {
@@ -153,6 +156,9 @@ public static class SkillCompositionRuntimeExecutor
 
     private static bool ExecuteSingleEffect(SkillCompositionEffect effect, SkillData skill, SkillContext context, SkillImpact impact)
     {
+        if (effect.EffectKind == SkillEffectKind.Heal && effect.StatusDefinition != null)
+            return ExecuteStatusEffect(effect, skill, context, impact);
+
         switch (effect.EffectKind)
         {
             case SkillEffectKind.Damage:
@@ -170,6 +176,9 @@ public static class SkillCompositionRuntimeExecutor
             case SkillEffectKind.Slow:
             case SkillEffectKind.Stun:
             case SkillEffectKind.PoisonBurn:
+            case SkillEffectKind.Buff:
+            case SkillEffectKind.Debuff:
+            case SkillEffectKind.StatModifierDebuff:
                 return ExecuteStatusEffect(effect, skill, context, impact);
             default:
                 Debug.LogWarning($"{LogTag} Unhandled SkillEffectKind: {effect.EffectKind}");
@@ -186,8 +195,6 @@ public static class SkillCompositionRuntimeExecutor
 
         int damageAmount = Mathf.Max(0, effect.Value);
         hitUnit.TakeDamage(damageAmount, caster);
-
-
 
         return true;
     }
@@ -236,6 +243,9 @@ public static class SkillCompositionRuntimeExecutor
         int knockbackCells = Mathf.Max(0, effect.Value);
         if (knockbackCells <= 0)
             return false;
+
+        // Interrupt active cast when knocked back
+        hitUnit.GetComponent<SkillCaster>()?.InterruptCast();
 
         RoomGrid grid = ResolveRoomGrid(context, hitUnit, caster);
         UnitMovement movement = hitUnit.GetComponent<UnitMovement>();
@@ -302,7 +312,7 @@ public static class SkillCompositionRuntimeExecutor
             return false;
 
         Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(grid, caster);
-        Vector3Int desiredCell = ResolveSummonDesiredCell(context, grid, caster, effect.SummonAnchorMode);
+        Vector3Int desiredCell = ResolveSummonDesiredCell(context, grid, caster, impact, effect.SummonAnchorMode);
         int spawnRangeInCells = Mathf.Max(0, effect.Value);
 
         if (!grid.TryFindWalkableCellInRange(desiredCell, casterCell, spawnRangeInCells, null, out Vector3Int spawnCell))
@@ -492,9 +502,42 @@ public static class SkillCompositionRuntimeExecutor
         return caster != null ? caster.RoomContext : null;
     }
 
-    private static Vector3Int ResolveSummonDesiredCell(SkillContext context, RoomGrid grid, Unit caster, SummonAnchorMode anchorMode = SummonAnchorMode.AroundImpactCenter)
+    private static Vector3Int ResolveSummonDesiredCell(SkillContext context, RoomGrid grid, Unit caster, SkillImpact impact, SummonAnchorMode anchorMode = SummonAnchorMode.AroundImpactCenter)
     {
-        if (context == null || grid == null || caster == null)
+        if (grid == null)
+            return Vector3Int.zero;
+
+        if (impact != null)
+        {
+            switch (anchorMode)
+            {
+                case SummonAnchorMode.AroundCaster:
+                    if (caster != null)
+                        return GridUnitCellUtility.ResolveUnitCell(grid, caster);
+                    break;
+
+                case SummonAnchorMode.AroundPrimaryTarget:
+                case SummonAnchorMode.AroundImpactCenter:
+                    if (impact.HasTargetUnit)
+                        return GridUnitCellUtility.ResolveUnitCell(grid, impact.TargetUnit);
+                    if (impact.Kind == SkillImpactKind.AreaPoint)
+                        return grid.WorldToCell(impact.WorldPosition);
+                    if (impact.HasCell)
+                        return new Vector3Int(impact.Cell.x, impact.Cell.y, 0);
+                    break;
+
+                case SummonAnchorMode.AtTargetCell:
+                    if (impact.HasCell)
+                        return new Vector3Int(impact.Cell.x, impact.Cell.y, 0);
+                    if (impact.HasTargetUnit)
+                        return GridUnitCellUtility.ResolveUnitCell(grid, impact.TargetUnit);
+                    if (impact.Kind == SkillImpactKind.AreaPoint)
+                        return grid.WorldToCell(impact.WorldPosition);
+                    break;
+            }
+        }
+
+        if (context == null || caster == null)
             return caster != null ? GridUnitCellUtility.ResolveUnitCell(grid, caster) : Vector3Int.zero;
 
         switch (anchorMode)
@@ -735,7 +778,7 @@ public static class SkillCompositionRuntimeExecutor
         RoomGrid roomGrid = ResolveRoomGridForModifier(context, caster);
         if (caster == null)
         {
-            Debug.LogWarning($"[SkillCompositionRuntimeExecutor] Skill '{skill.DisplayName}' could not resolve a caster for explosive impacts.", skill);
+            Debug.LogWarning($"[SkillCompositionRuntimeExecutor] Skill '{skill.DisplayName}' could not resolve a caster for bounce impacts.", skill);
             return;
         }
 
@@ -744,9 +787,9 @@ public static class SkillCompositionRuntimeExecutor
             return;
 
         int sourceImpactCount = impacts.Count;
-        for (int impactIndex = 0; impactIndex < sourceImpactCount; impactIndex++)
+        for (int sourceImpactIndex = 0; sourceImpactIndex < sourceImpactCount; sourceImpactIndex++)
         {
-            SkillImpact sourceImpact = impacts[impactIndex];
+            SkillImpact sourceImpact = impacts[sourceImpactIndex];
             if (sourceImpact == null)
                 continue;
 

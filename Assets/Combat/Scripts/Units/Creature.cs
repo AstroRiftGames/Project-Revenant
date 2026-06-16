@@ -111,6 +111,18 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         OnCreatureAffiliationChanged?.Invoke(this);
     }
 
+#if UNITY_EDITOR
+    public void ForceInitializeForEditor(UnitData data)
+    {
+        if (data == null)
+        {
+            Debug.LogError("[Creature] ForceInitializeForEditor called with null data. Initialization skipped.");
+            return;
+        }
+        Initialize(data);
+    }
+#endif
+
     public void ResetAffiliationFromData()
     {
         _affiliationState.Initialize(_data);
@@ -296,7 +308,7 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
             return 0;
 
         int mitigatedDamage = rawDamage - Defense;
-        return Mathf.Max(0, mitigatedDamage);
+        return Mathf.Max(1, mitigatedDamage);
     }
 
     public event System.Action<ISelectable> OnSelectionInvalidated;

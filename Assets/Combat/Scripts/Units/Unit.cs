@@ -210,4 +210,19 @@ public class Unit : Creature, IGridOccupant
 
         return new CombatAction(this, combat, Role == UnitRole.Support);
     }
+
+#if UNITY_EDITOR
+    // Editor-only hook for Creature Variant Lab. Sets _unitData and fully initializes
+    // the unit so it can function at runtime without going through the normal Awake path.
+    public void ForceSetUnitDataForEditor(UnitData data)
+    {
+        if (data == null)
+        {
+            Debug.LogError("[Unit] ForceSetUnitDataForEditor called with null data. Initialization skipped.");
+            return;
+        }
+        _unitData = data;
+        ForceInitializeForEditor(data);
+    }
+#endif
 }

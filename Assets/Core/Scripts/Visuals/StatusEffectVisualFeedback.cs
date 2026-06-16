@@ -243,7 +243,10 @@ return definition.EffectType switch
             SkillEffectKind.PoisonBurn => StatusVisualStyle.DamageOverTime,
             SkillEffectKind.StrengthBuff => StatusVisualStyle.Buff,
             SkillEffectKind.Haste => StatusVisualStyle.Buff,
+            SkillEffectKind.Buff => StatusVisualStyle.Buff,
             SkillEffectKind.Slow => StatusVisualStyle.Debuff,
+            SkillEffectKind.Debuff => StatusVisualStyle.Debuff,
+            SkillEffectKind.StatModifierDebuff => StatusVisualStyle.Debuff,
             SkillEffectKind.Knockback => StatusVisualStyle.Knockback,
             _ => StatusVisualStyle.None
         };

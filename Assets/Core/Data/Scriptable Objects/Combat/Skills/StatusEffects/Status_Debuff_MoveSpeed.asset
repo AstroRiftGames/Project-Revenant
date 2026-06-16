@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _effectId: Status_Debuff_MoveSpeed
   _displayName: Move Speed Down
-  _effectType: 9
+  _effectType: 5
   _durationMode: 0
   _stackingMode: 0
   _durationSeconds: 4

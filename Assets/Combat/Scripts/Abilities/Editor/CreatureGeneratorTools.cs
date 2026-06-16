@@ -153,8 +153,7 @@ public static class CreatureGeneratorTools
         foreach (var guid in generatedGuids)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            // Ignore variants in the _Excluded subfolder
-            if (path.Contains("/_Excluded/")) continue;
+            if (path.Contains("/_Excluded/") || path.Contains("/_LabTemp/")) continue;
 
             UnitData ud = AssetDatabase.LoadAssetAtPath<UnitData>(path);
             if (ud == null) continue;
@@ -710,5 +709,4 @@ public static class CreatureGeneratorTools
                 Mathf.Approximately(a.visionRange, b.visionRange));
     }
 }
-
 
