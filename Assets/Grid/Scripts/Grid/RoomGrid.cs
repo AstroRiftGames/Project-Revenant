@@ -479,28 +479,40 @@ public class RoomGrid : MonoBehaviour
             return true;
         }
         
-        for (int searchRadius = 1; searchRadius <= rangeInCells; searchRadius++)
+        int bestScore = int.MaxValue;
+        Vector3Int bestCell = originCell;
+        bool found = false;
+        
+        for (int x = -rangeInCells; x <= rangeInCells; x++)
         {
-            for (int x = -searchRadius; x <= searchRadius; x++)
+            for (int y = -rangeInCells; y <= rangeInCells; y++)
             {
-                for (int y = -searchRadius; y <= searchRadius; y++)
+                Vector3Int candidate = targetCell + new Vector3Int(x, y, 0);
+                
+                if (!GridNavigationUtility.IsWithinCellRange(candidate, targetCell, rangeInCells))
+                    continue;
+                
+                if (!IsCellEnterable(candidate, movingUnit))
+                    continue;
+                
+                int distFromOrigin = GridNavigationUtility.GetCellDistance(originCell, candidate);
+                int crowdingPenalty = CalculateCrowdingPenalty(candidate, movingUnit);
+                int score = distFromOrigin + crowdingPenalty;
+                
+                if (score < bestScore)
                 {
-                    Vector3Int candidate = targetCell + new Vector3Int(x, y, 0);
-                    
-                    if (!IsCellEnterable(candidate, movingUnit))
-                        continue;
-                    
-                    if (!GridNavigationUtility.IsWithinCellRange(candidate, targetCell, rangeInCells))
-                        continue;
-                    
-                    int distFromOrigin = GridNavigationUtility.GetCellDistance(originCell, candidate);
-                    if (distFromOrigin > rangeInCells)
-                        continue;
-                    
-                    attackPosition = candidate;
-                    return true;
+                    bestScore = score;
+                    bestCell = candidate;
+                    found = true;
                 }
             }
+        }
+        
+        if (found)
+        {
+            attackPosition = bestCell;
+            LogMovementDebug($"[RoomGrid] AttackPositionFromBlocked: chosen={bestCell} score={bestScore}");
+            return true;
         }
         
         return false;
