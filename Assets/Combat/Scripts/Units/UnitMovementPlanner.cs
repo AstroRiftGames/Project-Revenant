@@ -11,6 +11,8 @@ public sealed class UnitMovementPlanner
     private bool _hasCachedTargetCell;
     private int _cachedTargetRange;
     private float _nextRepathTime;
+    private Vector3Int _cachedDesiredAttackCell;
+    private bool _hasCachedDesiredAttackCell;
 
     public UnitMovementPlanner(float repathInterval)
     {
@@ -29,6 +31,8 @@ public sealed class UnitMovementPlanner
         _hasCachedTargetCell = false;
         _cachedTargetRange = 0;
         _nextRepathTime = 0f;
+        _cachedDesiredAttackCell = Vector3Int.zero;
+        _hasCachedDesiredAttackCell = false;
         _cachedPath.Clear();
     }
 
@@ -222,13 +226,19 @@ public sealed class UnitMovementPlanner
             LogDebug(debugLogs, $"[UnitMovement] {debugName} - CachedStepInvalidated: {cachedNextStep}");
         }
 
-        Vector3Int targetReference = _cachedTargetCell != Vector3Int.zero
+        Vector3Int tacticalReference = _hasCachedDesiredAttackCell
+            ? _cachedDesiredAttackCell
+            : (_cachedPath.Count > 2 ? _cachedPath[_cachedPath.Count - 1] : originCell);
+
+        Vector3Int targetReference = _hasCachedTargetCell
             ? _cachedTargetCell
             : (_cachedPath.Count > 2 ? _cachedPath[_cachedPath.Count - 1] : originCell);
 
-        int originDistance = GridNavigationUtility.GetCellDistance(originCell, targetReference);
+        int originDistanceToTactical = GridNavigationUtility.GetCellDistance(originCell, tacticalReference);
+        int originDistanceToTarget = GridNavigationUtility.GetCellDistance(originCell, targetReference);
+
         Vector3Int bestImprovingStep = originCell;
-        int bestImprovingDistance = originDistance;
+        int bestImprovingDistance = originDistanceToTactical;
         Vector3Int bestFallbackStep = originCell;
         int bestFallbackDistance = int.MaxValue;
 
@@ -240,18 +250,37 @@ public sealed class UnitMovementPlanner
             if (grid.OccupancyService.IsCellBlockedFor(movingUnit, candidate))
                 continue;
 
-            int candidateDistance = GridNavigationUtility.GetCellDistance(candidate, targetReference);
+            int candidateDistanceToTactical = GridNavigationUtility.GetCellDistance(candidate, tacticalReference);
 
-            if (candidateDistance < bestImprovingDistance)
+            if (candidateDistanceToTactical < bestImprovingDistance)
             {
                 bestImprovingStep = candidate;
-                bestImprovingDistance = candidateDistance;
+                bestImprovingDistance = candidateDistanceToTactical;
             }
 
-            if (candidateDistance <= originDistance && candidateDistance < bestFallbackDistance)
+            if (candidateDistanceToTactical <= originDistanceToTactical && candidateDistanceToTactical < bestFallbackDistance)
             {
                 bestFallbackStep = candidate;
-                bestFallbackDistance = candidateDistance;
+                bestFallbackDistance = candidateDistanceToTactical;
+            }
+        }
+
+        if (bestImprovingStep == originCell && bestFallbackStep == originCell && targetReference != tacticalReference)
+        {
+            for (int i = 0; i < neighbors.Count; i++)
+            {
+                Vector3Int candidate = neighbors[i];
+
+                if (grid.OccupancyService.IsCellBlockedFor(movingUnit, candidate))
+                    continue;
+
+                int candidateDistanceToTarget = GridNavigationUtility.GetCellDistance(candidate, targetReference);
+
+                if (candidateDistanceToTarget < originDistanceToTarget && candidateDistanceToTarget < bestFallbackDistance)
+                {
+                    bestFallbackStep = candidate;
+                    bestFallbackDistance = candidateDistanceToTarget;
+                }
             }
         }
 
@@ -358,6 +387,8 @@ public sealed class UnitMovementPlanner
         _cachedTargetCell = targetCell;
         _hasCachedTargetCell = true;
         _cachedTargetRange = rangeInCells;
+        _cachedDesiredAttackCell = desiredAttackCell;
+        _hasCachedDesiredAttackCell = true;
         _nextRepathTime = Time.time + _repathInterval;
 
         _cachedPath.Clear();
