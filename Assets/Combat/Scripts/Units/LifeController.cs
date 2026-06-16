@@ -84,7 +84,7 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(damageToHealth);
-        _unit.GetUnitData().AudioSet.TryGetClip("Damage Taken", out AudioClipConfig clip);
+        _unit.GetUnitData().AudioSet.TryGetClip("Hurt", out AudioClipConfig clip);
         AudioService.Instance.PlaySFX(clip, transform.position);
 
         if (CurrentHealth == 0)
