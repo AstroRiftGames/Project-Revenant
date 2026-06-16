@@ -51,7 +51,8 @@ public static class SkillCompositionRuntimeExecutor
                          effect.EffectKind == SkillEffectKind.PoisonBurn ||
                          effect.EffectKind == SkillEffectKind.Buff ||
                          effect.EffectKind == SkillEffectKind.Debuff ||
-                         effect.EffectKind == SkillEffectKind.StatModifierDebuff)
+                         effect.EffectKind == SkillEffectKind.StatModifierDebuff ||
+                         effect.EffectKind == SkillEffectKind.Taunt)
                 {
                     if (effect.StatusDefinition == null)
                     {
@@ -179,6 +180,7 @@ public static class SkillCompositionRuntimeExecutor
             case SkillEffectKind.Buff:
             case SkillEffectKind.Debuff:
             case SkillEffectKind.StatModifierDebuff:
+            case SkillEffectKind.Taunt:
                 return ExecuteStatusEffect(effect, skill, context, impact);
             default:
                 Debug.LogWarning($"{LogTag} Unhandled SkillEffectKind: {effect.EffectKind}");

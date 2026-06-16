@@ -363,7 +363,30 @@ public class StatusEffectController : MonoBehaviour
     private bool TryResolveForcedTarget(out Unit forcedTarget)
     {
         forcedTarget = null;
-        return false;
+
+        ActiveStatusEffect latestTaunt = null;
+        for (int i = 0; i < _activeEffects.Count; i++)
+        {
+            ActiveStatusEffect activeEffect = _activeEffects[i];
+            if (activeEffect == null || activeEffect.Definition == null)
+                continue;
+
+            if (!activeEffect.Definition.IsTaunt)
+                continue;
+
+            if (latestTaunt == null || activeEffect.AppliedAt > latestTaunt.AppliedAt)
+                latestTaunt = activeEffect;
+        }
+
+        if (latestTaunt == null)
+            return false;
+
+        Unit tauntSource = latestTaunt.SourceUnit;
+        if (!IsValidForcedTarget(tauntSource))
+            return false;
+
+        forcedTarget = tauntSource;
+        return true;
     }
 
     private void ApplyImmediateStatusRuntimeEffects(ActiveStatusEffect activeEffect)
