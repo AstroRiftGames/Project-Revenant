@@ -84,11 +84,14 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(damageToHealth);
-        _unit.GetUnitData().AudioSet.TryGetClip("Hurt", out AudioClipConfig clip);
-        AudioService.Instance.PlaySFX(clip, transform.position);
 
         if (CurrentHealth == 0)
             ResolveDeath();
+        else
+        {
+            _unit.GetUnitData().AudioSet.TryGetClip("Hurt", out AudioClipConfig clip);
+            AudioService.Instance.PlaySFX(clip, transform.position);
+        }
     }
 
     public void Heal(int amount, IUnit source = null)
@@ -126,7 +129,9 @@ public class LifeController : MonoBehaviour, IDamageable
 
         if (_debugDamage && _unit != null)
             Debug.Log($"[LifeController] '{_unit.name}' has died by {(LastAttacker != null ? LastAttacker.name : "None")}.", this);
-            
+
+        _unit.GetUnitData().AudioSet.TryGetClip("Death", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, transform.position);
         OnUnitDied?.Invoke(_unit);
         if (_deathHandler != null)
         {

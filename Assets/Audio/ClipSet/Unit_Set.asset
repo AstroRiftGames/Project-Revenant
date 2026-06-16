@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Unit_Set
   m_EditorClassIdentifier: 
   _entries:
-  - Key: Damage Taken
+  - Key: Hurt
     Config: {fileID: 11400000, guid: 0bb175182e504a84aa5e48167fddc95c, type: 2}
+  - Key: Attack
+    Config: {fileID: 11400000, guid: d798d2a031151434f8f3595f1cb2c23a, type: 2}
