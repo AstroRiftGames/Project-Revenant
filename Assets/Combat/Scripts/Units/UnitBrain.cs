@@ -214,8 +214,7 @@ public class UnitBrain : MonoBehaviour
     private void ExecuteBasicAction()
     {
         _animationController?.SetAttackTarget(_basicActionTargetUnit.Position);
-        _unit.GetUnitData().AudioSet.TryGetClip("Attack", out AudioClipConfig clip);
-        AudioService.Instance.PlaySFX(clip, transform.position);
+        AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Attack", transform.position);
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_basicActionTargetUnit)}.");
         _unit.BeginBasicActionExecution();

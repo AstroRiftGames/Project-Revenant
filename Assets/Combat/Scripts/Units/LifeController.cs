@@ -97,8 +97,7 @@ public class LifeController : MonoBehaviour, IDamageable
             ResolveDeath();
         else
         {
-            _unit.GetUnitData().AudioSet.TryGetClip("Hurt", out AudioClipConfig clip);
-            AudioService.Instance.PlaySFX(clip, transform.position);
+            AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Hurt", transform.position);
         }
     }
 
@@ -138,8 +137,7 @@ public class LifeController : MonoBehaviour, IDamageable
         if (_debugDamage && _unit != null)
             Debug.Log($"[LifeController] '{_unit.name}' has died by {(LastAttacker != null ? LastAttacker.name : "None")}.", this);
 
-        _unit.GetUnitData().AudioSet.TryGetClip("Death", out AudioClipConfig clip);
-        AudioService.Instance.PlaySFX(clip, transform.position);
+        AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Death", transform.position);
         OnUnitDied?.Invoke(_unit);
         if (_deathHandler != null)
         {

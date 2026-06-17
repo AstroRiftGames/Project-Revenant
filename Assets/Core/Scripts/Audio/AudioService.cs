@@ -89,6 +89,37 @@ namespace Core.Audio
             }
         }
 
+        // ── Safe Static Methods ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Safely plays an SFX configuration if AudioService instance exists.
+        /// </summary>
+        public static void TryPlaySFX(AudioClipConfig config, Vector3? worldPosition = null)
+        {
+            if (Instance == null || config == null || config.Clip == null)
+                return;
+
+            Instance.PlaySFX(config, worldPosition);
+        }
+
+        /// <summary>
+        /// Safely plays a clip from an AudioClipSet if AudioService and the set are valid,
+        /// and the key exists.
+        /// </summary>
+        public static void TryPlayClipFromSet(AudioClipSet set, string key, Vector3? worldPosition = null)
+        {
+            if (Instance == null || set == null)
+                return;
+
+            if (set.TryGetClip(key, out AudioClipConfig config))
+            {
+                if (config != null)
+                {
+                    Instance.PlaySFX(config, worldPosition);
+                }
+            }
+        }
+
         // ── IAudioService — Playback ──────────────────────────────────────────
 
         public void PlaySFX(AudioClipConfig config, Vector3? worldPosition = null)

@@ -548,8 +548,7 @@ public class SkillCaster : MonoBehaviour
             $"[SkillCaster] {FormatOwnerIdentity()} began cast for '{skill.DisplayName}' " +
             $"with context {FormatSkillContext(skillContext)}. Cast time: {_castRemainingTime:F2}s.");
 
-        _unit.GetUnitData().AudioSet.TryGetClip("Skill Cast", out AudioClipConfig clip);
-        AudioService.Instance.PlaySFX(clip, _unit.transform.position);
+        AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Skill Cast", _unit.transform.position);
 
         return true;
     }
