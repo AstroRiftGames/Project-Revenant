@@ -13,7 +13,8 @@ public enum LabEffectKind
     HealOverTime,
     Summon,
     Knockback,
-    Taunt
+    Taunt,
+    Blind
 }
 
 public enum LabModifierKind
@@ -45,6 +46,7 @@ public static class SkillCompositionMapper
             LabEffectKind.Summon => SkillEffectKind.Summon,
             LabEffectKind.Knockback => SkillEffectKind.Knockback,
             LabEffectKind.Taunt => SkillEffectKind.Taunt,
+            LabEffectKind.Blind => SkillEffectKind.Blind,
             _ => throw new ArgumentOutOfRangeException(nameof(labKind), labKind, $"Unsupported LabEffectKind: {labKind}")
         };
     }
@@ -64,6 +66,7 @@ public static class SkillCompositionMapper
             SkillEffectKind.Summon => LabEffectKind.Summon,
             SkillEffectKind.Knockback => LabEffectKind.Knockback,
             SkillEffectKind.Taunt => LabEffectKind.Taunt,
+            SkillEffectKind.Blind => LabEffectKind.Blind,
             _ => null
         };
     }
@@ -106,7 +109,8 @@ public static class SkillCompositionMapper
                kind == LabEffectKind.Haste ||
                kind == LabEffectKind.StrengthBuff ||
                kind == LabEffectKind.HealOverTime ||
-               kind == LabEffectKind.Taunt;
+               kind == LabEffectKind.Taunt ||
+               kind == LabEffectKind.Blind;
     }
 
     public static bool IsBeneficialEffect(LabEffectKind kind)
@@ -125,7 +129,8 @@ public static class SkillCompositionMapper
                kind == LabEffectKind.Slow ||
                kind == LabEffectKind.PoisonBurn ||
                kind == LabEffectKind.Knockback ||
-               kind == LabEffectKind.Taunt;
+               kind == LabEffectKind.Taunt ||
+               kind == LabEffectKind.Blind;
     }
 
     public static bool HasNumericValue(LabEffectKind kind)

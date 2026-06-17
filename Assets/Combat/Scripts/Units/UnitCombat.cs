@@ -142,6 +142,18 @@ public class UnitCombat : MonoBehaviour
             candidate => candidate.Heal(self.AttackDamage, self));
     }
 
+    private bool ShouldBasicActionHit(Unit self, Unit target, TargetRelation relation)
+    {
+        if (relation != TargetRelation.Hostile)
+            return true;
+
+        if (target == null)
+            return true;
+
+        float hitChance = Mathf.Clamp01(self.Accuracy - target.Evasion);
+        return Random.value <= hitChance;
+    }
+
     public bool TryUseBasicActionOn(
         Unit self,
         Unit target,
@@ -156,8 +168,18 @@ public class UnitCombat : MonoBehaviour
             return false;
 
         int targetHealthBefore = target != null ? target.CurrentHealth : 0;
-        ApplyBasicActionToTarget(target, effect);
-        bool appliedEffect = DidBasicActionApplyEffect(target, targetHealthBefore);
+        
+        bool willHit = ShouldBasicActionHit(self, target, targetRelation);
+        if (willHit)
+        {
+            ApplyBasicActionToTarget(target, effect);
+        }
+        else
+        {
+            Debug.Log($"[UnitCombat] {self.name}'s basic attack on {target?.name} MISSED (Chance: {Mathf.Clamp01(self.Accuracy - (target != null ? target.Evasion : 0f)) * 100:F1}%)");
+        }
+        
+        bool appliedEffect = willHit && DidBasicActionApplyEffect(target, targetHealthBefore);
         NotifySuccessfulBasicAction(targetRelation, appliedEffect);
         ConsumeBasicActionCooldown();
         ShowBasicActionPresentation(target);

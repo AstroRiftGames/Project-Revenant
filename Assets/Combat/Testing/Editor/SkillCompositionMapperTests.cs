@@ -39,6 +39,7 @@ public static class SkillCompositionMapperTests
         Assert.AreEqual(LabEffectKind.Summon, SkillCompositionMapper.ToLabEffectKind(SkillEffectKind.Summon));
         Assert.AreEqual(LabEffectKind.Knockback, SkillCompositionMapper.ToLabEffectKind(SkillEffectKind.Knockback));
         Assert.AreEqual(LabEffectKind.Taunt, SkillCompositionMapper.ToLabEffectKind(SkillEffectKind.Taunt));
+        Assert.AreEqual(LabEffectKind.Blind, SkillCompositionMapper.ToLabEffectKind(SkillEffectKind.Blind));
     }
 
     [Test]

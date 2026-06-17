@@ -297,6 +297,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 case SkillEffectKind.Stun:
                 case SkillEffectKind.PoisonBurn:
                 case SkillEffectKind.Taunt:
+                case SkillEffectKind.Blind:
                     if (!hasStatusFeedback)
                     {
                         PresentStatusFeedback(context, impacts, skill);
@@ -672,6 +673,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 case SkillEffectKind.Stun:
                 case SkillEffectKind.PoisonBurn:
                 case SkillEffectKind.Taunt:
+                case SkillEffectKind.Blind:
                     hasStatus = true;
                     break;
 
@@ -737,6 +739,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 case SkillEffectKind.Stun:
                 case SkillEffectKind.PoisonBurn:
                 case SkillEffectKind.Taunt:
+                case SkillEffectKind.Blind:
                     hasStatus = true;
                     break;
 
@@ -808,6 +811,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 case SkillEffectKind.Debuff:
                 case SkillEffectKind.StatModifierDebuff:
                 case SkillEffectKind.Taunt:
+                case SkillEffectKind.Blind:
                     return _debuffColor;
             }
         }
@@ -831,7 +835,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             HasCompositionEffect(skill, SkillEffectKind.Buff) ||
             HasCompositionEffect(skill, SkillEffectKind.Debuff) ||
             HasCompositionEffect(skill, SkillEffectKind.StatModifierDebuff) ||
-            HasCompositionEffect(skill, SkillEffectKind.Taunt))
+            HasCompositionEffect(skill, SkillEffectKind.Taunt) ||
+            HasCompositionEffect(skill, SkillEffectKind.Blind))
             return false;
 
         return true;

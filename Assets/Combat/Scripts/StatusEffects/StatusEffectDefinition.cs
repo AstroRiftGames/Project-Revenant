@@ -57,7 +57,8 @@ public class StatusEffectDefinition : ScriptableObject
     public bool RestrictsMovement => _effectType == SkillEffectKind.Stun;
     public bool IsHeal => _effectType == SkillEffectKind.Heal;
     public bool IsTaunt => _effectType == SkillEffectKind.Taunt;
-    public bool AffectsStats => _effectType == SkillEffectKind.StrengthBuff || _effectType == SkillEffectKind.Haste || _effectType == SkillEffectKind.Slow || _effectType == SkillEffectKind.StatModifierDebuff || _effectType == SkillEffectKind.Buff || _effectType == SkillEffectKind.Debuff;
+    public bool IsBlind => _effectType == SkillEffectKind.Blind;
+    public bool AffectsStats => _effectType == SkillEffectKind.StrengthBuff || _effectType == SkillEffectKind.Haste || _effectType == SkillEffectKind.Slow || _effectType == SkillEffectKind.StatModifierDebuff || _effectType == SkillEffectKind.Buff || _effectType == SkillEffectKind.Debuff || _effectType == SkillEffectKind.Blind;
     public bool IsStateEffect => _effectType == SkillEffectKind.Shield;
     public bool IsModifierEffect => _effectType == SkillEffectKind.Knockback;
 }

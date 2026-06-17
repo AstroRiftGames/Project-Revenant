@@ -123,4 +123,45 @@ public static class SkillCompositionParameterValidatorTests
         Assert.IsFalse(hasError);
         UnityEngine.Object.DestroyImmediate(mockStatus);
     }
+
+    [Test]
+    public static void ValidateEffectParameters_BlindNullStatus_AddsClearError()
+    {
+        var state = new CreatureVariantLabState 
+        { 
+            effect = LabEffectKind.Blind, 
+            statusDefinition = null 
+        };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateEffectParameters(state, issues);
+        bool found = false;
+        foreach (var issue in issues)
+            if (issue.severity == ValidationSeverity.Error && issue.message.Contains("No StatusEffectDefinition found for Blind"))
+                found = true;
+        Assert.IsTrue(found);
+    }
+
+    [Test]
+    public static void ValidateEffectParameters_BlindValidStatus_Passes()
+    {
+        var mockStatus = ScriptableObject.CreateInstance<StatusEffectDefinition>();
+        var field = typeof(StatusEffectDefinition).GetField("_effectType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        field.SetValue(mockStatus, SkillEffectKind.Blind);
+
+        var state = new CreatureVariantLabState 
+        { 
+            effect = LabEffectKind.Blind, 
+            statusDefinition = mockStatus 
+        };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateEffectParameters(state, issues);
+        
+        bool hasError = false;
+        foreach (var issue in issues)
+            if (issue.severity == ValidationSeverity.Error)
+                hasError = true;
+                
+        Assert.IsFalse(hasError);
+        UnityEngine.Object.DestroyImmediate(mockStatus);
+    }
 }

@@ -146,6 +146,10 @@ public static class SkillCompositionParameterValidator
             {
                 issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "No StatusEffectDefinition found for Taunt."));
             }
+            else if (state.effect == LabEffectKind.Blind)
+            {
+                issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "No StatusEffectDefinition found for Blind."));
+            }
             else
             {
                 issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, $"No StatusEffectDefinition assigned for {state.effect}."));

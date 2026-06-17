@@ -74,7 +74,8 @@ public enum SkillEffectKind
     Buff,              // Buff para aumentar stats
     Debuff,            // Debuff para reducir stats
     StatModifierDebuff, // Debuff de estadística genérico
-    Taunt               // Provocar, forzar target hacia el provocador
+    Taunt,              // Provocar, forzar target hacia el provocador
+    Blind               // Cegar, reduce accuracy y afecta ataques básicos
 }
 
 public enum SkillModifierKind
