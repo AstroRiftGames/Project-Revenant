@@ -8,6 +8,7 @@ public enum GameState
     CombatResolved,
     StationUI,
     GameOver,
-    Dialogue
+    Dialogue,
+    Paused,
 }
 

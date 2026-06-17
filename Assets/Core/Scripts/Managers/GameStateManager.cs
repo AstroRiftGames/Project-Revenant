@@ -33,31 +33,34 @@ public class GameStateManager : MonoBehaviour
         switch (previous)
         {
             case GameState.MainMenu:
-                return next == GameState.SafeZone;
+                return next == GameState.SafeZone || next == GameState.Paused;
 
             case GameState.SafeZone:
-                return next == GameState.ExploringDungeon || next == GameState.StationUI || next == GameState.Dialogue;
+                return next == GameState.ExploringDungeon || next == GameState.StationUI || next == GameState.Dialogue || next == GameState.Paused;
 
             case GameState.ExploringDungeon:
-                return next == GameState.Deployment || next == GameState.StationUI || next == GameState.Dialogue;
+                return next == GameState.Deployment || next == GameState.StationUI || next == GameState.Dialogue || next == GameState.Paused;
 
             case GameState.Deployment:
-                return next == GameState.InCombat || next == GameState.ExploringDungeon;
+                return next == GameState.InCombat || next == GameState.ExploringDungeon || next == GameState.Paused;
 
             case GameState.InCombat:
-                return next == GameState.CombatResolved || next == GameState.GameOver;
+                return next == GameState.CombatResolved || next == GameState.GameOver || next == GameState.Paused;
 
             case GameState.CombatResolved:
-                return next == GameState.ExploringDungeon;
+                return next == GameState.ExploringDungeon || next == GameState.Paused;
 
             case GameState.StationUI:
-                return next == GameState.SafeZone || next == GameState.ExploringDungeon;
+                return next == GameState.SafeZone || next == GameState.ExploringDungeon || next == GameState.Paused;
 
             case GameState.GameOver:
-                return next == GameState.SafeZone;
+                return next == GameState.SafeZone || next == GameState.Paused;
 
             case GameState.Dialogue:
-                return next == GameState.SafeZone || next == GameState.ExploringDungeon || next == GameState.StationUI;
+                return next == GameState.SafeZone || next == GameState.ExploringDungeon || next == GameState.StationUI || next == GameState.Paused;
+
+            case GameState.Paused:
+                return next == GameState.SafeZone || next == GameState.ExploringDungeon || next == GameState.Deployment || next == GameState.InCombat || next == GameState.CombatResolved || next == GameState.StationUI || next == GameState.Dialogue;
 
             default:
                 return false;
