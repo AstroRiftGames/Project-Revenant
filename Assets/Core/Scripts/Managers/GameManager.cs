@@ -47,6 +47,7 @@ public class GameManager : MonoBehaviour
         StationUIManager.OnAnyStationClosed += OnStationClosed;
         PauseManager.OnPauseRequested += RequestPause;
         PauseManager.OnResumeRequested += RequestResume;
+        PauseManager.OnQuitRequested += RequestQuit;
     }
 
     private void OnDisable()
@@ -78,6 +79,12 @@ public class GameManager : MonoBehaviour
 
         Time.timeScale = 1f;
         RequestStateChange(_stateBeforePause);
+    }
+
+    public void RequestQuit()
+    {
+        Debug.Log("Quit requested");
+        Application.Quit();
     }
 
     public void RequestStateChange(GameState nextState)

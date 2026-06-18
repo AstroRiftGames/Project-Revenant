@@ -4,10 +4,14 @@ using UnityEngine.UI;
 
 public class PauseButton : MonoBehaviour
 {
-    [SerializeField] private Button _button;
-
+    private Button _button;
     public Action OnButtonPressed;
 
+    private void Awake()
+    {
+        TryGetComponent(out Button button);
+        _button = button;
+    }
     private void OnEnable()
     {
         if (_button == null)
