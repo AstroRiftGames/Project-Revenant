@@ -83,6 +83,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stationUIType: 5
   openUIAutomatically: 1
+  _audioClipSet: {fileID: 11400000, guid: 8d2811446e9536a4f8719ddbe3e48a0b, type: 2}
 --- !u!212 &8686503777660339114
 SpriteRenderer:
   m_ObjectHideFlags: 0

@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,6 +38,9 @@ public class PauseButton : MonoBehaviour
 
     public void OnPressed()
     {
+        UIManager.Instance.AudioClipSet.TryGetClip("Button Press", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip);
+
         OnButtonPressed?.Invoke();
     }
 

@@ -52,6 +52,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   stationUIType: 7
   openUIAutomatically: 1
+  _audioClipSet: {fileID: 11400000, guid: 8d2811446e9536a4f8719ddbe3e48a0b, type: 2}
 --- !u!212 &5451270490490312063
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -179,7 +180,7 @@ PolygonCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.90625, y: 1.15625}
+    oldSize: {x: 0.453125, y: 0.578125}
     newSize: {x: 0.90625, y: 1.15625}
     adaptiveTilingThreshold: 0.5
     drawMode: 0

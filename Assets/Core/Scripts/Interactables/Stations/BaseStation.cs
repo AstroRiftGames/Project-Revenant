@@ -1,3 +1,5 @@
+using Core.Audio;
+using Core.Audio.Data;
 using System;
 using UnityEngine;
 
@@ -13,6 +15,7 @@ public abstract class BaseStation : MonoBehaviour, IInteractable
     [SerializeField] protected UIType stationUIType;
     [Tooltip("Si es verdadero, interactuar con la estación abrirá automáticamente la UI en UIManager.")]
     [SerializeField] protected bool openUIAutomatically = false;
+    [SerializeField] private AudioClipSet _audioClipSet;
 
     public UIType StationUIType => stationUIType;
     public bool OpenUIAutomatically => openUIAutomatically;
@@ -57,5 +60,7 @@ public abstract class BaseStation : MonoBehaviour, IInteractable
     /// </summary>
     protected virtual void OnInteract()
     {
+        _audioClipSet.TryGetClip("Interaction", out AudioClipConfig clip);
+        AudioService.Instance.PlaySFX(clip, transform.position);
     }
 }

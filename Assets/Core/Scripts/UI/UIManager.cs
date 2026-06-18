@@ -1,3 +1,4 @@
+using Core.Audio.Data;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -36,6 +37,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] private List<UIType> _gameplayUIElements = new List<UIType>() { UIType.Inspector, UIType.Minimap, UIType.LOG, UIType.ProgressBar, UIType.DeepInspector, UIType.CombatStatus };
     
     private Dictionary<UIType, GameObject> _uiDictionary = new Dictionary<UIType, GameObject>();
+
+    [SerializeField] private AudioClipSet _audioClipSet;
+    public AudioClipSet AudioClipSet => _audioClipSet;
+
+
 
     private void Awake()
     {
