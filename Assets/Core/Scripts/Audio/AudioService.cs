@@ -19,6 +19,7 @@ namespace Core.Audio
     {
         private const string PrefsSfxKey   = "Audio_SFX_Volume";
         private const string PrefsMusicKey = "Audio_Music_Volume";
+        private const string PrefsMasterKey = "Audio_Master_Volume";
 
         public static AudioService Instance { get; private set; }
 
@@ -37,12 +38,14 @@ namespace Core.Audio
         private readonly List<AudioSource>          _sfxPool           = new();
         private readonly Dictionary<AudioSource, float> _sfxBaseVolumes = new();
 
+        private float      _masterVolume = 1f;
         private float      _sfxVolume   = 1f;
         private float      _musicVolume = 1f;
         private Coroutine  _musicFadeCoroutine;
 
         // ── IAudioService events ──────────────────────────────────────────────
 
+        public event Action OnMasterVolumeChanged;
         public event Action<float> OnSfxVolumeChanged;
         public event Action<float> OnMusicVolumeChanged;
 
@@ -67,9 +70,19 @@ namespace Core.Audio
             {
                 _musicVolume = Mathf.Clamp01(value);
                 if (_musicSource != null)
-                    _musicSource.volume = _musicVolume;
+                    _musicSource.volume = _musicVolume * _masterVolume;
                 PlayerPrefs.SetFloat(PrefsMusicKey, _musicVolume);
                 OnMusicVolumeChanged?.Invoke(_musicVolume);
+            }
+        }
+        public float MasterVolume
+        {
+            get => _masterVolume;
+            set
+            {
+                _masterVolume = Mathf.Clamp01(value);
+                PlayerPrefs.SetFloat(PrefsMasterKey, _masterVolume);
+                OnMasterVolumeChanged?.Invoke();
             }
         }
 
@@ -87,6 +100,12 @@ namespace Core.Audio
             {
                 Destroy(gameObject);
             }
+        }
+
+        private void OnEnable()
+        {
+            OnMasterVolumeChanged += ApplySfxVolume;
+            OnMasterVolumeChanged += ApplyMusicVolume;
         }
 
         // ── IAudioService — Playback ──────────────────────────────────────────
@@ -167,7 +186,7 @@ namespace Core.Audio
             _sfxBaseVolumes[source] = config.Volume;
 
             source.clip         = config.Clip;
-            source.volume       = config.Volume * _sfxVolume;
+            source.volume       = config.Volume * _sfxVolume * _masterVolume;
             source.pitch        = config.Pitch;
             source.loop         = config.Loop;
             source.spatialBlend = config.SpatialBlend;
@@ -184,8 +203,18 @@ namespace Core.Audio
             foreach (AudioSource source in _sfxPool)
             {
                 if (_sfxBaseVolumes.TryGetValue(source, out float baseVol))
-                    source.volume = baseVol * _sfxVolume;
+                    source.volume = baseVol * _sfxVolume * _masterVolume;
             }
+        }
+
+        /// <summary>
+        /// Re-applies the current Music master volume to the music source,
+        /// preserving the clip's individual base volume.
+        /// </summary>
+        private void ApplyMusicVolume()
+        {
+            if (_musicSource != null)
+                _musicSource.volume = _musicVolume * _masterVolume;
         }
 
         // ── Music Fades ───────────────────────────────────────────────────────
@@ -210,7 +239,7 @@ namespace Core.Audio
             _musicSource.Play();
 
             // Fade in the new track
-            float targetVolume = config.Volume * _musicVolume;
+            float targetVolume = config.Volume * _musicVolume * _masterVolume;
             if (_fadeDuration > 0f)
             {
                 _musicSource.volume = 0f;
@@ -237,7 +266,7 @@ namespace Core.Audio
             }
 
             _musicSource.Stop();
-            _musicSource.volume = _musicVolume;
+            _musicSource.volume = _musicVolume * _masterVolume;
         }
 
         // ── Persistence ───────────────────────────────────────────────────────
@@ -248,7 +277,7 @@ namespace Core.Audio
             _musicVolume = PlayerPrefs.GetFloat(PrefsMusicKey, 1f);
 
             if (_musicSource != null)
-                _musicSource.volume = _musicVolume;
+                _musicSource.volume = _musicVolume * _masterVolume;
         }
 
         // ── Editor helpers ────────────────────────────────────────────────────
