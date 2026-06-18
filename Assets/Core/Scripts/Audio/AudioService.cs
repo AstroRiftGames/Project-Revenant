@@ -131,6 +131,7 @@ namespace Core.Audio
                     Instance.PlaySFX(config, worldPosition);
                 }
             }
+        }
         private void OnEnable()
         {
             OnMasterVolumeChanged += ApplySfxVolume;
