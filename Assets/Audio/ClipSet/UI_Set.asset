@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 728a85a61c347c5428b474ae08c051fb, type: 3}
-  m_Name: Dungen_Set
+  m_Name: UI_Set
   m_EditorClassIdentifier: 
   _entries:
-  - Key: Room Transition
-    Config: {fileID: 11400000, guid: c5dddc3a77e00254c838020598cff3f5, type: 2}
-  - Key: Interaction
-    Config: {fileID: 11400000, guid: d6176f86bfa6b934cb4a23db644b33c7, type: 2}
+  - Key: Button Press
+    Config: {fileID: 11400000, guid: 183ad12d9d18e8548ba654d91ada454c, type: 2}

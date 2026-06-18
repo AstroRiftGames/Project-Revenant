@@ -151,6 +151,7 @@ MonoBehaviour:
   - ElementType: 12
     ElementObject: {fileID: 5785346903604953516}
   _gameplayUIElements: 0000000001000000020000000a0000000b000000
+  _audioClipSet: {fileID: 11400000, guid: f1cdb3358e9a7c940bc6290d3a3dd8a9, type: 2}
 --- !u!114 &8175705738802489650
 MonoBehaviour:
   m_ObjectHideFlags: 0
