@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public GameStateManager StateManager => _stateManager;
 
     private CombatRoomController _currentEncounterController;
+    private GameState _stateBeforePause = GameState.SafeZone;
 
     private void Awake()
     {
@@ -44,6 +45,9 @@ public class GameManager : MonoBehaviour
         CombatRoomController.AnyCombatResolved += OnAnyCombatResolved;
         BaseStation.OnStationUIRequestedGlobal += OnStationUIRequestedGlobal;
         StationUIManager.OnAnyStationClosed += OnStationClosed;
+        PauseManager.OnPauseRequested += RequestPause;
+        PauseManager.OnResumeRequested += RequestResume;
+        PauseManager.OnQuitRequested += RequestQuit;
     }
 
     private void OnDisable()
@@ -54,6 +58,33 @@ public class GameManager : MonoBehaviour
         CombatRoomController.AnyCombatResolved -= OnAnyCombatResolved;
         BaseStation.OnStationUIRequestedGlobal -= OnStationUIRequestedGlobal;
         StationUIManager.OnAnyStationClosed -= OnStationClosed;
+        PauseManager.OnPauseRequested -= RequestPause;
+        PauseManager.OnResumeRequested -= RequestResume;
+    }
+
+    public void RequestPause()
+    {
+        if (StateManager.CurrentState == GameState.Paused)
+            return;
+
+        Time.timeScale = 0f;
+        _stateBeforePause = StateManager.CurrentState;
+        RequestStateChange(GameState.Paused);
+    }
+
+    public void RequestResume()
+    {
+        if (StateManager.CurrentState != GameState.Paused)
+            return;
+
+        Time.timeScale = 1f;
+        RequestStateChange(_stateBeforePause);
+    }
+
+    public void RequestQuit()
+    {
+        Debug.Log("Quit requested");
+        Application.Quit();
     }
 
     public void RequestStateChange(GameState nextState)

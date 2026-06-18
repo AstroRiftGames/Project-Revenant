@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: b0c3e53b408282f4288abf14cb70c14a
+guid: 19faa791f0c9a054f99c315532e3f62d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8785344744026675
-    second: music on_0
+      213: -4650990692087804991
+    second: sfx on_0
+  - first:
+      213: 4654089656650921300
+    second: sfx on_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: music on_0
+      name: sfx on_0
       rect:
         serializedVersion: 2
-        x: 45
-        y: 50
-        width: 404
-        height: 405
+        x: 53
+        y: 31
+        width: 265
+        height: 444
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dcd8d4786c9c0eff0800000000000000
-      internalID: -8785344744026675
+      spriteID: 1cb45788b9c547fb0800000000000000
+      internalID: -4650990692087804991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sfx on_1
+      rect:
+        serializedVersion: 2
+        x: 343
+        y: 95
+        width: 97
+        height: 316
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4557f7162e5a69040800000000000000
+      internalID: 4654089656650921300
       vertices: []
       indices: 
       edges: []
@@ -148,7 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      music on_0: -8785344744026675
+      sfx on_0: -4650990692087804991
+      sfx on_1: 4654089656650921300
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
