@@ -274,7 +274,7 @@ public static class SkillCompositionEditorTools
             report.AppendLine($"  Composition Effects: {compEffectCount}");
 
             if (skill.CompositionState == SkillCompositionState.Official &&
-                !SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string runtimeGap))
+                !SkillCompositionExecutor.CanExecuteComposition(skill, out string runtimeGap))
             {
                 skillsWithGaps++;
                 report.AppendLine($"  GAP [Runtime]: {runtimeGap}");

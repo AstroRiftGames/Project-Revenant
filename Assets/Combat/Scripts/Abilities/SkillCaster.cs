@@ -41,6 +41,24 @@ public class SkillCaster : MonoBehaviour
     private Unit _castingTarget;
     private float _castRemainingTime;
 
+    public SkillUseFailureReason LastFailureReason { get; private set; } = SkillUseFailureReason.None;
+    public string LastFailureDetail { get; private set; } = null;
+    private string _lastContinueFromCurrentContextError = null;
+
+    private bool FailSkillUse(SkillUseFailureReason reason, string detail = null)
+    {
+        LastFailureReason = reason;
+        LastFailureDetail = detail;
+        return false;
+    }
+
+    private bool SucceedSkillUse()
+    {
+        LastFailureReason = SkillUseFailureReason.None;
+        LastFailureDetail = null;
+        return true;
+    }
+
 #if UNITY_EDITOR
     // Editor-only hook for Creature Variant Lab. Overrides the resolved skill
     // so the spawned unit uses the Lab's composition at runtime.
@@ -57,41 +75,11 @@ public class SkillCaster : MonoBehaviour
 
     public bool TryUseForDebug(Unit combatTarget, out string rejectReason)
     {
-        rejectReason = null;
-        SkillData skill = ResolveSkill();
-
-        if (IsTemporaryCombatUnit()) { rejectReason = "caster is a temporary combat unit."; return false; }
-        if (_unit == null) { rejectReason = "caster unit is not resolved."; return false; }
-        if (skill == null) { rejectReason = "no skill assigned."; return false; }
-        if (!skill.TryValidateDeclarativeContract(out string contractError)) { rejectReason = $"skill data is invalid: {contractError}."; return false; }
-        if (IsCasting) { rejectReason = $"already casting '{_castingSkill.DisplayName}'."; return false; }
-        if (!IsOwnerCombatAlive()) { rejectReason = "caster is not alive or not in Alive lifecycle state."; return false; }
-        if (IsOwnerSkillBlockedByStatus()) { rejectReason = "status effect blocks skill usage (stunned or action-blocked)."; return false; }
-        if (!ResolveSkillReadiness(skill)) { rejectReason = $"insufficient charge ({_state.CurrentCharge:F0}/{_state.MaxCharge:F0})."; return false; }
-
-        if (!TryBuildSkillContext(skill, combatTarget, default, false, out SkillContext skillContext))
-        {
-            rejectReason = BuildContextBuildRejectionReason(skill, combatTarget);
-            return false;
-        }
-
-        if (!TryValidateSkillContext(skillContext))
-        {
-            rejectReason = BuildContextValidationRejectionReason(skillContext);
-            return false;
-        }
-
-        if (!IsSkillContextInRange(skillContext))
-        {
-            rejectReason = BuildRangeRejectionReason(skillContext);
-            return false;
-        }
-
-        if (!BeginCast(skillContext)) { rejectReason = "internal error: could not begin cast."; return false; }
-        if (!ShouldCompleteCastImmediately(skill)) return true;
-        if (!CompleteCast()) { rejectReason = "cast completed but no impacts or effects were applied."; return false; }
-        return true;
+        bool success = TryUseInternal(combatTarget, default, false, null);
+        rejectReason = LastFailureDetail;
+        return success;
     }
+#endif
 
     private string BuildContextBuildRejectionReason(SkillData skill, Unit combatTarget)
     {
@@ -204,7 +192,51 @@ public class SkillCaster : MonoBehaviour
 
         return $"target '{target.name}' failed targeting validation for {skill.PrimaryTargetRequirement}.";
     }
-#endif
+
+    private SkillUseFailureReason MapTargetRejectionReasonToEnum(string targetError)
+    {
+        if (string.IsNullOrEmpty(targetError))
+            return SkillUseFailureReason.None;
+
+        if (targetError.Contains("caster is not alive"))
+            return SkillUseFailureReason.OwnerNotAlive;
+        if (targetError.Contains("is not alive") || targetError.Contains("is not in Alive lifecycle state"))
+            return SkillUseFailureReason.TargetDead;
+        if (targetError.Contains("different room"))
+            return SkillUseFailureReason.TargetOutOfRoom;
+        if (targetError.Contains("relationship") || targetError.Contains("hostile") || targetError.Contains("ally"))
+            return SkillUseFailureReason.InvalidTargetRelation;
+        if (targetError.Contains("range"))
+            return SkillUseFailureReason.OutOfRange;
+        if (targetError.Contains("targeting") || targetError.Contains("target"))
+            return SkillUseFailureReason.InvalidTarget;
+
+        return SkillUseFailureReason.InvalidTarget;
+    }
+
+    private string MapInterruptReason(string reason)
+    {
+        if (!IsOwnerCombatAlive())
+            return "owner dead";
+
+        if (IsOwnerSkillBlockedByStatus())
+            return "Stun";
+
+        if (string.IsNullOrEmpty(reason))
+            return "generic interrupt";
+
+        string lower = reason.ToLowerInvariant();
+        if (lower.Contains("stun"))
+            return "Stun";
+        if (lower.Contains("knockback"))
+            return "Knockback";
+        if (lower.Contains("dead") || lower.Contains("death") || lower.Contains("die"))
+            return "owner dead";
+        if (lower.Contains("combat") || lower.Contains("encounter") || lower.Contains("ended") || lower.Contains("resolved"))
+            return "combat ended";
+
+        return "generic interrupt";
+    }
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
     public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillImpactsResolvedForVisuals;
@@ -267,17 +299,29 @@ public class SkillCaster : MonoBehaviour
 
     private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell, SkillData skillOverride)
     {
+        LastFailureReason = SkillUseFailureReason.None;
+        LastFailureDetail = null;
+
+        if (IsCombatEnded())
+            return FailSkillUse(SkillUseFailureReason.CombatEnded, "combat has ended.");
+
         if (IsTemporaryCombatUnit())
-            return false;
+            return FailSkillUse(SkillUseFailureReason.TemporaryCombatUnit, "caster is a temporary combat unit.");
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
 
         SkillData skill = skillOverride != null ? skillOverride : ResolveSkill();
+        if (skill == null)
+            return FailSkillUse(SkillUseFailureReason.NoSkillAssigned, "no skill assigned.");
+
         if (!CanStartCast(skill))
             return false;
 
         if (!TryBuildSkillContext(skill, combatTarget, targetCell, hasTargetCell, out SkillContext skillContext))
-            return false;
+        {
+            string buildError = BuildContextBuildRejectionReason(skill, combatTarget);
+            return FailSkillUse(SkillUseFailureReason.ContextInvalid, buildError);
+        }
 
         if (!TryValidateSkillContext(skillContext))
             return false;
@@ -286,14 +330,14 @@ public class SkillCaster : MonoBehaviour
         {
             LogDebug(
                 $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' target {FormatSkillContext(skillContext)} is out of range.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.OutOfRange, BuildRangeRejectionReason(skillContext));
         }
 
         if (!BeginCast(skillContext))
-            return false;
+            return FailSkillUse(SkillUseFailureReason.Unknown, "internal error: could not begin cast.");
 
         if (!ShouldCompleteCastImmediately(skill))
-            return true;
+            return SucceedSkillUse();
 
         return CompleteCast();
     }
@@ -375,6 +419,23 @@ public class SkillCaster : MonoBehaviour
         InterruptCast("external interruption");
     }
 
+    public void InterruptCast(string reason)
+    {
+        InterruptCastInternal(reason);
+    }
+
+    private void InterruptCastInternal(string reason)
+    {
+        if (!IsCasting)
+            return;
+
+        string detail = MapInterruptReason(reason);
+        FailSkillUse(SkillUseFailureReason.Interrupted, detail);
+
+        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} interrupted '{_castingSkill.DisplayName}': {reason} (mapped to {detail}).");
+        ClearCastingState();
+    }
+
     private bool _isConfirmedTemporaryCombatUnit;
     private bool IsTemporaryCombatUnit()
     {
@@ -388,6 +449,22 @@ public class SkillCaster : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool IsCombatEnded()
+    {
+        if (_unit == null)
+            return false;
+
+        RoomContext roomContext = _unit.RoomContext;
+        if (roomContext == null)
+            return false;
+
+        CombatRoomController combatRoomController = roomContext.CombatController;
+        if (combatRoomController == null)
+            return false;
+
+        return combatRoomController.State == CombatRoomState.Resolved;
     }
 
     private bool CanContinueFromCurrentContext(SkillData skill, SkillContext context, out string reason)
@@ -611,46 +688,49 @@ public class SkillCaster : MonoBehaviour
 
     private bool CanStartCast(SkillData skill)
     {
+        if (IsCombatEnded())
+            return FailSkillUse(SkillUseFailureReason.CombatEnded, "combat has ended.");
+
         if (IsTemporaryCombatUnit())
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: temporary combat units cannot use skills.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.TemporaryCombatUnit, "caster is a temporary combat unit.");
         }
 
         if (_unit == null)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner unit was not resolved.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.OwnerNotReady, "caster unit is not resolved.");
         }
 
         if (skill == null)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: no skill assigned.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.NoSkillAssigned, "no skill assigned.");
         }
 
         if (!skill.TryValidateDeclarativeContract(out string validationError))
         {
             Debug.LogError($"[SkillCaster] {FormatOwnerIdentity()} aborted: {validationError}", skill);
-            return false;
+            return FailSkillUse(SkillUseFailureReason.Unknown, $"skill data is invalid: {validationError}.");
         }
 
         if (IsCasting)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: already casting '{_castingSkill.DisplayName}'.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.AlreadyCasting, $"already casting '{_castingSkill.DisplayName}'.");
         }
 
         if (!IsOwnerCombatAlive())
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner cannot act (dead, recruit corpse, or removed).");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.OwnerNotAlive, "caster is not alive or not in Alive lifecycle state.");
         }
 
         if (IsOwnerSkillBlockedByStatus())
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: active status effect blocks skill usage.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.BlockedByStatus, "status effect blocks skill usage (stunned or action-blocked).");
         }
 
         if (ResolveSkillReadiness(skill))
@@ -660,7 +740,7 @@ public class SkillCaster : MonoBehaviour
         LogDebug(
             $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' is not charged " +
             $"({_state.CurrentCharge:F1}/{_state.MaxCharge:F1}, missing {missingCharge:F1}).");
-        return false;
+        return FailSkillUse(SkillUseFailureReason.SkillNotReady, $"insufficient charge ({_state.CurrentCharge:F0}/{_state.MaxCharge:F0}).");
     }
 
     private bool BeginCast(SkillContext skillContext)
@@ -688,7 +768,13 @@ public class SkillCaster : MonoBehaviour
     {
         SkillData skill = _castingSkill;
         if (skill == null)
-            return false;
+            return FailSkillUse(SkillUseFailureReason.Unknown, "no casting skill active.");
+
+        if (IsCombatEnded())
+        {
+            CancelCurrentCast();
+            return FailSkillUse(SkillUseFailureReason.CombatEnded, "combat has ended.");
+        }
 
         if (ShouldInterruptCurrentCast())
         {
@@ -699,14 +785,19 @@ public class SkillCaster : MonoBehaviour
         if (!TryResolveCastContext(skill, out SkillContext resolvedContext))
         {
             CancelCurrentCast();
-            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} canceled '{skill.DisplayName}' because no valid skill context remained.");
-            return false;
+            string detail = "canceled because no valid skill context remained.";
+            if (skill != null && skill.TargetFallbackMode == TargetFallbackMode.ContinueFromCurrentContext && !string.IsNullOrEmpty(_lastContinueFromCurrentContextError))
+            {
+                detail = $"ContinueFromCurrentContext aborted: {_lastContinueFromCurrentContextError}.";
+            }
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} {detail}");
+            return FailSkillUse(SkillUseFailureReason.ContextInvalid, detail);
         }
 
         if (!TryCollectImpacts(resolvedContext))
         {
             CancelCurrentCast();
-            return false;
+            return FailSkillUse(SkillUseFailureReason.NoImpacts, $"'{skill?.DisplayName ?? "Unknown"}' produced no impacts.");
         }
 
         LogDebug(
@@ -719,12 +810,12 @@ public class SkillCaster : MonoBehaviour
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' applied no effects to resolved impacts.");
             CancelCurrentCast();
-            return false;
+            return FailSkillUse(SkillUseFailureReason.EffectApplicationFailed, $"'{skill.DisplayName}' applied no effects to resolved impacts.");
         }
 
         OnSkillCastSucceeded(skill, resolvedContext.PrimaryTarget);
         ClearCastingState();
-        return true;
+        return SucceedSkillUse();
     }
 
     private void UpdateCasting()
@@ -771,6 +862,7 @@ public class SkillCaster : MonoBehaviour
     // center data became stale during cast time.
     private bool TryResolveCastContext(SkillData skill, out SkillContext resolvedContext)
     {
+        _lastContinueFromCurrentContextError = null;
         resolvedContext = _castingContext;
         if (CanCompleteCastWithContext(resolvedContext))
             return true;
@@ -784,6 +876,7 @@ public class SkillCaster : MonoBehaviour
             else
             {
                 LogDebug($"[SkillCaster] ContinueFromCurrentContext aborted: {rejectReason}.");
+                _lastContinueFromCurrentContextError = rejectReason;
                 return false;
             }
         }
@@ -821,14 +914,7 @@ public class SkillCaster : MonoBehaviour
         return IsOwnerSkillBlockedByStatus();
     }
 
-    private void InterruptCast(string reason)
-    {
-        if (!IsCasting)
-            return;
-
-        LogDebug($"[SkillCaster] {FormatOwnerIdentity()} interrupted '{_castingSkill.DisplayName}': {reason}.");
-        ClearCastingState();
-    }
+    // InterruptCast(string reason) implementation has been moved to the top.
 
     private void CancelCurrentCast()
     {
@@ -1054,7 +1140,7 @@ public class SkillCaster : MonoBehaviour
         {
             if (logFailure)
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: skill context could not be built.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.ContextInvalid, "skill context is null or incomplete.");
         }
 
         SkillData skill = skillContext.Skill;
@@ -1066,7 +1152,7 @@ public class SkillCaster : MonoBehaviour
             {
                 if (logFailure)
                     LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' resolved no valid primary target.");
-                return false;
+                return FailSkillUse(SkillUseFailureReason.InvalidTarget, $"skill '{skill.DisplayName}' resolved no valid primary target.");
             }
 
             if (CanUseUnitAsPrimaryTarget(skill, skillContext.PrimaryTarget))
@@ -1074,14 +1160,17 @@ public class SkillCaster : MonoBehaviour
 
             if (logFailure)
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' primary target {FormatUnitName(skillContext.PrimaryTarget)} failed skill rules.");
-            return false;
+            
+            string rejectReason = BuildTargetRejectionReason(skill, skillContext.PrimaryTarget, skillContext.Caster);
+            SkillUseFailureReason reason = MapTargetRejectionReasonToEnum(rejectReason);
+            return FailSkillUse(reason, rejectReason);
         }
 
         if (skillContext.HasPrimaryTarget)
         {
             if (logFailure)
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' should not carry a primary unit target.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.InvalidTarget, $"skill '{skill.DisplayName}' should not carry a primary unit target.");
         }
 
         if ((primaryTargetRequirement == PrimaryTargetRequirement.GroundCell ||
@@ -1090,7 +1179,7 @@ public class SkillCaster : MonoBehaviour
         {
             if (logFailure)
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill.DisplayName}' requires a target cell as impact center.");
-            return false;
+            return FailSkillUse(SkillUseFailureReason.InvalidGroundCell, $"skill '{skill.DisplayName}' requires a target cell as impact center.");
         }
 
         if ((primaryTargetRequirement == PrimaryTargetRequirement.GroundCell ||
@@ -1104,7 +1193,7 @@ public class SkillCaster : MonoBehaviour
     private bool IsValidGroundTargetCell(SkillContext skillContext, bool logFailure)
     {
         if (skillContext == null || !skillContext.HasTargetCell)
-            return false;
+            return FailSkillUse(SkillUseFailureReason.InvalidGroundCell, "no target cell provided.");
 
         RoomGrid roomGrid = skillContext.RoomGrid;
         if (roomGrid == null)
@@ -1114,7 +1203,7 @@ public class SkillCaster : MonoBehaviour
                 SkillData skill = skillContext.Skill;
                 LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' requires a room grid for ground targeting.");
             }
-            return false;
+            return FailSkillUse(SkillUseFailureReason.MissingRoomGrid, $"skill '{skillContext.Skill?.DisplayName ?? "Unknown"}' requires a room grid for ground targeting.");
         }
 
         Vector3Int targetCell = new(skillContext.TargetCell.x, skillContext.TargetCell.y, 0);
@@ -1127,7 +1216,7 @@ public class SkillCaster : MonoBehaviour
                     $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' target cell " +
                     $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is outside the valid grid.");
             }
-            return false;
+            return FailSkillUse(SkillUseFailureReason.InvalidGroundCell, $"target cell ({targetCell.x}, {targetCell.y}) is outside the valid grid.");
         }
 
         SkillData skillData = skillContext.Skill;
@@ -1141,7 +1230,7 @@ public class SkillCaster : MonoBehaviour
                         $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skillData.DisplayName}' target cell " +
                         $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is not walkable for a summon placement.");
                 }
-                return false;
+                return FailSkillUse(SkillUseFailureReason.GroundCellBlocked, $"target cell ({targetCell.x}, {targetCell.y}) is not walkable for a summon placement.");
             }
 
             if (!roomGrid.OccupancyService.IsCellFreeForPlacement(targetCell))
@@ -1152,7 +1241,7 @@ public class SkillCaster : MonoBehaviour
                         $"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skillData.DisplayName}' target cell " +
                         $"({targetCell.x}, {targetCell.y}, {targetCell.z}) is occupied or reserved.");
                 }
-                return false;
+                return FailSkillUse(SkillUseFailureReason.GroundCellBlocked, $"target cell ({targetCell.x}, {targetCell.y}) is occupied or reserved.");
             }
         }
 
@@ -1177,16 +1266,18 @@ public class SkillCaster : MonoBehaviour
     private bool HasValidImpactCenter(SkillContext skillContext, bool logFailure)
     {
         if (skillContext == null)
-            return false;
+            return FailSkillUse(SkillUseFailureReason.ContextInvalid, "skill context is null.");
 
         SkillData skill = skillContext.Skill;
         if (skill == null)
-            return false;
+            return FailSkillUse(SkillUseFailureReason.NoSkillAssigned, "no skill assigned.");
 
         switch (skill.ImpactCenterMode)
         {
             case ImpactCenterMode.TargetCell:
-                return skillContext.HasTargetCell;
+                if (skillContext.HasTargetCell)
+                    return true;
+                break;
             case ImpactCenterMode.Caster:
             case ImpactCenterMode.PrimaryTarget:
                 if (skillContext.HasImpactCenterUnit)
@@ -1199,7 +1290,7 @@ public class SkillCaster : MonoBehaviour
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: '{skill?.DisplayName ?? "Unknown"}' resolved no valid impact center.");
         }
 
-        return false;
+        return FailSkillUse(SkillUseFailureReason.ContextInvalid, $"skill '{skill.DisplayName}' has no valid impact center (mode: {skill.ImpactCenterMode}).");
     }
 
     // Applies the primary target contract only. Impact target validation lives
@@ -1266,7 +1357,7 @@ public class SkillCaster : MonoBehaviour
             return false;
         }
 
-        SkillCompositionRuntimeExecutor.ExecuteModifiers(skillContext, skillContext.Skill, _impactsHit);
+        SkillCompositionExecutor.ExecuteModifiers(skillContext, skillContext.Skill, _impactsHit);
         return true;
     }
 
@@ -1304,9 +1395,9 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
             return false;
 
-        if (SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string gapMessage))
+        if (SkillCompositionExecutor.CanExecuteComposition(skill, out string gapMessage))
         {
-            return SkillCompositionRuntimeExecutor.ExecuteEffects(skill, skillContext, impact);
+            return SkillCompositionExecutor.ExecuteEffects(skill, skillContext, impact);
         }
 
         Debug.LogError($"[SkillCompositionRuntimeExecutor Error] Skill '{skill.name}' is not ready for composition runtime. Reason: {gapMessage}");

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class SkillCompositionRuntimeExecutor
+public static class SkillCompositionExecutor
 {
-    private const string LogTag = "[SkillCompositionRuntimeExecutor]";
+    private const string LogTag = "[SkillCompositionExecutor]";
 
     // ============================================================
     // PUBLIC ENTRY POINTS

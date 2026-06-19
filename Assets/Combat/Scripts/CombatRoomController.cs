@@ -379,11 +379,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         CancelActiveUnitMovementOnEncounterResolved();
         CleanupStatusEffectsOnEncounterResolved();
         CleanupTemporaryCombatUnits();
-
-        if (_outcome != CombatRoomOutcome.PlayerVictory)
-            return;
-
-        CleanupProjectilesOnVictory();
+        CleanupProjectilesAndVfx();
     }
 
     private void InterruptActiveUnitCastingOnEncounterResolved()
@@ -472,7 +468,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         }
     }
 
-    private void CleanupProjectilesOnVictory()
+    private void CleanupProjectilesAndVfx()
     {
         CombatProjectileVisual[] roomProjectiles =
             _roomContext.GetComponentsInChildren<CombatProjectileVisual>(includeInactive: true);
@@ -480,10 +476,16 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         for (int i = 0; i < roomProjectiles.Length; i++)
         {
             CombatProjectileVisual projectile = roomProjectiles[i];
-            if (projectile == null)
-                continue;
+            if (projectile != null)
+                Destroy(projectile.gameObject);
+        }
 
-            Destroy(projectile.gameObject);
+        SkillDebugVfxInstance[] activeVfx = FindObjectsByType<SkillDebugVfxInstance>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < activeVfx.Length; i++)
+        {
+            SkillDebugVfxInstance vfx = activeVfx[i];
+            if (vfx != null)
+                Destroy(vfx.gameObject);
         }
     }
 

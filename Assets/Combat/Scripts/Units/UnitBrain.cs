@@ -130,6 +130,12 @@ public class UnitBrain : MonoBehaviour
         if (!CanResolveMoveTargetUnit())
             return null;
 
+        if (_unit.StatusEffects != null && _unit.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
+        {
+            preferredDistance = _unit.GetPreferredDistance(_unit.Action);
+            return forcedTarget;
+        }
+
         if (TryResolveSupportMoveTarget(out Unit supportTarget, out preferredDistance))
             return supportTarget;
 

@@ -83,7 +83,7 @@ public static class SkillCompositionValidator
         if (!skill.TryValidateDeclarativeContract(out string contractError))
             issues.Add(ValidationIssue.Error(ValidationCategory.RuntimeReadiness, $"Declarative contract: {contractError}"));
 
-        if (!SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string runtimeGap))
+        if (!SkillCompositionExecutor.CanExecuteComposition(skill, out string runtimeGap))
             issues.Add(ValidationIssue.Error(ValidationCategory.RuntimeReadiness, $"Runtime readiness: {runtimeGap}"));
 
         if (!requireProductionSupport)
