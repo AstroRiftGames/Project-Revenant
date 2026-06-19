@@ -19,9 +19,6 @@ namespace Selection.UI
         [SerializeField] private Image abilityIconImage;
         [SerializeField] private Image characterPortraitImage;
         [SerializeField] private Image roleIconImage;
-        [SerializeField] private Sprite tankRoleIcon;
-        [SerializeField] private Sprite dpsRoleIcon;
-        [SerializeField] private Sprite supportRoleIcon;
         [SerializeField] private Transform effectsContainer;
         [SerializeField] private EffectIcon effectIconPrefab;
 
@@ -103,18 +100,7 @@ namespace Selection.UI
 
             if (roleIconImage != null)
             {
-                switch (currentStats.Role)
-                {
-                    case UnitRole.Tank:
-                        roleIconImage.sprite = tankRoleIcon;
-                        break;
-                    case UnitRole.DPS:
-                        roleIconImage.sprite = dpsRoleIcon;
-                        break;
-                    case UnitRole.Support:
-                        roleIconImage.sprite = supportRoleIcon;
-                        break;
-                }
+                roleIconImage.sprite = iconDatabase.GetRoleIcon(currentStats.Role).Item1;
                 roleIconImage.enabled = roleIconImage.sprite != null;
             }
 
