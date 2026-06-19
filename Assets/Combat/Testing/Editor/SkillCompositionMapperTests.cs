@@ -107,4 +107,22 @@ public static class SkillCompositionMapperTests
             Assert.NotZero((int)mapped, $"ToSkillModifierKind({kind}) returned default/zero.");
         }
     }
+
+    [Test]
+    public static void ProductionSupportCatalog_Persistent_IsMissingRuntime()
+    {
+        Assert.AreEqual(SkillProductionSupportStatus.MissingRuntime, SkillProductionSupportCatalog.GetModifierStatus(LabModifierKind.Persistent));
+    }
+
+    [Test]
+    public static void ProductionSupportCatalog_Bounce_IsRuntimePartial()
+    {
+        Assert.AreEqual(SkillProductionSupportStatus.RuntimePartial, SkillProductionSupportCatalog.GetModifierStatus(LabModifierKind.Bounce));
+    }
+
+    [Test]
+    public static void ProductionSupportCatalog_Summon_IsExperimental()
+    {
+        Assert.AreEqual(SkillProductionSupportStatus.Experimental, SkillProductionSupportCatalog.GetEffectStatus(LabEffectKind.Summon));
+    }
 }

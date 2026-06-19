@@ -120,8 +120,16 @@ public static class CreatureVariantAssetService
 
     public static void SaveProductionVariant(CreatureVariantLabState state, CreatureVariantLabConfig config, SkillCompositionValidator.ValidationResult validation)
     {
-        if (validation.HasErrors || !SkillCompositionValidator.IsProductionCatalogCompatible(state))
+        if (validation.HasErrors)
             return;
+
+        if (!SkillCompositionValidator.IsProductionCatalogCompatible(state))
+        {
+            string blockReason = SkillProductionSupportCatalog.GetProductionBlockReason(state) ??
+                "Production save blocked: composition is outside the production-supported catalog.";
+            EditorUtility.DisplayDialog("Save Blocked", blockReason, "OK");
+            return;
+        }
 
         string skillName = state.saveSkillName.Trim();
         if (string.IsNullOrEmpty(skillName))
@@ -139,7 +147,7 @@ public static class CreatureVariantAssetService
         {
             CreatureVariantBuilder.ConfigureSkillData(preSaveSkill, state, "SaveValidateTemp", "SaveValidateTemp", SkillCompositionState.Official, config);
             var runtimeIssues = new List<ValidationIssue>();
-            SkillCompositionValidator.ValidateAgainstRuntimeReadiness(preSaveSkill, runtimeIssues);
+            SkillCompositionValidator.ValidateAgainstRuntimeReadiness(preSaveSkill, runtimeIssues, true);
             bool hasRuntimeErrors = false;
             var errorMessages = new List<string>();
             foreach (var issue in runtimeIssues)
@@ -153,7 +161,7 @@ public static class CreatureVariantAssetService
             if (hasRuntimeErrors)
             {
                 string combined = string.Join("\n", errorMessages);
-                EditorUtility.DisplayDialog("Save Blocked", $"Runtime validation errors:\n\n{combined}", "OK");
+                EditorUtility.DisplayDialog("Save Blocked", $"Production validation errors:\n\n{combined}", "OK");
                 return;
             }
         }

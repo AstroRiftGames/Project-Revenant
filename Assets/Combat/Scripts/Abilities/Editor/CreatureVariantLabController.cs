@@ -146,7 +146,7 @@ public class CreatureVariantLabController
         if (ValidationIssue.ListHasErrors(_validationIssues))
             return $"Save blocked: composition has {GetValidationErrorMessages().Count} blocking error(s).";
         if (!SkillCompositionValidator.IsProductionCatalogCompatible(_state))
-            return "Save blocked: this composition is experimental or outside the active production catalog.";
+            return SkillProductionSupportCatalog.GetProductionBlockReason(_state);
         if (IsUsingPlaceholderPrefab())
             return "Production save requires a prefab override. Runtime placeholders are test-only.";
 

@@ -164,4 +164,51 @@ public static class SkillCompositionParameterValidatorTests
         Assert.IsFalse(hasError);
         UnityEngine.Object.DestroyImmediate(mockStatus);
     }
+
+    [Test]
+    public static void ValidateModifierParameters_Bounce_AddsProductionWarning()
+    {
+        var state = new CreatureVariantLabState
+        {
+            modifier = LabModifierKind.Bounce,
+            bounceMaxBounces = 2,
+            bounceRangeInCells = 2
+        };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateModifierParameters(state, issues);
+
+        bool found = false;
+        foreach (var issue in issues)
+        {
+            if (issue.severity == ValidationSeverity.Warning &&
+                issue.category == ValidationCategory.Production &&
+                issue.message.Contains("RuntimePartial"))
+            {
+                found = true;
+            }
+        }
+
+        Assert.IsTrue(found);
+    }
+
+    [Test]
+    public static void ValidateModifierParameters_Periodic_AddsProductionError()
+    {
+        var state = new CreatureVariantLabState { modifier = LabModifierKind.Periodic };
+        var issues = new List<ValidationIssue>();
+        SkillCompositionParameterValidator.ValidateModifierParameters(state, issues);
+
+        bool found = false;
+        foreach (var issue in issues)
+        {
+            if (issue.severity == ValidationSeverity.Error &&
+                issue.category == ValidationCategory.Production &&
+                issue.message.Contains("MissingRuntime"))
+            {
+                found = true;
+            }
+        }
+
+        Assert.IsTrue(found);
+    }
 }

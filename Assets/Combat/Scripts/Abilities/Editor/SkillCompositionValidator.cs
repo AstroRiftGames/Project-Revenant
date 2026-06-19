@@ -75,7 +75,7 @@ public static class SkillCompositionValidator
         return result;
     }
 
-    public static void ValidateAgainstRuntimeReadiness(SkillData skill, List<ValidationIssue> issues)
+    public static void ValidateAgainstRuntimeReadiness(SkillData skill, List<ValidationIssue> issues, bool requireProductionSupport = false)
     {
         if (skill == null)
             return;
@@ -85,6 +85,13 @@ public static class SkillCompositionValidator
 
         if (!SkillCompositionRuntimeExecutor.CanExecuteComposition(skill, out string runtimeGap))
             issues.Add(ValidationIssue.Error(ValidationCategory.RuntimeReadiness, $"Runtime readiness: {runtimeGap}"));
+
+        if (!requireProductionSupport)
+            return;
+
+        List<string> productionSupportIssues = SkillProductionSupportCatalog.GetProductionSupportIssues(skill);
+        for (int i = 0; i < productionSupportIssues.Count; i++)
+            issues.Add(ValidationIssue.Error(ValidationCategory.Production, productionSupportIssues[i]));
     }
 
     public static bool IsProductionCatalogCompatible(CreatureVariantLabState state)

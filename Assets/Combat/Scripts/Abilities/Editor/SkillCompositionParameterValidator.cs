@@ -103,23 +103,23 @@ public static class SkillCompositionParameterValidator
 
     public static void ValidateModifierParameters(CreatureVariantLabState state, List<ValidationIssue> issues)
     {
+        ValidateProductionSupport(state, issues);
+
         if (state.modifier == LabModifierKind.Bounce)
         {
             if (state.bounceMaxBounces <= 0 || state.bounceRangeInCells <= 0)
                 issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "Bounce requires count and range greater than 0."));
-            issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "Bounce modifier is outside the active production catalog."));
         }
 
         if (state.modifier == LabModifierKind.Explosive)
         {
             if (state.explosiveRadiusInCells <= 0)
                 issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, "Explosive requires radius greater than 0."));
-            issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "Explosive modifier is outside the active production catalog."));
         }
 
         if (state.modifier == LabModifierKind.Persistent || state.modifier == LabModifierKind.Periodic)
         {
-            issues.Add(ValidationIssue.Error(ValidationCategory.Composition, $"Modifier {state.modifier} has no runtime implementation in SkillCompositionRuntimeExecutor."));
+            issues.Add(ValidationIssue.Error(ValidationCategory.Composition, $"Modifier {state.modifier} has no runtime implementation in SkillCompositionRuntimeExecutor and cannot be used in production assets."));
         }
 
         bool isStatus = SkillCompositionMapper.IsStatusEffect(state.effect);
@@ -127,14 +127,42 @@ public static class SkillCompositionParameterValidator
             state.modifier != LabModifierKind.Persistent &&
             state.duration > 0f)
         {
-            issues.Add(ValidationIssue.Warning(ValidationCategory.Parameters, "[Rule 7] Duration belongs to the effect/status; Persistent should not be added while it has no runtime."));
+            issues.Add(ValidationIssue.Warning(ValidationCategory.Parameters, "Duration belongs to the effect/status definition. Do not add Persistent unless runtime support is implemented."));
         }
 
         if ((state.effect == LabEffectKind.PoisonBurn || state.effect == LabEffectKind.HealOverTime) &&
             state.interval > 0f &&
             state.modifier != LabModifierKind.Periodic)
         {
-            issues.Add(ValidationIssue.Warning(ValidationCategory.Parameters, "[Rule 8] Ticks belong to the StatusEffectDefinition; Periodic should not be added while it has no runtime."));
+            issues.Add(ValidationIssue.Warning(ValidationCategory.Parameters, "Tick behavior belongs to the StatusEffectDefinition. Do not add Periodic unless runtime support is implemented."));
+        }
+    }
+
+    private static void ValidateProductionSupport(CreatureVariantLabState state, List<ValidationIssue> issues)
+    {
+        SkillProductionSupportStatus effectStatus = SkillProductionSupportCatalog.GetEffectStatus(state.effect);
+        if (effectStatus != SkillProductionSupportStatus.ProductionSupported)
+        {
+            issues.Add(ValidationIssue.Warning(
+                ValidationCategory.Production,
+                $"Effect {state.effect} is {effectStatus}. {SkillProductionSupportCatalog.GetEffectStatusExplanation(state.effect)} Save as Production Variant will be blocked."));
+        }
+
+        if (state.modifier == LabModifierKind.None)
+            return;
+
+        SkillProductionSupportStatus modifierStatus = SkillProductionSupportCatalog.GetModifierStatus(state.modifier);
+        if (modifierStatus == SkillProductionSupportStatus.MissingRuntime)
+        {
+            issues.Add(ValidationIssue.Error(
+                ValidationCategory.Production,
+                $"Modifier {state.modifier} is {modifierStatus}. {SkillProductionSupportCatalog.GetModifierStatusExplanation(state.modifier)}"));
+        }
+        else if (modifierStatus != SkillProductionSupportStatus.ProductionSupported)
+        {
+            issues.Add(ValidationIssue.Warning(
+                ValidationCategory.Production,
+                $"Modifier {state.modifier} is {modifierStatus}. {SkillProductionSupportCatalog.GetModifierStatusExplanation(state.modifier)} Save as Production Variant will be blocked."));
         }
     }
 
@@ -187,7 +215,7 @@ public static class SkillCompositionParameterValidator
             issues.Add(ValidationIssue.Error(ValidationCategory.Parameters, $"SummonedUnit '{state.summonedUnit.name}' needs a valid prefab with Unit component."));
         }
 
-        issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "Summon effect is outside the active production catalog."));
+        issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "Summon is experimental. Save as Production Variant will be blocked."));
     }
 
     private static void ValidateDeliveryParameters(CreatureVariantLabState state, List<ValidationIssue> issues)
@@ -211,6 +239,6 @@ public static class SkillCompositionParameterValidator
             issues.Add(ValidationIssue.Error(ValidationCategory.Composition, "Direct delivery requires Hostile, Ally or Self as primary target."));
 
         if (state.primaryTarget == PrimaryTargetRequirement.GroundCell)
-            issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "GroundCell is supported by runtime but remains experimental and outside the active production catalog."));
+            issues.Add(ValidationIssue.Warning(ValidationCategory.Production, "GroundCell targeting remains experimental. Save as Production Variant will be blocked."));
     }
 }

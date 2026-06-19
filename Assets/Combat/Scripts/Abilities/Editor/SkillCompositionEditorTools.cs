@@ -77,8 +77,7 @@ public static class SkillCompositionEditorTools
                 report.AppendLine($"Rule {i}: {rules[i]} cases");
             }
 
-            if (i != 7 && i != 8)
-                criticalMetadataViolations += rules[i];
+            criticalMetadataViolations += rules[i];
         }
         report.AppendLine($"Critical Metadata Violations: {criticalMetadataViolations}");
 
@@ -181,6 +180,24 @@ public static class SkillCompositionEditorTools
             }
         }
 
+        if (skill.CompositionState == SkillCompositionState.Official)
+        {
+            List<string> productionSupportIssues = SkillProductionSupportCatalog.GetProductionSupportIssues(skill);
+            for (int i = 0; i < productionSupportIssues.Count; i++)
+            {
+                string issue = productionSupportIssues[i];
+                int ruleNumber = issue.StartsWith("Modifier ") ? 8 : 7;
+                errors.Add(new ValidationViolation
+                {
+                    RuleNumber = ruleNumber,
+                    Message = $"[Rule {ruleNumber}] '{skill.name}' is Official but uses non-production support: {issue}"
+                });
+            }
+        }
+
+        hasStatusWithDuration = false;
+        hasPeriodicStatus = false;
+
         // 7. Skills con StatusEffectDefinition persistente pero sin modifier Persistent
         if (hasStatusWithDuration)
         {
@@ -261,6 +278,17 @@ public static class SkillCompositionEditorTools
             {
                 skillsWithGaps++;
                 report.AppendLine($"  GAP [Runtime]: {runtimeGap}");
+            }
+
+            if (skill.CompositionState == SkillCompositionState.Official)
+            {
+                List<string> productionSupportIssues = SkillProductionSupportCatalog.GetProductionSupportIssues(skill);
+                if (productionSupportIssues.Count > 0)
+                {
+                    skillsWithGaps++;
+                    for (int i = 0; i < productionSupportIssues.Count; i++)
+                        report.AppendLine($"  GAP [Production]: {productionSupportIssues[i]}");
+                }
             }
 
             // Build lookup for modifier data by kind

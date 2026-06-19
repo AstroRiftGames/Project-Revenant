@@ -79,6 +79,8 @@ public class CreatureVariantLabWindow : EditorWindow
     private bool _showAdvancedTools;
     private string _actionFeedback;
     private MessageType _actionFeedbackType = MessageType.Info;
+    private string[] _effectOptions;
+    private string[] _modifierOptions;
 
     private GUIStyle _headerStyle;
 
@@ -87,6 +89,7 @@ public class CreatureVariantLabWindow : EditorWindow
         LoadConfig();
         EnsureController();
         LoadStatusDefinitions();
+        RebuildSupportOptions();
         Validate();
         EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         EditorApplication.hierarchyChanged += OnHierarchyChanged;
@@ -135,6 +138,19 @@ public class CreatureVariantLabWindow : EditorWindow
         {
             _selectedStatusIndex = _controller.ResolveSelectedStatusIndex(_state.statusDefinition, _statusDefinitions);
         }
+    }
+
+    private void RebuildSupportOptions()
+    {
+        LabEffectKind[] effectValues = (LabEffectKind[])System.Enum.GetValues(typeof(LabEffectKind));
+        _effectOptions = new string[effectValues.Length];
+        for (int i = 0; i < effectValues.Length; i++)
+            _effectOptions[i] = SkillProductionSupportCatalog.GetDisplayLabel(effectValues[i]);
+
+        LabModifierKind[] modifierValues = (LabModifierKind[])System.Enum.GetValues(typeof(LabModifierKind));
+        _modifierOptions = new string[modifierValues.Length];
+        for (int i = 0; i < modifierValues.Length; i++)
+            _modifierOptions[i] = SkillProductionSupportCatalog.GetDisplayLabel(modifierValues[i]);
     }
 
     private void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -416,8 +432,8 @@ public class CreatureVariantLabWindow : EditorWindow
         _state.delivery = (ImpactPattern)EditorGUILayout.EnumPopup(new GUIContent("Delivery", Tips.Delivery), _state.delivery);
         _state.primaryTarget = (PrimaryTargetRequirement)EditorGUILayout.EnumPopup(new GUIContent("Target", Tips.PrimaryTarget), _state.primaryTarget);
         LabEffectKind previousEffect = _state.effect;
-        _state.effect = (LabEffectKind)EditorGUILayout.EnumPopup(new GUIContent("Effect", Tips.Effect), _state.effect);
-        _state.modifier = (LabModifierKind)EditorGUILayout.EnumPopup(new GUIContent("Modifier", Tips.Modifier), _state.modifier);
+        _state.effect = (LabEffectKind)EditorGUILayout.Popup(new GUIContent("Effect", Tips.Effect), (int)_state.effect, _effectOptions);
+        _state.modifier = (LabModifierKind)EditorGUILayout.Popup(new GUIContent("Modifier", Tips.Modifier), (int)_state.modifier, _modifierOptions);
 
         if (_state.effect != previousEffect)
         {
@@ -495,6 +511,7 @@ public class CreatureVariantLabWindow : EditorWindow
         var configErrors = new List<string>();
         var compErrors = new List<string>();
         var warnings = new List<string>();
+        var productionWarnings = new List<string>();
 
         if (allIssues != null)
         {
@@ -510,7 +527,9 @@ public class CreatureVariantLabWindow : EditorWindow
                 }
                 else if (issue.severity == ValidationSeverity.Warning)
                 {
-                    if (issue.category != ValidationCategory.Production)
+                    if (issue.category == ValidationCategory.Production)
+                        productionWarnings.Add(issue.message);
+                    else
                         warnings.Add(issue.message);
                 }
             }
@@ -535,6 +554,18 @@ public class CreatureVariantLabWindow : EditorWindow
                 EditorGUI.indentLevel--;
             }
         }
+
+        if (productionWarnings.Count > 0)
+        {
+            EditorGUILayout.Space(4);
+            EditorGUILayout.HelpBox("Production gating warnings detected. These options can still be tested in the Lab, but they cannot be saved as production variants.", MessageType.Warning);
+            for (int i = 0; i < productionWarnings.Count; i++)
+                EditorGUILayout.LabelField(productionWarnings[i], EditorStyles.wordWrappedMiniLabel);
+        }
+
+        string saveBlockReason = _controller?.GetSaveBlockReason();
+        if (!string.IsNullOrEmpty(saveBlockReason))
+            EditorGUILayout.HelpBox(saveBlockReason, MessageType.Warning);
         EditorGUILayout.EndVertical();
     }
 

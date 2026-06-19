@@ -27,11 +27,11 @@ public static class SkillCompositionRules
 
     public static bool IsProductionCatalogCompatible(CreatureVariantLabState state)
     {
+        if (state == null)
+            return false;
+
         return state.primaryTarget != PrimaryTargetRequirement.GroundCell &&
-               state.effect != LabEffectKind.Summon &&
-               state.modifier != LabModifierKind.Bounce &&
-               state.modifier != LabModifierKind.Explosive &&
-               state.modifier != LabModifierKind.Persistent &&
-               state.modifier != LabModifierKind.Periodic;
+               SkillProductionSupportCatalog.IsProductionSupported(state.effect) &&
+               SkillProductionSupportCatalog.IsProductionSupported(state.modifier);
     }
 }

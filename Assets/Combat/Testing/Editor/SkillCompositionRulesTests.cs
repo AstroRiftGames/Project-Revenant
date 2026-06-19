@@ -91,6 +91,20 @@ public static class SkillCompositionRulesTests
     }
 
     [Test]
+    public static void IsProductionCatalogCompatible_Taunt_Invalid()
+    {
+        var state = new CreatureVariantLabState { effect = LabEffectKind.Taunt };
+        Assert.IsFalse(SkillCompositionRules.IsProductionCatalogCompatible(state));
+    }
+
+    [Test]
+    public static void IsProductionCatalogCompatible_Blind_Invalid()
+    {
+        var state = new CreatureVariantLabState { effect = LabEffectKind.Blind };
+        Assert.IsFalse(SkillCompositionRules.IsProductionCatalogCompatible(state));
+    }
+
+    [Test]
     public static void IsProductionCatalogCompatible_GroundCell_Invalid()
     {
         var state = new CreatureVariantLabState { primaryTarget = PrimaryTargetRequirement.GroundCell };

@@ -127,6 +127,13 @@ public class SkillDataEditor : Editor
         }
 
         EditorGUILayout.PropertyField(_compositionState, new GUIContent("State"));
+
+        var skill = (SkillData)target;
+        var productionSupportIssues = SkillProductionSupportCatalog.GetProductionSupportIssues(skill);
+        for (int i = 0; i < productionSupportIssues.Count; i++)
+        {
+            EditorGUILayout.HelpBox(productionSupportIssues[i], MessageType.Warning);
+        }
         
         // Group visually: Effects
         GUILayout.Label("Effects", EditorStyles.miniBoldLabel);
@@ -145,7 +152,6 @@ public class SkillDataEditor : Editor
         // Buttons
         if (GUILayout.Button("Validate This Skill", GUILayout.Height(30)))
         {
-            var skill = (SkillData)target;
             var violations = SkillCompositionEditorTools.ValidateSkill(skill);
             if (violations.Count == 0)
             {
