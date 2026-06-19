@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: HumanShaman
   displayName: Human Shaman
   isFusion: 0
-  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010103, type: 3}
+  unitPrefab: {fileID: 1672024382909255568, guid: 5844cda4db05e4e4f83844f076e2bc57, type: 3}
   team: 1
   role: 2
   combatStyle: 2
