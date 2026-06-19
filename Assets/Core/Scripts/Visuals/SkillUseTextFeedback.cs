@@ -16,6 +16,7 @@ public class SkillUseTextFeedback : MonoBehaviour
     [SerializeField] private Color _statusBuffColor = new(0.25f, 0.75f, 1f, 1f);
     [SerializeField] private Color _statusDebuffColor = new(0.72f, 0.35f, 0.95f, 1f);
     [SerializeField] private Color _statusHealColor = new(0.3f, 1f, 0.45f, 1f);
+    [SerializeField] private Color _missColor = new(1f, 1f, 1f, 1f);
 
     [Header("Debug")]
     [SerializeField] private bool _debugOnly = true;
@@ -82,6 +83,15 @@ public class SkillUseTextFeedback : MonoBehaviour
                 CreatePopup(popupAnchor, statusDef.ApplyPopupText, ResolveStatusPopupColor(skill.CompositionEffects[i].EffectKind));
             }
         }
+    }
+
+    public bool TryShowMissPopup(Unit popupAnchor)
+    {
+        if (popupAnchor == null || _popupPrefab == null)
+            return false;
+
+        CreatePopup(popupAnchor, "MISS", _missColor);
+        return true;
     }
 
     private Color ResolvePopupColor(Unit caster, Unit popupAnchor)

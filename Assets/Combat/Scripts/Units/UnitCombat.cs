@@ -76,6 +76,7 @@ public class UnitCombat : MonoBehaviour
 
     private Unit _unit;
     private SkillCaster _skillCaster;
+    private SkillUseTextFeedback _textFeedback;
     private float _nextAttackTime;
 
     public int AttackRangeInCells => _unit != null ? Mathf.Max(0, _unit.AttackRangeInCells) : 0;
@@ -84,6 +85,7 @@ public class UnitCombat : MonoBehaviour
     {
         _unit = GetComponent<Unit>();
         _skillCaster = GetComponent<SkillCaster>();
+        _textFeedback = GetComponent<SkillUseTextFeedback>();
     }
 
     public bool IsBasicActionTargetInRange(Unit target)
@@ -176,6 +178,7 @@ public class UnitCombat : MonoBehaviour
         }
         else
         {
+            ShowBasicAttackMissFeedback(target, targetRelation);
             Debug.Log($"[UnitCombat] {self.name}'s basic attack on {target?.name} MISSED (Chance: {Mathf.Clamp01(self.Accuracy - (target != null ? target.Evasion : 0f)) * 100:F1}%)");
         }
         
@@ -248,6 +251,18 @@ public class UnitCombat : MonoBehaviour
         Transform projectileParent = _unit.RoomContext != null ? _unit.RoomContext.transform : null;
         CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity, projectileParent);
         projectile.Launch(transform.position, target.transform, target.Position);
+    }
+
+    private void ShowBasicAttackMissFeedback(Unit target, TargetRelation targetRelation)
+    {
+        if (targetRelation != TargetRelation.Hostile || target == null)
+            return;
+
+        SkillUseTextFeedback targetFeedback = target.GetComponent<SkillUseTextFeedback>();
+        if (targetFeedback != null && targetFeedback.TryShowMissPopup(target))
+            return;
+
+        _textFeedback?.TryShowMissPopup(target);
     }
 
     private CombatProjectileVisual ResolveBasicActionProjectilePrefab()
