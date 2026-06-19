@@ -137,6 +137,15 @@ MonoBehaviour:
   - effectType: 11
     icon: {fileID: 21300000, guid: 9e7a2638c0f03dc408bb8accab3fdb83, type: 3}
     color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 12
+    icon: {fileID: 21300000, guid: 104612d5556b6534b84f02dc8f0017ad, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 13
+    icon: {fileID: 21300000, guid: 9e7a2638c0f03dc408bb8accab3fdb83, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - effectType: 14
+    icon: {fileID: 21300000, guid: 9e7a2638c0f03dc408bb8accab3fdb83, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 1}
   cursorIcons:
   - cursorType: 0
     icon: {fileID: 2800000, guid: 2d6841ef3c41be144ad9221ca3aa0fd9, type: 3}

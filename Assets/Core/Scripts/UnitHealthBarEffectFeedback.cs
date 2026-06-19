@@ -49,6 +49,8 @@ public class UnitHealthBarEffectFeedback : MonoBehaviour
         if (_statusEffectController == null) return;
 
         _statusEffectController.EffectApplied += OnEffectApplied;
+        _statusEffectController.EffectRefreshed += OnEffectRefreshed;
+        _statusEffectController.EffectStackChanged += OnEffectStackChanged;
         _statusEffectController.EffectRemoved += OnEffectRemoved;
     }
 
@@ -57,10 +59,22 @@ public class UnitHealthBarEffectFeedback : MonoBehaviour
         if (_statusEffectController == null) return;
 
         _statusEffectController.EffectApplied -= OnEffectApplied;
+        _statusEffectController.EffectRefreshed -= OnEffectRefreshed;
+        _statusEffectController.EffectStackChanged -= OnEffectStackChanged;
         _statusEffectController.EffectRemoved -= OnEffectRemoved;
     }
 
     private void OnEffectApplied(StatusEffectController controller, ActiveStatusEffect effect)
+    {
+        RefreshEffects();
+    }
+
+    private void OnEffectRefreshed(StatusEffectController controller, ActiveStatusEffect effect)
+    {
+        RefreshEffects();
+    }
+
+    private void OnEffectStackChanged(StatusEffectController controller, ActiveStatusEffect effect)
     {
         RefreshEffects();
     }
