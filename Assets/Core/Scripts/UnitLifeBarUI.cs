@@ -12,6 +12,10 @@ public class UnitLifeBarUI : MonoBehaviour
     private Canvas _parentCanvas;
     private int _maxHP;
 
+    private int _directDamageTaken = 0;
+    private float _lastDamageFeedback;
+    [SerializeField] private float _damageFeedbackCD;
+
     public void Initialize(LifeController lifeController, UnitAffiliationState affiliation, Canvas parentCanvas)
     {
         _lifeController = lifeController;
@@ -24,13 +28,24 @@ public class UnitLifeBarUI : MonoBehaviour
             UpdateLifeBar(_maxHP);
 
             _lifeController.OnLifeUpdated += UpdateLifeBar;
-            _lifeController.OnDamageTaken += ShowDamageTaken;
+            _lifeController.OnDamageTakenDetailed += UpdateDamageTaken;
         }
 
         bool isAlly = affiliation != null && affiliation.Team == UnitTeam.Ally;
         if (_lifeBar != null && _lifeBar.fillRect != null && _lifeBar.fillRect.TryGetComponent(out Image fillImage))
         {
             fillImage.color = isAlly ? _allyColor : _enemyColor;
+        }
+        _lastDamageFeedback = Time.time - _damageFeedbackCD;
+    }
+
+    private void Update()
+    {
+        if(Time.time >= _damageFeedbackCD + _lastDamageFeedback && _directDamageTaken > 0)
+        {
+            ShowDamageTaken(_directDamageTaken, DamageSourceKind.Direct);
+            _directDamageTaken = 0;
+            _lastDamageFeedback = Time.time;
         }
     }
 
@@ -39,7 +54,7 @@ public class UnitLifeBarUI : MonoBehaviour
         if (_lifeController != null)
         {
             _lifeController.OnLifeUpdated -= UpdateLifeBar;
-            _lifeController.OnDamageTaken -= ShowDamageTaken;
+            _lifeController.OnDamageTakenDetailed -= UpdateDamageTaken;
         }
     }
 
@@ -51,7 +66,19 @@ public class UnitLifeBarUI : MonoBehaviour
         }
     }
 
-    private void ShowDamageTaken(int damage)
+    private void UpdateDamageTaken(int damage, DamageSourceKind sourceKind)
+    {
+        if(sourceKind == DamageSourceKind.Direct)
+        {
+            _directDamageTaken += damage;
+        }
+        else if(sourceKind == DamageSourceKind.DoT)
+        {
+            ShowDamageTaken(damage, DamageSourceKind.DoT);
+        }
+    }
+
+    private void ShowDamageTaken(int damage, DamageSourceKind sourceKind)
     {
         if (_damageDealtPrefab == null || _parentCanvas == null) return;
 
@@ -59,7 +86,7 @@ public class UnitLifeBarUI : MonoBehaviour
         if (lifeUpdate != null)
         {
             lifeUpdate.transform.SetParent(_parentCanvas.transform, true);
-            lifeUpdate.Play(-damage);
+            lifeUpdate.Play(-damage, sourceKind);
         }
     }
 }

@@ -1105,3 +1105,4 @@ MonoBehaviour:
   _damageDealtPrefab: {fileID: 4326233653113426999, guid: aac7e63c414708840ab564d100722293, type: 3}
   _allyColor: {r: 0, g: 1, b: 0, a: 1}
   _enemyColor: {r: 1, g: 0, b: 0, a: 1}
+  _damageFeedbackCD: 1

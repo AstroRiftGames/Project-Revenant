@@ -16,11 +16,11 @@ public class HealthDeltaText : BaseFeedbackText
         base.Awake();
     }
 
-    public override void Play(int delta)
+    public override void Play(int delta, DamageSourceKind sourceKind)
     {
         ApplyRandomRotation();
         _rectTransform.anchoredPosition = Vector2.zero;
-        base.Play(delta);
+        base.Play(delta, sourceKind);
     }
 
     private void ApplyRandomRotation()

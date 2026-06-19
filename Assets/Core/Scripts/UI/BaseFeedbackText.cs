@@ -19,7 +19,8 @@ public abstract class BaseFeedbackText : MonoBehaviour
     protected TextMeshProUGUI _label;
     protected Animator _animator;
 
-    protected static readonly int PlayTrigger = Animator.StringToHash("Play");
+    protected static readonly int FadeUp = Animator.StringToHash("FadeUp");
+    protected static readonly int FadeDown = Animator.StringToHash("FadeDown");
 
     protected virtual void Awake()
     {
@@ -28,7 +29,7 @@ public abstract class BaseFeedbackText : MonoBehaviour
     }
 
     /// <summary>Initialises text and triggers the animation. Call immediately after instantiation.</summary>
-    public virtual void Play(int delta)
+    public virtual void Play(int delta, DamageSourceKind sourceKind = DamageSourceKind.Direct)
     {
         if (delta == 0)
         {
@@ -39,7 +40,13 @@ public abstract class BaseFeedbackText : MonoBehaviour
         _label.text = delta > 0 ? $"+{delta}" : delta.ToString();
         _label.color = delta > 0 ? _positiveColor : _negativeColor;
 
-        _animator.SetTrigger(PlayTrigger);
+        _animator.SetTrigger(
+            sourceKind switch {
+                DamageSourceKind.Direct => FadeUp,
+                DamageSourceKind.DoT => FadeDown,
+                _ => FadeUp,
+            }
+            );
     }
 
     /// <summary>Called by the Animation Event on the last keyframe.</summary>
