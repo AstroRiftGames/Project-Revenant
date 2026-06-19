@@ -60,6 +60,7 @@ public class SkillCaster : MonoBehaviour
         rejectReason = null;
         SkillData skill = ResolveSkill();
 
+        if (IsTemporaryCombatUnit()) { rejectReason = "caster is a temporary combat unit."; return false; }
         if (_unit == null) { rejectReason = "caster unit is not resolved."; return false; }
         if (skill == null) { rejectReason = "no skill assigned."; return false; }
         if (!skill.TryValidateDeclarativeContract(out string contractError)) { rejectReason = $"skill data is invalid: {contractError}."; return false; }
@@ -217,7 +218,7 @@ public class SkillCaster : MonoBehaviour
     public SkillData CurrentCastingSkill => _castingSkill;
     public Unit CastTarget => _castingContext != null ? _castingContext.PrimaryTarget : _castingTarget;
     public float CastRemainingTime => Mathf.Max(0f, _castRemainingTime);
-    public bool IsSkillReady => !IsCasting && ResolveSkillReadiness(Skill);
+    public bool IsSkillReady => !IsTemporaryCombatUnit() && !IsCasting && ResolveSkillReadiness(Skill);
     public bool UsesAbilityChargeVisual => HasSkill;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
@@ -236,7 +237,7 @@ public class SkillCaster : MonoBehaviour
         AnySkillUsed += HandleAnySkillUsed;
 
         if (_lifeController != null)
-            _lifeController.OnDamageTaken += HandleDamageTaken;
+            _lifeController.OnDamageTakenDetailed += HandleDamageTakenDetailed;
     }
 
     private void OnDisable()
@@ -246,7 +247,7 @@ public class SkillCaster : MonoBehaviour
         AnySkillUsed -= HandleAnySkillUsed;
 
         if (_lifeController != null)
-            _lifeController.OnDamageTaken -= HandleDamageTaken;
+            _lifeController.OnDamageTakenDetailed -= HandleDamageTakenDetailed;
     }
 
     private void Update()
@@ -266,6 +267,9 @@ public class SkillCaster : MonoBehaviour
 
     private bool TryUseInternal(Unit combatTarget, Vector2Int targetCell, bool hasTargetCell, SkillData skillOverride)
     {
+        if (IsTemporaryCombatUnit())
+            return false;
+
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} attempting skill. Combat target: {FormatUnitName(combatTarget)}.");
 
         SkillData skill = skillOverride != null ? skillOverride : ResolveSkill();
@@ -301,6 +305,9 @@ public class SkillCaster : MonoBehaviour
 
     public void GrantChargeFromBasicAction(TargetRelation targetRelation)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         AbilityChargeSource source = ResolveBasicActionChargeSource(targetRelation);
         if (source == AbilityChargeSource.BasicHeal && !CanChargeFromBasicHeal())
             return;
@@ -310,6 +317,9 @@ public class SkillCaster : MonoBehaviour
 
     public void AddAbilityChargeFromSource(AbilityChargeSource source)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         if (!CanReceiveChargeFromSource(source))
             return;
 
@@ -318,11 +328,17 @@ public class SkillCaster : MonoBehaviour
 
     public void AddAbilityCharge(float amount)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         AddAbilityCharge(amount, AbilityChargeSource.BasicAttack);
     }
 
     public void AddAbilityCharge(float amount, AbilityChargeSource source)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         if (!CanApplyAbilityCharge())
             return;
 
@@ -357,6 +373,100 @@ public class SkillCaster : MonoBehaviour
     public void InterruptCast()
     {
         InterruptCast("external interruption");
+    }
+
+    private bool _isConfirmedTemporaryCombatUnit;
+    private bool IsTemporaryCombatUnit()
+    {
+        if (_isConfirmedTemporaryCombatUnit)
+            return true;
+
+        if (GetComponent<TemporaryCombatUnit>() != null)
+        {
+            _isConfirmedTemporaryCombatUnit = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool CanContinueFromCurrentContext(SkillData skill, SkillContext context, out string reason)
+    {
+        reason = null;
+        if (skill == null)
+        {
+            reason = "skill is null";
+            return false;
+        }
+        if (context == null)
+        {
+            reason = "context is null";
+            return false;
+        }
+        if (context.Caster == null)
+        {
+            reason = "caster is null";
+            return false;
+        }
+        if (!context.Caster.IsAlive || context.Caster.LifecycleState != UnitLifecycleState.Alive)
+        {
+            reason = "caster is not alive";
+            return false;
+        }
+        if (context.RoomContext == null)
+        {
+            reason = "room context is null";
+            return false;
+        }
+
+        bool requiresGrid = skill.PrimaryTargetRequirement == PrimaryTargetRequirement.GroundCell ||
+                            skill.ImpactCenterMode == ImpactCenterMode.TargetCell;
+        if (requiresGrid && context.RoomGrid == null)
+        {
+            reason = "grid is missing";
+            return false;
+        }
+
+        if (context.HasPrimaryTarget)
+        {
+            Unit target = context.PrimaryTarget;
+            if (target == null)
+            {
+                reason = "primary target is null";
+                return false;
+            }
+            if (!target.IsAlive || target.LifecycleState != UnitLifecycleState.Alive)
+            {
+                reason = "primary target is not alive";
+                return false;
+            }
+            if (target.RoomContext != context.RoomContext)
+            {
+                reason = "primary target is in a different room";
+                return false;
+            }
+            if (context.Caster.RoomContext != context.RoomContext)
+            {
+                reason = "caster is in a different room";
+                return false;
+            }
+            if (!CanUseUnitAsPrimaryTarget(skill, target))
+            {
+                reason = "primary target is invalid for skill requirements";
+                return false;
+            }
+        }
+
+        if (requiresGrid && context.HasTargetCell)
+        {
+            if (!IsValidGroundTargetCell(context, false))
+            {
+                reason = "ground target cell is invalid or blocked";
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool CanGainAbilityChargeByStatus()
@@ -414,6 +524,9 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleUnitDied(Unit deadUnit)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         if (deadUnit == null || !IsOwnerCombatAlive() || _unit.Role != UnitRole.DPS)
             return;
 
@@ -430,8 +543,14 @@ public class SkillCaster : MonoBehaviour
         AddAbilityChargeFromSource(AbilityChargeSource.Kill);
     }
 
-    private void HandleDamageTaken(int amount)
+    private void HandleDamageTakenDetailed(int amount, DamageSourceKind sourceKind)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
+        if (sourceKind != DamageSourceKind.Direct)
+            return;
+
         if (!IsOwnerCombatAlive() || _unit.Role != UnitRole.Tank || amount <= 0)
             return;
 
@@ -440,10 +559,16 @@ public class SkillCaster : MonoBehaviour
 
     private void HandleAnySkillUsed(Unit caster, SkillData skill, Unit popupAnchor)
     {
+        if (IsTemporaryCombatUnit())
+            return;
+
         if (!IsOwnerCombatAlive() || _unit.Role != UnitRole.Support)
             return;
 
         if (caster == null || skill == null || ReferenceEquals(caster, _unit))
+            return;
+
+        if (caster.GetComponent<TemporaryCombatUnit>() != null)
             return;
 
         if (caster.Team != _unit.Team)
@@ -486,6 +611,12 @@ public class SkillCaster : MonoBehaviour
 
     private bool CanStartCast(SkillData skill)
     {
+        if (IsTemporaryCombatUnit())
+        {
+            LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: temporary combat units cannot use skills.");
+            return false;
+        }
+
         if (_unit == null)
         {
             LogDebug($"[SkillCaster] {FormatOwnerIdentity()} aborted: owner unit was not resolved.");
@@ -645,7 +776,17 @@ public class SkillCaster : MonoBehaviour
             return true;
 
         if (skill != null && skill.TargetFallbackMode == TargetFallbackMode.ContinueFromCurrentContext)
-            return resolvedContext != null;
+        {
+            if (CanContinueFromCurrentContext(skill, resolvedContext, out string rejectReason))
+            {
+                return true;
+            }
+            else
+            {
+                LogDebug($"[SkillCaster] ContinueFromCurrentContext aborted: {rejectReason}.");
+                return false;
+            }
+        }
 
         if (skill != null && skill.TargetFallbackMode == TargetFallbackMode.Cancel)
             return false;

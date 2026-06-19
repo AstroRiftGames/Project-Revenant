@@ -164,13 +164,13 @@ public abstract class Creature : MonoBehaviour, IUnit, ISelectable, ICharacterSt
         return creature.gameObject.activeInHierarchy;
     }
 
-    public void TakeDamage(int amount, IUnit source = null)
+    public void TakeDamage(int amount, IUnit source = null, DamageSourceKind sourceKind = DamageSourceKind.Direct)
     {
         int resolvedDamage = ResolveIncomingDamage(amount, source);
         if (resolvedDamage > 0)
             _statusEffectController?.HandleIncomingAttack();
 
-        _lifeController?.TakeDamage(resolvedDamage, source);
+        _lifeController?.TakeDamage(resolvedDamage, source, sourceKind);
     }
 
     public void Heal(int amount, IUnit source = null)

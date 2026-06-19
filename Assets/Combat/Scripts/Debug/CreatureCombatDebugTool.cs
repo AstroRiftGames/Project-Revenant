@@ -289,7 +289,7 @@ public class CreatureCombatDebugTool : MonoBehaviour
             Debug.LogWarning($"[CreatureCombatDebugTool] '{target.name}' has no LifeController.");
             return;
         }
-        life.TakeDamage(int.MaxValue);
+        life.TakeDamage(int.MaxValue, null, DamageSourceKind.Debug);
         Debug.Log($"[CreatureCombatDebugTool] Killed '{target.name}'.");
     }
 

@@ -23,6 +23,7 @@ public class LifeController : MonoBehaviour, IDamageable
     public static event Action<Unit> OnUnitDied;
     public static event Action<Unit> OnHealthChanged;
     public Action<int> OnDamageTaken;
+    public Action<int, DamageSourceKind> OnDamageTakenDetailed;
     public Action<int> OnLifeUpdated;
 
     public Unit LastAttacker { get; private set; }
@@ -59,12 +60,12 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
     }
 
-    public void TakeDamage(int amount, IUnit source = null)
+    public void TakeDamage(int amount, IUnit source = null, DamageSourceKind sourceKind = DamageSourceKind.Direct)
     {
-        TakeDamage(amount, source, false);
+        TakeDamage(amount, source, false, sourceKind);
     }
 
-    public void TakeDamage(int amount, IUnit source, bool bypassShields)
+    public void TakeDamage(int amount, IUnit source, bool bypassShields, DamageSourceKind sourceKind = DamageSourceKind.Direct)
     {
         if (!CanReceiveCombatLifeEffect() || amount <= 0)
             return;
@@ -92,6 +93,7 @@ public class LifeController : MonoBehaviour, IDamageable
         NotifyHealthChanged();
         OnLifeUpdated?.Invoke(CurrentHealth);
         OnDamageTaken?.Invoke(damageToHealth);
+        OnDamageTakenDetailed?.Invoke(damageToHealth, sourceKind);
 
         if (CurrentHealth == 0)
             ResolveDeath();

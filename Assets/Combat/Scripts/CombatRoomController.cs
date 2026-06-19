@@ -375,6 +375,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
         if (_roomContext == null)
             return;
 
+        InterruptActiveUnitCastingOnEncounterResolved();
         CancelActiveUnitMovementOnEncounterResolved();
         CleanupStatusEffectsOnEncounterResolved();
         CleanupTemporaryCombatUnits();
@@ -383,6 +384,23 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             return;
 
         CleanupProjectilesOnVictory();
+    }
+
+    private void InterruptActiveUnitCastingOnEncounterResolved()
+    {
+        if (_roomContext == null)
+            return;
+
+        Unit[] allUnits = _roomContext.GetComponentsInChildren<Unit>(includeInactive: true);
+        for (int i = 0; i < allUnits.Length; i++)
+        {
+            Unit unit = allUnits[i];
+            if (unit == null)
+                continue;
+
+            SkillCaster skillCaster = unit.GetComponent<SkillCaster>();
+            skillCaster?.InterruptCast();
+        }
     }
 
     private void CleanupStatusEffectsOnEncounterResolved()
