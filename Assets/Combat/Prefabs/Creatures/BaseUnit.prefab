@@ -351,7 +351,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 997d671fff5655d44a18cbe8b0eed742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _animator: {fileID: 0}
+  _animatorSync: {fileID: 0}
   _movement: {fileID: 7701875384359832061}
   _defaultFacingDirection: {x: 0, y: -1}
   _attackStateDuration: 0.15
@@ -537,6 +537,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1245600239630665284}
   - component: {fileID: 133726671917518890}
+  - component: {fileID: 2407836801558652858}
   m_Layer: 0
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -574,6 +575,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dbb4dc9248f4a2f914d1ad83980fef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &2407836801558652858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6544969360564936545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10744db447f076444bd4706fe663b157, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bodyAnimator: {fileID: 4205939575717462751}
+  clothAnimator: {fileID: 3034310766945447335}
+  weaponAnimator: {fileID: 7095866876270813563}
 --- !u!1001 &759142484392599347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -708,6 +724,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Humans_DPS_Body_Idle
       objectReference: {fileID: 0}
+    - target: {fileID: 1160356261127867848, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: d37d6f42e9ba1d041927fe7d975aaeff, type: 2}
     - target: {fileID: 3626916397498700004, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
       propertyPath: m_SortingLayer
       value: 4
@@ -761,6 +781,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -8435245712485981826, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+--- !u!95 &4205939575717462751 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+  m_PrefabInstance: {fileID: 3045583564772527895}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5121036714326929434 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
@@ -778,6 +803,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Humans_DPS_Clothes_Idle
       objectReference: {fileID: 0}
+    - target: {fileID: 1160356261127867848, guid: 66ffc6daa6dc44440b3329364f3b1329, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 2928622b97779a348ab36840a96da6a9, type: 2}
     - target: {fileID: 3626916397498700004, guid: 66ffc6daa6dc44440b3329364f3b1329, type: 3}
       propertyPath: m_SortingLayer
       value: 4
@@ -831,6 +860,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -8435245712485981826, guid: 66ffc6daa6dc44440b3329364f3b1329, type: 3}
+--- !u!95 &3034310766945447335 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: 66ffc6daa6dc44440b3329364f3b1329, type: 3}
+  m_PrefabInstance: {fileID: 4181135199909732463}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6292625511604035426 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: 66ffc6daa6dc44440b3329364f3b1329, type: 3}
@@ -848,6 +882,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Humans_DPS_Axes_Idle
       objectReference: {fileID: 0}
+    - target: {fileID: 1160356261127867848, guid: ac1fc5bca67601c4281b7172054464a5, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 28ac0f4d2f7bbe648b7ae46721f34f22, type: 2}
     - target: {fileID: 3626916397498700004, guid: ac1fc5bca67601c4281b7172054464a5, type: 3}
       propertyPath: m_SortingLayer
       value: 4
@@ -904,5 +942,10 @@ PrefabInstance:
 --- !u!4 &2249118469356262334 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7878350319992209165, guid: ac1fc5bca67601c4281b7172054464a5, type: 3}
+  m_PrefabInstance: {fileID: 8242709417770380467}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &7095866876270813563 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 1160356261127867848, guid: ac1fc5bca67601c4281b7172054464a5, type: 3}
   m_PrefabInstance: {fileID: 8242709417770380467}
   m_PrefabAsset: {fileID: 0}
