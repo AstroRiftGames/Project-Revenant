@@ -52,6 +52,9 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 }
             }
         }
+
+        // 3. Process origin tracer visuals (Phase 3B)
+        CreateTracers(skill, context, impacts);
     }
 
     private static Material GetSharedMaterial()
@@ -133,6 +136,202 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
 
         return unit.transform.position;
+    }
+
+    public static Vector3 ResolveUnitCenterPosition(Unit unit)
+    {
+        if (unit == null)
+            return Vector3.zero;
+
+        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>();
+        bool hasBounds = false;
+        Bounds combinedBounds = new Bounds();
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            if (!hasBounds)
+            {
+                combinedBounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combinedBounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        if (hasBounds)
+        {
+            return new Vector3(combinedBounds.center.x, combinedBounds.center.y, unit.transform.position.z);
+        }
+
+        return unit.transform.position;
+    }
+
+    private static void CreateTracers(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    {
+        Unit caster = context.Caster;
+        if (caster == null) return;
+
+        Vector3 origin = ResolveUnitCenterPosition(caster);
+        if (origin == Vector3.zero) return;
+
+        SkillEffectKind mainEffect = GetMainEffectKind(skill);
+        Color tracerColor = GetTracerColor(mainEffect);
+
+        int tracerCount = 0;
+        const int maxTracers = 6;
+        HashSet<Vector3> drawnPositions = new HashSet<Vector3>();
+
+        for (int i = 0; i < impacts.Count; i++)
+        {
+            SkillImpact impact = impacts[i];
+            if (impact == null) continue;
+
+            Vector3 destination = Vector3.zero;
+            if (impact.HasTargetUnit)
+            {
+                if (impact.TargetUnit == caster)
+                {
+#if UNITY_EDITOR
+                    UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: target is self-cast for unit {caster.name}.");
+#endif
+                    continue; // Skip self-tracer
+                }
+                destination = ResolveUnitCenterPosition(impact.TargetUnit);
+            }
+            else
+            {
+                destination = ResolveImpactPosition(impact, context);
+            }
+
+            if (destination == Vector3.zero) continue;
+            if (drawnPositions.Contains(destination)) continue;
+
+            // Reduce minimum distance threshold to 0.01f (about 0.1 cells) so close targets get tracers
+            if ((destination - origin).sqrMagnitude < 0.01f)
+            {
+#if UNITY_EDITOR
+                UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: distance too short between {caster.name} and {destination}.");
+#endif
+                continue; 
+            }
+
+            if (tracerCount >= maxTracers)
+            {
+#if UNITY_EDITOR
+                UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: reached maximum tracer count ({maxTracers}) for skill {skill.DisplayName}.");
+#endif
+                break;
+            }
+
+#if UNITY_EDITOR
+            UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer spawned from {caster.name} to target position {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
+#endif
+            CreateSingleTracer(caster, origin, destination, tracerColor);
+            drawnPositions.Add(destination);
+            tracerCount++;
+        }
+
+        // Fallback: If no tracers drawn (e.g. AoE with no targets, or pure spatial effect) but impact center is valid
+        if (tracerCount == 0 && context.ImpactCenterWorld != Vector3.zero)
+        {
+            if (!context.HasImpactCenterUnit || context.ImpactCenterUnit != caster)
+            {
+                Vector3 destination = context.ImpactCenterWorld;
+                if ((destination - origin).sqrMagnitude >= 0.01f)
+                {
+#if UNITY_EDITOR
+                    UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer fallback spawned from {caster.name} to impact center {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
+#endif
+                    CreateSingleTracer(caster, origin, destination, tracerColor);
+                }
+            }
+        }
+    }
+
+    private static void CreateSingleTracer(Unit caster, Vector3 origin, Vector3 destination, Color color)
+    {
+        GameObject obj = new GameObject("VFX_Placeholder_Tracer");
+        LineRenderer lr = obj.AddComponent<LineRenderer>();
+        lr.sharedMaterial = GetSharedMaterial();
+        lr.useWorldSpace = true;
+        lr.alignment = LineAlignment.View;
+        lr.loop = false;
+        
+        // Increased width for visibility: start 0.065f, end 0.03f
+        lr.startWidth = 0.065f;
+        lr.endWidth = 0.03f;
+
+        lr.startColor = color;
+        lr.endColor = color;
+        
+        // High sorting offset (+45) to draw on top of units and standard impact VFX
+        ConfigureSorting(obj, caster, 45); 
+
+        var behavior = obj.AddComponent<TracerVisualBehavior>();
+        // Increased duration to 0.35s for validation in play mode
+        behavior.Initialize(lr, origin, destination, 0.35f, color);
+    }
+
+    private static SkillEffectKind GetMainEffectKind(SkillData skill)
+    {
+        if (skill == null || skill.CompositionEffects == null || skill.CompositionEffects.Length == 0)
+        {
+            return SkillEffectKind.Damage;
+        }
+
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
+        {
+            var kind = skill.CompositionEffects[i].EffectKind;
+            if (kind == SkillEffectKind.Damage) return kind;
+        }
+        for (int i = 0; i < skill.CompositionEffects.Length; i++)
+        {
+            var kind = skill.CompositionEffects[i].EffectKind;
+            if (kind == SkillEffectKind.Heal || kind == SkillEffectKind.Shield) return kind;
+        }
+
+        return skill.CompositionEffects[0].EffectKind;
+    }
+
+    private static Color GetTracerColor(SkillEffectKind effectKind)
+    {
+        switch (effectKind)
+        {
+            case SkillEffectKind.Damage:
+                return new Color(1f, 0.4f, 0.1f, 1f); // Bright red-orange
+
+            case SkillEffectKind.Heal:
+                return new Color(0.2f, 1f, 0.4f, 1f); // Neon green
+
+            case SkillEffectKind.Shield:
+                return new Color(0.3f, 0.85f, 1f, 1f); // Sky blue
+
+            case SkillEffectKind.Haste:
+            case SkillEffectKind.StrengthBuff:
+            case SkillEffectKind.Buff:
+                return new Color(1f, 0.9f, 0.4f, 1f); // Gold
+
+            case SkillEffectKind.Slow:
+            case SkillEffectKind.Stun:
+            case SkillEffectKind.PoisonBurn:
+            case SkillEffectKind.Taunt:
+            case SkillEffectKind.Blind:
+            case SkillEffectKind.Debuff:
+            case SkillEffectKind.StatModifierDebuff:
+                return new Color(0.9f, 0.2f, 0.9f, 1f); // Hot pink/magenta
+
+            case SkillEffectKind.Summon:
+                return new Color(0.1f, 1f, 1f, 1f); // Cyan
+
+            default:
+                return new Color(0.8f, 0.8f, 0.8f, 1f); // Gray
+        }
     }
 
     private static void ConfigureSorting(GameObject obj, Unit targetUnit, int orderOffset)
@@ -546,6 +745,54 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             _lr.SetPosition(2, centerOffset);
             _lr.SetPosition(3, centerOffset + Vector3.up * _size);
             _lr.SetPosition(4, centerOffset + Vector3.down * _size);
+        }
+    }
+
+    private class TracerVisualBehavior : MonoBehaviour
+    {
+        private LineRenderer _lr;
+        private Vector3 _start;
+        private Vector3 _end;
+        private float _lifetime;
+        private float _elapsed;
+        private Color _color;
+
+        public void Initialize(LineRenderer lr, Vector3 start, Vector3 end, float lifetime, Color color)
+        {
+            _lr = lr;
+            _start = start;
+            _end = end;
+            _lifetime = lifetime;
+            _color = color;
+            
+            if (_lr != null)
+            {
+                _lr.positionCount = 2;
+                _lr.SetPosition(0, _start);
+                _lr.SetPosition(1, _end);
+                _lr.startColor = _color;
+                _lr.endColor = _color;
+            }
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            float t = _elapsed / _lifetime;
+            Color sc = _color;
+            sc.a *= (1f - t);
+
+            if (_lr != null)
+            {
+                _lr.startColor = sc;
+                _lr.endColor = sc;
+            }
         }
     }
 }
