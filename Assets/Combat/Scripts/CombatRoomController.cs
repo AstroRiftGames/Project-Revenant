@@ -487,6 +487,12 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             if (vfx != null)
                 Destroy(vfx.gameObject);
         }
+
+        GameObject combatVfxRoot = GameObject.Find("_CombatVfxRuntimeRoot");
+        if (combatVfxRoot != null)
+        {
+            Destroy(combatVfxRoot);
+        }
     }
 
     private void LogDebug(string message)

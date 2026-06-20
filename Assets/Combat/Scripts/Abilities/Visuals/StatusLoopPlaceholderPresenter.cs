@@ -87,6 +87,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         if (effectType == SkillEffectKind.Stun)
         {
             GameObject obj = new GameObject("VFX_StatusLoop_Stun");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(obj, unit, keepWorldPosition: true);
             StunLoopBehavior behavior = obj.AddComponent<StunLoopBehavior>();
             behavior.Initialize(unit, GetSharedMaterial());
             return obj;
@@ -94,6 +95,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         else if (effectType == SkillEffectKind.Slow)
         {
             GameObject obj = new GameObject("VFX_StatusLoop_Slow");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(obj, unit, keepWorldPosition: true);
             SlowLoopBehavior behavior = obj.AddComponent<SlowLoopBehavior>();
             behavior.Initialize(unit, GetSharedMaterial());
             return obj;
@@ -245,6 +247,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 return;
             }
 
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
             UpdatePosition();
         }
 
@@ -351,6 +354,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 return;
             }
 
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
             UpdatePosition();
         }
 

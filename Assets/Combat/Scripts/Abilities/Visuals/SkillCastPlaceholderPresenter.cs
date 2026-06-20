@@ -82,6 +82,7 @@ public class SkillCastPlaceholderPresenter : MonoBehaviour
     private static void CreatePersistentVisuals(SkillCastVisualEvent evt)
     {
         GameObject casterRingObj = new GameObject("CasterRing_Placeholder");
+        CombatVfxHierarchyHelper.ParentToUnitVisual(casterRingObj, evt.Caster, keepWorldPosition: true);
         GameObject telegraphRingObj = null;
 
         string sortingLayerName = "Gameplay";
@@ -113,6 +114,7 @@ public class SkillCastPlaceholderPresenter : MonoBehaviour
         if (evt.HasImpactPosition)
         {
             telegraphRingObj = new GameObject("TelegraphRing_Placeholder");
+            CombatVfxHierarchyHelper.ParentToCombatVfxRoot(telegraphRingObj);
             LineRenderer lrTelegraph = telegraphRingObj.AddComponent<LineRenderer>();
             lrTelegraph.sharedMaterial = GetSharedMaterial();
             lrTelegraph.useWorldSpace = true;
@@ -223,7 +225,6 @@ public class SkillCastPlaceholderPresenter : MonoBehaviour
     private class TelegraphRingBehavior : MonoBehaviour
     {
         private LineRenderer _lr;
-        private Vector3 _center;
         private float _radius;
         private float _elapsed;
         private Color _baseColor;
@@ -231,7 +232,7 @@ public class SkillCastPlaceholderPresenter : MonoBehaviour
         public void Initialize(LineRenderer lr, Vector3 center, float radius, Color color)
         {
             _lr = lr;
-            _center = center;
+            transform.position = center;
             _radius = radius;
             _baseColor = color;
             DrawRing();
@@ -262,7 +263,7 @@ public class SkillCastPlaceholderPresenter : MonoBehaviour
                 float angle = ((float)i / segments) * Mathf.PI * 2f;
                 float x = Mathf.Cos(angle) * _radius;
                 float y = Mathf.Sin(angle) * _radius;
-                _lr.SetPosition(i, _center + new Vector3(x, y, 0f));
+                _lr.SetPosition(i, transform.position + new Vector3(x, y, 0f));
             }
         }
     }

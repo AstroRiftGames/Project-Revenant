@@ -67,6 +67,7 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
     private static void CreateMeleeSlash(Unit attacker, Unit target, Vector3 attackerPos, Vector3 targetPos)
     {
         GameObject slashObj = new GameObject("MeleeSlash_Placeholder");
+        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(slashObj);
         
         // Find best sorting settings from attacker's SpriteRenderer
         string sortingLayerName = "Gameplay";
@@ -123,6 +124,7 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
     private static void CreateHitImpact(Unit target, Vector3 targetPos)
     {
         GameObject impactObj = new GameObject("HitImpact_Placeholder");
+        CombatVfxHierarchyHelper.ParentToUnitVisual(impactObj, target, keepWorldPosition: true);
         
         string sortingLayerName = "Gameplay";
         int sortingOrder = 1010; // Draw slightly in front of slash
@@ -195,7 +197,6 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
     private class RingImpactBehavior : MonoBehaviour
     {
         private LineRenderer _lr;
-        private Vector3 _center;
         private float _lifetime;
         private float _elapsed;
         private float _startRadius;
@@ -206,7 +207,7 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
         public void Initialize(LineRenderer lr, Vector3 center, float lifetime, float startRadius, float endRadius)
         {
             _lr = lr;
-            _center = center;
+            transform.position = center;
             _lifetime = lifetime;
             _startRadius = startRadius;
             _endRadius = endRadius;
@@ -250,7 +251,7 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
                 float angle = ((float)i / segments) * Mathf.PI * 2f;
                 float x = Mathf.Cos(angle) * radius;
                 float y = Mathf.Sin(angle) * radius;
-                _lr.SetPosition(i, _center + new Vector3(x, y, 0f));
+                _lr.SetPosition(i, transform.position + new Vector3(x, y, 0f));
             }
         }
     }

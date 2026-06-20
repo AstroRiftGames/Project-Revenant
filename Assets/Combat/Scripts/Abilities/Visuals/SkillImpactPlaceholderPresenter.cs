@@ -261,6 +261,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateSingleTracer(Unit caster, Vector3 origin, Vector3 destination, Color color)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Tracer");
+        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(obj);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -410,6 +411,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateDamageImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Damage");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -436,6 +438,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             GameObject obj = new GameObject($"VFX_Placeholder_Heal_Cross_{i}");
+            CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
             LineRenderer lr = obj.AddComponent<LineRenderer>();
             lr.sharedMaterial = GetSharedMaterial();
             lr.useWorldSpace = true;
@@ -466,6 +469,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateShieldImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Shield");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -488,6 +492,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateBuffImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Buff");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -510,6 +515,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateDebuffImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Debuff");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -532,6 +538,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateStatusImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Status");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -554,6 +561,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateKnockbackImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Knockback");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -608,6 +616,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         if (!hasSummonPos) return;
 
         GameObject obj = new GameObject("VFX_Placeholder_Summon");
+        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(obj);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -633,7 +642,6 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private class RingImpactBehavior : MonoBehaviour
     {
         private LineRenderer _lr;
-        private Vector3 _center;
         private float _lifetime;
         private float _elapsed;
         private float _startRadius;
@@ -646,7 +654,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         public void Initialize(LineRenderer lr, Vector3 center, float lifetime, float startRadius, float endRadius, float startVerticalOffset, float endVerticalOffset)
         {
             _lr = lr;
-            _center = center;
+            transform.position = center;
             _lifetime = lifetime;
             _startRadius = startRadius;
             _endRadius = endRadius;
@@ -692,7 +700,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 float angle = ((float)i / segments) * Mathf.PI * 2f;
                 float x = Mathf.Cos(angle) * radius;
                 float y = Mathf.Sin(angle) * radius;
-                _lr.SetPosition(i, _center + new Vector3(x, y + verticalOffset, 0f));
+                _lr.SetPosition(i, transform.position + new Vector3(x, y + verticalOffset, 0f));
             }
         }
     }
@@ -700,7 +708,6 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private class CrossImpactBehavior : MonoBehaviour
     {
         private LineRenderer _lr;
-        private Vector3 _center;
         private float _lifetime;
         private float _elapsed;
         private float _size;
@@ -711,7 +718,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         public void Initialize(LineRenderer lr, Vector3 center, float lifetime, float size, float verticalSpeed, Color color)
         {
             _lr = lr;
-            _center = center;
+            transform.position = center;
             _lifetime = lifetime;
             _size = size;
             _verticalSpeed = verticalSpeed;
@@ -747,7 +754,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         {
             if (_lr == null) return;
 
-            Vector3 centerOffset = _center + new Vector3(0f, verticalOffset, 0f);
+            Vector3 centerOffset = transform.position + new Vector3(0f, verticalOffset, 0f);
             
             _lr.positionCount = 5;
             _lr.SetPosition(0, centerOffset + Vector3.left * _size);
@@ -1034,6 +1041,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateCentralFlash(Unit targetUnit, Vector3 position, Color effectColor)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Flash");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
@@ -1057,6 +1065,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void CreateSingleParticle(Unit targetUnit, Vector3 position, Vector3 velocity, float lifetime, float length, float startWidth, float endWidth, Color color, float drag = 0f, Vector3 gravity = default)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Particle");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
         LineRenderer lr = obj.AddComponent<LineRenderer>();
         lr.sharedMaterial = GetSharedMaterial();
         lr.useWorldSpace = true;
