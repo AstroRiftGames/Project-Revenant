@@ -36,7 +36,7 @@ MonoBehaviour:
   _compositionModifierKinds: 
   _compositionModifierData: []
   _compositionState: 0
-  _castTime: 0
+  _castTime: 1
   _rangeInCells: 1
   _radiusInCells: 1
   _lineLengthInCells: 0

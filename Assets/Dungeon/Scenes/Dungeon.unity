@@ -400,7 +400,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enabled: 1
+  _enabled: 0
   _debugLogs: 0
   _runtimeRoot: {fileID: 0}
   _defaultDuration: 0.6

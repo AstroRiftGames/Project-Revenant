@@ -19,6 +19,11 @@ public class SkillCaster : MonoBehaviour
 {
     public static event Action<Unit, SkillData, Unit> AnySkillUsed;
     public static event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> AnySkillImpactsResolvedForVisuals;
+    public static event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> AnySkillEffectsAppliedForVisuals;
+
+    public static event Action<SkillCastVisualEvent> AnySkillCastStarted;
+    public static event Action<SkillCastVisualEvent> AnySkillCastInterrupted;
+    public static event Action<SkillCastVisualEvent> AnySkillCastCompleted;
 
     [SerializeField] private SkillData _overrideSkill;
     [SerializeField] private float _maxAbilityCharge = 100f;
@@ -240,6 +245,7 @@ public class SkillCaster : MonoBehaviour
 
     public event Action<Unit, SkillData, Unit> SkillUsed;
     public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillImpactsResolvedForVisuals;
+    public event Action<SkillData, SkillContext, IReadOnlyList<SkillImpact>> SkillEffectsAppliedForVisuals;
     public event Action<float> OnAbilityChargeChanged;
 
     public SkillData Skill => ResolveSkill();
@@ -433,6 +439,18 @@ public class SkillCaster : MonoBehaviour
         FailSkillUse(SkillUseFailureReason.Interrupted, detail);
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} interrupted '{_castingSkill.DisplayName}': {reason} (mapped to {detail}).");
+
+        AnySkillCastInterrupted?.Invoke(new SkillCastVisualEvent(
+            _unit,
+            _castingSkill,
+            _castingContext,
+            ResolveExecutionDuration(_castingSkill),
+            _unit.Position,
+            _castingContext != null ? _castingContext.ImpactCenterWorld : _unit.Position,
+            ResolveHasSpatialImpactPosition(_castingSkill, _castingContext),
+            detail
+        ));
+
         ClearCastingState();
     }
 
@@ -761,6 +779,16 @@ public class SkillCaster : MonoBehaviour
 
         AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Skill Cast", _unit.transform.position);
 
+        AnySkillCastStarted?.Invoke(new SkillCastVisualEvent(
+            _unit,
+            skill,
+            skillContext,
+            _castRemainingTime,
+            _unit.Position,
+            skillContext != null ? skillContext.ImpactCenterWorld : _unit.Position,
+            ResolveHasSpatialImpactPosition(skill, skillContext)
+        ));
+
         return true;
     }
 
@@ -812,6 +840,18 @@ public class SkillCaster : MonoBehaviour
             CancelCurrentCast();
             return FailSkillUse(SkillUseFailureReason.EffectApplicationFailed, $"'{skill.DisplayName}' applied no effects to resolved impacts.");
         }
+
+        NotifySkillEffectsAppliedForVisuals(skill, resolvedContext);
+
+        AnySkillCastCompleted?.Invoke(new SkillCastVisualEvent(
+            _unit,
+            skill,
+            resolvedContext,
+            ResolveExecutionDuration(skill),
+            _unit.Position,
+            resolvedContext != null ? resolvedContext.ImpactCenterWorld : _unit.Position,
+            ResolveHasSpatialImpactPosition(skill, resolvedContext)
+        ));
 
         OnSkillCastSucceeded(skill, resolvedContext.PrimaryTarget);
         ClearCastingState();
@@ -922,6 +962,18 @@ public class SkillCaster : MonoBehaviour
             return;
 
         LogDebug($"[SkillCaster] {FormatOwnerIdentity()} canceled '{_castingSkill.DisplayName}' before completion.");
+
+        AnySkillCastInterrupted?.Invoke(new SkillCastVisualEvent(
+            _unit,
+            _castingSkill,
+            _castingContext,
+            ResolveExecutionDuration(_castingSkill),
+            _unit.Position,
+            _castingContext != null ? _castingContext.ImpactCenterWorld : _unit.Position,
+            ResolveHasSpatialImpactPosition(_castingSkill, _castingContext),
+            "Canceled"
+        ));
+
         ClearCastingState();
     }
 
@@ -956,6 +1008,33 @@ public class SkillCaster : MonoBehaviour
         {
             Debug.LogWarning(
                 $"[SkillCaster] {FormatOwnerIdentity()} ignored a global visual listener exception while resolving '{skill?.DisplayName ?? "<null>"}': {exception.Message}",
+                this);
+        }
+    }
+
+    private void NotifySkillEffectsAppliedForVisuals(SkillData skill, SkillContext resolvedContext)
+    {
+        IReadOnlyList<SkillImpact> visualImpacts = CreateVisualImpactSnapshot();
+
+        try
+        {
+            SkillEffectsAppliedForVisuals?.Invoke(skill, resolvedContext, visualImpacts);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"[SkillCaster] {FormatOwnerIdentity()} ignored a visual listener exception while applying effects for '{skill?.DisplayName ?? "<null>"}': {exception.Message}",
+                this);
+        }
+
+        try
+        {
+            AnySkillEffectsAppliedForVisuals?.Invoke(skill, resolvedContext, visualImpacts);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                $"[SkillCaster] {FormatOwnerIdentity()} ignored a global visual listener exception while applying effects for '{skill?.DisplayName ?? "<null>"}': {exception.Message}",
                 this);
         }
     }
@@ -1642,5 +1721,48 @@ public class SkillCaster : MonoBehaviour
             : "[None]";
 
         return $"Primary={primaryTarget}, ImpactUnit={impactCenterUnit}, TargetCell={targetCell}, ImpactWorld=({skillContext.ImpactCenterWorld.x:F2}, {skillContext.ImpactCenterWorld.y:F2}, {skillContext.ImpactCenterWorld.z:F2})";
+    }
+
+    private static bool ResolveHasSpatialImpactPosition(SkillData skill, SkillContext context)
+    {
+        if (skill == null || context == null)
+            return false;
+
+        return skill.RadiusInCells > 0 ||
+               skill.PrimaryTargetRequirement == PrimaryTargetRequirement.GroundCell ||
+               skill.ImpactCenterMode == ImpactCenterMode.TargetCell ||
+               skill.ImpactPattern == ImpactPattern.Area;
+    }
+}
+
+public struct SkillCastVisualEvent
+{
+    public Unit Caster { get; }
+    public SkillData Skill { get; }
+    public SkillContext Context { get; }
+    public float CastDuration { get; }
+    public Vector3 CasterPosition { get; }
+    public Vector3 ImpactPosition { get; }
+    public bool HasImpactPosition { get; }
+    public string InterruptionReason { get; }
+
+    public SkillCastVisualEvent(
+        Unit caster,
+        SkillData skill,
+        SkillContext context,
+        float castDuration,
+        Vector3 casterPosition,
+        Vector3 impactPosition,
+        bool hasImpactPosition,
+        string interruptionReason = null)
+    {
+        Caster = caster;
+        Skill = skill;
+        Context = context;
+        CastDuration = castDuration;
+        CasterPosition = casterPosition;
+        ImpactPosition = impactPosition;
+        HasImpactPosition = hasImpactPosition;
+        InterruptionReason = interruptionReason;
     }
 }

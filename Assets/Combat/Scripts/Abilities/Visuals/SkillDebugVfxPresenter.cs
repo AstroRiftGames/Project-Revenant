@@ -4,8 +4,13 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class SkillDebugVfxPresenter : MonoBehaviour
 {
-    [SerializeField] private bool _enabled = true;
+    [SerializeField] private bool _enabled = false;
     [SerializeField] private bool _debugLogs;
+
+    public void SetDebugVfxEnabled(bool enabled)
+    {
+        _enabled = enabled;
+    }
     [SerializeField] private Transform _runtimeRoot;
     [SerializeField] private float _defaultDuration = 0.6f;
     [SerializeField] private float _primaryPointSize = 0.42f;
@@ -34,6 +39,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     [SerializeField] private Color _lineColor = new Color(1f, 0.55f, 0.45f, 0.92f);
     [SerializeField] private Color _knockbackColor = new Color(0.35f, 0.9f, 1f, 0.95f);
     [SerializeField] private Color _shieldColor = new Color(0.45f, 0.8f, 1f, 0.95f);
+
+    public bool IsDebugVfxEnabled => isActiveAndEnabled && _enabled;
 
     private readonly HashSet<string> _missingPrefabWarnings = new();
     private readonly HashSet<StatusEffectController> _subscribedStatusControllers = new();
