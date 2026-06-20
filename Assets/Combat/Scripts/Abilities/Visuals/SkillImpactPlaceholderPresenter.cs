@@ -7,6 +7,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static Material _sharedMaterial;
     private static bool _isSubscribed;
     private static readonly bool EnableTracerLogs = false;
+    private static int _particleBurstCount;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Initialize()
@@ -19,6 +20,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private static void HandleSkillEffectsApplied(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
         if (skill == null || context == null || impacts == null) return;
+
+        _particleBurstCount = 0;
 
         // 1. Process target-based impacts (Damage, Heal, Shield, Buff, Debuff, Status, Knockback)
         for (int i = 0; i < impacts.Count; i++)
@@ -398,6 +401,9 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 CreateKnockbackImpact(targetUnit, targetPos);
                 break;
         }
+
+        // Phase 3C: Burst of particles
+        CreateImpactParticles(targetPos, effectKind, targetUnit, context);
     }
 
     // 1. Damage: pequeño burst/anillo rojo-naranja en target
@@ -618,6 +624,9 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         var behavior = obj.AddComponent<RingImpactBehavior>();
         // Expand ring from 0.15f to 0.65f over 0.55s
         behavior.Initialize(lr, summonPos, 0.55f, 0.15f, 0.65f, 0f, 0f);
+
+        // Phase 3C: Summon particles
+        CreateImpactParticles(summonPos, SkillEffectKind.Summon, null, context);
     }
 
     // Helper components inside the same file for encapsulation
@@ -794,6 +803,347 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 _lr.startColor = sc;
                 _lr.endColor = sc;
             }
+        }
+    }
+
+    private static void CreateImpactParticles(Vector3 targetPos, SkillEffectKind effectKind, Unit targetUnit, SkillContext context)
+    {
+        if (_particleBurstCount >= 6) return;
+
+        // Skip self-cast particles if it is not heal or buff
+        if (targetUnit != null && context != null && context.Caster != null && targetUnit == context.Caster)
+        {
+            bool isHealOrBuff = effectKind == SkillEffectKind.Heal ||
+                               effectKind == SkillEffectKind.Buff ||
+                               effectKind == SkillEffectKind.StrengthBuff ||
+                               effectKind == SkillEffectKind.Haste;
+            if (!isHealOrBuff) return;
+        }
+
+        _particleBurstCount++;
+
+        // Determine base position (center or ground/feet)
+        Vector3 spawnPos = targetPos;
+        if (targetUnit != null)
+        {
+            if (effectKind == SkillEffectKind.Damage ||
+                effectKind == SkillEffectKind.Shield ||
+                effectKind == SkillEffectKind.Knockback)
+            {
+                spawnPos = ResolveUnitCenterPosition(targetUnit);
+            }
+            else
+            {
+                spawnPos = ResolveUnitGroundPosition(targetUnit);
+            }
+        }
+
+        // Determine effect-specific color
+        Color effectColor = Color.white;
+        switch (effectKind)
+        {
+            case SkillEffectKind.Damage:
+                effectColor = new Color(1.0f, 0.5f, 0.15f, 1.0f); // Bright yellow-orange
+                break;
+            case SkillEffectKind.Heal:
+                effectColor = new Color(0.2f, 1.0f, 0.4f, 1.0f); // Neon green
+                break;
+            case SkillEffectKind.Shield:
+                effectColor = new Color(0.3f, 0.85f, 1.0f, 1.0f); // Sky blue
+                break;
+            case SkillEffectKind.Haste:
+            case SkillEffectKind.StrengthBuff:
+            case SkillEffectKind.Buff:
+                effectColor = new Color(1.0f, 0.9f, 0.4f, 1.0f); // Bright gold
+                break;
+            case SkillEffectKind.Slow:
+            case SkillEffectKind.Stun:
+            case SkillEffectKind.Taunt:
+            case SkillEffectKind.Blind:
+            case SkillEffectKind.PoisonBurn:
+            case SkillEffectKind.Debuff:
+            case SkillEffectKind.StatModifierDebuff:
+                effectColor = new Color(0.9f, 0.2f, 0.9f, 1.0f); // Bright magenta/violet
+                break;
+            case SkillEffectKind.Knockback:
+                effectColor = new Color(0.85f, 0.95f, 1.0f, 1.0f); // Bright white-blue
+                break;
+            case SkillEffectKind.Summon:
+                effectColor = new Color(0.2f, 1.0f, 1.0f, 1.0f); // Bright cyan
+                break;
+        }
+
+        // Phase 3C: Spawn central flash to anchor visual impact
+        CreateCentralFlash(targetUnit, spawnPos, effectColor);
+
+        // Particle widths
+        float startWidth = 0.055f;
+        float endWidth = 0.022f;
+
+        switch (effectKind)
+        {
+            case SkillEffectKind.Damage:
+                {
+                    int particleCount = UnityEngine.Random.Range(10, 13);
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        float angle = (i * 2f * Mathf.PI) / particleCount;
+                        angle += UnityEngine.Random.Range(-0.1f, 0.1f);
+                        Vector3 dir = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+                        float speed = UnityEngine.Random.Range(2.5f, 4.2f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.45f, 0.55f);
+                        float length = UnityEngine.Random.Range(0.1f, 0.18f);
+                        float drag = 3.5f;
+                        CreateSingleParticle(targetUnit, spawnPos, velocity, lifetime, length, startWidth, endWidth, effectColor, drag);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Heal:
+                {
+                    int particleCount = UnityEngine.Random.Range(6, 9);
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        Vector3 offsetPos = spawnPos + new Vector3(UnityEngine.Random.Range(-0.25f, 0.25f), UnityEngine.Random.Range(0f, 0.2f), 0f);
+                        Vector3 dir = new Vector3(UnityEngine.Random.Range(-0.2f, 0.2f), 1f, 0f).normalized;
+                        float speed = UnityEngine.Random.Range(1.2f, 2.2f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.6f, 0.75f);
+                        float length = UnityEngine.Random.Range(0.08f, 0.15f);
+                        CreateSingleParticle(targetUnit, offsetPos, velocity, lifetime, length, startWidth, endWidth, effectColor);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Shield:
+                {
+                    int particleCount = UnityEngine.Random.Range(8, 11);
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        float angle = (i * 2f * Mathf.PI) / particleCount;
+                        Vector3 dir = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+                        float speed = UnityEngine.Random.Range(0.9f, 1.6f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.55f, 0.7f);
+                        float length = 0.08f;
+                        float drag = 2.0f;
+                        CreateSingleParticle(targetUnit, spawnPos, velocity, lifetime, length, startWidth, endWidth, effectColor, drag);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Haste:
+            case SkillEffectKind.StrengthBuff:
+            case SkillEffectKind.Buff:
+                {
+                    int particleCount = UnityEngine.Random.Range(6, 9);
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        Vector3 offsetPos = spawnPos + new Vector3(UnityEngine.Random.Range(-0.25f, 0.25f), UnityEngine.Random.Range(0f, 0.2f), 0f);
+                        Vector3 dir = new Vector3(UnityEngine.Random.Range(-0.15f, 0.15f), 1f, 0f).normalized;
+                        float speed = UnityEngine.Random.Range(1.5f, 2.5f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.55f, 0.7f);
+                        float length = UnityEngine.Random.Range(0.08f, 0.15f);
+                        CreateSingleParticle(targetUnit, offsetPos, velocity, lifetime, length, startWidth, endWidth, effectColor);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Slow:
+            case SkillEffectKind.Stun:
+            case SkillEffectKind.Taunt:
+            case SkillEffectKind.Blind:
+            case SkillEffectKind.PoisonBurn:
+            case SkillEffectKind.Debuff:
+            case SkillEffectKind.StatModifierDebuff:
+                {
+                    int particleCount = UnityEngine.Random.Range(6, 9);
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        Vector3 offsetPos = spawnPos + new Vector3(UnityEngine.Random.Range(-0.25f, 0.25f), UnityEngine.Random.Range(0.4f, 0.8f), 0f);
+                        Vector3 dir = new Vector3(UnityEngine.Random.Range(-0.15f, 0.15f), -1f, 0f).normalized;
+                        float speed = UnityEngine.Random.Range(1.2f, 2.2f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.55f, 0.7f);
+                        float length = UnityEngine.Random.Range(0.08f, 0.15f);
+                        CreateSingleParticle(targetUnit, offsetPos, velocity, lifetime, length, startWidth, endWidth, effectColor);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Knockback:
+                {
+                    int particleCount = UnityEngine.Random.Range(10, 13);
+                    Vector3 pushDir = Vector3.zero;
+                    if (context != null && context.Caster != null)
+                    {
+                        Vector3 casterPos = ResolveUnitCenterPosition(context.Caster);
+                        pushDir = spawnPos - casterPos;
+                        pushDir.z = 0f;
+                        pushDir = pushDir.normalized;
+                    }
+
+                    bool hasDirection = pushDir != Vector3.zero;
+                    float centerAngle = hasDirection ? Mathf.Atan2(pushDir.y, pushDir.x) : 0f;
+
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        Vector3 dir;
+                        if (hasDirection)
+                        {
+                            float spreadAngle = centerAngle + UnityEngine.Random.Range(-Mathf.PI / 6f, Mathf.PI / 6f);
+                            dir = new Vector3(Mathf.Cos(spreadAngle), Mathf.Sin(spreadAngle), 0f);
+                        }
+                        else
+                        {
+                            float angle = (i * 2f * Mathf.PI) / particleCount;
+                            dir = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+                        }
+
+                        float speed = UnityEngine.Random.Range(3.0f, 5.2f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.45f, 0.6f);
+                        float length = UnityEngine.Random.Range(0.12f, 0.2f);
+                        float drag = 2.5f;
+                        CreateSingleParticle(targetUnit, spawnPos, velocity, lifetime, length, startWidth, endWidth, effectColor, drag);
+                    }
+                }
+                break;
+
+            case SkillEffectKind.Summon:
+                {
+                    int particleCount = 12;
+                    for (int i = 0; i < particleCount; i++)
+                    {
+                        float angle = (i * 2f * Mathf.PI) / particleCount;
+                        Vector3 dir = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+                        float speed = UnityEngine.Random.Range(2.0f, 3.3f);
+                        Vector3 velocity = dir * speed;
+                        float lifetime = UnityEngine.Random.Range(0.65f, 0.85f);
+                        float length = UnityEngine.Random.Range(0.1f, 0.18f);
+                        float drag = 2.0f;
+                        CreateSingleParticle(targetUnit, spawnPos, velocity, lifetime, length, startWidth, endWidth, effectColor, drag);
+                    }
+                }
+                break;
+        }
+    }
+
+    private static void CreateCentralFlash(Unit targetUnit, Vector3 position, Color effectColor)
+    {
+        GameObject obj = new GameObject("VFX_Placeholder_Flash");
+        LineRenderer lr = obj.AddComponent<LineRenderer>();
+        lr.sharedMaterial = GetSharedMaterial();
+        lr.useWorldSpace = true;
+        lr.alignment = LineAlignment.View;
+        lr.loop = false;
+        lr.startWidth = 0.08f;
+        lr.endWidth = 0.08f;
+
+        // White with tint of effectColor
+        Color flashColor = Color.Lerp(Color.white, effectColor, 0.4f);
+        flashColor.a = 1.0f; // Initial opacity
+        lr.startColor = flashColor;
+        lr.endColor = flashColor;
+
+        ConfigureSorting(obj, targetUnit, 35); // Particle order offset +35
+
+        var behavior = obj.AddComponent<CrossImpactBehavior>();
+        behavior.Initialize(lr, position, 0.15f, 0.18f, 0f, flashColor);
+    }
+
+    private static void CreateSingleParticle(Unit targetUnit, Vector3 position, Vector3 velocity, float lifetime, float length, float startWidth, float endWidth, Color color, float drag = 0f, Vector3 gravity = default)
+    {
+        GameObject obj = new GameObject("VFX_Placeholder_Particle");
+        LineRenderer lr = obj.AddComponent<LineRenderer>();
+        lr.sharedMaterial = GetSharedMaterial();
+        lr.useWorldSpace = true;
+        lr.alignment = LineAlignment.View;
+        lr.loop = false;
+        lr.startWidth = startWidth;
+        lr.endWidth = endWidth;
+        lr.startColor = color;
+        lr.endColor = color;
+
+        ConfigureSorting(obj, targetUnit, 35); // Particle order offset +35
+
+        var behavior = obj.AddComponent<ImpactParticleBehavior>();
+        behavior.Initialize(lr, position, velocity, lifetime, length, color, drag, gravity);
+    }
+
+    private class ImpactParticleBehavior : MonoBehaviour
+    {
+        private LineRenderer _lr;
+        private Vector3 _position;
+        private Vector3 _velocity;
+        private float _lifetime;
+        private float _elapsed;
+        private Color _startColor;
+        private Color _endColor;
+        private float _drag;
+        private Vector3 _gravity;
+        private float _length;
+
+        public void Initialize(LineRenderer lr, Vector3 startPos, Vector3 velocity, float lifetime, float length, Color color, float drag = 0f, Vector3 gravity = default)
+        {
+            _lr = lr;
+            _position = startPos;
+            _velocity = velocity;
+            _lifetime = lifetime;
+            _length = length;
+            _startColor = color;
+            _endColor = color;
+            _endColor.a = 0f;
+            _drag = drag;
+            _gravity = gravity;
+
+            UpdateVisual();
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            float t = _elapsed / _lifetime;
+
+            if (_drag > 0f)
+            {
+                _velocity -= _velocity * _drag * Time.deltaTime;
+            }
+            _velocity += _gravity * Time.deltaTime;
+
+            _position += _velocity * Time.deltaTime;
+
+            UpdateVisual();
+
+            Color sc = Color.Lerp(_startColor, _endColor, t);
+            if (_lr != null)
+            {
+                _lr.startColor = sc;
+                _lr.endColor = sc;
+            }
+        }
+
+        private void UpdateVisual()
+        {
+            if (_lr == null) return;
+
+            _lr.positionCount = 2;
+            _lr.SetPosition(0, _position);
+
+            Vector3 tailDirection = _velocity.normalized;
+            if (tailDirection == Vector3.zero)
+            {
+                tailDirection = Vector3.up;
+            }
+            _lr.SetPosition(1, _position - tailDirection * _length);
         }
     }
 }
