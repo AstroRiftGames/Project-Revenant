@@ -8,11 +8,18 @@ public class CombatProjectileVisual : MonoBehaviour
 
     private Transform _target;
     private Vector3 _fallbackTargetPosition;
+    private System.Action<Vector3> _onArrivedCallback;
 
     private void Update()
     {
         Vector3 targetPosition = GetTargetPosition();
         targetPosition.z = transform.position.z;
+
+        // Calculate travel direction just before update position
+        Vector3 travelDir = (targetPosition - transform.position).normalized;
+        travelDir.z = 0f;
+        if (travelDir == Vector3.zero) travelDir = transform.right;
+
         transform.position = Vector3.MoveTowards(transform.position, targetPosition, _moveSpeed * Time.deltaTime);
 
         Vector3 direction = targetPosition - transform.position;
@@ -20,14 +27,19 @@ public class CombatProjectileVisual : MonoBehaviour
             transform.right = direction.normalized;
 
         if (Vector3.Distance(transform.position, targetPosition) <= _arrivalThreshold)
+        {
+            _onArrivedCallback?.Invoke(travelDir);
+            _onArrivedCallback = null; // Prevent double invocation
             Destroy(gameObject);
+        }
     }
 
-    public void Launch(Vector3 origin, Transform target, Vector3 fallbackTargetPosition)
+    public void Launch(Vector3 origin, Transform target, Vector3 fallbackTargetPosition, System.Action<Vector3> onArrivedCallback = null)
     {
         transform.position = origin;
         _target = target;
         _fallbackTargetPosition = fallbackTargetPosition;
+        _onArrivedCallback = onArrivedCallback;
     }
 
     private Vector3 GetTargetPosition()

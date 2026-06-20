@@ -24,6 +24,23 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
             if (evt.WillHit && evt.Target != null)
             {
                 CreateHitImpact(evt.Target, evt.TargetPosition);
+
+                // Spawn hit particles for hostile melee attacks (skip for support/heals/buffs)
+                if (evt.Relation == TargetRelation.Hostile)
+                {
+                    DamageParticleView dpv = evt.Target.GetComponent<DamageParticleView>();
+                    if (dpv != null)
+                    {
+                        Vector3 attackerCenter = evt.Attacker != null ? SkillImpactPlaceholderPresenter.ResolveUnitCenterPosition(evt.Attacker) : evt.AttackerPosition;
+                        Vector3 targetCenter = SkillImpactPlaceholderPresenter.ResolveUnitCenterPosition(evt.Target);
+                        Vector3 hitDirection = (targetCenter - attackerCenter).normalized;
+                        hitDirection.z = 0f;
+                        if (hitDirection == Vector3.zero) hitDirection = Vector3.right;
+
+                        Vector3 contactPoint = DamageParticleView.ResolveHitContactPoint(evt.Target, attackerCenter);
+                        dpv.TriggerHitParticles(contactPoint, hitDirection, UnityEngine.Random.Range(5, 8));
+                    }
+                }
             }
         }
     }

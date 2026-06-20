@@ -198,7 +198,7 @@ public class UnitCombat : MonoBehaviour
         bool appliedEffect = willHit && DidBasicActionApplyEffect(target, targetHealthBefore);
         NotifySuccessfulBasicAction(targetRelation, appliedEffect);
         ConsumeBasicActionCooldown();
-        ShowBasicActionPresentation(target);
+        ShowBasicActionPresentation(target, willHit, targetRelation);
         return true;
     }
 
@@ -249,7 +249,7 @@ public class UnitCombat : MonoBehaviour
         _nextAttackTime = Time.time + Mathf.Max(0f, _unit.AttackCooldown);
     }
 
-    private void ShowBasicActionPresentation(Unit target)
+    private void ShowBasicActionPresentation(Unit target, bool willHit, TargetRelation relation)
     {
         if (_unit == null || target == null)
             return;
@@ -263,7 +263,70 @@ public class UnitCombat : MonoBehaviour
 
         Transform projectileParent = _unit.RoomContext != null ? _unit.RoomContext.transform : null;
         CombatProjectileVisual projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity, projectileParent);
-        projectile.Launch(transform.position, target.transform, target.Position);
+
+        if (willHit && relation == TargetRelation.Hostile)
+        {
+            Unit targetCaptured = target;
+            Vector3 fallbackPos = target.Position;
+            Vector3 launchOrigin = transform.position;
+            projectile.Launch(transform.position, target.transform, target.Position, (arrivalDir) =>
+            {
+                int count = UnityEngine.Random.Range(5, 8); // 5 to 7 particles per hit
+                if (targetCaptured != null)
+                {
+                    DamageParticleView dpv = targetCaptured.GetComponent<DamageParticleView>();
+                    if (dpv != null)
+                    {
+                        Vector3 contactPoint = DamageParticleView.ResolveHitContactPoint(targetCaptured, launchOrigin);
+                        dpv.TriggerHitParticles(contactPoint, arrivalDir, count);
+                    }
+                }
+                else
+                {
+                    DamageParticleView attackerDpv = _unit.GetComponent<DamageParticleView>();
+                    if (attackerDpv != null && attackerDpv.HitParticlesPrefab != null)
+                    {
+                        ParticleSystem tempParticles = Instantiate(attackerDpv.HitParticlesPrefab, fallbackPos, Quaternion.identity);
+                        var renderer = tempParticles.GetComponent<ParticleSystemRenderer>();
+                        if (renderer != null)
+                        {
+                            renderer.sortingLayerName = "Gameplay";
+                            renderer.sortingOrder = 1050;
+                        }
+
+                        // Emit with direction manually (local short dense burst)
+                        float upwardBias = 0.45f;
+                        for (int i = 0; i < count; i++)
+                        {
+                            ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
+                            emitParams.position = tempParticles.main.simulationSpace == ParticleSystemSimulationSpace.World ? fallbackPos : Vector3.zero;
+                            
+                            // Set custom short lifetime (0.22s to 0.35s)
+                            emitParams.startLifetime = UnityEngine.Random.Range(0.22f, 0.35f);
+
+                            // Mix direction: 60% radial/local burst, 40% directional
+                            Vector3 localDir = new Vector3(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f), 0f).normalized;
+                            Vector3 mixedDir = (arrivalDir * 0.4f + localDir * 0.6f).normalized;
+
+                            float speed = UnityEngine.Random.Range(0.8f, 1.8f);
+                            Vector3 randomSpreadSmall = new Vector3(
+                                UnityEngine.Random.Range(-0.3f, 0.3f),
+                                UnityEngine.Random.Range(-0.3f, 0.3f),
+                                0f
+                            );
+                            
+                            emitParams.velocity = (mixedDir * speed) + (Vector3.up * upwardBias) + randomSpreadSmall;
+                            tempParticles.Emit(emitParams, 1);
+                        }
+                        Destroy(tempParticles.gameObject, tempParticles.main.duration + 0.5f);
+                    }
+                }
+            });
+        }
+        else
+        {
+            projectile.Launch(transform.position, target.transform, target.Position);
+        }
     }
 
     private void ShowBasicAttackMissFeedback(Unit target, TargetRelation targetRelation)
