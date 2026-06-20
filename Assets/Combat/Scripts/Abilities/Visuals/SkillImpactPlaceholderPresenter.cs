@@ -6,6 +6,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 {
     private static Material _sharedMaterial;
     private static bool _isSubscribed;
+    private static readonly bool EnableTracerLogs = false;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Initialize()
@@ -198,7 +199,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 if (impact.TargetUnit == caster)
                 {
 #if UNITY_EDITOR
-                    UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: target is self-cast for unit {caster.name}.");
+                    if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: target is self-cast for unit {caster.name}.");
 #endif
                     continue; // Skip self-tracer
                 }
@@ -216,7 +217,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             if ((destination - origin).sqrMagnitude < 0.01f)
             {
 #if UNITY_EDITOR
-                UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: distance too short between {caster.name} and {destination}.");
+                if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: distance too short between {caster.name} and {destination}.");
 #endif
                 continue; 
             }
@@ -224,13 +225,13 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             if (tracerCount >= maxTracers)
             {
 #if UNITY_EDITOR
-                UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: reached maximum tracer count ({maxTracers}) for skill {skill.DisplayName}.");
+                if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: reached maximum tracer count ({maxTracers}) for skill {skill.DisplayName}.");
 #endif
                 break;
             }
 
 #if UNITY_EDITOR
-            UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer spawned from {caster.name} to target position {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
+            if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer spawned from {caster.name} to target position {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
 #endif
             CreateSingleTracer(caster, origin, destination, tracerColor);
             drawnPositions.Add(destination);
@@ -246,7 +247,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 if ((destination - origin).sqrMagnitude >= 0.01f)
                 {
 #if UNITY_EDITOR
-                    UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer fallback spawned from {caster.name} to impact center {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
+                    if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer fallback spawned from {caster.name} to impact center {destination} for skill '{skill.DisplayName}' ({mainEffect}).");
 #endif
                     CreateSingleTracer(caster, origin, destination, tracerColor);
                 }

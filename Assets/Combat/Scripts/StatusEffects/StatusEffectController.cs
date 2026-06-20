@@ -22,6 +22,9 @@ public class StatusEffectController : MonoBehaviour
     public event Action<StatusEffectController, ActiveStatusEffect, int> EffectTickResolved;
     public event Action<StatusEffectController, ActiveStatusEffect, StatusEffectRemovalReason> EffectRemoved;
 
+    public static event Action<Unit, ActiveStatusEffect> AnyStatusApplied;
+    public static event Action<Unit, ActiveStatusEffect> AnyStatusRemoved;
+
     public IReadOnlyList<ActiveStatusEffect> ActiveEffects => _activeEffects;
     public bool HasStun => HasEffect(SkillEffectKind.Stun);
     public bool HasKnockback => HasEffect(SkillEffectKind.Knockback);
@@ -222,6 +225,7 @@ public class StatusEffectController : MonoBehaviour
         _activeEffects.Add(newEffect);
         ApplyImmediateStatusRuntimeEffects(newEffect);
         EffectApplied?.Invoke(this, newEffect);
+        AnyStatusApplied?.Invoke(_unit, newEffect);
         return true;
     }
 
@@ -308,7 +312,10 @@ public class StatusEffectController : MonoBehaviour
             return;
 
         if (_activeEffects.Remove(activeEffect))
+        {
             EffectRemoved?.Invoke(this, activeEffect, reason);
+            AnyStatusRemoved?.Invoke(_unit, activeEffect);
+        }
     }
 
     public void RemoveEffectOfType(SkillEffectKind effectType)
