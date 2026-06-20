@@ -427,7 +427,7 @@ PrefabInstance:
     - target: {fileID: 167064952393830357, guid: ab142d70d694d444696282a2a10bf0f3, type: 3}
       propertyPath: '_startingPartyMembers.Array.data[1]'
       value: 
-      objectReference: {fileID: 11400000, guid: 7d2a6f8b9c104f31a1b2c3d4e5f10101, type: 2}
+      objectReference: {fileID: 11400000, guid: f51469812dd5ab7419cc39beac733e48, type: 2}
     - target: {fileID: 167064952393830357, guid: ab142d70d694d444696282a2a10bf0f3, type: 3}
       propertyPath: '_startingPartyMembers.Array.data[2]'
       value: 

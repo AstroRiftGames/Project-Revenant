@@ -24,13 +24,10 @@ MonoBehaviour:
   _impactPattern: 0
   _impactCenterMode: 0
   _skillExecutionMode: 0
-  _effects:
-  - {fileID: 11400000, guid: d2c1a4b7e8f9437bb0cc91d0f25b1215, type: 2}
-  _modifiers: []
   _compositionEffects:
   - _effectKind: 5
-    _value: 25
-    _duration: 4
+    _value: 10
+    _duration: 5
     _interval: 0
     _maxStacks: 1
     _summonedUnit: {fileID: 0}

@@ -71,6 +71,8 @@ public class HealAction : BasicUnitAction
 [RequireComponent(typeof(UnitMovement))]
 public class UnitCombat : MonoBehaviour
 {
+    public static event System.Action<BasicAttackVisualEvent> AnyBasicAttackVisualRequested;
+
     [SerializeField] private CombatProjectileVisual _projectileVisualPrefab;
     [SerializeField] private CombatProjectileVisual _supportProjectileVisualPrefab;
 
@@ -172,6 +174,17 @@ public class UnitCombat : MonoBehaviour
         int targetHealthBefore = target != null ? target.CurrentHealth : 0;
         
         bool willHit = ShouldBasicActionHit(self, target, targetRelation);
+
+        AnyBasicAttackVisualRequested?.Invoke(new BasicAttackVisualEvent(
+            self,
+            target,
+            targetRelation,
+            willHit,
+            self.AttackPresentation,
+            self.Position,
+            target != null ? target.Position : self.Position
+        ));
+
         if (willHit)
         {
             ApplyBasicActionToTarget(target, effect);
@@ -271,5 +284,34 @@ public class UnitCombat : MonoBehaviour
             return _supportProjectileVisualPrefab;
 
         return _projectileVisualPrefab;
+    }
+}
+
+public struct BasicAttackVisualEvent
+{
+    public Unit Attacker { get; }
+    public Unit Target { get; }
+    public TargetRelation Relation { get; }
+    public bool WillHit { get; }
+    public UnitAttackKind AttackPresentation { get; }
+    public Vector3 AttackerPosition { get; }
+    public Vector3 TargetPosition { get; }
+
+    public BasicAttackVisualEvent(
+        Unit attacker, 
+        Unit target, 
+        TargetRelation relation, 
+        bool willHit, 
+        UnitAttackKind attackPresentation, 
+        Vector3 attackerPosition, 
+        Vector3 targetPosition)
+    {
+        Attacker = attacker;
+        Target = target;
+        Relation = relation;
+        WillHit = willHit;
+        AttackPresentation = attackPresentation;
+        AttackerPosition = attackerPosition;
+        TargetPosition = targetPosition;
     }
 }
