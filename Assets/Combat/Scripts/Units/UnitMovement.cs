@@ -475,12 +475,13 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             case DeadlockType.ChainBlock:
             case DeadlockType.StalledNoProgress:
                 _isInDeadlock = true;
-                _deadlockCooldownEndTime = Time.time + _deadlockCooldown;
+                float dynamicCooldown = _deadlockCooldown * UnityEngine.Random.Range(0.85f, 1.15f);
+                _deadlockCooldownEndTime = Time.time + dynamicCooldown;
                 _totalAttemptsWithoutProgress = 0;
                 _sameStepFailureCount = 0;
                 _nextRetryTime = _deadlockCooldownEndTime;
                 
-                LogMovementDebug($"[UnitMovement] {name} - DeadlockCooldown_Started: {_deadlockCooldown}s");
+                LogMovementDebug($"[UnitMovement] {name} - DeadlockCooldown_Started: {dynamicCooldown}s (base: {_deadlockCooldown}s)");
                 return false;
                 
             default:

@@ -490,12 +490,28 @@ public class RoomGrid : MonoBehaviour
 
     public bool TryGetTraversalCost(Vector3Int cell, out int cost)
     {
+        return TryGetTraversalCost(cell, null, out cost);
+    }
+
+    public bool TryGetTraversalCost(Vector3Int cell, IGridOccupant movingOccupant, out int cost)
+    {
         cost = 0;
 
         if (IsCellHardBlocked(cell))
             return false;
 
-        cost = 1 + Mathf.Max(0, GetAvoidanceCost(cell));
+        int occupantPenalty = 0;
+        IGridOccupant blocker = OccupancyService.GetBlockingOccupant(cell, movingOccupant);
+        if (blocker != null && movingOccupant is Creature movingCreature && blocker is Creature blockingCreature)
+        {
+            if (movingCreature.Team == blockingCreature.Team)
+            {
+                // Friendly unit: add soft obstacle cost penalty (e.g. 5)
+                occupantPenalty = 5;
+            }
+        }
+
+        cost = 1 + Mathf.Max(0, GetAvoidanceCost(cell)) + occupantPenalty;
         return true;
     }
 

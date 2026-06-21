@@ -53,7 +53,7 @@ public static class GridPathfinder
             return new List<Vector3Int>();
         }
 
-        if (!grid.TryGetTraversalCost(goal, out _))
+        if (!grid.TryGetTraversalCost(goal, movingUnit, out _))
         {
             ClearDebugSnapshot(grid);
             return new List<Vector3Int>();
@@ -83,7 +83,7 @@ public static class GridPathfinder
             {
                 Vector3Int neighbor = neighbors[i];
 
-                if (!grid.TryGetTraversalCost(neighbor, out int traversalCost))
+                if (!grid.TryGetTraversalCost(neighbor, movingUnit, out int traversalCost))
                     continue;
 
                 int tentativeGScore = GetScore(gScore, current) + Mathf.Max(1, traversalCost);
