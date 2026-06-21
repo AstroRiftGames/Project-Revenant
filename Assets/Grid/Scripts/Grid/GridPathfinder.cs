@@ -26,6 +26,14 @@ public static class GridPathfinder
 
     private static readonly Dictionary<RoomGrid, PathDebugSnapshot> DebugSnapshotsByGrid = new();
 
+    public static void ClearSnapshotsForGrid(RoomGrid grid)
+    {
+        if (grid != null)
+        {
+            DebugSnapshotsByGrid.Remove(grid);
+        }
+    }
+
     public static List<Vector3Int> FindPath(RoomGrid grid, Vector3Int start, Vector3Int goal, IGridOccupant movingUnit = null)
     {
         if (grid == null)

@@ -57,8 +57,37 @@ public class Unit : Creature, IGridOccupant
     protected override void OnDisable()
     {
         base.OnDisable();
+        if (_roomContext != null && _roomContext.RoomGrid != null && _roomContext.RoomGrid.OccupancyService != null)
+        {
+            _roomContext.RoomGrid.OccupancyService.ReleaseOccupant(this);
+        }
+        else
+        {
+            RoomGrid grid = GetComponentInParent<RoomGrid>(includeInactive: true);
+            if (grid != null && grid.OccupancyService != null)
+            {
+                grid.OccupancyService.ReleaseOccupant(this);
+            }
+        }
+
         if (_roomContext != null)
             _roomContext.UnregisterUnit(this);
+    }
+
+    private void OnDestroy()
+    {
+        if (_roomContext != null && _roomContext.RoomGrid != null && _roomContext.RoomGrid.OccupancyService != null)
+        {
+            _roomContext.RoomGrid.OccupancyService.ReleaseOccupant(this);
+        }
+        else
+        {
+            RoomGrid grid = GetComponentInParent<RoomGrid>(includeInactive: true);
+            if (grid != null && grid.OccupancyService != null)
+            {
+                grid.OccupancyService.ReleaseOccupant(this);
+            }
+        }
     }
 
     public RoomContext RoomContext => _roomContext;

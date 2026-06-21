@@ -274,6 +274,11 @@ public class RoomGrid : MonoBehaviour
         ResolveDependencies();
     }
 
+    private void OnDestroy()
+    {
+        GridPathfinder.ClearSnapshotsForGrid(this);
+    }
+
 #if UNITY_EDITOR
     private void OnValidate()
     {

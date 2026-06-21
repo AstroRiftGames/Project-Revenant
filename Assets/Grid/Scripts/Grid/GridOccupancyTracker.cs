@@ -19,6 +19,24 @@ public class GridOccupancyTracker : MonoBehaviour
         ResolveGrid();
     }
 
+    private void OnEnable()
+    {
+        UnitDeathHandler.AnyDeathResolved += HandleUnitDeath;
+    }
+
+    private void OnDisable()
+    {
+        UnitDeathHandler.AnyDeathResolved -= HandleUnitDeath;
+    }
+
+    private void HandleUnitDeath(Unit unit)
+    {
+        if (unit != null)
+        {
+            ReleaseOccupant(unit);
+        }
+    }
+
     public void RegisterOccupant(IGridOccupant occupant)
     {
         if (occupant == null)
