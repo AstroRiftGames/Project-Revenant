@@ -260,6 +260,48 @@ public class SkillCaster : MonoBehaviour
     public bool UsesAbilityChargeVisual => HasSkill;
     public Sprite Icon => Skill != null ? Skill.Icon : null;
 
+    public Unit GetPreferredSkillTarget(Unit defaultTarget)
+    {
+        SkillData skill = Skill;
+        if (skill == null)
+            return null;
+        return ChoosePrimaryTarget(skill, defaultTarget);
+    }
+
+    public bool CanCastNow(Unit target)
+    {
+        if (!IsSkillReady)
+            return false;
+        SkillData skill = Skill;
+        if (skill == null)
+            return false;
+        if (!TryBuildSkillContext(skill, target, default, false, out SkillContext context))
+            return false;
+        return TryValidateSkillContext(context, false) && IsSkillContextInRange(context);
+    }
+
+    public bool IsTargetSelectableForSkill(Unit target)
+    {
+        SkillData skill = Skill;
+        if (skill == null)
+            return false;
+        if (!TryBuildSkillContext(skill, target, default, false, out SkillContext context))
+            return false;
+        return TryValidateSkillContext(context, false);
+    }
+
+    public int GetSkillRange()
+    {
+        SkillData skill = Skill;
+        return skill != null ? skill.RangeInCells : 0;
+    }
+
+    public bool SkillRequiresTarget()
+    {
+        SkillData skill = Skill;
+        return skill != null && RequiresUnitPrimaryTarget(skill);
+    }
+
     private void Awake()
     {
         _unit = GetComponent<Unit>();
@@ -1385,7 +1427,7 @@ public class SkillCaster : MonoBehaviour
         if (!RequiresUnitPrimaryTarget(skill))
             return false;
 
-        if (!UnitTargetValidator.IsSkillTargetSelectable(_unit, primaryTarget, skill))
+        if (!TargetingStrategy.IsSkillTargetSelectable(_unit, primaryTarget, skill))
             return false;
 
         return true;
@@ -1397,7 +1439,7 @@ public class SkillCaster : MonoBehaviour
             return false;
 
         if (skillContext.HasPrimaryTarget)
-            return UnitTargetValidator.IsSkillTargetInRange(skillContext.Caster, skillContext.PrimaryTarget, skillContext.Skill);
+            return TargetingStrategy.IsSkillTargetInRange(skillContext.Caster, skillContext.PrimaryTarget, skillContext.Skill);
 
         if (skillContext.HasTargetCell)
             return IsTargetCellInRange(skillContext);

@@ -173,6 +173,7 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
             name,
             ShouldLogMovementDebug);
 
+
         if (!decision.HasMove)
             return false;
 
@@ -216,6 +217,52 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
         Vector3Int selfCell = GetCurrentCell();
         Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
         return GridNavigationUtility.IsWithinCellRange(selfCell, targetCell, rangeInCells);
+    }
+
+    public bool CanReachTarget(Unit targetUnit, int rangeInCells)
+    {
+        if (_grid == null || _unit == null || targetUnit == null)
+            return false;
+
+        Vector3Int originCell = GetCurrentCell();
+        Vector3Int targetCell = _grid.WorldToCell(targetUnit.Position);
+        int resolvedRange = Mathf.Max(0, rangeInCells);
+
+        if (GridNavigationUtility.IsWithinCellRange(originCell, targetCell, resolvedRange))
+            return true;
+
+        if (!_grid.TryFindWalkableCellInRange(targetCell, originCell, resolvedRange, _unit, out Vector3Int desiredAttackCell))
+            return false;
+
+        if (_grid.OccupancyService.IsCellBlockedFor(_unit, desiredAttackCell))
+        {
+            IGridOccupant blockingOccupant = _grid.OccupancyService.GetBlockingOccupant(desiredAttackCell, _unit);
+            IGridOccupant reservingOccupant = _grid.OccupancyService.GetReservingOccupant(desiredAttackCell);
+
+            Unit blockerAsUnit = blockingOccupant as Unit;
+            bool isEnemyBlocker = blockerAsUnit != null && _unit.IsHostileTo(blockerAsUnit);
+            bool isAllyBlocker = blockerAsUnit != null && !_unit.IsHostileTo(blockerAsUnit);
+
+            bool isReservedByAlly = false;
+            if (reservingOccupant != null && !ReferenceEquals(reservingOccupant, _unit))
+            {
+                Unit reserverAsUnit = reservingOccupant as Unit;
+                isReservedByAlly = reserverAsUnit != null && !_unit.IsHostileTo(reserverAsUnit);
+            }
+
+            if (isEnemyBlocker)
+            {
+                if (!_grid.TryFindAttackPositionFromBlockedDesiredCell(desiredAttackCell, targetCell, originCell, resolvedRange, _unit, targetUnit, out _))
+                    return false;
+            }
+            else if (isAllyBlocker || isReservedByAlly)
+            {
+                if (!_grid.TryFindNearbyAlternativeCell(desiredAttackCell, targetCell, originCell, resolvedRange, _unit, out _))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     [Obsolete("ClearDestination only invalidates the movement path cache. Use ClearPathCache() to make that behavior explicit.")]

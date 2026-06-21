@@ -101,7 +101,7 @@ public class UnitCombat : MonoBehaviour
             return false;
         }
 
-        return UnitTargetValidator.IsTargetInRange(_unit, target, AttackRangeInCells);
+        return TargetingStrategy.IsTargetInRange(_unit, target, AttackRangeInCells);
     }
 
     public bool CanUseBasicActionOn(Unit self, Unit target, TargetRelation targetRelation, bool needsInjuredTarget)
@@ -123,7 +123,7 @@ public class UnitCombat : MonoBehaviour
         if (self == null || _unit == null)
             return false;
 
-        return UnitTargetValidator.IsBasicActionTargetSelectable(self, target, targetRelation, needsInjuredTarget);
+        return TargetingStrategy.IsBasicActionTargetSelectable(self, target, targetRelation, needsInjuredTarget);
     }
 
     public bool TryUseAttack(Unit self, Unit target, TargetRelation targetRelation)

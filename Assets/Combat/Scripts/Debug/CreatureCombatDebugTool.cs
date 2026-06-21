@@ -353,7 +353,7 @@ public class CreatureCombatDebugTool : MonoBehaviour
         Unit basicTarget = targeting != null
             ? targeting.SelectBasicActionTarget(unit, action, null)
             : null;
-        Unit moveTarget = SpacingEvaluator.GetNearestVisibleHostile(unit);
+        Unit moveTarget = TargetingStrategy.GetNearestVisibleHostile(unit);
 
         string basicTargetInfo = FormatTargetAudit(unit, unitCell, basicTarget, action != null ? action.RangeInCells : 0);
         string moveTargetInfo = FormatTargetAudit(unit, unitCell, moveTarget, action != null ? action.PreferredDistanceInCells : 0);

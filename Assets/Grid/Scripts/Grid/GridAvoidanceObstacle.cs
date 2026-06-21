@@ -26,6 +26,7 @@ public class GridAvoidanceObstacle : MonoBehaviour
     private bool _hasLastCenterCell;
     private bool _isRegistered;
     private bool _lastRuntimeActive;
+    private bool _isDirty;
 
     public int RadiusInCells => Mathf.Max(0, _radiusInCells);
     public int AvoidanceCost => Mathf.Max(0, _avoidanceCost);
@@ -49,9 +50,19 @@ public class GridAvoidanceObstacle : MonoBehaviour
         MonitorRegistrationContext();
     }
 
+    private void LateUpdate()
+    {
+        if (_isDirty)
+        {
+            RefreshRegistration();
+            _isDirty = false;
+        }
+    }
+
     private void OnDisable()
     {
         UnregisterFromRegistry();
+        _isDirty = false;
     }
 
 #if UNITY_EDITOR
@@ -105,7 +116,7 @@ public class GridAvoidanceObstacle : MonoBehaviour
         bool runtimeActive = IsRuntimeActive;
         if (runtimeActive != _lastRuntimeActive)
         {
-            RefreshRegistration();
+            _isDirty = true;
             _lastRuntimeActive = runtimeActive;
             transform.hasChanged = false;
             return;
@@ -113,7 +124,7 @@ public class GridAvoidanceObstacle : MonoBehaviour
 
         if (transform.hasChanged)
         {
-            RefreshRegistration();
+            _isDirty = true;
             transform.hasChanged = false;
             if (_cellAnchor != null)
                 _cellAnchor.hasChanged = false;
@@ -122,14 +133,16 @@ public class GridAvoidanceObstacle : MonoBehaviour
 
         if (_cellAnchor != null && _cellAnchor.hasChanged)
         {
-            RefreshRegistration();
+            _isDirty = true;
             _cellAnchor.hasChanged = false;
             return;
         }
 
         RoomGrid resolvedGrid = RoomGridResolver.ResolveInParents(this);
         if (!ReferenceEquals(resolvedGrid, _grid))
-            RefreshRegistration();
+        {
+            _isDirty = true;
+        }
     }
 
     private void RefreshRegistration()

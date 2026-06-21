@@ -27,7 +27,7 @@ public static class SkillHitCollector
             requiresTarget: false,
             allowSelf: allowSelf,
             requireSelf: requireSelf);
-        return UnitTargetValidator.IsTargetSelectable(caster, target, policy);
+        return TargetingStrategy.IsTargetSelectable(caster, target, policy);
     }
 
     private readonly struct SkillTargetRequest

@@ -34,6 +34,7 @@ public sealed class RoomGridTopology
     private Vector2 _cellCheckSize = new(0.8f, 0.8f);
     private bool _usePhysicsBlockedCells;
     private LayerMask _blockedCellsMask;
+    private HashSet<Vector3Int> _cachedStaticWalkableCells;
 
     public void Configure(
         Tilemap walkableTilemap,
@@ -49,6 +50,8 @@ public sealed class RoomGridTopology
         _cellCheckSize = cellCheckSize;
         _usePhysicsBlockedCells = usePhysicsBlockedCells;
         _blockedCellsMask = blockedCellsMask;
+
+        CacheStaticWalkability();
     }
 
     public Vector2 CellWorldSize
@@ -144,7 +147,23 @@ public sealed class RoomGridTopology
         return true;
     }
 
-    public bool IsCellStaticallyWalkable(Vector3Int cell)
+    public void CacheStaticWalkability()
+    {
+        _cachedStaticWalkableCells = new HashSet<Vector3Int>();
+        if (_walkableTilemap == null)
+            return;
+
+        BoundsInt bounds = _walkableTilemap.cellBounds;
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            if (ComputeIsCellStaticallyWalkable(pos))
+            {
+                _cachedStaticWalkableCells.Add(pos);
+            }
+        }
+    }
+
+    private bool ComputeIsCellStaticallyWalkable(Vector3Int cell)
     {
         if (!IsCellInsideWalkableBounds(cell))
             return false;
@@ -165,6 +184,15 @@ public sealed class RoomGridTopology
         }
 
         return true;
+    }
+
+    public bool IsCellStaticallyWalkable(Vector3Int cell)
+    {
+        if (_cachedStaticWalkableCells == null)
+        {
+            return ComputeIsCellStaticallyWalkable(cell);
+        }
+        return _cachedStaticWalkableCells.Contains(cell);
     }
 
     public bool TryGetCardinalNeighborsInsideBounds(Vector3Int cell, List<Vector3Int> results)

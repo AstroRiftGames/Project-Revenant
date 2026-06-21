@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Core.Audio;
 using Core.Audio.Data;
 using UnityEngine;
@@ -25,6 +27,10 @@ public class UnitBrain : MonoBehaviour
     private bool _hasLoggedResolvedBlock;
     private bool _hasLoggedStatusBlock;
 
+    private bool _hasSkillIntent;
+    private Unit _skillIntentTarget;
+    private int _skillIntentMoveFailures;
+
     private void Awake()
     {
         _unit = GetComponent<Unit>();
@@ -34,13 +40,29 @@ public class UnitBrain : MonoBehaviour
         _animationController = GetComponent<UnitAnimationController>();
     }
 
+    private void OnDisable()
+    {
+        ClearSkillIntent();
+    }
+
     private void Update()
     {
         if (!CanUpdateBrain())
+        {
+            ClearSkillIntent();
             return;
+        }
 
         if (!CanActInCurrentEncounter())
+        {
+            ClearSkillIntent();
             return;
+        }
+
+        if (_unit.StatusEffects != null && (_unit.StatusEffects.HasStun || _unit.StatusEffects.HasKnockback))
+        {
+            ClearSkillIntent();
+        }
 
         UnitOperationalState operationalState = _unit.OperationalState;
         LogOperationalStateChange(operationalState);
@@ -71,162 +93,220 @@ public class UnitBrain : MonoBehaviour
         if (TryResolveFearBehavior())
             return;
 
-        if (TryUseSkillIntent())
+        // 1. Evaluar Skill Disponible
+        if (TryEvaluateAndUseSkill())
             return;
 
-        if (TryExecuteBasicActionIntent())
+        // 2. Si no hay skill (o no es viable), evaluar acción básica
+        if (TryEvaluateAndUseBasicAction())
             return;
 
-        ExecuteMovementIntent();
-    }
-
-    private bool TryUseSkillIntent()
-    {
-        if (_skillCaster == null || !_skillCaster.IsSkillReady || !_skillCaster.TryUse(_basicActionTargetUnit))
-            return false;
-
-        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} consumed action with skill before base attack.");
-        return true;
-    }
-
-    private bool TryExecuteBasicActionIntent()
-    {
-        if (_basicActionTargetUnit == null)
-            return false;
-
-        if (!_unit.Action.IsInRange(_unit, _basicActionTargetUnit))
-            return false;
-
-        if (!_unit.Action.CanExecute(_unit, _basicActionTargetUnit))
-            return false;
-
-        ExecuteBasicAction();
-        return true;
-    }
-
-    private void ExecuteMovementIntent()
-    {
-        if (TryMoveToBasicActionRange())
+        // 3. Spacing si corresponde
+        if (TryMaintainSpacing())
             return;
 
-        TryMaintainSpacing();
+        // 4. Idle con razón clara
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} remains Idle: no valid or reachable targets for active skills or basic actions.");
     }
 
-    private bool TryMoveToBasicActionRange()
+    private bool TryEvaluateAndUseSkill()
     {
-        Unit moveTargetUnit = ResolveMoveTargetUnit(out int preferredDistance);
-        if (moveTargetUnit == null)
-            return false;
-
-        if (_movement.IsWithinRange(moveTargetUnit, preferredDistance))
-            return false;
-
-        return _movement.MoveTowards(moveTargetUnit, preferredDistance);
-    }
-
-    private Unit ResolveMoveTargetUnit(out int preferredDistance)
-    {
-        preferredDistance = 0;
-        if (!CanResolveMoveTargetUnit())
-            return null;
-
-        if (_unit.StatusEffects != null && _unit.StatusEffects.TryGetForcedTarget(out Unit forcedTarget))
+        if (_skillCaster == null || !_skillCaster.IsSkillReady)
         {
-            preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-            return forcedTarget;
+            ClearSkillIntent();
+            return false;
         }
 
-        if (TryResolveSupportMoveTarget(out Unit supportTarget, out preferredDistance))
-            return supportTarget;
+        Unit target = _skillCaster.GetPreferredSkillTarget(_basicActionTargetUnit);
+        int skillRange = _skillCaster.GetSkillRange();
 
-        preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-        return SpacingEvaluator.GetNearestVisibleHostile(_unit);
-    }
-
-    private bool TryResolveSupportMoveTarget(out Unit supportTarget, out int preferredDistance)
-    {
-        supportTarget = null;
-        preferredDistance = 0;
-        if (_unit.Role != UnitRole.Support)
-            return false;
-
-        if (_basicActionTargetUnit != null && _unit.Action.TargetRelation == TargetRelation.Ally)
+        if (_skillCaster.SkillRequiresTarget())
         {
-            supportTarget = _basicActionTargetUnit;
-            preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-            return true;
+            bool targetIsValid = target != null && _skillCaster.IsTargetSelectableForSkill(target);
+            bool targetIsReachable = targetIsValid && _movement.CanReachTarget(target, skillRange);
+
+            if (!targetIsReachable)
+            {
+                // Buscar otro objetivo válido y alcanzable en la sala
+                Unit alternativeTarget = null;
+                IReadOnlyList<Unit> candidates = _unit.GetRoomUnits();
+                for (int i = 0; i < candidates.Count; i++)
+                {
+                    Unit candidate = candidates[i];
+                    if (candidate == null || ReferenceEquals(candidate, target))
+                        continue;
+
+                    if (_skillCaster.IsTargetSelectableForSkill(candidate) && _movement.CanReachTarget(candidate, skillRange))
+                    {
+                        alternativeTarget = candidate;
+                        break;
+                    }
+                }
+
+                if (alternativeTarget != null)
+                {
+                    LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} target {FormatUnitIdentity(target)} unreachable. Switching skill target to {FormatUnitIdentity(alternativeTarget)}.");
+                    target = alternativeTarget;
+                }
+                else
+                {
+                    LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} no reachable targets for skill. Degrading to basic action.");
+                    ClearSkillIntent();
+                    return false;
+                }
+            }
+
+            if (_hasSkillIntent && _skillIntentTarget != target)
+            {
+                LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} changed skill intent target from {FormatUnitIdentity(_skillIntentTarget)} to {FormatUnitIdentity(target)}.");
+                _skillIntentTarget = target;
+                _skillIntentMoveFailures = 0;
+            }
+
+            if (_skillCaster.CanCastNow(target))
+            {
+                if (_skillCaster.TryUse(target))
+                {
+                    LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} casted skill against {FormatUnitIdentity(target)}.");
+                    ClearSkillIntent();
+                    return true;
+                }
+            }
+            else
+            {
+                _hasSkillIntent = true;
+                _skillIntentTarget = target;
+
+                if (TryMoveToSkillRange())
+                {
+                    return true;
+                }
+                else
+                {
+                    return true;
+                }
+            }
         }
-
-        SkillData skill = _skillCaster != null ? _skillCaster.Skill : null;
-        if (skill == null || skill.ImpactTargetRequirement != ImpactTargetRequirement.Ally)
-            return false;
-
-        bool requiresInjuredTarget = HasHealEffect(skill);
-        System.Func<Unit, bool> canChooseTarget = candidate =>
-            UnitTargetValidator.IsTargetSelectable(
-                _unit,
-                candidate,
-                new TargetingPolicy(
-                    TargetRelation.Ally,
-                    allowSelf: false,
-                    requireInjured: requiresInjuredTarget));
-
-        supportTarget = requiresInjuredTarget
-            ? TargetingStrategy.SelectBestHealingAllyTarget(
-                _unit,
-                null,
-                TargetingStrategy.GetRoomCandidates(_unit),
-                canChooseTarget)
-            : TargetingStrategy.SelectBestBuffAllyTarget(
-                _unit,
-                null,
-                TargetingStrategy.GetRoomCandidates(_unit),
-                canChooseTarget);
-
-        if (supportTarget == null)
-            return false;
-
-        preferredDistance = skill.ImpactCenterMode == ImpactCenterMode.Caster
-            ? skill.RadiusInCells
-            : skill.RangeInCells;
-        return true;
-    }
-
-    private static bool HasHealEffect(SkillData skill)
-    {
-        SkillCompositionEffect[] effects = skill != null ? skill.CompositionEffects : null;
-        if (effects == null)
-            return false;
-
-        for (int i = 0; i < effects.Length; i++)
+        else
         {
-            if (effects[i].EffectKind == SkillEffectKind.Heal)
-                return true;
+            if (_skillCaster.CanCastNow(null))
+            {
+                if (_skillCaster.TryUse(null))
+                {
+                    LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} casted self/caster-centered skill.");
+                    ClearSkillIntent();
+                    return true;
+                }
+            }
+
+            if (_hasSkillIntent)
+            {
+                LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} cleared skill intent: skill does not require target and cannot be cast now.");
+                ClearSkillIntent();
+            }
         }
 
         return false;
     }
 
-    private bool CanResolveMoveTargetUnit()
+    private bool TryEvaluateAndUseBasicAction()
     {
-        return _unit != null &&
-               _unit.IsAlive &&
-               _unit.LifecycleState == UnitLifecycleState.Alive &&
-               _unit.RoomContext != null &&
-               _unit.RoomContext.RoomGrid != null &&
-               (_unit.StatusEffects == null || _unit.StatusEffects.CanMoveTowardTarget);
+        ClearSkillIntent(); // Asegurar que no hay intención de skill activa
+
+        Unit target = _basicActionTargetUnit;
+        int actionRange = _unit.Action.RangeInCells;
+
+        bool targetIsValid = target != null && _unit.Action.IsValidTarget(_unit, target);
+        bool targetIsReachable = targetIsValid && _movement.CanReachTarget(target, actionRange);
+
+        if (!targetIsReachable)
+        {
+            // Buscar otro objetivo básico alternativo en la sala
+            Unit alternativeTarget = null;
+            IReadOnlyList<Unit> candidates = _unit.GetRoomUnits();
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                Unit candidate = candidates[i];
+                if (candidate == null || ReferenceEquals(candidate, target))
+                    continue;
+
+                if (_unit.Action.IsValidTarget(_unit, candidate) && _movement.CanReachTarget(candidate, actionRange))
+                {
+                    alternativeTarget = candidate;
+                    break;
+                }
+            }
+
+            if (alternativeTarget != null)
+            {
+                LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} target {FormatUnitIdentity(target)} unreachable. Switching basic target to {FormatUnitIdentity(alternativeTarget)}.");
+                target = alternativeTarget;
+                _basicActionTargetUnit = alternativeTarget;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        if (_unit.Action.IsInRange(_unit, target) && _unit.Action.CanExecute(_unit, target))
+        {
+            ExecuteBasicAction(target);
+            return true;
+        }
+        else
+        {
+            int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
+            LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} moving to basic range of {FormatUnitIdentity(target)} (range={actionRange}, preferred={preferredDistance}).");
+            return _movement.MoveTowards(target, preferredDistance);
+        }
     }
 
-    private void ExecuteBasicAction()
+    private bool TryMoveToSkillRange()
     {
-        _animationController?.SetAttackTarget(_basicActionTargetUnit.Position);
+        if (!_hasSkillIntent || _skillIntentTarget == null)
+            return false;
+
+        int range = _skillCaster.GetSkillRange();
+        if (_movement.IsWithinRange(_skillIntentTarget, range))
+            return false;
+
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} moving towards skill target {FormatUnitIdentity(_skillIntentTarget)} at range {range}.");
+        bool moved = _movement.MoveTowards(_skillIntentTarget, range);
+        if (!moved)
+        {
+            _skillIntentMoveFailures++;
+            if (_skillIntentMoveFailures >= 3)
+            {
+                LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} cleared skill intent: movement failed {_skillIntentMoveFailures} times.");
+                ClearSkillIntent();
+            }
+        }
+        else
+        {
+            _skillIntentMoveFailures = 0;
+        }
+
+        return moved;
+    }
+
+    private void ClearSkillIntent()
+    {
+        _hasSkillIntent = false;
+        _skillIntentTarget = null;
+        _skillIntentMoveFailures = 0;
+    }
+
+    private void ExecuteBasicAction(Unit target)
+    {
+        _animationController?.SetAttackTarget(target.Position);
         AudioService.TryPlayClipFromSet(_unit.GetUnitData()?.AudioSet, "Attack", transform.position);
 
-        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} fell back to base action against {FormatUnitIdentity(_basicActionTargetUnit)}.");
+        LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} executed base action against {FormatUnitIdentity(target)}.");
         _unit.BeginBasicActionExecution();
         try
         {
-            _unit.Action.Execute(_unit, _basicActionTargetUnit);
+            _unit.Action.Execute(_unit, target);
         }
         finally
         {
@@ -243,7 +323,7 @@ public class UnitBrain : MonoBehaviour
         if (_movement.IsMoving)
             return true;
 
-        Unit nearestThreat = SpacingEvaluator.GetNearestVisibleHostile(_unit);
+        Unit nearestThreat = TargetingStrategy.GetNearestVisibleHostile(_unit);
         if (nearestThreat == null)
             return true;
 
@@ -254,7 +334,7 @@ public class UnitBrain : MonoBehaviour
     private bool TryMaintainSpacing()
     {
         int preferredDistance = _unit.GetPreferredDistance(_unit.Action);
-        Unit spacingThreat = SpacingEvaluator.GetSpacingThreat(_unit, _basicActionTargetUnit);
+        Unit spacingThreat = TargetingStrategy.GetSpacingThreat(_unit, _basicActionTargetUnit);
         return TryMaintainSpacingFromThreat(spacingThreat, preferredDistance);
     }
 
@@ -317,12 +397,14 @@ public class UnitBrain : MonoBehaviour
         switch (operationalState)
         {
             case UnitOperationalState.Dead:
+                ClearSkillIntent();
                 return false;
 
             case UnitOperationalState.CrowdControl:
                 if (_unit != null && _unit.StatusEffects != null && _unit.StatusEffects.RestrictsMovement)
                     _movement.InterruptMovement();
 
+                ClearSkillIntent();
                 LogEncounterGate(
                     ref _hasLoggedStatusBlock,
                     $"[UnitBrain] '{name}' blocked by active status effect.");

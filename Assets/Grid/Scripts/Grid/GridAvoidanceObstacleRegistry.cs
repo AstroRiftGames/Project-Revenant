@@ -33,6 +33,7 @@ public class GridAvoidanceObstacleRegistry : MonoBehaviour
     private readonly List<Vector3Int> _cellBuffer = new();
 
     private RoomGrid _grid;
+    private bool _rebuildNeeded;
 
     public RoomGrid Grid => _grid;
 
@@ -46,13 +47,21 @@ public class GridAvoidanceObstacleRegistry : MonoBehaviour
         Rebuild();
     }
 
+    private void LateUpdate()
+    {
+        if (_rebuildNeeded)
+        {
+            Rebuild();
+        }
+    }
+
     public void RegisterObstacle(GridAvoidanceObstacle obstacle)
     {
         if (obstacle == null)
             return;
 
         if (_obstacles.Add(obstacle))
-            Rebuild();
+            _rebuildNeeded = true;
     }
 
     public void UnregisterObstacle(GridAvoidanceObstacle obstacle)
@@ -61,21 +70,27 @@ public class GridAvoidanceObstacleRegistry : MonoBehaviour
             return;
 
         if (_obstacles.Remove(obstacle))
-            Rebuild();
+            _rebuildNeeded = true;
     }
 
     public int GetAvoidanceCost(Vector3Int cell)
     {
+        if (_rebuildNeeded)
+            Rebuild();
         return _cellData.TryGetValue(cell, out CellAvoidanceData data) ? data.Cost : 0;
     }
 
     public bool IsCellBlockedByAvoidanceObstacle(Vector3Int cell)
     {
+        if (_rebuildNeeded)
+            Rebuild();
         return _cellData.TryGetValue(cell, out CellAvoidanceData data) && data.IsBlocked;
     }
 
     public bool TryGetAvoidanceCost(Vector3Int cell, out int cost)
     {
+        if (_rebuildNeeded)
+            Rebuild();
         if (_cellData.TryGetValue(cell, out CellAvoidanceData data))
         {
             cost = data.Cost;
@@ -93,12 +108,15 @@ public class GridAvoidanceObstacleRegistry : MonoBehaviour
 
         results.Clear();
 
+        if (_rebuildNeeded)
+            Rebuild();
         foreach (KeyValuePair<Vector3Int, CellAvoidanceData> pair in _cellData)
             results.Add(new GridAvoidanceCellDebugInfo(pair.Key, pair.Value.Cost, pair.Value.IsBlocked));
     }
 
     public void Rebuild()
     {
+        _rebuildNeeded = false;
         _cellData.Clear();
         _obstacleBuffer.Clear();
 
