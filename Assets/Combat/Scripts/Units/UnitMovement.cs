@@ -2,6 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum MovementRequestResult
+{
+    Accepted,
+    TemporarilyDelayed,
+    Failed
+}
+
 [RequireComponent(typeof(Unit))]
 public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 {
@@ -78,6 +85,23 @@ public class UnitMovement : MonoBehaviour, IRoomContextUnitComponent
 
     public bool IsMoving => _isMoving;
     public Vector2 CurrentMovementDirection => _currentMovementDirection;
+
+    public MovementRequestResult RequestMoveTowards(Unit targetUnit, int desiredDistance)
+    {
+        if (IsMovementTemporarilyDelayed())
+        {
+            return MovementRequestResult.TemporarilyDelayed;
+        }
+
+        bool moved = MoveTowards(targetUnit, desiredDistance);
+        return moved ? MovementRequestResult.Accepted : MovementRequestResult.Failed;
+    }
+
+    private bool IsMovementTemporarilyDelayed()
+    {
+        return (Time.time < _nextStepTime) || (Time.time < _nextRetryTime) || (_isInDeadlock && Time.time < _deadlockCooldownEndTime);
+    }
+
     private bool ShouldLogMovementDebug => _debugMovementLogs || (_grid != null && _grid.DebugMovementLogs);
 
     private UnitMovementPlanner Planner

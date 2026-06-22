@@ -272,8 +272,9 @@ public class UnitBrain : MonoBehaviour
             return false;
 
         LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} moving towards skill target {FormatUnitIdentity(_skillIntentTarget)} at range {range}.");
-        bool moved = _movement.MoveTowards(_skillIntentTarget, range);
-        if (!moved)
+        MovementRequestResult result = _movement.RequestMoveTowards(_skillIntentTarget, range);
+
+        if (result == MovementRequestResult.Failed)
         {
             _skillIntentMoveFailures++;
             if (_skillIntentMoveFailures >= 3)
@@ -281,13 +282,17 @@ public class UnitBrain : MonoBehaviour
                 LogSkillFlow($"[UnitBrain] {FormatDebugIdentity()} cleared skill intent: movement failed {_skillIntentMoveFailures} times.");
                 ClearSkillIntent();
             }
+            return false;
         }
-        else
+        else if (result == MovementRequestResult.TemporarilyDelayed)
+        {
+            return true;
+        }
+        else // Accepted
         {
             _skillIntentMoveFailures = 0;
+            return true;
         }
-
-        return moved;
     }
 
     private void ClearSkillIntent()
