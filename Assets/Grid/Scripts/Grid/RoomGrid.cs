@@ -87,7 +87,7 @@ public sealed class RoomGridTopology
             return center;
         }
 
-        return new Vector3(cell.x * _cellSize, cell.y * _cellSize, 0f);
+        return new Vector3((cell.x + 0.5f) * _cellSize, (cell.y + 0.5f) * _cellSize, 0f);
     }
 
     public bool TryGetCellVisualCornersWorld(Vector3Int cell, Vector3[] corners)
