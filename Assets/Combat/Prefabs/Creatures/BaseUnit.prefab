@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 3706451424158634363}
   - component: {fileID: 7556137208961261310}
   - component: {fileID: 3040782223565862886}
-  - component: {fileID: 6697826520073177205}
   - component: {fileID: 8258632723007000326}
   - component: {fileID: 6784161802599723046}
   - component: {fileID: 3514271622509206922}
@@ -193,23 +192,6 @@ MonoBehaviour:
   _chargeFromDamageTaken: 10
   _chargeFromNearbyAllySkillUsed: 15
   _nearbyAllySkillChargeRadius: 3.5
-  _debugLogs: 0
---- !u!114 &6697826520073177205
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 100269259682500494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b7f63bf6fb34d06b6554f2ddcb32748, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _popupPrefab: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
-  _popupOffset: {x: 0, y: 0.85, z: 0}
-  _impactSkillColor: {r: 1, g: 0.72, b: 0.2, a: 1}
-  _selfSkillColor: {r: 0.35, g: 1, b: 0.55, a: 1}
   _debugLogs: 0
 --- !u!114 &8258632723007000326
 MonoBehaviour:

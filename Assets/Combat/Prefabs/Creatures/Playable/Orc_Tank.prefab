@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3957760073442153178}
   - component: {fileID: 3746043680875141128}
-  - component: {fileID: 9706000000000000005}
+  - component: {fileID: 9223372036854775807}
   m_Layer: 0
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -59,6 +59,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &9223372036854775807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1207868459264756139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dbb4dc9248f4a2f914d1ad83980fef1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1957911122123118832
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,7 +446,6 @@ GameObject:
   - component: {fileID: 8606000000000000007}
   - component: {fileID: 8606000000000000008}
   - component: {fileID: 8606000000000000009}
-  - component: {fileID: 8606000000000000010}
   - component: {fileID: 8606000000000000011}
   - component: {fileID: 8606000000000000012}
   - component: {fileID: 8606000000000000013}
@@ -610,23 +621,6 @@ MonoBehaviour:
   _chargeFromNearbyAllySkillUsed: 15
   _nearbyAllySkillChargeRadius: 3.5
   _debugLogs: 0
---- !u!114 &8606000000000000010
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5437173185435831237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b7f63bf6fb34d06b6554f2ddcb32748, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _popupPrefab: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
-  _popupOffset: {x: 0, y: 0.85, z: 0}
-  _impactSkillColor: {r: 1, g: 0.72, b: 0.2, a: 1}
-  _selfSkillColor: {r: 0.35, g: 1, b: 0.55, a: 1}
-  _debugLogs: 0
 --- !u!114 &8606000000000000011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -767,7 +761,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 997d671fff5655d44a18cbe8b0eed742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _animator: {fileID: 3746043680875141128}
+  _animatorSync: {fileID: 0}
   _movement: {fileID: 8606000000000000002}
   _defaultFacingDirection: {x: 0, y: -1}
   _attackStateDuration: 0.15
@@ -1168,7 +1162,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.5
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1204,15 +1198,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
   m_PrefabInstance: {fileID: 4555080961214858949}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &9706000000000000005
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1207868459264756139}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9dbb4dc9248f4a2f914d1ad83980fef1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:

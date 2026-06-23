@@ -78,7 +78,6 @@ public class UnitCombat : MonoBehaviour
 
     private Unit _unit;
     private SkillCaster _skillCaster;
-    private SkillUseTextFeedback _textFeedback;
     private float _nextAttackTime;
 
     public int AttackRangeInCells => _unit != null ? Mathf.Max(0, _unit.AttackRangeInCells) : 0;
@@ -87,7 +86,6 @@ public class UnitCombat : MonoBehaviour
     {
         _unit = GetComponent<Unit>();
         _skillCaster = GetComponent<SkillCaster>();
-        _textFeedback = GetComponent<SkillUseTextFeedback>();
     }
 
     public bool IsBasicActionTargetInRange(Unit target)
@@ -331,14 +329,6 @@ public class UnitCombat : MonoBehaviour
 
     private void ShowBasicAttackMissFeedback(Unit target, TargetRelation targetRelation)
     {
-        if (targetRelation != TargetRelation.Hostile || target == null)
-            return;
-
-        SkillUseTextFeedback targetFeedback = target.GetComponent<SkillUseTextFeedback>();
-        if (targetFeedback != null && targetFeedback.TryShowMissPopup(target))
-            return;
-
-        _textFeedback?.TryShowMissPopup(target);
     }
 
     private CombatProjectileVisual ResolveBasicActionProjectilePrefab()

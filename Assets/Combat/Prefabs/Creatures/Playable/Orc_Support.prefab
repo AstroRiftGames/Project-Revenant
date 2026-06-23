@@ -446,7 +446,6 @@ GameObject:
   - component: {fileID: 8606000000000000007}
   - component: {fileID: 8606000000000000008}
   - component: {fileID: 8606000000000000009}
-  - component: {fileID: 8606000000000000010}
   - component: {fileID: 8606000000000000011}
   - component: {fileID: 8606000000000000012}
   - component: {fileID: 8606000000000000013}
@@ -622,27 +621,6 @@ MonoBehaviour:
   _chargeFromNearbyAllySkillUsed: 15
   _nearbyAllySkillChargeRadius: 3.5
   _debugLogs: 0
---- !u!114 &8606000000000000010
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5437173185435831237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b7f63bf6fb34d06b6554f2ddcb32748, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _popupPrefab: {fileID: 100004, guid: b6fa2d7c456d4a1d8bf9fb1225bf5f42, type: 3}
-  _popupOffset: {x: 0, y: 0.85, z: 0}
-  _impactSkillColor: {r: 1, g: 0.72, b: 0.2, a: 1}
-  _selfSkillColor: {r: 0.35, g: 1, b: 0.55, a: 1}
-  _statusBuffColor: {r: 0.25, g: 0.75, b: 1, a: 1}
-  _statusDebuffColor: {r: 0.72, g: 0.35, b: 0.95, a: 1}
-  _statusHealColor: {r: 0.3, g: 1, b: 0.45, a: 1}
-  _debugOnly: 1
-  _debugLogs: 0
 --- !u!114 &8606000000000000011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -783,7 +761,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 997d671fff5655d44a18cbe8b0eed742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _animator: {fileID: 3746043680875141128}
+  _animatorSync: {fileID: 0}
   _movement: {fileID: 8606000000000000002}
   _defaultFacingDirection: {x: 0, y: -1}
   _attackStateDuration: 0.15
@@ -1184,7 +1162,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.5
+      value: 0.75
       objectReference: {fileID: 0}
     - target: {fileID: 240808305995385096, guid: 178578fc1c939ae45ad4a4e1cf00881e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

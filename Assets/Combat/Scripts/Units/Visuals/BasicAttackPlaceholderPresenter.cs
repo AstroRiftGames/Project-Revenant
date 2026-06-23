@@ -23,7 +23,9 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
             // 2. Handle Hit Impact for Melee (only if it hit, and not for misses)
             if (evt.WillHit && evt.Target != null)
             {
-                CreateHitImpact(evt.Target, evt.TargetPosition);
+                Vector3 attackerCenter = evt.Attacker != null ? ResolveUnitCenterPosition(evt.Attacker) : evt.AttackerPosition;
+                Vector3 targetCenter = ResolveUnitCenterPosition(evt.Target);
+                CreateHitImpact(evt.Target, targetCenter);
 
                 // Spawn hit particles for hostile melee attacks (skip for support/heals/buffs)
                 if (evt.Relation == TargetRelation.Hostile)
@@ -31,8 +33,6 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
                     DamageParticleView dpv = evt.Target.GetComponent<DamageParticleView>();
                     if (dpv != null)
                     {
-                        Vector3 attackerCenter = evt.Attacker != null ? SkillImpactPlaceholderPresenter.ResolveUnitCenterPosition(evt.Attacker) : evt.AttackerPosition;
-                        Vector3 targetCenter = SkillImpactPlaceholderPresenter.ResolveUnitCenterPosition(evt.Target);
                         Vector3 hitDirection = (targetCenter - attackerCenter).normalized;
                         hitDirection.z = 0f;
                         if (hitDirection == Vector3.zero) hitDirection = Vector3.right;
@@ -43,6 +43,38 @@ public class BasicAttackPlaceholderPresenter : MonoBehaviour
                 }
             }
         }
+    }
+
+    private static Vector3 ResolveUnitCenterPosition(Unit unit)
+    {
+        if (unit == null)
+            return Vector3.zero;
+
+        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>();
+        bool hasBounds = false;
+        Bounds combinedBounds = new Bounds();
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null || renderer.sprite == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            if (!hasBounds)
+            {
+                combinedBounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combinedBounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        if (hasBounds)
+            return new Vector3(combinedBounds.center.x, combinedBounds.center.y, unit.transform.position.z);
+
+        return unit.transform.position;
     }
 
     private static Material GetSharedMaterial()
