@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: HumanSlayer
   displayName: Human Slayer
   isFusion: 0
-  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010101, type: 3}
+  unitPrefab: {fileID: 1672024382909255568, guid: 95060da5b3af34243b10308f1c4aad7c, type: 3}
   team: 1
   role: 1
   combatStyle: 1

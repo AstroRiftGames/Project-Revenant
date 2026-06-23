@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1607788421380390942
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 100269259682500494, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Name
+      value: Human-Tank
+      objectReference: {fileID: 0}
+    - target: {fileID: 1358824690437045211, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Name
+      value: Humans_Tank_Weapon_Idle
+      objectReference: {fileID: 0}
+    - target: {fileID: 3034310766945447335, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 4a56afd2d9864e545bef92670304747c, type: 2}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3995730443500458170, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4205939575717462751, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: d9e28c08bae5a4c40a227b70bfed0795, type: 2}
+    - target: {fileID: 5403309435751176319, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Name
+      value: Humans_Tank_Body_Idle
+      objectReference: {fileID: 0}
+    - target: {fileID: 6538697930046420743, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Name
+      value: Humans_Tank_Clothes_Idle
+      objectReference: {fileID: 0}
+    - target: {fileID: 7095866876270813563, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 22100000, guid: 108987c5448b845469768785d6f79503, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 09d4674bdaf1dd445b14b3a000852173, type: 3}

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Human-Tank-Weapon
+  m_Controller: {fileID: 9100000, guid: 608917a3c53651c47a8e58d577c7f89a, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 1624593205714598167, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: 1624593205714598167, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: -5637541457207421186, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: -5637541457207421186, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: 429540359091499943, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: 429540359091499943, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: 2242093226116659609, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: 2242093226116659609, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: 8451551337587442842, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: 8451551337587442842, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: -3332656750375472118, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: -3332656750375472118, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: -5148657230702060658, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: -5148657230702060658, guid: bbd917feecb1906418a06439e94b673b, type: 3}
+  - m_OriginalClip: {fileID: 2039607144426384982, guid: 999bdcb70ca3efc4d99b57db10aad942, type: 3}
+    m_OverrideClip: {fileID: 2039607144426384982, guid: bbd917feecb1906418a06439e94b673b, type: 3}

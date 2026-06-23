@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: HumanBrute
   displayName: Human Brute
   isFusion: 0
-  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010102, type: 3}
+  unitPrefab: {fileID: 1672024382909255568, guid: 34d535140d19b694c85c68da079f96e1, type: 3}
   team: 1
   role: 0
   combatStyle: 1

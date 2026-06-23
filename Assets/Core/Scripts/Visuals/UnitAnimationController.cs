@@ -7,8 +7,8 @@ public sealed class UnitAnimationController : MonoBehaviour
     private static readonly int MoveYHash = Animator.StringToHash("MoveY");
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private static readonly int IsAttackingHash = Animator.StringToHash("IsAttacking");
+    [SerializeField] private AnimatorSync _animatorSync;
 
-    [SerializeField] private Animator _animator;
     [SerializeField] private UnitMovement _movement;
     [SerializeField] private Vector2 _defaultFacingDirection = Vector2.down;
     [SerializeField] private float _attackStateDuration = 0.15f;
@@ -22,7 +22,7 @@ public sealed class UnitAnimationController : MonoBehaviour
     private void Awake()
     {
         _movement ??= GetComponent<UnitMovement>();
-        _animator ??= GetComponentInChildren<Animator>();
+        _animatorSync ??= GetComponentInChildren<AnimatorSync>();
         _lastFacingDirection = ResolveInitialFacingDirection();
         ApplyAnimatorState(isMoving: false);
     }
@@ -57,16 +57,16 @@ public sealed class UnitAnimationController : MonoBehaviour
 
     private void ApplyAnimatorState(bool isMoving)
     {
-        if (_animator == null)
+        if (_animatorSync == null)
             return;
 
         Vector2 facing = isMoving ? _currentMovement : _lastFacingDirection;
         bool isAttacking = Time.time < _attackStateUntilTime;
 
-        _animator.SetFloat(MoveXHash, facing.x);
-        _animator.SetFloat(MoveYHash, facing.y);
-        _animator.SetBool(IsMovingHash, isMoving);
-        _animator.SetBool(IsAttackingHash, isAttacking);
+        _animatorSync.SetFloat(MoveXHash, facing.x);
+        _animatorSync.SetFloat(MoveYHash, facing.y);
+        _animatorSync.SetBool(IsMovingHash, isMoving);
+        _animatorSync.SetBool(IsAttackingHash, isAttacking);
     }
 
     private Vector2 ResolveInitialFacingDirection()
