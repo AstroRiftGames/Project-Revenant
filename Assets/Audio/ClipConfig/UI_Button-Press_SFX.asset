@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
   m_Name: UI_Button-Press_SFX
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: b864be316aaa1cb4d9a04678921938c6, type: 3}
+  _clip: {fileID: 8300000, guid: da2bab717f89ff044b52d99a9e2b3123, type: 3}
   _channel: 0
   _volume: 1
   _useRandomPitch: 0

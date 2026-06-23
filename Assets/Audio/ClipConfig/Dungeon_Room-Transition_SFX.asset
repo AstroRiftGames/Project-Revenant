@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
   m_Name: Dungeon_Room-Transition_SFX
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: b21adb8e8bf110d4c8d1b5b59a8947ec, type: 3}
+  _clip: {fileID: 8300000, guid: 9c50b23df185ba947af59b84992e39f8, type: 3}
   _channel: 0
   _volume: 1
   _useRandomPitch: 0

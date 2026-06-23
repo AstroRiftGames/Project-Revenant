@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
   m_Name: Unit_Death_SFX
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: 725df792110c5c649b80acbc851b6a2a, type: 3}
+  _clip: {fileID: 8300000, guid: 487587928b81b8d4396cfd30d6300dad, type: 3}
   _channel: 0
   _volume: 0.8
   _useRandomPitch: 1

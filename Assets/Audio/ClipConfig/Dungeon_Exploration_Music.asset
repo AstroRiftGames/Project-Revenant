@@ -12,10 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d9d2ac7cc055cf4e8048d2f51c57b40, type: 3}
   m_Name: Dungeon_Exploration_Music
   m_EditorClassIdentifier: 
-  _clip: {fileID: 8300000, guid: 6aedb0bde8e0c8a43abd87dd40dae56f, type: 3}
+  _clip: {fileID: 8300000, guid: d37773d31ccb80b4393dfec82488aa48, type: 3}
   _channel: 1
   _volume: 1
+  _useRandomPitch: 0
   _pitch: 1
+  _minPitch: 0.9
+  _maxPitch: 1.1
   _loop: 1
   _spatialSound: 0
   _spatialBlend: 1
