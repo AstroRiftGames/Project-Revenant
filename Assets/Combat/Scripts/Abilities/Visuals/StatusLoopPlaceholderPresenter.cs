@@ -156,6 +156,39 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
 
         return unit.transform.position;
     }
+    private static Vector3 ResolveUnitBodyPosition(Unit unit)
+    {
+        if (unit == null)
+            return Vector3.zero;
+
+        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>();
+        bool hasBounds = false;
+        Bounds combinedBounds = new Bounds();
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null || renderer.sprite == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            if (!hasBounds)
+            {
+                combinedBounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combinedBounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        if (hasBounds)
+        {
+            return new Vector3(combinedBounds.center.x, combinedBounds.center.y, unit.transform.position.z);
+        }
+
+        return unit.transform.position;
+    }
 
     public static Vector3 ResolveUnitHeadPosition(Unit unit, float yOffset = 0.15f)
     {
@@ -360,13 +393,13 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
 
         private void UpdatePosition()
         {
-            Vector3 groundPos = ResolveUnitGroundPosition(_unit);
+            Vector3 bodyPos = ResolveUnitBodyPosition(_unit);
             
             float innerPulse = 0.24f + 0.02f * Mathf.Sin(Time.time * 2.5f);
-            DrawFlatRing(_innerLr, groundPos, innerPulse);
+            DrawFlatRing(_innerLr, bodyPos, innerPulse);
 
             float outerPulse = 0.38f + 0.03f * Mathf.Sin(Time.time * 2.5f + Mathf.PI);
-            DrawFlatRing(_outerLr, groundPos, outerPulse);
+            DrawFlatRing(_outerLr, bodyPos, outerPulse);
         }
 
         private void DrawFlatRing(LineRenderer lr, Vector3 center, float radius)
@@ -384,3 +417,4 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 }
+
