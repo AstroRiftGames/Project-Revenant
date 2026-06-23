@@ -23,6 +23,13 @@ public class HealthDeltaText : BaseFeedbackText
         base.Play(delta, sourceKind);
     }
 
+    public override void PlayText(string text, Color color, DamageSourceKind sourceKind)
+    {
+        ApplyRandomRotation();
+        _rectTransform.anchoredPosition = Vector2.zero;
+        base.PlayText(text, color, sourceKind);
+    }
+
     private void ApplyRandomRotation()
     {
         float randomZ = Random.Range(_minRotationZ, _maxRotationZ);

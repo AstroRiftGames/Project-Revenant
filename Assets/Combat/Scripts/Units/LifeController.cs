@@ -25,6 +25,7 @@ public class LifeController : MonoBehaviour, IDamageable
     public Action<int> OnDamageTaken;
     public Action<int, DamageSourceKind> OnDamageTakenDetailed;
     public Action<int> OnLifeUpdated;
+    public Action OnMissed;
 
     public Unit LastAttacker { get; private set; }
 

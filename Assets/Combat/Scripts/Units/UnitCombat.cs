@@ -329,6 +329,10 @@ public class UnitCombat : MonoBehaviour
 
     private void ShowBasicAttackMissFeedback(Unit target, TargetRelation targetRelation)
     {
+        if (target != null && target.TryGetComponent(out LifeController lifeController))
+        {
+            lifeController.OnMissed?.Invoke();
+        }
     }
 
     private CombatProjectileVisual ResolveBasicActionProjectilePrefab()

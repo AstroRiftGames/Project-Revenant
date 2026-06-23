@@ -49,6 +49,21 @@ public abstract class BaseFeedbackText : MonoBehaviour
             );
     }
 
+    /// <summary>Initialises arbitrary text and triggers the animation.</summary>
+    public virtual void PlayText(string text, Color color, DamageSourceKind sourceKind = DamageSourceKind.Direct)
+    {
+        _label.text = text;
+        _label.color = color;
+
+        _animator.SetTrigger(
+            sourceKind switch {
+                DamageSourceKind.Direct => FadeUp,
+                DamageSourceKind.DoT => FadeDown,
+                _ => FadeUp,
+            }
+        );
+    }
+
     /// <summary>Called by the Animation Event on the last keyframe.</summary>
     protected virtual void End() => Destroy(gameObject);
 }

@@ -29,6 +29,7 @@ public class UnitLifeBarUI : MonoBehaviour
 
             _lifeController.OnLifeUpdated += UpdateLifeBar;
             _lifeController.OnDamageTakenDetailed += UpdateDamageTaken;
+            _lifeController.OnMissed += ShowMissFeedback;
         }
 
         bool isAlly = affiliation != null && affiliation.Team == UnitTeam.Ally;
@@ -55,6 +56,7 @@ public class UnitLifeBarUI : MonoBehaviour
         {
             _lifeController.OnLifeUpdated -= UpdateLifeBar;
             _lifeController.OnDamageTakenDetailed -= UpdateDamageTaken;
+            _lifeController.OnMissed -= ShowMissFeedback;
         }
     }
 
@@ -87,6 +89,18 @@ public class UnitLifeBarUI : MonoBehaviour
         {
             lifeUpdate.transform.SetParent(_parentCanvas.transform, true);
             lifeUpdate.Play(-damage, sourceKind);
+        }
+    }
+
+    private void ShowMissFeedback()
+    {
+        if (_damageDealtPrefab == null || _parentCanvas == null) return;
+
+        Instantiate(_damageDealtPrefab, transform.up * .5f, Quaternion.identity).TryGetComponent(out HealthDeltaText lifeUpdate);
+        if (lifeUpdate != null)
+        {
+            lifeUpdate.transform.SetParent(_parentCanvas.transform, true);
+            lifeUpdate.PlayText("MISS", Color.white, DamageSourceKind.Direct);
         }
     }
 }
