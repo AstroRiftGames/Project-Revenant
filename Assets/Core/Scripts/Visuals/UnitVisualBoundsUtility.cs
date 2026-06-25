@@ -81,6 +81,77 @@ public static class UnitVisualBoundsUtility
         return anchor != null && anchor.gameObject.activeInHierarchy ? anchor : null;
     }
 
+    private static bool IsBodyRenderer(Transform t)
+    {
+        Transform current = t;
+        while (current != null)
+        {
+            string nameLower = current.name.ToLowerInvariant();
+            if (nameLower.Contains("vfx") ||
+                nameLower.Contains("debug") ||
+                nameLower.Contains("status") ||
+                nameLower.Contains("overlay") ||
+                nameLower.Contains("ui") ||
+                nameLower.Contains("healthbar") ||
+                nameLower.Contains("selection") ||
+                nameLower.Contains("marker") ||
+                nameLower.Contains("shadow") ||
+                nameLower.Contains("placeholder") ||
+                nameLower.Contains("canvas") ||
+                nameLower.Contains("clone") ||
+                nameLower.Contains("hud") ||
+                nameLower.Contains("particle"))
+            {
+                return false;
+            }
+            current = current.parent;
+        }
+        return true;
+    }
+
+    public static bool TryResolveUnitBodyVisualBounds(Unit unit, out Bounds combinedBounds)
+    {
+        combinedBounds = new Bounds();
+        if (unit == null)
+            return false;
+
+        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>(true);
+        Transform preferredRoot = null;
+        string[] preferredNames = { "VisualRoot", "SpriteRoot", "Body", "Graphics", "Model" };
+        foreach (var pName in preferredNames)
+        {
+            preferredRoot = FindDescendantByName(unit.transform, pName);
+            if (preferredRoot != null)
+                break;
+        }
+
+        bool hasBounds = false;
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer renderer = renderers[i];
+            if (renderer == null || renderer.sprite == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            if (preferredRoot != null && !renderer.transform.IsChildOf(preferredRoot))
+                continue;
+
+            if (!IsBodyRenderer(renderer.transform))
+                continue;
+
+            if (!hasBounds)
+            {
+                combinedBounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                combinedBounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return hasBounds;
+    }
+
     private static Transform FindDescendantByName(Transform root, string childName)
     {
         if (root == null || string.IsNullOrEmpty(childName))

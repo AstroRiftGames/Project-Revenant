@@ -646,6 +646,7 @@ GameObject:
   - component: {fileID: 3000000002}
   - component: {fileID: 3000000003}
   - component: {fileID: 3000000004}
+  - component: {fileID: 3000000005}
   m_Layer: 0
   m_Name: CombatDebugVisuals
   m_TagString: Untagged
@@ -730,6 +731,28 @@ MonoBehaviour:
   _bodyImpactLineWidthClamp: {x: 0.05, y: 0.09}
   _bodyImpactColor: {r: 1, g: 0.42, b: 0.12, a: 0.95}
   _bodyImpactSortingOffset: 24
+--- !u!114 &3000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425bf86f38a6d094d8f44c7a4672a3a9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  radiusHeightFactor: 0.22
+  radiusClamp: {x: 0.12, y: 0.28}
+  verticalOffsetHeightFactor: -0.12
+  verticalOffsetClamp: {x: -0.16, y: 0.06}
+  markSize: 0.055
+  markCount: 3
+  rotationSpeed: 160
+  pulseSpeed: 4
+  color: {r: 1, g: 0.85, b: 0.18, a: 0.85}
+  sortingOffset: 28
 --- !u!1839735485 &3000000010 stripped
 Tilemap:
   m_CorrespondingSourceObject: {fileID: 3184769969460405456, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}

@@ -15,6 +15,9 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     [SerializeField] private Transform optionalWorldPoint;
     [SerializeField] private bool autoResolveUnitsFromScene = true;
 
+    [Header("Status Presenters")]
+    [SerializeField] private StatusLoopPlaceholderPresenter statusLoopPresenter;
+
     [Header("Timing")]
     [SerializeField] private float testDuration = 1.5f;
     [SerializeField] private float testDamageAmount = 10f;
@@ -39,6 +42,20 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         public ActiveStatusEffect Effect;
     }
 
+    private StatusLoopPlaceholderPresenter GetActiveStatusLoopPresenter()
+    {
+        if (statusLoopPresenter != null && statusLoopPresenter.gameObject.activeInHierarchy && statusLoopPresenter.enabled)
+        {
+            return statusLoopPresenter;
+        }
+        var found = FindAnyObjectByType<StatusLoopPlaceholderPresenter>();
+        if (found != null && found.gameObject.activeInHierarchy && found.enabled)
+        {
+            return found;
+        }
+        return null;
+    }
+
     [ContextMenu("Test Slow Loop")]
     private void TestSlowLoop()
     {
@@ -51,7 +68,14 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         if (!InjectStatusEffect(target, SkillEffectKind.Slow))
             return;
 
-        SpawnTracked("SlowLoop", () => InvokeStaticMethod(typeof(StatusLoopPlaceholderPresenter), "CreateVisualLoop", target, SkillEffectKind.Slow));
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("SlowLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Slow));
         ScheduleCleanup();
     }
 
@@ -67,7 +91,14 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         if (!InjectStatusEffect(target, SkillEffectKind.Stun))
             return;
 
-        SpawnTracked("StunLoop", () => InvokeStaticMethod(typeof(StatusLoopPlaceholderPresenter), "CreateVisualLoop", target, SkillEffectKind.Stun));
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("StunLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Stun));
         ScheduleCleanup();
     }
 
