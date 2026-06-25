@@ -214,7 +214,7 @@ public class TargetingStrategy : MonoBehaviour
         Unit bestTarget = null;
         int bestBaseDamage = int.MinValue;
         float bestSqrDistance = float.MaxValue;
-        int bestInstanceId = int.MaxValue;
+        EntityId bestEntityId = EntityId.None;
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -224,14 +224,14 @@ public class TargetingStrategy : MonoBehaviour
 
             int candidateBaseDamage = ResolveBaseDamage(candidate);
             float candidateSqrDistance = ResolveSqrDistance(self, candidate);
-            int candidateInstanceId = candidate.GetInstanceID();
+            EntityId candidateEntityId = candidate.GetEntityId();
 
             if (candidateBaseDamage > bestBaseDamage)
             {
                 bestTarget = candidate;
                 bestBaseDamage = candidateBaseDamage;
                 bestSqrDistance = candidateSqrDistance;
-                bestInstanceId = candidateInstanceId;
+                bestEntityId = candidateEntityId;
                 continue;
             }
 
@@ -242,17 +242,17 @@ public class TargetingStrategy : MonoBehaviour
             {
                 bestTarget = candidate;
                 bestSqrDistance = candidateSqrDistance;
-                bestInstanceId = candidateInstanceId;
+                bestEntityId = candidateEntityId;
                 continue;
             }
 
             if (candidateSqrDistance > bestSqrDistance)
                 continue;
 
-            if (candidateInstanceId < bestInstanceId)
+            if (bestTarget == null || candidateEntityId.CompareTo(bestEntityId) < 0)
             {
                 bestTarget = candidate;
-                bestInstanceId = candidateInstanceId;
+                bestEntityId = candidateEntityId;
             }
         }
 
@@ -273,7 +273,7 @@ public class TargetingStrategy : MonoBehaviour
         int bestBaseDamage = bestTarget != null ? ResolveBaseDamage(bestTarget) : int.MinValue;
         int bestRolePriority = bestTarget != null ? ResolveOffensiveTargetRolePriority(self.Role, bestTarget.Role) : int.MaxValue;
         float bestSqrDistance = bestTarget != null ? ResolveSqrDistance(self, bestTarget) : float.MaxValue;
-        int bestInstanceId = bestTarget != null ? bestTarget.GetInstanceID() : int.MaxValue;
+        EntityId bestEntityId = bestTarget != null ? bestTarget.GetEntityId() : EntityId.None;
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -285,7 +285,7 @@ public class TargetingStrategy : MonoBehaviour
             int candidateBaseDamage = ResolveBaseDamage(candidate);
             int candidateRolePriority = ResolveOffensiveTargetRolePriority(self.Role, candidate.Role);
             float candidateSqrDistance = ResolveSqrDistance(self, candidate);
-            int candidateInstanceId = candidate.GetInstanceID();
+            EntityId candidateEntityId = candidate.GetEntityId();
 
             if (!IsBetterOffensiveCandidate(
                     self.Role,
@@ -295,13 +295,13 @@ public class TargetingStrategy : MonoBehaviour
                     candidateBaseDamage,
                     candidateRolePriority,
                     candidateSqrDistance,
-                    candidateInstanceId,
+                    candidateEntityId,
                     bestTarget,
                     bestHealthRatio,
                     bestBaseDamage,
                     bestRolePriority,
                     bestSqrDistance,
-                    bestInstanceId))
+                    bestEntityId))
             {
                 continue;
             }
@@ -311,7 +311,7 @@ public class TargetingStrategy : MonoBehaviour
             bestBaseDamage = candidateBaseDamage;
             bestRolePriority = candidateRolePriority;
             bestSqrDistance = candidateSqrDistance;
-            bestInstanceId = candidateInstanceId;
+            bestEntityId = candidateEntityId;
         }
 
         return bestTarget;
@@ -329,7 +329,7 @@ public class TargetingStrategy : MonoBehaviour
         Unit bestTarget = isValidCandidate(currentTarget) ? currentTarget : null;
         float bestHealthRatio = bestTarget != null ? ResolveHealthRatio(bestTarget) : float.MaxValue;
         float bestSqrDistance = bestTarget != null ? ResolveSqrDistance(self, bestTarget) : float.MaxValue;
-        int bestInstanceId = bestTarget != null ? bestTarget.GetInstanceID() : int.MaxValue;
+        EntityId bestEntityId = bestTarget != null ? bestTarget.GetEntityId() : EntityId.None;
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -339,18 +339,18 @@ public class TargetingStrategy : MonoBehaviour
 
             float candidateHealthRatio = ResolveHealthRatio(candidate);
             float candidateSqrDistance = ResolveSqrDistance(self, candidate);
-            int candidateInstanceId = candidate.GetInstanceID();
+            EntityId candidateEntityId = candidate.GetEntityId();
 
             if (!IsBetterHealingCandidate(
                     currentTarget,
                     candidate,
                     candidateHealthRatio,
                     candidateSqrDistance,
-                    candidateInstanceId,
+                    candidateEntityId,
                     bestTarget,
                     bestHealthRatio,
                     bestSqrDistance,
-                    bestInstanceId))
+                    bestEntityId))
             {
                 continue;
             }
@@ -358,7 +358,7 @@ public class TargetingStrategy : MonoBehaviour
             bestTarget = candidate;
             bestHealthRatio = candidateHealthRatio;
             bestSqrDistance = candidateSqrDistance;
-            bestInstanceId = candidateInstanceId;
+            bestEntityId = candidateEntityId;
         }
 
         return bestTarget;
@@ -376,7 +376,7 @@ public class TargetingStrategy : MonoBehaviour
         Unit bestTarget = isValidCandidate(currentTarget) ? currentTarget : null;
         int bestRolePriority = bestTarget != null ? ResolveBuffRolePriority(bestTarget.Role) : int.MaxValue;
         float bestSqrDistance = bestTarget != null ? ResolveSqrDistance(self, bestTarget) : float.MaxValue;
-        int bestInstanceId = bestTarget != null ? bestTarget.GetInstanceID() : int.MaxValue;
+        EntityId bestEntityId = bestTarget != null ? bestTarget.GetEntityId() : EntityId.None;
 
         for (int i = 0; i < candidates.Count; i++)
         {
@@ -386,18 +386,18 @@ public class TargetingStrategy : MonoBehaviour
 
             int candidateRolePriority = ResolveBuffRolePriority(candidate.Role);
             float candidateSqrDistance = ResolveSqrDistance(self, candidate);
-            int candidateInstanceId = candidate.GetInstanceID();
+            EntityId candidateEntityId = candidate.GetEntityId();
 
             if (!IsBetterBuffCandidate(
                     currentTarget,
                     candidate,
                     candidateRolePriority,
                     candidateSqrDistance,
-                    candidateInstanceId,
+                    candidateEntityId,
                     bestTarget,
                     bestRolePriority,
                     bestSqrDistance,
-                    bestInstanceId))
+                    bestEntityId))
             {
                 continue;
             }
@@ -405,7 +405,7 @@ public class TargetingStrategy : MonoBehaviour
             bestTarget = candidate;
             bestRolePriority = candidateRolePriority;
             bestSqrDistance = candidateSqrDistance;
-            bestInstanceId = candidateInstanceId;
+            bestEntityId = candidateEntityId;
         }
 
         return bestTarget;
@@ -449,11 +449,11 @@ public class TargetingStrategy : MonoBehaviour
         Unit candidate,
         float candidateHealthRatio,
         float candidateSqrDistance,
-        int candidateInstanceId,
+        EntityId candidateEntityId,
         Unit bestTarget,
         float bestHealthRatio,
         float bestSqrDistance,
-        int bestInstanceId)
+        EntityId bestEntityId)
     {
         if (bestTarget == null)
             return true;
@@ -473,7 +473,7 @@ public class TargetingStrategy : MonoBehaviour
         if (ReferenceEquals(bestTarget, currentTarget))
             return false;
 
-        return candidateInstanceId < bestInstanceId;
+        return candidateEntityId.CompareTo(bestEntityId) < 0;
     }
 
     private static bool IsBetterBuffCandidate(
@@ -481,11 +481,11 @@ public class TargetingStrategy : MonoBehaviour
         Unit candidate,
         int candidateRolePriority,
         float candidateSqrDistance,
-        int candidateInstanceId,
+        EntityId candidateEntityId,
         Unit bestTarget,
         int bestRolePriority,
         float bestSqrDistance,
-        int bestInstanceId)
+        EntityId bestEntityId)
     {
         if (bestTarget == null)
             return true;
@@ -505,7 +505,7 @@ public class TargetingStrategy : MonoBehaviour
         if (ReferenceEquals(bestTarget, currentTarget))
             return false;
 
-        return candidateInstanceId < bestInstanceId;
+        return candidateEntityId.CompareTo(bestEntityId) < 0;
     }
 
     private static bool IsBetterOffensiveCandidate(
@@ -516,13 +516,13 @@ public class TargetingStrategy : MonoBehaviour
         int candidateBaseDamage,
         int candidateRolePriority,
         float candidateSqrDistance,
-        int candidateInstanceId,
+        EntityId candidateEntityId,
         Unit bestTarget,
         float bestHealthRatio,
         int bestBaseDamage,
         int bestRolePriority,
         float bestSqrDistance,
-        int bestInstanceId)
+        EntityId bestEntityId)
     {
         if (bestTarget == null)
             return true;
@@ -559,7 +559,7 @@ public class TargetingStrategy : MonoBehaviour
         if (ReferenceEquals(bestTarget, currentTarget))
             return false;
 
-        return candidateInstanceId < bestInstanceId;
+        return candidateEntityId.CompareTo(bestEntityId) < 0;
     }
 
     private static float ResolveHealthRatio(Unit target)

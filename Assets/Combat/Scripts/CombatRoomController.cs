@@ -428,7 +428,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
 
     private void CleanupTemporaryCombatUnits()
     {
-        var temporaryUnits = new HashSet<int>();
+        var temporaryUnits = new HashSet<EntityId>();
 
         TemporaryCombatUnit[] tempCombatUnits = _roomContext.GetComponentsInChildren<TemporaryCombatUnit>(includeInactive: true);
         for (int i = 0; i < tempCombatUnits.Length; i++)
@@ -441,7 +441,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             if (unitObject == null)
                 continue;
 
-            int instanceId = unitObject.GetInstanceID();
+            EntityId instanceId = unitObject.GetEntityId();
             if (!temporaryUnits.Add(instanceId))
                 continue;
 
@@ -460,7 +460,7 @@ public class CombatRoomController : MonoBehaviour, IRoomContextComponent
             if (unitObject == null)
                 continue;
 
-            int instanceId = unitObject.GetInstanceID();
+            EntityId instanceId = unitObject.GetEntityId();
             if (!temporaryUnits.Add(instanceId))
                 continue;
 

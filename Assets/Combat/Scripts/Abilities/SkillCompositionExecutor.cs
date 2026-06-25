@@ -672,7 +672,7 @@ public static class SkillCompositionExecutor
             ? GridUnitCellUtility.ResolveUnitCell(roomGrid, currentUnit)
             : default;
         float bestDistance = float.MaxValue;
-        int bestInstanceId = int.MaxValue;
+        EntityId bestEntityId = EntityId.None;
 
         for (int unitIndex = 0; unitIndex < roomUnits.Count; unitIndex++)
         {
@@ -706,12 +706,12 @@ public static class SkillCompositionExecutor
                 continue;
 
             float distance = ResolveBounceDistance(roomGrid, currentUnit, currentUnitCell, candidate, candidateCell);
-            int candidateInstanceId = candidate.GetInstanceID();
+            EntityId candidateEntityId = candidate.GetEntityId();
             if (distance < bestDistance ||
-                (Mathf.Approximately(distance, bestDistance) && candidateInstanceId < bestInstanceId))
+                (Mathf.Approximately(distance, bestDistance) && (nextUnit == null || candidateEntityId.CompareTo(bestEntityId) < 0)))
             {
                 bestDistance = distance;
-                bestInstanceId = candidateInstanceId;
+                bestEntityId = candidateEntityId;
                 nextUnit = candidate;
                 nextUnitCell = candidateCell;
             }

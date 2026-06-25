@@ -201,7 +201,7 @@ public static class SkillHitCollector
                 if (distanceComparison != 0)
                     return distanceComparison;
 
-                return left.Target.GetInstanceID().CompareTo(right.Target.GetInstanceID());
+                return left.Target.GetEntityId().CompareTo(right.Target.GetEntityId());
             });
 
             int remainingSlots = Mathf.Max(0, maxTargets - results.Count);
@@ -810,7 +810,7 @@ public static class SkillHitCollector
             return "[None]";
 
         string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
-        return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+        return $"[{unit.name}#{unit.GetEntityId()}|{unitId}]";
     }
 
     private static string FormatWorldPosition(Vector3 position)

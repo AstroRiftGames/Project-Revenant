@@ -1687,9 +1687,9 @@ public class SkillCaster : MonoBehaviour
     {
         Unit owner = _unit;
         string ownerName = owner != null ? owner.name : name;
-        int ownerInstanceId = owner != null ? owner.GetInstanceID() : GetInstanceID();
+        EntityId ownerEntityId = owner != null ? owner.GetEntityId() : GetEntityId();
         string unitId = owner != null && !string.IsNullOrWhiteSpace(owner.Id) ? owner.Id : "NoUnitId";
-        return $"[{ownerName}#{ownerInstanceId}|{unitId}]";
+        return $"[{ownerName}#{ownerEntityId}|{unitId}]";
     }
 
     private static string FormatUnitName(Unit unit)
@@ -1698,7 +1698,7 @@ public class SkillCaster : MonoBehaviour
             return "[None]";
 
         string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
-        return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+        return $"[{unit.name}#{unit.GetEntityId()}|{unitId}]";
     }
 
     private static string FormatUnits(IReadOnlyList<Unit> units)

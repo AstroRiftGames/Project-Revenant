@@ -629,7 +629,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         if (spawnAction == null)
             return;
 
-        HashSet<int> beforeIds = CaptureSceneObjectIds();
+        var beforeIds = CaptureSceneObjectIds();
         spawnAction.Invoke();
         List<GameObject> newRoots = CaptureNewRootObjects(beforeIds);
         RegisterSpawnedRoots(label, newRoots);
@@ -655,9 +655,9 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
     }
 
-    private static HashSet<int> CaptureSceneObjectIds()
+    private static HashSet<EntityId> CaptureSceneObjectIds()
     {
-        HashSet<int> ids = new HashSet<int>();
+        HashSet<EntityId> ids = new HashSet<EntityId>();
         GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
         for (int i = 0; i < objects.Length; i++)
         {
@@ -665,15 +665,15 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             if (obj == null || !obj.scene.IsValid())
                 continue;
 
-            ids.Add(obj.GetInstanceID());
+            ids.Add(obj.GetEntityId());
         }
 
         return ids;
     }
 
-    private static List<GameObject> CaptureNewRootObjects(HashSet<int> beforeIds)
+    private static List<GameObject> CaptureNewRootObjects(HashSet<EntityId> beforeIds)
     {
-        Dictionary<int, GameObject> newObjects = new Dictionary<int, GameObject>();
+        Dictionary<EntityId, GameObject> newObjects = new Dictionary<EntityId, GameObject>();
         GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
         for (int i = 0; i < objects.Length; i++)
         {
@@ -681,7 +681,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             if (obj == null || !obj.scene.IsValid())
                 continue;
 
-            int id = obj.GetInstanceID();
+            EntityId id = obj.GetEntityId();
             if (beforeIds.Contains(id))
                 continue;
 
@@ -689,11 +689,11 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
 
         List<GameObject> roots = new List<GameObject>();
-        foreach (KeyValuePair<int, GameObject> pair in newObjects)
+        foreach (KeyValuePair<EntityId, GameObject> pair in newObjects)
         {
             GameObject obj = pair.Value;
             Transform parent = obj.transform.parent;
-            if (parent != null && newObjects.ContainsKey(parent.gameObject.GetInstanceID()))
+            if (parent != null && newObjects.ContainsKey(parent.gameObject.GetEntityId()))
                 continue;
 
             roots.Add(obj);

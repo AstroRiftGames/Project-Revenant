@@ -460,10 +460,10 @@ public class UnitBrain : MonoBehaviour
     private string FormatDebugIdentity()
     {
         if (_unit == null)
-            return $"[{name}#{GetInstanceID()}|NoUnit]";
+            return $"[{name}#{GetEntityId()}|NoUnit]";
 
         string unitId = !string.IsNullOrWhiteSpace(_unit.Id) ? _unit.Id : "NoUnitId";
-        return $"[{_unit.name}#{_unit.GetInstanceID()}|{unitId}]";
+        return $"[{_unit.name}#{_unit.GetEntityId()}|{unitId}]";
     }
 
     private static string FormatUnitIdentity(Unit unit)
@@ -472,6 +472,6 @@ public class UnitBrain : MonoBehaviour
             return "[None]";
 
         string unitId = !string.IsNullOrWhiteSpace(unit.Id) ? unit.Id : "NoUnitId";
-        return $"[{unit.name}#{unit.GetInstanceID()}|{unitId}]";
+        return $"[{unit.name}#{unit.GetEntityId()}|{unitId}]";
     }
 }
