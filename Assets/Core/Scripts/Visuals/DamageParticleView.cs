@@ -8,6 +8,17 @@ public class DamageParticleView : MonoBehaviour
     [SerializeField] private Transform _spawnPoint;
     [SerializeField] private Vector3 offset = new(0f, 0.5f, -0.1f);
 
+    [Header("Runtime Tuning")]
+    [SerializeField, Min(1)] private int _defaultParticleCount = 8;
+    [SerializeField] private Vector2 _particleLifetimeRange = new(0.38f, 0.55f);
+    [SerializeField] private Vector2 _particleSizeRange = new(0.10f, 0.16f);
+    [SerializeField] private Vector2 _particleSpeedRange = new(0.65f, 1.35f);
+    [SerializeField, Min(0f)] private float _upwardBias = 0.35f;
+    [SerializeField, Min(0f)] private float _randomSpread = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float _directionalWeight = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float _radialWeight = 0.6f;
+    [SerializeField] private int _sortingOrderOffset = 30;
+
     private ParticleSystem _hitParticles;
 
     public ParticleSystem HitParticlesPrefab => _hitParticlesPrefab;
@@ -29,10 +40,35 @@ public class DamageParticleView : MonoBehaviour
         CounteractScale();
     }
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        _defaultParticleCount = Mathf.Max(1, _defaultParticleCount);
+        _particleLifetimeRange = SanitizeRange(_particleLifetimeRange, 0.01f);
+        _particleSizeRange = SanitizeRange(_particleSizeRange, 0.001f);
+        _particleSpeedRange = SanitizeRange(_particleSpeedRange, 0f);
+        _upwardBias = Mathf.Max(0f, _upwardBias);
+        _randomSpread = Mathf.Max(0f, _randomSpread);
+    }
+#endif
+
+    private static Vector2 SanitizeRange(Vector2 range, float minimum)
+    {
+        float x = Mathf.Max(minimum, range.x);
+        float y = Mathf.Max(minimum, range.y);
+
+        if (y < x)
+        {
+            y = x;
+        }
+
+        return new Vector2(x, y);
+    }
+
     private void CounteractScale()
     {
         if (_hitParticles == null) return;
-        
+
         Vector3 parentLossyScale = transform.lossyScale;
         _hitParticles.transform.localScale = new Vector3(
             parentLossyScale.x != 0 ? 1f / Mathf.Abs(parentLossyScale.x) : 1f,
@@ -41,7 +77,7 @@ public class DamageParticleView : MonoBehaviour
         );
     }
 
-    public void TriggerHitParticles(Vector3 contactPoint, Vector3 hitDirection, int count = 6)
+    public void TriggerHitParticles(Vector3 contactPoint, Vector3 hitDirection, int count = -1)
     {
         if (_hitParticles == null)
         {
@@ -59,33 +95,51 @@ public class DamageParticleView : MonoBehaviour
             if (sr != null)
             {
                 renderer.sortingLayerName = sr.sortingLayerName;
-                renderer.sortingOrder = sr.sortingOrder + 30; // Above target sprite (+30)
+                renderer.sortingOrder = sr.sortingOrder + _sortingOrderOffset;
             }
         }
 
         bool isWorldSpace = _hitParticles.main.simulationSpace == ParticleSystemSimulationSpace.World;
-        float upwardBias = 0.45f;
+        int finalCount = count > 0 ? count : _defaultParticleCount;
+        Vector2 lifetimeRange = SanitizeRange(_particleLifetimeRange, 0.01f);
+        Vector2 sizeRange = SanitizeRange(_particleSizeRange, 0.001f);
+        Vector2 speedRange = SanitizeRange(_particleSpeedRange, 0f);
+        Vector3 normalizedHitDirection = hitDirection.normalized;
 
-        for (int i = 0; i < count; i++)
+        if (normalizedHitDirection == Vector3.zero)
         {
-            ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
-            
-            // Set custom short lifetime (0.22s to 0.35s) so particles stay close to the target
-            emitParams.startLifetime = UnityEngine.Random.Range(0.22f, 0.35f);
+            normalizedHitDirection = Vector3.right;
+        }
 
-            // Mix direction: 60% radial/local burst, 40% directional hit direction
-            Vector3 localDir = new Vector3(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f), 0f).normalized;
-            Vector3 mixedDir = (hitDirection * 0.4f + localDir * 0.6f).normalized;
+        for (int i = 0; i < finalCount; i++)
+        {
+            ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams
+            {
+                startLifetime = UnityEngine.Random.Range(lifetimeRange.x, lifetimeRange.y),
+                startSize = UnityEngine.Random.Range(sizeRange.x, sizeRange.y)
+            };
 
-            float speed = UnityEngine.Random.Range(0.8f, 1.8f);
-            
+            Vector3 localDir = new Vector3(
+                UnityEngine.Random.Range(-1f, 1f),
+                UnityEngine.Random.Range(-1f, 1f),
+                0f
+            ).normalized;
+
+            Vector3 mixedDir = (normalizedHitDirection * _directionalWeight + localDir * _radialWeight).normalized;
+            if (mixedDir == Vector3.zero)
+            {
+                mixedDir = localDir == Vector3.zero ? Vector3.right : localDir;
+            }
+
+            float speed = UnityEngine.Random.Range(speedRange.x, speedRange.y);
+
             Vector3 randomSpreadSmall = new Vector3(
-                UnityEngine.Random.Range(-0.3f, 0.3f),
-                UnityEngine.Random.Range(-0.3f, 0.3f),
+                UnityEngine.Random.Range(-_randomSpread, _randomSpread),
+                UnityEngine.Random.Range(-_randomSpread, _randomSpread),
                 0f
             );
-            
-            Vector3 worldVelocity = (mixedDir * speed) + (Vector3.up * upwardBias) + randomSpreadSmall;
+
+            Vector3 worldVelocity = (mixedDir * speed) + (Vector3.up * _upwardBias) + randomSpreadSmall;
 
             if (isWorldSpace)
             {
@@ -107,7 +161,7 @@ public class DamageParticleView : MonoBehaviour
     {
         if (target == null) return incomingOrigin;
 
-        Vector3 center = SkillImpactPlaceholderPresenter.ResolveUnitCenterPosition(target);
+        Vector3 center = UnitVisualBoundsUtility.ResolveUnitCenterPosition(target);
         Vector3 incomingDir = (center - incomingOrigin).normalized;
         incomingDir.z = 0f;
         if (incomingDir == Vector3.zero) incomingDir = Vector3.right;
@@ -139,7 +193,7 @@ public class DamageParticleView : MonoBehaviour
         {
             float halfWidth = combinedBounds.extents.x;
             float halfHeight = combinedBounds.extents.y;
-            
+
             float factorX = Mathf.Abs(incomingDir.x);
             float factorY = Mathf.Abs(incomingDir.y);
             radiusOffset = (halfWidth * factorX + halfHeight * factorY) * 0.75f;
@@ -148,7 +202,7 @@ public class DamageParticleView : MonoBehaviour
 
         // Contact point on the surface facing the attacker
         Vector3 surfacePoint = center - incomingDir * radiusOffset;
-        
+
         // Pull it 20% closer to the center of the torso for better connection
         return Vector3.Lerp(surfacePoint, center, 0.2f);
     }

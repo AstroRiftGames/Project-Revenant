@@ -19,6 +19,9 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     [SerializeField] private float testDuration = 1.5f;
     [SerializeField] private float testDamageAmount = 10f;
 
+    [Header("Debug")]
+    [SerializeField] private bool enableDebugLogs;
+
     private const string TestPrefix = "TEST_VFX_";
 
     private static readonly BindingFlags StaticPrivate = BindingFlags.NonPublic | BindingFlags.Static;
@@ -153,8 +156,53 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
 
         Vector3 center = ResolveBodyAnchor(target);
         Debug.Log($"[CombatVfxContextMenuTester] Testing skill body impact on '{target.name}'.", this);
-        SpawnTracked("SkillImpact_Body", () => InvokeStaticMethod(typeof(SkillImpactPlaceholderPresenter), "CreateDamageImpact", target, center));
+        SpawnTracked("SkillImpact_Body", () => InvokeSkillImpactPresenter("CreateDamageImpact", target, center));
+        TriggerSkillBodyImpactDamageParticles(target, center);
         ScheduleCleanup();
+    }
+
+    private void TriggerSkillBodyImpactDamageParticles(Unit target, Vector3 targetCenter)
+    {
+        if (target == null)
+            return;
+
+        DamageParticleView particles = target.GetComponentInChildren<DamageParticleView>();
+        if (particles == null)
+        {
+            LogDebugWarning($"[CombatVfxContextMenuTester] '{target.name}' has no DamageParticleView component for skill body impact particles.");
+            return;
+        }
+
+        if (particles.HitParticlesPrefab == null && particles.HitParticles == null)
+        {
+            LogDebugWarning($"[CombatVfxContextMenuTester] '{target.name}' has DamageParticleView but no configured hit particle prefab/runtime instance.");
+            return;
+        }
+
+        Vector3 incomingOrigin = ResolveSkillBodyImpactIncomingOrigin(target, targetCenter);
+        Vector3 hitDirection = targetCenter - incomingOrigin;
+        hitDirection.z = 0f;
+        hitDirection = hitDirection.normalized;
+        if (hitDirection == Vector3.zero)
+            hitDirection = Vector3.right;
+
+        Vector3 contactPoint = DamageParticleView.ResolveHitContactPoint(target, incomingOrigin);
+        particles.TriggerHitParticles(contactPoint, hitDirection, 10);
+    }
+
+    private Vector3 ResolveSkillBodyImpactIncomingOrigin(Unit target, Vector3 targetCenter)
+    {
+        Unit caster = ResolvePreferredCaster();
+        if (caster != null && !ReferenceEquals(caster, target))
+            return ResolveBodyAnchor(caster);
+
+        return targetCenter + Vector3.left;
+    }
+
+    private void LogDebugWarning(string message)
+    {
+        if (enableDebugLogs)
+            Debug.LogWarning(message, this);
     }
 
     [ContextMenu("Test Skill Impact On Ground")]
@@ -165,7 +213,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
 
         Vector3 groundPoint = target != null ? ResolveGroundAnchor(target) : point;
         Debug.Log("[CombatVfxContextMenuTester] Testing skill ground impact placeholder.", this);
-        SpawnTracked("SkillImpact_Ground", () => InvokeStaticMethod(typeof(SkillImpactPlaceholderPresenter), "CreateStatusImpact", null, groundPoint));
+        SpawnTracked("SkillImpact_Ground", () => InvokeSkillImpactPresenter("CreateStatusImpact", null, groundPoint));
         ScheduleCleanup();
     }
 
@@ -225,7 +273,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         Color lineColor = new Color(1f, 0.4f, 0.1f, 1f);
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing skill line placeholder '{caster.name}' -> '{endTarget.name}'.", this);
-        SpawnTracked("SkillLine", () => InvokeStaticMethod(typeof(SkillImpactPlaceholderPresenter), "CreateSingleTracer", caster, origin, destination, lineColor));
+        SpawnTracked("SkillLine", () => InvokeSkillImpactPresenter("CreateSingleTracer", caster, origin, destination, lineColor));
         ScheduleCleanup();
     }
 
@@ -237,8 +285,8 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
 
         Vector3 center = ResolveBodyAnchor(target);
         Debug.Log($"[CombatVfxContextMenuTester] Testing skill heal/buff impact on '{target.name}'.", this);
-        SpawnTracked("SkillHealImpact", () => InvokeStaticMethod(typeof(SkillImpactPlaceholderPresenter), "CreateHealImpact", target, center));
-        SpawnTracked("SkillBuffImpact", () => InvokeStaticMethod(typeof(SkillImpactPlaceholderPresenter), "CreateBuffImpact", target, center));
+        SpawnTracked("SkillHealImpact", () => InvokeSkillImpactPresenter("CreateHealImpact", target, center));
+        SpawnTracked("SkillBuffImpact", () => InvokeSkillImpactPresenter("CreateBuffImpact", target, center));
         ScheduleCleanup();
     }
 
@@ -819,6 +867,16 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         return unit.transform.position;
     }
 
+    private object InvokeSkillImpactPresenter(string methodName, params object[] args)
+    {
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            LogDebugWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter instance was found in the scene.");
+            return null;
+        }
+
+        return InvokeInstanceMethod(presenter, methodName, args);
+    }
     private static T InvokeInstanceMethod<T>(object instance, string methodName, params object[] args)
     {
         object value = InvokeInstanceMethod(instance, methodName, args);

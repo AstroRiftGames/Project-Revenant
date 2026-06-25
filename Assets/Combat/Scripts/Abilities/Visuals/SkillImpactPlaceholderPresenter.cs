@@ -4,20 +4,160 @@ using System.Collections.Generic;
 
 public class SkillImpactPlaceholderPresenter : MonoBehaviour
 {
-    private static Material _sharedMaterial;
-    private static bool _isSubscribed;
-    private static readonly bool EnableTracerLogs = false;
-    private static int _particleBurstCount;
+    private const float DefaultBodyImpactLifetime = 0.38f;
+    private const float DefaultBodyImpactStartRadiusHeightFactor = 0.20f;
+    private const float DefaultBodyImpactEndRadiusHeightFactor = 0.46f;
+    private const float DefaultBodyImpactLineWidthHeightFactor = 0.06f;
+    private const float DefaultBodyImpactMinStartRadius = 0.14f;
+    private const float DefaultBodyImpactMaxStartRadius = 0.28f;
+    private const float DefaultBodyImpactMinEndRadius = 0.32f;
+    private const float DefaultBodyImpactMaxEndRadius = 0.56f;
+    private const float DefaultBodyImpactMinLineWidth = 0.05f;
+    private const float DefaultBodyImpactMaxLineWidth = 0.09f;
+    private const int DefaultBodyImpactSortingOffset = 24;
+    private static readonly Color DefaultBodyImpactColor = new Color(1f, 0.42f, 0.12f, 0.95f);
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void Initialize()
+    [Header("Body Impact Runtime Tuning")]
+    [SerializeField, Min(0.01f)] private float _bodyImpactLifetime = DefaultBodyImpactLifetime;
+    [SerializeField, Min(0.01f)] private float _bodyImpactStartRadiusHeightFactor = DefaultBodyImpactStartRadiusHeightFactor;
+    [SerializeField, Min(0.01f)] private float _bodyImpactEndRadiusHeightFactor = DefaultBodyImpactEndRadiusHeightFactor;
+    [SerializeField, Min(0.01f)] private float _bodyImpactLineWidthHeightFactor = DefaultBodyImpactLineWidthHeightFactor;
+    [SerializeField] private Vector2 _bodyImpactStartRadiusClamp = new Vector2(DefaultBodyImpactMinStartRadius, DefaultBodyImpactMaxStartRadius);
+    [SerializeField] private Vector2 _bodyImpactEndRadiusClamp = new Vector2(DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius);
+    [SerializeField] private Vector2 _bodyImpactLineWidthClamp = new Vector2(DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth);
+    [SerializeField] private Color _bodyImpactColor = DefaultBodyImpactColor;
+    [SerializeField] private int _bodyImpactSortingOffset = DefaultBodyImpactSortingOffset;
+
+    private static SkillImpactPlaceholderPresenter _activeInstance;
+    private static Material _sharedMaterial;
+    private static readonly bool EnableTracerLogs = false;
+    private int _particleBurstCount;
+
+    public static SkillImpactPlaceholderPresenter ActiveInstance => _activeInstance;
+
+    public static bool TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter)
     {
-        if (_isSubscribed) return;
-        SkillCaster.AnySkillEffectsAppliedForVisuals += HandleSkillEffectsApplied;
-        _isSubscribed = true;
+        presenter = _activeInstance;
+        return presenter != null && presenter.isActiveAndEnabled;
     }
 
-    private static void HandleSkillEffectsApplied(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    private void OnEnable()
+    {
+        if (_activeInstance != null && _activeInstance != this)
+        {
+            SkillCaster.AnySkillEffectsAppliedForVisuals -= _activeInstance.HandleSkillEffectsApplied;
+            Debug.LogWarning("[SkillImpactPlaceholderPresenter] Replacing an already active presenter instance. Disable duplicate presenters to avoid ambiguous debug VFX tuning.", this);
+        }
+
+        _activeInstance = this;
+        SkillCaster.AnySkillEffectsAppliedForVisuals -= HandleSkillEffectsApplied;
+        SkillCaster.AnySkillEffectsAppliedForVisuals += HandleSkillEffectsApplied;
+    }
+
+    private void OnDisable()
+    {
+        SkillCaster.AnySkillEffectsAppliedForVisuals -= HandleSkillEffectsApplied;
+        if (_activeInstance == this)
+            _activeInstance = null;
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        _bodyImpactLifetime = Mathf.Max(0.01f, _bodyImpactLifetime);
+        _bodyImpactStartRadiusHeightFactor = Mathf.Max(0.01f, _bodyImpactStartRadiusHeightFactor);
+        _bodyImpactEndRadiusHeightFactor = Mathf.Max(0.01f, _bodyImpactEndRadiusHeightFactor);
+        _bodyImpactLineWidthHeightFactor = Mathf.Max(0.01f, _bodyImpactLineWidthHeightFactor);
+        _bodyImpactStartRadiusClamp = SanitizeClamp(_bodyImpactStartRadiusClamp, DefaultBodyImpactMinStartRadius, DefaultBodyImpactMaxStartRadius);
+        _bodyImpactEndRadiusClamp = SanitizeClamp(_bodyImpactEndRadiusClamp, DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius);
+        _bodyImpactLineWidthClamp = SanitizeClamp(_bodyImpactLineWidthClamp, DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth);
+    }
+#endif
+
+    private readonly struct BodyImpactTuning
+    {
+        public readonly float Lifetime;
+        public readonly float StartRadiusHeightFactor;
+        public readonly float EndRadiusHeightFactor;
+        public readonly float LineWidthHeightFactor;
+        public readonly Vector2 StartRadiusClamp;
+        public readonly Vector2 EndRadiusClamp;
+        public readonly Vector2 LineWidthClamp;
+        public readonly Color Color;
+        public readonly int SortingOffset;
+
+        public BodyImpactTuning(
+            float lifetime,
+            float startRadiusHeightFactor,
+            float endRadiusHeightFactor,
+            float lineWidthHeightFactor,
+            Vector2 startRadiusClamp,
+            Vector2 endRadiusClamp,
+            Vector2 lineWidthClamp,
+            Color color,
+            int sortingOffset)
+        {
+            Lifetime = Mathf.Max(0.01f, lifetime);
+            StartRadiusHeightFactor = Mathf.Max(0.01f, startRadiusHeightFactor);
+            EndRadiusHeightFactor = Mathf.Max(0.01f, endRadiusHeightFactor);
+            LineWidthHeightFactor = Mathf.Max(0.01f, lineWidthHeightFactor);
+            StartRadiusClamp = SanitizeClamp(startRadiusClamp, DefaultBodyImpactMinStartRadius, DefaultBodyImpactMaxStartRadius);
+            EndRadiusClamp = SanitizeClamp(endRadiusClamp, DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius);
+            LineWidthClamp = SanitizeClamp(lineWidthClamp, DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth);
+            Color = color;
+            SortingOffset = sortingOffset;
+        }
+    }
+
+    private BodyImpactTuning ResolveBodyImpactTuning()
+    {
+        return new BodyImpactTuning(
+            _bodyImpactLifetime,
+            _bodyImpactStartRadiusHeightFactor,
+            _bodyImpactEndRadiusHeightFactor,
+            _bodyImpactLineWidthHeightFactor,
+            _bodyImpactStartRadiusClamp,
+            _bodyImpactEndRadiusClamp,
+            _bodyImpactLineWidthClamp,
+            _bodyImpactColor,
+            _bodyImpactSortingOffset);
+    }
+
+    private static BodyImpactTuning CreateDefaultBodyImpactTuning()
+    {
+        return new BodyImpactTuning(
+            DefaultBodyImpactLifetime,
+            DefaultBodyImpactStartRadiusHeightFactor,
+            DefaultBodyImpactEndRadiusHeightFactor,
+            DefaultBodyImpactLineWidthHeightFactor,
+            new Vector2(DefaultBodyImpactMinStartRadius, DefaultBodyImpactMaxStartRadius),
+            new Vector2(DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius),
+            new Vector2(DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth),
+            DefaultBodyImpactColor,
+            DefaultBodyImpactSortingOffset);
+    }
+
+    private static Vector2 SanitizeClamp(Vector2 clamp, float fallbackMin, float fallbackMax)
+    {
+        float min = Mathf.Min(clamp.x, clamp.y);
+        float max = Mathf.Max(clamp.x, clamp.y);
+
+        if (float.IsNaN(min) || float.IsInfinity(min))
+        {
+            min = fallbackMin;
+        }
+
+        if (float.IsNaN(max) || float.IsInfinity(max))
+        {
+            max = fallbackMax;
+        }
+
+        min = Mathf.Max(0.001f, min);
+        max = Mathf.Max(min + 0.001f, max);
+        return new Vector2(min, max);
+    }
+
+    private void HandleSkillEffectsApplied(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
         if (skill == null || context == null || impacts == null) return;
 
@@ -86,7 +226,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         {
             if (impact.HasTargetUnit)
             {
-                return ResolveUnitGroundPosition(impact.TargetUnit);
+                return UnitVisualBoundsUtility.ResolveUnitGroundPosition(impact.TargetUnit);
             }
             if (impact.Kind == SkillImpactKind.AreaPoint)
             {
@@ -101,87 +241,27 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         {
             if (context.HasImpactCenterUnit)
             {
-                return ResolveUnitGroundPosition(context.ImpactCenterUnit);
+                return UnitVisualBoundsUtility.ResolveUnitGroundPosition(context.ImpactCenterUnit);
             }
             return context.ImpactCenterWorld;
         }
         return Vector3.zero;
     }
 
-    public static Vector3 ResolveUnitGroundPosition(Unit unit)
+    private static float ResolveUnitVisualHeight(Unit unit)
     {
-        if (unit == null)
-            return Vector3.zero;
+        if (unit != null && UnitVisualBoundsUtility.TryResolveUnitVisualBounds(unit, out Bounds bounds))
+            return Mathf.Max(0.01f, bounds.size.y);
 
-        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>();
-        bool hasBounds = false;
-        Bounds combinedBounds = new Bounds();
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer renderer = renderers[i];
-            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
-                continue;
-
-            if (!hasBounds)
-            {
-                combinedBounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                combinedBounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        if (hasBounds)
-        {
-            return new Vector3(combinedBounds.center.x, combinedBounds.min.y, unit.transform.position.z);
-        }
-
-        return unit.transform.position;
+        return 1f;
     }
 
-    public static Vector3 ResolveUnitCenterPosition(Unit unit)
-    {
-        if (unit == null)
-            return Vector3.zero;
-
-        SpriteRenderer[] renderers = unit.GetComponentsInChildren<SpriteRenderer>();
-        bool hasBounds = false;
-        Bounds combinedBounds = new Bounds();
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer renderer = renderers[i];
-            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
-                continue;
-
-            if (!hasBounds)
-            {
-                combinedBounds = renderer.bounds;
-                hasBounds = true;
-            }
-            else
-            {
-                combinedBounds.Encapsulate(renderer.bounds);
-            }
-        }
-
-        if (hasBounds)
-        {
-            return new Vector3(combinedBounds.center.x, combinedBounds.center.y, unit.transform.position.z);
-        }
-
-        return unit.transform.position;
-    }
-
-    private static void CreateTracers(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    private void CreateTracers(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
         Unit caster = context.Caster;
         if (caster == null) return;
 
-        Vector3 origin = ResolveUnitCenterPosition(caster);
+        Vector3 origin = UnitVisualBoundsUtility.ResolveUnitCenterPosition(caster);
         if (origin == Vector3.zero) return;
 
         SkillEffectKind mainEffect = GetMainEffectKind(skill);
@@ -206,7 +286,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 #endif
                     continue; // Skip self-tracer
                 }
-                destination = ResolveUnitCenterPosition(impact.TargetUnit);
+                destination = UnitVisualBoundsUtility.ResolveUnitCenterPosition(impact.TargetUnit);
             }
             else
             {
@@ -222,7 +302,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 #if UNITY_EDITOR
                 if (EnableTracerLogs) UnityEngine.Debug.Log($"[SkillImpactPlaceholderPresenter] Tracer omitted: distance too short between {caster.name} and {destination}.");
 #endif
-                continue; 
+                continue;
             }
 
             if (tracerCount >= maxTracers)
@@ -258,7 +338,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
     }
 
-    private static void CreateSingleTracer(Unit caster, Vector3 origin, Vector3 destination, Color color)
+    private void CreateSingleTracer(Unit caster, Vector3 origin, Vector3 destination, Color color)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Tracer");
         CombatVfxHierarchyHelper.ParentToCombatVfxRoot(obj);
@@ -267,16 +347,16 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         lr.useWorldSpace = true;
         lr.alignment = LineAlignment.View;
         lr.loop = false;
-        
+
         // Increased width for visibility: start 0.065f, end 0.03f
         lr.startWidth = 0.065f;
         lr.endWidth = 0.03f;
 
         lr.startColor = color;
         lr.endColor = color;
-        
+
         // High sorting offset (+45) to draw on top of units and standard impact VFX
-        ConfigureSorting(obj, caster, 45); 
+        ConfigureSorting(obj, caster, 45);
 
         var behavior = obj.AddComponent<TracerVisualBehavior>();
         // Increased duration to 0.35s for validation in play mode
@@ -361,7 +441,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         lr.sortingOrder = sortingOrder;
     }
 
-    private static void CreateVisualForEffect(SkillEffectKind effectKind, SkillImpact impact, Vector3 targetPos, SkillContext context)
+    private void CreateVisualForEffect(SkillEffectKind effectKind, SkillImpact impact, Vector3 targetPos, SkillContext context)
     {
         Unit targetUnit = impact.HasTargetUnit ? impact.TargetUnit : null;
 
@@ -407,8 +487,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         CreateImpactParticles(targetPos, effectKind, targetUnit, context);
     }
 
-    // 1. Damage: pequeño burst/anillo rojo-naranja en target
-    private static void CreateDamageImpact(Unit targetUnit, Vector3 targetPos)
+    // 1. Damage: short body-centered hit cue, distinct from ground/status/AoE impacts.
+    private void CreateDamageImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Damage");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -417,21 +497,27 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         lr.useWorldSpace = true;
         lr.alignment = LineAlignment.View;
         lr.loop = true;
-        lr.startWidth = 0.05f;
-        lr.endWidth = 0.05f;
 
-        Color color = new Color(1f, 0.35f, 0.1f, 0.9f);
-        lr.startColor = color;
-        lr.endColor = color;
-        ConfigureSorting(obj, targetUnit, 12);
+        BodyImpactTuning tuning = ResolveBodyImpactTuning();
+        float visualHeight = ResolveUnitVisualHeight(targetUnit);
+        float lineWidth = Mathf.Clamp(visualHeight * tuning.LineWidthHeightFactor, tuning.LineWidthClamp.x, tuning.LineWidthClamp.y);
+        float startRadius = Mathf.Clamp(visualHeight * tuning.StartRadiusHeightFactor, tuning.StartRadiusClamp.x, tuning.StartRadiusClamp.y);
+        float endRadius = Mathf.Clamp(visualHeight * tuning.EndRadiusHeightFactor, tuning.EndRadiusClamp.x, tuning.EndRadiusClamp.y);
+        Vector3 impactCenter = UnitVisualBoundsUtility.ResolveUnitBodyImpactPosition(targetUnit, targetPos);
+
+        lr.startWidth = lineWidth;
+        lr.endWidth = lineWidth;
+
+        lr.startColor = tuning.Color;
+        lr.endColor = tuning.Color;
+        ConfigureSorting(obj, targetUnit, tuning.SortingOffset);
 
         var behavior = obj.AddComponent<RingImpactBehavior>();
-        // Lifetime 0.35s, size 0.08f to 0.45f
-        behavior.Initialize(lr, targetPos, 0.35f, 0.08f, 0.45f, 0f, 0f);
+        behavior.Initialize(lr, impactCenter, tuning.Lifetime, startRadius, endRadius, 0f, 0f);
     }
 
     // 2. Heal: pulso verde o cruces verdes ascendentes muy simples
-    private static void CreateHealImpact(Unit targetUnit, Vector3 targetPos)
+    private void CreateHealImpact(Unit targetUnit, Vector3 targetPos)
     {
         // Spawn 2 green crosses with slightly randomized start positions ascending
         int count = 2;
@@ -466,7 +552,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     }
 
     // 3. Shield: anillo azul/celeste breve alrededor del target
-    private static void CreateShieldImpact(Unit targetUnit, Vector3 targetPos)
+    private void CreateShieldImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Shield");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -489,7 +575,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     }
 
     // 4. Buff: pulso ascendente claro
-    private static void CreateBuffImpact(Unit targetUnit, Vector3 targetPos)
+    private void CreateBuffImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Buff");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -512,7 +598,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     }
 
     // 5. Debuff: pulso descendente oscuro o violeta
-    private static void CreateDebuffImpact(Unit targetUnit, Vector3 targetPos)
+    private void CreateDebuffImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Debuff");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -534,8 +620,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         behavior.Initialize(lr, targetPos, 0.45f, 0.32f, 0.28f, 0.65f, 0f);
     }
 
-    // 6. Status: anillo breve sobre target o bajo pies, color genérico
-    private static void CreateStatusImpact(Unit targetUnit, Vector3 targetPos)
+    // 6. Status: anillo breve sobre target o bajo pies, color genÃƒÂ©rico
+    private void CreateStatusImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Status");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -558,7 +644,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     }
 
     // 7. Knockback: impacto simple en target
-    private static void CreateKnockbackImpact(Unit targetUnit, Vector3 targetPos)
+    private void CreateKnockbackImpact(Unit targetUnit, Vector3 targetPos)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Knockback");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -580,8 +666,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         behavior.Initialize(lr, targetPos, 0.35f, 0.1f, 0.5f, 0f, 0f);
     }
 
-    // 8. Summon: pulso circular en la celda de aparición
-    private static void CreateSummonVisual(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
+    // 8. Summon: pulso circular en la celda de apariciÃƒÂ³n
+    private void CreateSummonVisual(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
         Vector3 summonPos = Vector3.zero;
         bool hasSummonPos = false;
@@ -755,7 +841,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             if (_lr == null) return;
 
             Vector3 centerOffset = transform.position + new Vector3(0f, verticalOffset, 0f);
-            
+
             _lr.positionCount = 5;
             _lr.SetPosition(0, centerOffset + Vector3.left * _size);
             _lr.SetPosition(1, centerOffset + Vector3.right * _size);
@@ -781,7 +867,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             _end = end;
             _lifetime = lifetime;
             _color = color;
-            
+
             if (_lr != null)
             {
                 _lr.positionCount = 2;
@@ -813,7 +899,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
     }
 
-    private static void CreateImpactParticles(Vector3 targetPos, SkillEffectKind effectKind, Unit targetUnit, SkillContext context)
+    private void CreateImpactParticles(Vector3 targetPos, SkillEffectKind effectKind, Unit targetUnit, SkillContext context)
     {
         if (_particleBurstCount >= 6) return;
 
@@ -837,11 +923,11 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 effectKind == SkillEffectKind.Shield ||
                 effectKind == SkillEffectKind.Knockback)
             {
-                spawnPos = ResolveUnitCenterPosition(targetUnit);
+                spawnPos = UnitVisualBoundsUtility.ResolveUnitCenterPosition(targetUnit);
             }
             else
             {
-                spawnPos = ResolveUnitGroundPosition(targetUnit);
+                spawnPos = UnitVisualBoundsUtility.ResolveUnitGroundPosition(targetUnit);
             }
         }
 
@@ -986,7 +1072,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                     Vector3 pushDir = Vector3.zero;
                     if (context != null && context.Caster != null)
                     {
-                        Vector3 casterPos = ResolveUnitCenterPosition(context.Caster);
+                        Vector3 casterPos = UnitVisualBoundsUtility.ResolveUnitCenterPosition(context.Caster);
                         pushDir = spawnPos - casterPos;
                         pushDir.z = 0f;
                         pushDir = pushDir.normalized;
@@ -1038,7 +1124,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
     }
 
-    private static void CreateCentralFlash(Unit targetUnit, Vector3 position, Color effectColor)
+    private void CreateCentralFlash(Unit targetUnit, Vector3 position, Color effectColor)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Flash");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
@@ -1062,7 +1148,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         behavior.Initialize(lr, position, 0.15f, 0.18f, 0f, flashColor);
     }
 
-    private static void CreateSingleParticle(Unit targetUnit, Vector3 position, Vector3 velocity, float lifetime, float length, float startWidth, float endWidth, Color color, float drag = 0f, Vector3 gravity = default)
+    private void CreateSingleParticle(Unit targetUnit, Vector3 position, Vector3 velocity, float lifetime, float length, float startWidth, float endWidth, Color color, float drag = 0f, Vector3 gravity = default)
     {
         GameObject obj = new GameObject("VFX_Placeholder_Particle");
         CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);

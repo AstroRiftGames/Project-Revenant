@@ -12,11 +12,25 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         _enabled = enabled;
     }
     [SerializeField] private Transform _runtimeRoot;
-    [SerializeField] private float _defaultDuration = 0.6f;
-    [SerializeField] private float _primaryPointSize = 0.42f;
-    [SerializeField] private float _secondaryPointSize = 0.28f;
-    [SerializeField] private float _lineWidth = 0.08f;
-    [SerializeField] private float _ringWidth = 0.07f;
+
+    [Header("Runtime Tuning")]
+    [SerializeField, Min(0.01f)] private float _defaultDuration = 0.6f;
+    [SerializeField, Min(0.01f)] private float _primaryPointSize = 0.42f;
+    [SerializeField, Min(0.01f)] private float _secondaryPointSize = 0.28f;
+    [SerializeField, Min(0.01f)] private float _lineWidth = 0.08f;
+    [SerializeField, Min(0.01f)] private float _ringWidth = 0.07f;
+
+    [Header("Duration Multipliers")]
+    [SerializeField, Min(0.01f)] private float _patternDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _modifierDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _primaryImpactDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _secondaryImpactDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _healDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _statusDurationMultiplier = 1f;
+    [SerializeField, Min(0f)] private float _summonDurationBonus = 0.15f;
+    [SerializeField, Min(0.01f)] private float _knockbackDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _shieldDurationMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float _periodicTickDurationMultiplier = 0.65f;
     [SerializeField] private SkillDebugVfxInstance _targetPointPrefab;
     [SerializeField] private SkillDebugVfxInstance _areaCirclePrefab;
     [SerializeField] private SkillDebugVfxInstance _linePrefab;
@@ -46,6 +60,40 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     private readonly HashSet<StatusEffectController> _subscribedStatusControllers = new();
     private readonly List<StatusEffectController> _staleStatusControllers = new();
     private float _nextSubscriptionCleanupTime;
+
+    private void OnValidate()
+    {
+        SanitizeRuntimeTuning();
+    }
+
+    private void SanitizeRuntimeTuning()
+    {
+        _defaultDuration = Mathf.Max(0.01f, _defaultDuration);
+        _primaryPointSize = Mathf.Max(0.01f, _primaryPointSize);
+        _secondaryPointSize = Mathf.Max(0.01f, _secondaryPointSize);
+        _lineWidth = Mathf.Max(0.01f, _lineWidth);
+        _ringWidth = Mathf.Max(0.01f, _ringWidth);
+        _patternDurationMultiplier = Mathf.Max(0.01f, _patternDurationMultiplier);
+        _modifierDurationMultiplier = Mathf.Max(0.01f, _modifierDurationMultiplier);
+        _primaryImpactDurationMultiplier = Mathf.Max(0.01f, _primaryImpactDurationMultiplier);
+        _secondaryImpactDurationMultiplier = Mathf.Max(0.01f, _secondaryImpactDurationMultiplier);
+        _healDurationMultiplier = Mathf.Max(0.01f, _healDurationMultiplier);
+        _statusDurationMultiplier = Mathf.Max(0.01f, _statusDurationMultiplier);
+        _summonDurationBonus = Mathf.Max(0f, _summonDurationBonus);
+        _knockbackDurationMultiplier = Mathf.Max(0.01f, _knockbackDurationMultiplier);
+        _shieldDurationMultiplier = Mathf.Max(0.01f, _shieldDurationMultiplier);
+        _periodicTickDurationMultiplier = Mathf.Max(0.01f, _periodicTickDurationMultiplier);
+    }
+
+    private float ResolveDuration(float multiplier)
+    {
+        return Mathf.Max(0.01f, _defaultDuration * Mathf.Max(0.01f, multiplier));
+    }
+
+    private float ResolveDurationWithBonus(float bonus)
+    {
+        return Mathf.Max(0.01f, _defaultDuration + Mathf.Max(0f, bonus));
+    }
 
     private void OnEnable()
     {
@@ -93,6 +141,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         if (!_enabled || skill == null || context == null)
             return;
 
+        SanitizeRuntimeTuning();
+
         SubscribeToStatusControllers(context, impacts);
         LogDebug($"Received '{skill.DisplayName}' with {impacts?.Count ?? 0} impact(s).");
         PresentProjectileTrajectory(skill, context, impacts);
@@ -109,6 +159,8 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
     {
         if (!_enabled || controller == null || activeEffect == null || activeEffect.Definition == null)
             return;
+
+        SanitizeRuntimeTuning();
 
         Unit targetUnit = activeEffect.TargetUnit;
         if (targetUnit == null || !targetUnit.gameObject.activeInHierarchy)
@@ -166,11 +218,11 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                     context.HasImpactCenterUnit,
                     Mathf.Max(0.4f, skill.RadiusInCells),
                     ResolveAreaColor(skill),
-                    _defaultDuration);
+                    ResolveDuration(_patternDurationMultiplier));
                 break;
 
             case ImpactPattern.Line:
-                SpawnLineVisual(skill, context, impacts, _lineColor, _defaultDuration);
+                SpawnLineVisual(skill, context, impacts, _lineColor, ResolveDuration(_patternDurationMultiplier));
                 break;
         }
     }
@@ -185,62 +237,62 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             switch (skill.CompositionModifierKinds[i])
             {
                 case SkillModifierKind.Splash:
-                {
-                    SkillImpact primaryImpact = FindPrimaryImpact(impacts);
-                    Vector3 center = ResolveImpactWorldPosition(primaryImpact, context);
-                    Unit centerUnit = primaryImpact != null && primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null;
-                    SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), ResolveAreaColor(skill), _defaultDuration);
-                    break;
-                }
-
-                case SkillModifierKind.Explosive:
-                {
-                    float worldRadius = Mathf.Max(0.4f, skill.RadiusInCells);
-
-                    bool isSimpleDirect = skill.ImpactPattern == ImpactPattern.Direct &&
-                        skill.CompositionModifierKinds.Length == 1 &&
-                        skill.CompositionModifierKinds[0] == SkillModifierKind.Explosive;
-
-                    if (isSimpleDirect)
                     {
                         SkillImpact primaryImpact = FindPrimaryImpact(impacts);
-                        if (primaryImpact != null)
+                        Vector3 center = ResolveImpactWorldPosition(primaryImpact, context);
+                        Unit centerUnit = primaryImpact != null && primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null;
+                        SpawnAreaCircle(center, centerUnit, centerUnit != null, Mathf.Max(0.4f, skill.RadiusInCells), ResolveAreaColor(skill), ResolveDuration(_modifierDurationMultiplier));
+                        break;
+                    }
+
+                case SkillModifierKind.Explosive:
+                    {
+                        float worldRadius = Mathf.Max(0.4f, skill.RadiusInCells);
+
+                        bool isSimpleDirect = skill.ImpactPattern == ImpactPattern.Direct &&
+                            skill.CompositionModifierKinds.Length == 1 &&
+                            skill.CompositionModifierKinds[0] == SkillModifierKind.Explosive;
+
+                        if (isSimpleDirect)
                         {
+                            SkillImpact primaryImpact = FindPrimaryImpact(impacts);
+                            if (primaryImpact != null)
+                            {
+                                SpawnAreaCircle(
+                                    ResolveImpactWorldPosition(primaryImpact, context),
+                                    primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
+                                    primaryImpact.HasTargetUnit,
+                                    worldRadius,
+                                    ResolveAreaColor(skill),
+                                    ResolveDuration(_modifierDurationMultiplier * 0.95f));
+                            }
+
+                            break;
+                        }
+
+                        for (int impactIndex = 0; impacts != null && impactIndex < impacts.Count; impactIndex++)
+                        {
+                            SkillImpact impact = impacts[impactIndex];
+                            if (impact == null)
+                                continue;
+
                             SpawnAreaCircle(
-                                ResolveImpactWorldPosition(primaryImpact, context),
-                                primaryImpact.HasTargetUnit ? primaryImpact.TargetUnit : null,
-                                primaryImpact.HasTargetUnit,
+                                ResolveImpactWorldPosition(impact, context),
+                                impact.HasTargetUnit ? impact.TargetUnit : null,
+                                impact.HasTargetUnit,
                                 worldRadius,
                                 ResolveAreaColor(skill),
-                                _defaultDuration * 0.95f);
+                                ResolveDuration(_modifierDurationMultiplier * 0.95f));
                         }
 
                         break;
                     }
 
-                    for (int impactIndex = 0; impacts != null && impactIndex < impacts.Count; impactIndex++)
-                    {
-                        SkillImpact impact = impacts[impactIndex];
-                        if (impact == null)
-                            continue;
-
-                        SpawnAreaCircle(
-                            ResolveImpactWorldPosition(impact, context),
-                            impact.HasTargetUnit ? impact.TargetUnit : null,
-                            impact.HasTargetUnit,
-                            worldRadius,
-                            ResolveAreaColor(skill),
-                            _defaultDuration * 0.95f);
-                    }
-
-                    break;
-                }
-
                 case SkillModifierKind.Bounce:
-                {
-                    PresentBounceLinks(impacts);
-                    break;
-                }
+                    {
+                        PresentBounceLinks(impacts);
+                        break;
+                    }
             }
         }
     }
@@ -267,7 +319,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             {
                 LogSpawn(_targetPointPrefab, "VFX_TargetPoint_Runtime", worldPosition);
                 SkillDebugVfxInstance instance = SpawnInstance(_targetPointPrefab, "VFX_TargetPoint_Runtime");
-                instance.ConfigureDiamond(worldPosition, targetUnit, targetUnit != null, _primaryPointSize, primaryColor, _defaultDuration);
+                instance.ConfigureDiamond(worldPosition, targetUnit, targetUnit != null, _primaryPointSize, primaryColor, ResolveDuration(_primaryImpactDurationMultiplier));
                 continue;
             }
 
@@ -276,7 +328,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             LogSpawn(_impactSecondaryPrefab, "VFX_ImpactSecondary_Runtime", worldPosition);
             SkillDebugVfxInstance secondaryInstance = SpawnInstance(_impactSecondaryPrefab, "VFX_ImpactSecondary_Runtime");
-            secondaryInstance.ConfigurePoint(worldPosition, targetUnit, targetUnit != null, _secondaryPointSize, secondaryColor, _defaultDuration);
+            secondaryInstance.ConfigurePoint(worldPosition, targetUnit, targetUnit != null, _secondaryPointSize, secondaryColor, ResolveDuration(_secondaryImpactDurationMultiplier));
         }
     }
 
@@ -344,7 +396,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
 
             LogSpawn(_healPrefab, "VFX_Heal_Runtime", impact.TargetUnit.Position);
             SkillDebugVfxInstance instance = SpawnInstance(_healPrefab, "VFX_Heal_Runtime");
-            instance.ConfigureCross(impact.TargetUnit.Position, impact.TargetUnit, true, 0.46f, 0.12f, _healColor, _defaultDuration);
+            instance.ConfigureCross(impact.TargetUnit.Position, impact.TargetUnit, true, 0.46f, 0.12f, _healColor, ResolveDuration(_healDurationMultiplier));
         }
     }
 
@@ -364,7 +416,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 continue;
 
             SkillDebugVfxInstance instance = SpawnInstance(_statusPrefab, "VFX_Status_Runtime");
-            instance.ConfigureRing(impact.TargetUnit.Position, impact.TargetUnit, true, 0.34f, _ringWidth, statusColor, _defaultDuration);
+            instance.ConfigureRing(impact.TargetUnit.Position, impact.TargetUnit, true, 0.34f, _ringWidth, statusColor, ResolveDuration(_statusDurationMultiplier));
         }
     }
 
@@ -373,7 +425,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
         Vector3 worldPosition = ResolveSummonAnchorWorldPosition(context);
         int spawnRange = CompositionEffectValue(skill, SkillEffectKind.Summon);
         SkillDebugVfxInstance instance = SpawnInstance(_summonPrefab, "VFX_Summon_Runtime");
-        instance.ConfigureRing(worldPosition, null, false, Mathf.Max(0.45f, spawnRange), _ringWidth, _summonColor, _defaultDuration + 0.15f);
+        instance.ConfigureRing(worldPosition, null, false, Mathf.Max(0.45f, spawnRange), _ringWidth, _summonColor, ResolveDurationWithBonus(_summonDurationBonus));
     }
 
     private void PresentKnockbackFeedback(
@@ -401,12 +453,12 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 continue;
 
             UnitVisualBumpView bumpView = impact.TargetUnit.GetComponent<UnitVisualBumpView>();
-            if (bumpView != null && bumpView.TryPlayBump(direction.normalized, knockbackDistanceWorld, _defaultDuration))
+            if (bumpView != null && bumpView.TryPlayBump(direction.normalized, knockbackDistanceWorld, ResolveDuration(_knockbackDurationMultiplier)))
                 continue;
 
             Vector3 end = impact.TargetUnit.Position + direction.normalized * knockbackDistanceWorld;
             SkillDebugVfxInstance instance = SpawnInstance(_knockbackPrefab, "VFX_Knockback_Runtime");
-            instance.ConfigureArrow(impact.TargetUnit.Position, end, _lineWidth, _knockbackColor, _defaultDuration);
+            instance.ConfigureArrow(impact.TargetUnit.Position, end, _lineWidth, _knockbackColor, ResolveDuration(_knockbackDurationMultiplier));
         }
     }
 
@@ -424,7 +476,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             Vector3 worldPosition = ResolveImpactWorldPosition(impact, context);
             Unit targetUnit = impact.HasTargetUnit ? impact.TargetUnit : null;
             SkillDebugVfxInstance instance = SpawnInstance(_shieldPrefab, "VFX_Shield_Runtime");
-            instance.ConfigureRing(worldPosition, targetUnit, targetUnit != null, 0.4f, _ringWidth, _shieldColor, _defaultDuration);
+            instance.ConfigureRing(worldPosition, targetUnit, targetUnit != null, 0.4f, _ringWidth, _shieldColor, ResolveDuration(_shieldDurationMultiplier));
         }
     }
 
@@ -434,7 +486,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             return;
 
         SkillDebugVfxInstance instance = SpawnInstance(_statusPrefab, "VFX_DoTTick_Runtime");
-        instance.ConfigureRing(targetUnit.Position, targetUnit, true, 0.24f, _ringWidth, _debuffColor, _defaultDuration * 0.65f);
+        instance.ConfigureRing(targetUnit.Position, targetUnit, true, 0.24f, _ringWidth, _debuffColor, ResolveDuration(_periodicTickDurationMultiplier));
     }
 
     private void PresentHealOverTimeTick(Unit targetUnit)
@@ -443,7 +495,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
             return;
 
         SkillDebugVfxInstance instance = SpawnInstance(_healPrefab, "VFX_HoTTick_Runtime");
-        instance.ConfigureCross(targetUnit.Position, targetUnit, true, 0.28f, 0.08f, _healColor, _defaultDuration * 0.65f);
+        instance.ConfigureCross(targetUnit.Position, targetUnit, true, 0.28f, 0.08f, _healColor, ResolveDuration(_periodicTickDurationMultiplier));
     }
 
     private void PresentBounceLinks(IReadOnlyList<SkillImpact> impacts)
@@ -472,7 +524,7 @@ public sealed class SkillDebugVfxPresenter : MonoBehaviour
                 continue;
 
             SkillDebugVfxInstance instance = SpawnInstance(_bounceLinkPrefab, "VFX_BounceLink_Runtime");
-            instance.ConfigureLine(previousImpact.TargetUnit.Position, currentImpact.TargetUnit.Position, _lineWidth, _bounceColor, _defaultDuration);
+            instance.ConfigureLine(previousImpact.TargetUnit.Position, currentImpact.TargetUnit.Position, _lineWidth, _bounceColor, ResolveDuration(_modifierDurationMultiplier));
         }
     }
 
