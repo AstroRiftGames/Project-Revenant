@@ -435,6 +435,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: _uiElements.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: _gameplayUIElements.Array.size
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: '_gameplayUIElements.Array.data[5]'
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: _uiElements.Array.data[10].ElementType
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 8698626510555738051, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: _uiElements.Array.data[10].ElementObject
+      value: 
+      objectReference: {fileID: 43452040}
     - target: {fileID: 9134120382481591321, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -456,6 +476,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+--- !u!1 &43452040 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4891178945235888229, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+  m_PrefabInstance: {fileID: 12011240}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1129984924
 PrefabInstance:
   m_ObjectHideFlags: 0

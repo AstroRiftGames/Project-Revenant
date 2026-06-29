@@ -17,6 +17,7 @@ public enum UIType
     Profile,
     CombatStatus,
     Dialogue,
+    TimeScaler,
 }
 
 public class UIManager : MonoBehaviour
