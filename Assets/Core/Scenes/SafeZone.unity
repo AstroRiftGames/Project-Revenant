@@ -923,6 +923,7 @@ MonoBehaviour:
     height: 1
   _padding: 0
   _minOrthographicSize: 2
+  _transitionSpeed: 7
 --- !u!114 &1995739586
 MonoBehaviour:
   m_ObjectHideFlags: 0

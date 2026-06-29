@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -27,6 +28,11 @@ public sealed class RoomCameraFitter : MonoBehaviour
     [Header("Fit Settings")]
     [SerializeField] private float _padding = 1.5f;
     [SerializeField] private float _minOrthographicSize = 5f;
+
+    [Header("Smooth Transition")]
+    [SerializeField] private float _transitionSpeed = 5f;
+
+    private Coroutine _activeTransition;
 
     // -------------------------------------------------------------------------
     // Public API
@@ -65,6 +71,65 @@ public sealed class RoomCameraFitter : MonoBehaviour
         }
 
         FitToBounds(roomBounds.Bounds);
+    }
+
+    /// <summary>
+    /// Smoothly interpolates the camera position and orthographic size towards
+    /// the values required to frame <paramref name="worldBounds"/> inside the
+    /// playable viewport. Any in-progress transition is cancelled.
+    /// </summary>
+    public void SmoothFitToBounds(Bounds worldBounds)
+    {
+        Camera cam = ResolveCamera();
+        if (cam == null) return;
+        if (!ValidateViewport()) return;
+
+        float effectiveAspect = (cam.aspect * _playableViewport.width) / _playableViewport.height;
+
+        float verticalHalf   = worldBounds.size.y * 0.5f;
+        float horizontalHalf = worldBounds.size.x * 0.5f / effectiveAspect;
+
+        float targetSize = Mathf.Max(verticalHalf, horizontalHalf) + _padding;
+        targetSize = Mathf.Max(targetSize, _minOrthographicSize);
+
+        Vector3 targetCenter = CalculateCameraCenter(worldBounds.center, cam);
+        Vector3 targetPosition = new Vector3(targetCenter.x, targetCenter.y, cam.transform.position.z);
+
+        if (_activeTransition != null)
+            StopCoroutine(_activeTransition);
+
+        _activeTransition = StartCoroutine(TransitionCoroutine(cam, targetPosition, targetSize));
+    }
+
+    /// <summary>Convenience overload — smoothly fits to a <see cref="RoomCameraBounds"/>.</summary>
+    public void SmoothFitToRoomBounds(RoomCameraBounds roomBounds)
+    {
+        if (roomBounds == null)
+        {
+            Debug.LogWarning(
+                "[RoomCameraFitter] SmoothFitToRoomBounds called with a null RoomCameraBounds.",
+                this);
+            return;
+        }
+
+        SmoothFitToBounds(roomBounds.Bounds);
+    }
+
+    private IEnumerator TransitionCoroutine(Camera cam, Vector3 targetPosition, float targetSize)
+    {
+        float threshold = 0.01f;
+
+        while (Vector3.Distance(cam.transform.position, targetPosition) > threshold || 
+               Mathf.Abs(cam.orthographicSize - targetSize) > threshold)
+        {
+            cam.transform.position = Vector3.Lerp(cam.transform.position, targetPosition, Time.unscaledDeltaTime * _transitionSpeed);
+            cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetSize, Time.unscaledDeltaTime * _transitionSpeed);
+            yield return null;
+        }
+
+        cam.transform.position = targetPosition;
+        cam.orthographicSize = targetSize;
+        _activeTransition = null;
     }
 
     // -------------------------------------------------------------------------

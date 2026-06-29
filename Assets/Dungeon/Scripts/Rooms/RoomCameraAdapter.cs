@@ -146,7 +146,7 @@ public sealed class RoomCameraAdapter : MonoBehaviour
 
     private void HandleRoomEntered(RoomDoor door, GameObject nextRoom)
     {
-        FitToRoom(nextRoom);
+        SmoothFitToRoom(nextRoom);
     }
 
     private void HandleFloorGenerated(PDFloorData floorData)
@@ -171,5 +171,66 @@ public sealed class RoomCameraAdapter : MonoBehaviour
                 "Add one and assign it in the Inspector.",
                 this);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Smooth transition (door-to-door)
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Smoothly transitions the camera to frame <paramref name="roomGO"/>.
+    /// Used when the player walks through a door.
+    /// </summary>
+    private void SmoothFitToRoom(GameObject roomGO)
+    {
+        if (roomGO == null)
+        {
+            Debug.LogWarning("[RoomCameraAdapter] SmoothFitToRoom called with null room.", this);
+            return;
+        }
+
+        if (_fitter == null)
+        {
+            Debug.LogWarning(
+                "[RoomCameraAdapter] RoomCameraFitter reference is missing. " +
+                "Assign it in the Inspector.",
+                this);
+            return;
+        }
+
+        if (TrySmoothFitExplicitRoomBounds(roomGO))
+            return;
+
+        if (TrySmoothFitRoomGridBounds(roomGO))
+            return;
+
+        // Fallback: no bounds found, log and do nothing (same as FitToRoom).
+        Debug.LogWarning(
+            $"[RoomCameraAdapter] Room '{roomGO.name}' has no RoomCameraBounds and no RoomGrid bounds. " +
+            "Camera will not be repositioned.",
+            this);
+    }
+
+    private bool TrySmoothFitExplicitRoomBounds(GameObject roomGO)
+    {
+        RoomCameraBounds bounds = roomGO.GetComponentInChildren<RoomCameraBounds>(includeInactive: false);
+        if (bounds == null)
+            return false;
+
+        _fitter.SmoothFitToRoomBounds(bounds);
+        return true;
+    }
+
+    private bool TrySmoothFitRoomGridBounds(GameObject roomGO)
+    {
+        RoomGrid roomGrid = ResolveRoomGrid(roomGO);
+        if (roomGrid == null)
+            return false;
+
+        if (!roomGrid.TryGetWorldBounds(out Bounds worldBounds))
+            return false;
+
+        _fitter.SmoothFitToBounds(worldBounds);
+        return true;
     }
 }
