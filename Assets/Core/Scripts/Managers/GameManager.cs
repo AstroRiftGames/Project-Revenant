@@ -77,7 +77,9 @@ public class GameManager : MonoBehaviour
         if (StateManager.CurrentState != GameState.Paused)
             return;
 
-        Time.timeScale = 1f;
+        Time.timeScale = TimeScaleController.Instance != null
+            ? TimeScaleController.Instance.CurrentSpeed
+            : 1f;
         RequestStateChange(_stateBeforePause);
     }
 
