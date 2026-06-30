@@ -202,6 +202,26 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Debuff")]
+    private void TestDebuffLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Debuff loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("DebuffLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Debuff));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Effect Taunt")]
     private void TestTauntLoop()
     {

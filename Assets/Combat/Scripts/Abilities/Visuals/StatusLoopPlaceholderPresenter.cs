@@ -273,6 +273,53 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct DebuffLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int chevronCount;
+        public float chevronSize;
+        public int particleCount;
+        public float particleSize;
+        public float fallAmount;
+        public float pulseSpeed;
+        public float pulseAmount;
+        public float wobbleAmount;
+        public Color color;
+        public Color coreColor;
+        public int sortingOffset;
+
+        public void Sanitize()
+        {
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (chevronCount < 1) chevronCount = 1;
+            if (particleCount < 0) particleCount = 0;
+            if (chevronSize <= 0f) chevronSize = 0.075f;
+            if (particleSize <= 0f) particleSize = 0.04f;
+            if (fallAmount < 0f) fallAmount = 0f;
+            if (pulseSpeed < 0f) pulseSpeed = 0f;
+            if (pulseAmount < 0f) pulseAmount = 0f;
+            if (wobbleAmount < 0f) wobbleAmount = 0f;
+            color.a = Mathf.Clamp01(color.a);
+            coreColor.a = Mathf.Clamp01(coreColor.a);
+        }
+    }
+
+
 
 
     [Header("Stun Loop Tuning")]
@@ -375,6 +422,24 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color buffColor = new Color(0.75f, 0.55f, 1.0f, 0.80f);
     [SerializeField] private Color buffCoreColor = new Color(0.95f, 0.85f, 1.0f, 0.70f);
     [SerializeField] private int buffSortingOffset = 26;
+
+    [Header("Debuff Loop Tuning")]
+    [SerializeField] private float debuffRadiusHeightFactor = 0.27f;
+    [SerializeField] private Vector2 debuffRadiusClamp = new Vector2(0.14f, 0.35f);
+    [SerializeField] private float debuffVerticalOffsetHeightFactor = 0.44f;
+    [SerializeField] private Vector2 debuffVerticalOffsetClamp = new Vector2(0.20f, 0.52f);
+    [SerializeField] private int debuffChevronCount = 3;
+    [SerializeField] private float debuffChevronSize = 0.075f;
+    [SerializeField] private int debuffParticleCount = 6;
+    [SerializeField] private float debuffParticleSize = 0.04f;
+    [SerializeField] private float debuffFallAmount = 0.24f;
+    [SerializeField] private float debuffPulseSpeed = 1.7f;
+    [SerializeField] private float debuffPulseAmount = 0.07f;
+    [SerializeField] private float debuffWobbleAmount = 0.025f;
+    [SerializeField] private Color debuffColor = new Color(0.34f, 0.12f, 0.55f, 0.85f);
+    [SerializeField] private Color debuffCoreColor = new Color(0.55f, 0.38f, 0.75f, 0.60f);
+    [SerializeField] private int debuffSortingOffset = 26;
+
 
 
     private static Material _sharedMaterial;
@@ -543,6 +608,31 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public DebuffLoopTuning GetDebuffTuningSnapshot()
+    {
+        DebuffLoopTuning snapshot = new DebuffLoopTuning
+        {
+            radiusHeightFactor = this.debuffRadiusHeightFactor,
+            radiusClamp = this.debuffRadiusClamp,
+            verticalOffsetHeightFactor = this.debuffVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.debuffVerticalOffsetClamp,
+            chevronCount = this.debuffChevronCount,
+            chevronSize = this.debuffChevronSize,
+            particleCount = this.debuffParticleCount,
+            particleSize = this.debuffParticleSize,
+            fallAmount = this.debuffFallAmount,
+            pulseSpeed = this.debuffPulseSpeed,
+            pulseAmount = this.debuffPulseAmount,
+            wobbleAmount = this.debuffWobbleAmount,
+            color = this.debuffColor,
+            coreColor = this.debuffCoreColor,
+            sortingOffset = this.debuffSortingOffset
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
+
 
     private void ClearAllLoops()
     {
@@ -594,7 +684,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff && effectType != SkillEffectKind.Debuff) return;
 
         Unit source = effect.SourceUnit;
         CreateVisualLoopInstance(unit, effectType, source);
@@ -619,7 +709,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff && effectType != SkillEffectKind.Debuff) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -690,6 +780,14 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                     if (behavior != null)
                     {
                         behavior.Initialize(unit, GetSharedMaterial(), GetBuffTuningSnapshot(), true);
+                    }
+                }
+                else if (effectType == SkillEffectKind.Debuff)
+                {
+                    DebuffLoopBehavior behavior = existingObj.GetComponent<DebuffLoopBehavior>();
+                    if (behavior != null)
+                    {
+                        behavior.Initialize(unit, GetSharedMaterial(), GetDebuffTuningSnapshot(), true);
                     }
                 }
                 return existingObj; // Reuse existing
@@ -772,6 +870,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             isTester = true;
 #endif
             behavior.Initialize(unit, GetSharedMaterial(), GetBuffTuningSnapshot(), isTester);
+        }
+        else if (effectType == SkillEffectKind.Debuff)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Debuff");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            DebuffLoopBehavior behavior = visualObj.AddComponent<DebuffLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            behavior.Initialize(unit, GetSharedMaterial(), GetDebuffTuningSnapshot(), isTester);
         }
 
         if (visualObj != null)
@@ -2648,6 +2757,283 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 lr.SetPosition(2, particlePos + new Vector3(0f, -currentSize * 0.5f, 0f));
                 lr.SetPosition(3, particlePos + new Vector3(-currentSize * 0.5f, 0f, 0f));
                 lr.SetPosition(4, particlePos + new Vector3(0f, currentSize * 0.5f, 0f));
+            }
+        }
+    }
+
+    private class DebuffLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private DebuffLoopTuning _tuning;
+        private Material _sharedMat;
+        private readonly List<LineRenderer> _chevronLrs = new List<LineRenderer>();
+        private readonly List<LineRenderer> _particleLrs = new List<LineRenderer>();
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+        private bool _isTesterLoop;
+
+        public void Initialize(Unit unit, Material mat, DebuffLoopTuning tuning, bool isTester = false)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _isTesterLoop = isTester;
+
+            ResolveAnchor(unit);
+            CreateChevrons();
+            CreateParticles();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+                {
+                    float offset = bounds.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    _resolvedBoundsPosition = new Vector3(bounds.center.x, bounds.min.y + offset, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreateChevrons()
+        {
+            foreach (var lr in _chevronLrs) if (lr != null) Destroy(lr.gameObject);
+            _chevronLrs.Clear();
+
+            int count = Mathf.Max(1, _tuning.chevronCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject chevronObj = new GameObject($"DebuffChevron_{i}");
+                chevronObj.transform.SetParent(transform, false);
+                LineRenderer lr = chevronObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _chevronLrs.Add(lr);
+            }
+        }
+
+        private void CreateParticles()
+        {
+            foreach (var lr in _particleLrs) if (lr != null) Destroy(lr.gameObject);
+            _particleLrs.Clear();
+
+            int count = Mathf.Max(0, _tuning.particleCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject particleObj = new GameObject($"DebuffParticle_{i}");
+                particleObj.transform.SetParent(transform, false);
+                LineRenderer lr = particleObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset - 1);
+                _particleLrs.Add(lr);
+            }
+        }
+
+        private void SetupLr(LineRenderer lr)
+        {
+            lr.sharedMaterial = _sharedMat;
+            lr.useWorldSpace = true;
+            lr.alignment = LineAlignment.View;
+            lr.loop = false;
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.Debuff))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 basePos;
+            float unitHeight = 1.0f;
+            Bounds boundsForHeight = new Bounds();
+            bool hasBounds = false;
+
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                basePos = _resolvedAnchorTransform.position;
+            }
+            else if (hasBounds)
+            {
+                float offset = unitHeight * _tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                basePos = new Vector3(boundsForHeight.center.x, boundsForHeight.min.y + offset, _unit.transform.position.z);
+            }
+            else
+            {
+                basePos = _resolvedBoundsPosition;
+            }
+
+            float verticalOffset = 0f;
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                verticalOffset = Mathf.Clamp(unitHeight * _tuning.verticalOffsetHeightFactor, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+            }
+
+            Vector3 debuffCenter = basePos + new Vector3(0f, verticalOffset, 0f);
+            transform.position = debuffCenter;
+
+            float radius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            // Pulso irregular/pesado: combinación de dos ondas de frecuencia distinta para distorsión
+            float rawPulse = Mathf.Sin(Time.time * _tuning.pulseSpeed) + 0.35f * Mathf.Cos(Time.time * _tuning.pulseSpeed * 2.3f);
+            float scalePulse = 1.0f + rawPulse * _tuning.pulseAmount;
+            float alphaPulse = 0.75f + 0.25f * Mathf.Clamp(rawPulse, -1.0f, 1.0f);
+
+            Color baseColor = _tuning.color;
+            baseColor.a *= alphaPulse;
+            Color coreColor = _tuning.coreColor;
+            coreColor.a *= alphaPulse;
+
+            // Wobble determinista/suave para sensación inestable/deteriorada
+            float baseWobbleX = Mathf.Sin(Time.time * 2.8f) * _tuning.wobbleAmount;
+            float baseWobbleY = Mathf.Cos(Time.time * 2.2f) * _tuning.wobbleAmount;
+
+            // Draw chevrons falling downward
+            int chevronCount = _chevronLrs.Count;
+            for (int i = 0; i < chevronCount; i++)
+            {
+                LineRenderer lr = _chevronLrs[i];
+                if (lr == null) continue;
+
+                // Spacing in angle
+                float baseAngle = (i * 2f * Mathf.PI / chevronCount) - Time.time * 0.4f;
+                // Progress falling downward from +fallAmount to -fallAmount
+                float progress = (Time.time * 0.7f + (float)i / chevronCount) % 1.0f;
+                float localY = Mathf.Lerp(_tuning.fallAmount, -_tuning.fallAmount, progress);
+                float fade = Mathf.Sin(progress * Mathf.PI);
+
+                float cwobbleX = Mathf.Sin(Time.time * 3.5f + i) * _tuning.wobbleAmount * 0.5f;
+                float cwobbleY = Mathf.Cos(Time.time * 2.9f + i) * _tuning.wobbleAmount * 0.5f;
+
+                float x = Mathf.Cos(baseAngle) * radius * scalePulse + baseWobbleX + cwobbleX;
+                float y = Mathf.Sin(baseAngle) * radius * 0.3f * scalePulse + localY + baseWobbleY + cwobbleY;
+
+                Vector3 chevronPos = debuffCenter + new Vector3(x, y, 0f);
+                float currentSize = _tuning.chevronSize * (1f - 0.15f * progress);
+
+                Color finalColor = baseColor;
+                finalColor.a *= fade;
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentSize * 0.25f;
+                lr.endWidth = currentSize * 0.25f;
+
+                // Chevron points: v shape pointing DOWN
+                lr.positionCount = 3;
+                lr.SetPosition(0, chevronPos + new Vector3(-currentSize * 0.5f, currentSize * 0.3f, 0f));
+                lr.SetPosition(1, chevronPos + new Vector3(0f, -currentSize * 0.4f, 0f));
+                lr.SetPosition(2, chevronPos + new Vector3(currentSize * 0.5f, currentSize * 0.3f, 0f));
+            }
+
+            // Draw small falling particles/motes
+            int particleCount = _particleLrs.Count;
+            for (int i = 0; i < particleCount; i++)
+            {
+                LineRenderer lr = _particleLrs[i];
+                if (lr == null) continue;
+
+                float progress = (Time.time * 0.9f + (float)i / particleCount) % 1.0f;
+                float localY = Mathf.Lerp(_tuning.fallAmount * 1.2f, -_tuning.fallAmount * 1.2f, progress);
+                float fade = Mathf.Sin(progress * Mathf.PI);
+
+                float seedAngle = i * 1.9f;
+                float sway = Mathf.Sin(Time.time * 2.5f + i) * radius * 0.2f;
+                float pwobbleX = Mathf.Sin(Time.time * 4.2f + i) * _tuning.wobbleAmount * 0.8f;
+                float pwobbleY = Mathf.Cos(Time.time * 3.7f + i) * _tuning.wobbleAmount * 0.8f;
+
+                float x = Mathf.Cos(seedAngle) * radius * 0.75f + sway + baseWobbleX + pwobbleX;
+                float y = Mathf.Sin(seedAngle) * radius * 0.22f + localY + baseWobbleY + pwobbleY;
+
+                Vector3 particlePos = debuffCenter + new Vector3(x, y, 0f);
+                float currentSize = _tuning.particleSize * (0.8f + 0.3f * Mathf.Sin(Time.time * 4f + i));
+
+                Color finalColor = coreColor;
+                finalColor.a *= fade;
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentSize * 0.25f;
+                lr.endWidth = currentSize * 0.25f;
+
+                // Draw a simple falling droplet/mote shape (pointing down or diamond)
+                lr.positionCount = 5;
+                lr.SetPosition(0, particlePos + new Vector3(0f, currentSize * 0.6f, 0f));
+                lr.SetPosition(1, particlePos + new Vector3(currentSize * 0.4f, 0f, 0f));
+                lr.SetPosition(2, particlePos + new Vector3(0f, -currentSize * 0.6f, 0f));
+                lr.SetPosition(3, particlePos + new Vector3(-currentSize * 0.4f, 0f, 0f));
+                lr.SetPosition(4, particlePos + new Vector3(0f, currentSize * 0.6f, 0f));
             }
         }
     }
