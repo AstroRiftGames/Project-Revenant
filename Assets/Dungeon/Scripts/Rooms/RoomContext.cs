@@ -17,6 +17,7 @@ public class RoomContext : MonoBehaviour
 
     private readonly List<Unit> _units = new();
     private readonly List<MonoBehaviour> _roomComponents = new();
+    private RoomDoor[] _doors;
 
     public RoomGrid RoomGrid => _roomGrid;
     public CombatRoomController CombatController => _combatController;
@@ -30,6 +31,10 @@ public class RoomContext : MonoBehaviour
 
     public void EnterRoom()
     {
+        // Re-enable this RoomContext and its gameplay components in case
+        // they were disabled by a previous ExitRoom() call (room re-entry).
+        enabled = true;
+
         ResolveDependencies();
         ConfigureGrid();
         GenerateContentIfNeeded();
@@ -37,6 +42,74 @@ public class RoomContext : MonoBehaviour
         InjectContextIntoRoomComponents();
         CacheUnits();
         InjectContextIntoUnits();
+
+        // Re-enable gameplay components that were disabled on exit.
+        if (_combatController != null)
+            _combatController.enabled = true;
+
+        if (_contentGenerator != null)
+            _contentGenerator.enabled = true;
+
+        for (int i = 0; i < _units.Count; i++)
+        {
+            if (_units[i] != null)
+                _units[i].enabled = true;
+        }
+
+        // Activate all connected doors so they register grid occupancy and become interactable.
+        // Doors that were intentionally deactivated during dungeon generation (unused doors
+        // that don't connect to any room) are left inactive.
+        CacheDoors();
+        for (int i = 0; i < _doors.Length; i++)
+        {
+            RoomDoor door = _doors[i];
+            if (door != null && door.roomA != null && door.roomB != null)
+                door.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// Called when the player leaves this room. Disables gameplay components
+    /// (RoomContext, CombatRoomController, units, doors, etc.) while keeping
+    /// the room GameObject active so that tilemaps, sprites, and other visuals
+    /// remain visible. This makes previously visited rooms stay rendered.
+    /// </summary>
+    public void ExitRoom()
+    {
+        // Disable this RoomContext so its Awake/Update/etc. no longer run.
+        enabled = false;
+
+        // Disable the combat controller if present.
+        if (_combatController != null)
+            _combatController.enabled = false;
+
+        // Disable the content generator.
+        if (_contentGenerator != null)
+            _contentGenerator.enabled = false;
+
+        // Disable all units in the room so they stop processing.
+        for (int i = 0; i < _units.Count; i++)
+        {
+            if (_units[i] != null)
+                _units[i].enabled = false;
+        }
+
+        // Deactivate all doors so they release grid occupancy and can be
+        // properly re-initialized when the player returns to this room.
+        CacheDoors();
+        for (int i = 0; i < _doors.Length; i++)
+        {
+            if (_doors[i] != null)
+                _doors[i].gameObject.SetActive(false);
+        }
+    }
+
+    private void CacheDoors()
+    {
+        if (_doors != null && _doors.Length > 0)
+            return;
+
+        _doors = GetComponentsInChildren<RoomDoor>(includeInactive: true);
     }
 
     public void RegisterUnit(Unit unit)
