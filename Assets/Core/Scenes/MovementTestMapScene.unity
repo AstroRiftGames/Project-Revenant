@@ -583,6 +583,18 @@ MonoBehaviour:
   _bodyImpactLineWidthClamp: {x: 0.05, y: 0.09}
   _bodyImpactColor: {r: 1, g: 0.42, b: 0.12, a: 1}
   _bodyImpactSortingOffset: 24
+  _aoeLifetime: 0.55
+  _aoeRadius: 2.5
+  _aoeFillAlpha: 0.12
+  _aoeBorderWidth: 0.045
+  _aoeBorderSegmentCount: 18
+  _aoeBorderCoverage: 0.65
+  _aoePulseRadiusMultiplier: 0.35
+  _aoePulseSpeed: 2.2
+  _aoeGroundMarkCount: 8
+  _aoeColor: {r: 1, g: 0.28, b: 0.18, a: 0.75}
+  _aoeSortingOffset: 8
+  _aoeGroundVerticalScale: 0.5
 --- !u!114 &3000000005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -609,6 +621,8 @@ MonoBehaviour:
   slowRadiusClamp: {x: 0.18, y: 0.42}
   slowVerticalOffsetHeightFactor: 0.02
   slowVerticalOffsetClamp: {x: -0.04, y: 0.08}
+  slowFootCenterHeightFactor: 0.18
+  slowFootCenterOffsetClamp: {x: 0.12, y: 0.26}
   slowArcCount: 3
   slowArcCoverage: 220
   slowLineWidth: 0.035
@@ -616,6 +630,17 @@ MonoBehaviour:
   slowContractionAmount: 0.18
   slowColor: {r: 0.35, g: 0.65, b: 1, a: 1}
   slowSortingOffset: 18
+  enableDebugLogs: 1
+  poisonRadiusHeightFactor: 0.24
+  poisonRadiusClamp: {x: 0.12, y: 0.28}
+  poisonVerticalOffsetHeightFactor: 0.32
+  poisonVerticalOffsetClamp: {x: 0.12, y: 0.34}
+  poisonBubbleCount: 5
+  poisonBubbleSize: 0.045
+  poisonPulseSpeed: 1.6
+  poisonDriftAmount: 0.035
+  poisonColor: {r: 0, g: 0.44705883, b: 0.11372549, a: 0.9137255}
+  poisonSortingOffset: 26
 --- !u!1839735485 &3000000010 stripped
 Tilemap:
   m_CorrespondingSourceObject: {fileID: 3184769969460405456, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}

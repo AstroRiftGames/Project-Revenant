@@ -102,6 +102,26 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Poison")]
+    private void TestPoisonLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Poison loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("PoisonLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.PoisonBurn));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Clear Status Loop VFX")]
     private void ClearStatusLoopVfx()
     {
@@ -642,7 +662,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop");
     }
 
     private void ClearSpawnedTestVfxInternal()

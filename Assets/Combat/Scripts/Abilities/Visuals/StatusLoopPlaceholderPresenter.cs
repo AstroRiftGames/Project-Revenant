@@ -70,6 +70,36 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct PoisonLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int bubbleCount;
+        public float bubbleSize;
+        public float pulseSpeed;
+        public float driftAmount;
+        public Color color;
+        public int sortingOffset;
+
+        public void Sanitize()
+        {
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (bubbleCount < 1) bubbleCount = 1;
+            if (bubbleSize <= 0f) bubbleSize = 0.045f;
+            if (pulseSpeed < 0f) pulseSpeed = 0f;
+            if (driftAmount < 0f) driftAmount = 0f;
+            color.a = Mathf.Clamp01(color.a);
+        }
+    }
+
     [Header("Stun Loop Tuning")]
     [SerializeField] private float radiusHeightFactor = 0.22f;
     [SerializeField] private Vector2 radiusClamp = new Vector2(0.12f, 0.28f);
@@ -97,6 +127,18 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color slowColor = new Color(0.35f, 0.65f, 1.0f, 0.65f);
     [SerializeField] private int slowSortingOffset = 18;
     [SerializeField] private bool enableDebugLogs = true;
+
+    [Header("Poison Loop Tuning")]
+    [SerializeField] private float poisonRadiusHeightFactor = 0.24f;
+    [SerializeField] private Vector2 poisonRadiusClamp = new Vector2(0.12f, 0.28f);
+    [SerializeField] private float poisonVerticalOffsetHeightFactor = 0.32f;
+    [SerializeField] private Vector2 poisonVerticalOffsetClamp = new Vector2(0.12f, 0.34f);
+    [SerializeField] private int poisonBubbleCount = 5;
+    [SerializeField] private float poisonBubbleSize = 0.045f;
+    [SerializeField] private float poisonPulseSpeed = 1.6f;
+    [SerializeField] private float poisonDriftAmount = 0.035f;
+    [SerializeField] private Color poisonColor = new Color(0.35f, 0.95f, 0.25f, 0.75f);
+    [SerializeField] private int poisonSortingOffset = 26;
 
     private static Material _sharedMaterial;
     
@@ -156,6 +198,25 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public PoisonLoopTuning GetPoisonTuningSnapshot()
+    {
+        PoisonLoopTuning snapshot = new PoisonLoopTuning
+        {
+            radiusHeightFactor = this.poisonRadiusHeightFactor,
+            radiusClamp = this.poisonRadiusClamp,
+            verticalOffsetHeightFactor = this.poisonVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.poisonVerticalOffsetClamp,
+            bubbleCount = this.poisonBubbleCount,
+            bubbleSize = this.poisonBubbleSize,
+            pulseSpeed = this.poisonPulseSpeed,
+            driftAmount = this.poisonDriftAmount,
+            color = this.poisonColor,
+            sortingOffset = this.poisonSortingOffset
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
     private void ClearAllLoops()
     {
         foreach (var kvp in _activeLoops)
@@ -194,7 +255,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         if (unit == null || effect == null || effect.Definition == null) return;
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn) return;
 
         CreateVisualLoopInstance(unit, effectType);
     }
@@ -206,7 +267,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         SweepStaleLoops();
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -257,6 +318,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
             SlowLoopBehavior behavior = visualObj.AddComponent<SlowLoopBehavior>();
             behavior.Initialize(unit, GetSharedMaterial(), GetSlowTuningSnapshot(), enableDebugLogs);
+        }
+        else if (effectType == SkillEffectKind.PoisonBurn)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Poison");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            PoisonLoopBehavior behavior = visualObj.AddComponent<PoisonLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            behavior.Initialize(unit, GetSharedMaterial(), GetPoisonTuningSnapshot(), isTester);
         }
 
         if (visualObj != null)
@@ -869,6 +941,196 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             for (int k = 0; k < frontPoints.Count; k++)
             {
                 frontLr.SetPosition(k, frontPoints[k]);
+            }
+        }
+    }
+
+    private class PoisonLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private PoisonLoopTuning _tuning;
+        private Material _sharedMat;
+        private readonly List<LineRenderer> _bubbleLrs = new List<LineRenderer>();
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+        private bool _isTesterLoop;
+
+        public void Initialize(Unit unit, Material mat, PoisonLoopTuning tuning, bool isTesterLoop)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _isTesterLoop = isTesterLoop;
+
+            ResolveAnchor(unit);
+            CreateBubbles();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bodyBounds))
+                {
+                    _resolvedBoundsPosition = new Vector3(bodyBounds.center.x, bodyBounds.center.y, unit.transform.position.z);
+                }
+                else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(unit, out Bounds visualBounds))
+                {
+                    _resolvedBoundsPosition = new Vector3(visualBounds.center.x, visualBounds.center.y, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreateBubbles()
+        {
+            foreach (var lr in _bubbleLrs)
+            {
+                if (lr != null) Destroy(lr.gameObject);
+            }
+            _bubbleLrs.Clear();
+
+            int count = Mathf.Max(1, _tuning.bubbleCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject bubbleObj = new GameObject($"PoisonBubble_{i}");
+                bubbleObj.transform.SetParent(transform, false);
+                LineRenderer lr = bubbleObj.AddComponent<LineRenderer>();
+
+                lr.sharedMaterial = _sharedMat;
+                lr.useWorldSpace = true;
+                lr.alignment = LineAlignment.View;
+                lr.loop = true;
+                lr.startWidth = _tuning.bubbleSize * 0.25f;
+                lr.endWidth = _tuning.bubbleSize * 0.25f;
+
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _bubbleLrs.Add(lr);
+            }
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.PoisonBurn))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 basePos = _resolvedAnchorTransform != null ? _resolvedAnchorTransform.position : _resolvedBoundsPosition;
+
+            float unitHeight = 1.0f;
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out Bounds boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out Bounds normalBounds))
+            {
+                unitHeight = normalBounds.size.y;
+            }
+
+            float radius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+            float verticalOffset = Mathf.Clamp(unitHeight * _tuning.verticalOffsetHeightFactor, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+
+            Vector3 bodyCenter = basePos + new Vector3(0f, verticalOffset, 0f);
+            transform.position = bodyCenter;
+
+            int count = _bubbleLrs.Count;
+            for (int i = 0; i < count; i++)
+            {
+                LineRenderer lr = _bubbleLrs[i];
+                if (lr == null) continue;
+
+                float t = (Time.time * _tuning.pulseSpeed * 0.25f + (float)i / count) % 1.0f;
+                float localY = Mathf.Lerp(-radius * 0.7f, radius * 0.7f, t);
+                float sway = Mathf.Sin(Time.time * _tuning.pulseSpeed + i * 3.14f) * _tuning.driftAmount;
+                float baseX = Mathf.Sin(i * 1.7f) * radius * 0.8f;
+                float localX = baseX + sway;
+
+                Vector3 bubbleCenter = bodyCenter + new Vector3(localX, localY, 0f);
+                float currentSize = _tuning.bubbleSize * (0.8f + 0.4f * Mathf.Sin(Time.time * _tuning.pulseSpeed * 2.0f + i));
+
+                Color finalColor = _tuning.color;
+                float bubbleAlpha = Mathf.Sin(t * Mathf.PI);
+                finalColor.a *= bubbleAlpha;
+
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentSize * 0.25f;
+                lr.endWidth = currentSize * 0.25f;
+
+                DrawBubble(lr, bubbleCenter, currentSize);
+            }
+        }
+
+        private void DrawBubble(LineRenderer lr, Vector3 center, float size)
+        {
+            if (lr == null) return;
+            const int points = 8;
+            lr.positionCount = points;
+            for (int i = 0; i < points; i++)
+            {
+                float angle = (i * 2f * Mathf.PI / points);
+                float x = Mathf.Cos(angle) * size;
+                float y = Mathf.Sin(angle) * size;
+                lr.SetPosition(i, center + new Vector3(x, y, 0f));
             }
         }
     }
