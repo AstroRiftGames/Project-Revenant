@@ -141,6 +141,49 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct BurnLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int flameCount;
+        public float flameSize;
+        public float flickerSpeed;
+        public float flickerAmount;
+        public float heatWaveAmount;
+        public Color color;
+        public Color coreColor;
+        public int sortingOffset;
+        public float stackIntensity;
+
+        public void Sanitize()
+        {
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (flameCount < 1) flameCount = 1;
+            if (flameSize <= 0f) flameSize = 0.06f;
+            if (flickerSpeed < 0f) flickerSpeed = 0f;
+            if (flickerAmount < 0f) flickerAmount = 0f;
+            if (heatWaveAmount < 0f) heatWaveAmount = 0f;
+            if (stackIntensity < 0.25f) stackIntensity = 0.25f;
+            color.a = Mathf.Clamp01(color.a);
+            coreColor.a = Mathf.Clamp01(coreColor.a);
+        }
+    }
+
+
     [Header("Stun Loop Tuning")]
     [SerializeField] private float radiusHeightFactor = 0.22f;
     [SerializeField] private Vector2 radiusClamp = new Vector2(0.12f, 0.28f);
@@ -195,6 +238,21 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private bool tauntShowDirectionCue = true;
     [SerializeField] private float tauntDirectionCueLength = 0.48f;
     [SerializeField] private float tauntDirectionCueWidth = 0.05f;
+
+    [Header("Burn Loop Tuning")]
+    [SerializeField] private float burnRadiusHeightFactor = 0.22f;
+    [SerializeField] private Vector2 burnRadiusClamp = new Vector2(0.12f, 0.30f);
+    [SerializeField] private float burnVerticalOffsetHeightFactor = 0.28f;
+    [SerializeField] private Vector2 burnVerticalOffsetClamp = new Vector2(0.10f, 0.34f);
+    [SerializeField] private int burnFlameCount = 5;
+    [SerializeField] private float burnFlameSize = 0.06f;
+    [SerializeField] private float burnFlickerSpeed = 5.0f;
+    [SerializeField] private float burnFlickerAmount = 0.035f;
+    [SerializeField] private float burnHeatWaveAmount = 0.025f;
+    [SerializeField] private Color burnColor = new Color(1.0f, 0.34f, 0.06f, 0.85f);
+    [SerializeField] private Color burnCoreColor = new Color(1.0f, 0.85f, 0.18f, 0.75f);
+    [SerializeField] private int burnSortingOffset = 27;
+    [SerializeField] private float burnStackIntensity = 1.0f;
 
     private static Material _sharedMaterial;
     
@@ -295,6 +353,28 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public BurnLoopTuning GetBurnTuningSnapshot()
+    {
+        BurnLoopTuning snapshot = new BurnLoopTuning
+        {
+            radiusHeightFactor = this.burnRadiusHeightFactor,
+            radiusClamp = this.burnRadiusClamp,
+            verticalOffsetHeightFactor = this.burnVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.burnVerticalOffsetClamp,
+            flameCount = this.burnFlameCount,
+            flameSize = this.burnFlameSize,
+            flickerSpeed = this.burnFlickerSpeed,
+            flickerAmount = this.burnFlickerAmount,
+            heatWaveAmount = this.burnHeatWaveAmount,
+            color = this.burnColor,
+            coreColor = this.burnCoreColor,
+            sortingOffset = this.burnSortingOffset,
+            stackIntensity = this.burnStackIntensity
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
     private void ClearAllLoops()
     {
         foreach (var kvp in _activeLoops)
@@ -333,7 +413,19 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         if (unit == null || effect == null || effect.Definition == null) return;
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt) return;
+
+        // TODO: PoisonBurn is currently shared for Poison and Burn. Once they are fully separated, we will map SkillEffectKind.Burn directly.
+        if (effectType == SkillEffectKind.PoisonBurn)
+        {
+            bool isBurn = (effect.Definition.EffectId != null && effect.Definition.EffectId.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                         (effect.Definition.DisplayName != null && effect.Definition.DisplayName.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (isBurn)
+            {
+                effectType = SkillEffectKind.Burn;
+            }
+        }
+
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn) return;
 
         Unit source = effect.SourceUnit;
         CreateVisualLoopInstance(unit, effectType, source);
@@ -346,7 +438,19 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         SweepStaleLoops();
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt) return;
+
+        // TODO: PoisonBurn is currently shared for Poison and Burn. Once they are fully separated, we will map SkillEffectKind.Burn directly.
+        if (effectType == SkillEffectKind.PoisonBurn)
+        {
+            bool isBurn = (effect.Definition.EffectId != null && effect.Definition.EffectId.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                         (effect.Definition.DisplayName != null && effect.Definition.DisplayName.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (isBurn)
+            {
+                effectType = SkillEffectKind.Burn;
+            }
+        }
+
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -370,7 +474,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return null;
     }
 
-    public GameObject CreateVisualLoopInstance(Unit unit, SkillEffectKind effectType, Unit source = null)
+    public GameObject CreateVisualLoopInstance(Unit unit, SkillEffectKind effectType, Unit source = null, float burnIntensityOverride = -1.0f)
     {
         if (unit == null) return null;
 
@@ -387,6 +491,20 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                     if (behavior != null)
                     {
                         behavior.Initialize(unit, GetSharedMaterial(), GetTauntTuningSnapshot(), source, true);
+                    }
+                }
+                else if (effectType == SkillEffectKind.Burn)
+                {
+                    BurnLoopBehavior behavior = existingObj.GetComponent<BurnLoopBehavior>();
+                    if (behavior != null)
+                    {
+                        BurnLoopTuning tuning = GetBurnTuningSnapshot();
+                        if (burnIntensityOverride >= 0f)
+                        {
+                            tuning.stackIntensity = burnIntensityOverride;
+                            tuning.Sanitize();
+                        }
+                        behavior.Initialize(unit, GetSharedMaterial(), tuning, true);
                     }
                 }
                 return existingObj; // Reuse existing
@@ -430,6 +548,23 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             isTester = true;
 #endif
             behavior.Initialize(unit, GetSharedMaterial(), GetTauntTuningSnapshot(), source, isTester);
+        }
+        else if (effectType == SkillEffectKind.Burn)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Burn");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            BurnLoopBehavior behavior = visualObj.AddComponent<BurnLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            BurnLoopTuning tuning = GetBurnTuningSnapshot();
+            if (burnIntensityOverride >= 0f)
+            {
+                tuning.stackIntensity = burnIntensityOverride;
+                tuning.Sanitize();
+            }
+            behavior.Initialize(unit, GetSharedMaterial(), tuning, isTester);
         }
 
         if (visualObj != null)
@@ -1530,6 +1665,260 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 _directionCueLr.SetPosition(2, cueEnd - dir * headSize + perp * headSize * 0.4f);
                 _directionCueLr.SetPosition(3, cueEnd);
                 _directionCueLr.SetPosition(4, cueEnd - dir * headSize - perp * headSize * 0.4f);
+            }
+        }
+    }
+
+    private class BurnLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private BurnLoopTuning _tuning;
+        private Material _sharedMat;
+        private readonly List<LineRenderer> _outerLrs = new List<LineRenderer>();
+        private readonly List<LineRenderer> _coreLrs = new List<LineRenderer>();
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+        private bool _isTesterLoop;
+
+        public void Initialize(Unit unit, Material mat, BurnLoopTuning tuning, bool isTesterLoop)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _isTesterLoop = isTesterLoop;
+
+            ResolveAnchor(unit);
+            CreateFlames();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+                {
+                    float offset = bounds.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    _resolvedBoundsPosition = new Vector3(bounds.center.x, bounds.min.y + offset, unit.transform.position.z);
+                }
+                else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(unit, out Bounds boundsFallback))
+                {
+                    float offset = boundsFallback.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    _resolvedBoundsPosition = new Vector3(boundsFallback.center.x, boundsFallback.min.y + offset, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreateFlames()
+        {
+            foreach (var lr in _outerLrs) if (lr != null) Destroy(lr.gameObject);
+            _outerLrs.Clear();
+            foreach (var lr in _coreLrs) if (lr != null) Destroy(lr.gameObject);
+            _coreLrs.Clear();
+
+            int count = Mathf.Max(1, Mathf.RoundToInt(_tuning.flameCount * _tuning.stackIntensity));
+            for (int i = 0; i < count; i++)
+            {
+                GameObject outerObj = new GameObject($"BurnFlameOuter_{i}");
+                outerObj.transform.SetParent(transform, false);
+                LineRenderer outerLr = outerObj.AddComponent<LineRenderer>();
+                SetupLr(outerLr);
+                ConfigureSorting(outerLr, _tuning.sortingOffset);
+                _outerLrs.Add(outerLr);
+
+                GameObject coreObj = new GameObject($"BurnFlameCore_{i}");
+                coreObj.transform.SetParent(transform, false);
+                LineRenderer coreLr = coreObj.AddComponent<LineRenderer>();
+                SetupLr(coreLr);
+                ConfigureSorting(coreLr, _tuning.sortingOffset + 1);
+                _coreLrs.Add(coreLr);
+            }
+        }
+
+        private void SetupLr(LineRenderer lr)
+        {
+            lr.sharedMaterial = _sharedMat;
+            lr.useWorldSpace = true;
+            lr.alignment = LineAlignment.View;
+            lr.loop = true;
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.Burn))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 basePos;
+            float unitHeight = 1.0f;
+            Bounds boundsForHeight = new Bounds();
+            bool hasBounds = false;
+
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                basePos = _resolvedAnchorTransform.position;
+            }
+            else if (hasBounds)
+            {
+                float offset = unitHeight * _tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                basePos = new Vector3(boundsForHeight.center.x, boundsForHeight.min.y + offset, _unit.transform.position.z);
+            }
+            else
+            {
+                basePos = _unit.transform.position;
+            }
+
+            float verticalOffset = 0f;
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                verticalOffset = Mathf.Clamp(unitHeight * _tuning.verticalOffsetHeightFactor, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+            }
+
+            Vector3 burnCenter = basePos + new Vector3(0f, verticalOffset, 0f);
+            transform.position = burnCenter;
+
+            float radius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            float speedMult = _tuning.flickerSpeed * (0.8f + 0.2f * _tuning.stackIntensity);
+            float baseTime = Time.time * speedMult;
+
+            float alphaPulse = 0.8f + 0.2f * Mathf.Sin(Time.time * 4f);
+
+            int count = _outerLrs.Count;
+            for (int i = 0; i < count; i++)
+            {
+                LineRenderer outerLr = _outerLrs[i];
+                LineRenderer coreLr = _coreLrs[i];
+                if (outerLr == null || coreLr == null) continue;
+
+                float phase = (float)i / count;
+                float progress = (Time.time * 1.5f + phase) % 1.0f;
+
+                float localY = Mathf.Lerp(-radius * 0.5f, radius * 0.7f, progress);
+
+                float angle = phase * 2.0f * Mathf.PI + Time.time * 0.6f;
+                float rx = Mathf.Cos(angle) * radius;
+
+                float flickerWobble = Mathf.Sin(baseTime + i * 3.0f) * _tuning.flickerAmount * _tuning.stackIntensity;
+                float flameX = rx + flickerWobble;
+
+                Vector3 flameBase = burnCenter + new Vector3(flameX, localY, 0f);
+
+                float sizeMultiplier = _tuning.stackIntensity;
+                float baseFlameSize = _tuning.flameSize * sizeMultiplier;
+                float currentSize = baseFlameSize * (1.0f - progress * 0.8f);
+
+                float wave = Mathf.Sin(baseTime * 2.0f + i) * _tuning.heatWaveAmount * _tuning.stackIntensity;
+
+                Color outerCol = _tuning.color;
+                Color coreCol = _tuning.coreColor;
+
+                float fade = 1.0f;
+                if (progress > 0.7f)
+                {
+                    fade = (1.0f - progress) / 0.3f;
+                }
+                outerCol.a *= fade * alphaPulse;
+                coreCol.a *= fade * alphaPulse;
+
+                outerLr.startColor = outerCol;
+                outerLr.endColor = outerCol;
+                outerLr.startWidth = currentSize * 0.2f;
+                outerLr.endWidth = currentSize * 0.05f;
+
+                coreLr.startColor = coreCol;
+                coreLr.endColor = coreCol;
+                coreLr.startWidth = currentSize * 0.1f;
+                coreLr.endWidth = currentSize * 0.02f;
+
+                Vector3[] outerPoints = new Vector3[4];
+                outerPoints[0] = flameBase + new Vector3(-currentSize * 0.4f, 0f, 0f);
+                outerPoints[1] = flameBase + new Vector3(wave, currentSize * 1.3f, 0f);
+                outerPoints[2] = flameBase + new Vector3(currentSize * 0.4f, 0f, 0f);
+                outerPoints[3] = outerPoints[0];
+                outerLr.positionCount = 4;
+                outerLr.SetPositions(outerPoints);
+
+                Vector3[] corePoints = new Vector3[4];
+                corePoints[0] = flameBase + new Vector3(-currentSize * 0.2f, 0f, 0f);
+                corePoints[1] = flameBase + new Vector3(wave * 0.7f, currentSize * 0.9f, 0f);
+                corePoints[2] = flameBase + new Vector3(currentSize * 0.2f, 0f, 0f);
+                corePoints[3] = corePoints[0];
+                coreLr.positionCount = 4;
+                coreLr.SetPositions(corePoints);
             }
         }
     }

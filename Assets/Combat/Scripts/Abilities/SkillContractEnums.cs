@@ -75,7 +75,8 @@ public enum SkillEffectKind
     Debuff,            // Debuff para reducir stats
     StatModifierDebuff, // Debuff de estadística genérico
     Taunt,              // Provocar, forzar target hacia el provocador
-    Blind               // Cegar, reduce accuracy y afecta ataques básicos
+    Blind,               // Cegar, reduce accuracy y afecta ataques básicos
+    Burn                // Quemadura (VFX Debug)
 }
 
 public enum SkillModifierKind

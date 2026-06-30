@@ -122,6 +122,46 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Burn")]
+    private void TestBurnLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Burn loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("BurnLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Burn));
+        ScheduleCleanup();
+    }
+
+    [ContextMenu("Test Effect Burn Stacks")]
+    private void TestBurnLoopStacks()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Burn Stacks loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("BurnLoop_Stacks", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Burn, null, 2.5f));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Effect Taunt")]
     private void TestTauntLoop()
     {
@@ -804,7 +844,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks");
     }
 
     private void ClearSpawnedTestVfxInternal()
