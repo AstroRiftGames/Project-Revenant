@@ -182,6 +182,26 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Buff")]
+    private void TestBuffLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Buff loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("BuffLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Buff));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Effect Taunt")]
     private void TestTauntLoop()
     {

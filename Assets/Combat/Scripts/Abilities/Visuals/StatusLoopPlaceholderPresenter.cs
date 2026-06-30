@@ -229,6 +229,51 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct BuffLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int chevronCount;
+        public float chevronSize;
+        public int particleCount;
+        public float particleSize;
+        public float riseAmount;
+        public float pulseSpeed;
+        public float pulseAmount;
+        public Color color;
+        public Color coreColor;
+        public int sortingOffset;
+
+        public void Sanitize()
+        {
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (chevronCount < 1) chevronCount = 1;
+            if (particleCount < 0) particleCount = 0;
+            if (chevronSize <= 0f) chevronSize = 0.075f;
+            if (particleSize <= 0f) particleSize = 0.04f;
+            if (riseAmount < 0f) riseAmount = 0f;
+            if (pulseSpeed < 0f) pulseSpeed = 0f;
+            if (pulseAmount < 0f) pulseAmount = 0f;
+            color.a = Mathf.Clamp01(color.a);
+            coreColor.a = Mathf.Clamp01(coreColor.a);
+        }
+    }
+
+
 
     [Header("Stun Loop Tuning")]
     [SerializeField] private float radiusHeightFactor = 0.22f;
@@ -314,6 +359,23 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color shieldCoreColor = new Color(0.85f, 1.0f, 1.0f, 0.45f);
     [SerializeField] private int shieldSortingOffset = 25;
     [SerializeField] private bool shieldShowInnerPulse = true;
+
+    [Header("Buff Loop Tuning")]
+    [SerializeField] private float buffRadiusHeightFactor = 0.26f;
+    [SerializeField] private Vector2 buffRadiusClamp = new Vector2(0.14f, 0.34f);
+    [SerializeField] private float buffVerticalOffsetHeightFactor = 0.40f;
+    [SerializeField] private Vector2 buffVerticalOffsetClamp = new Vector2(0.18f, 0.48f);
+    [SerializeField] private int buffChevronCount = 3;
+    [SerializeField] private float buffChevronSize = 0.075f;
+    [SerializeField] private int buffParticleCount = 5;
+    [SerializeField] private float buffParticleSize = 0.04f;
+    [SerializeField] private float buffRiseAmount = 0.22f;
+    [SerializeField] private float buffPulseSpeed = 2.0f;
+    [SerializeField] private float buffPulseAmount = 0.06f;
+    [SerializeField] private Color buffColor = new Color(0.75f, 0.55f, 1.0f, 0.80f);
+    [SerializeField] private Color buffCoreColor = new Color(0.95f, 0.85f, 1.0f, 0.70f);
+    [SerializeField] private int buffSortingOffset = 26;
+
 
     private static Material _sharedMaterial;
     
@@ -458,6 +520,30 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public BuffLoopTuning GetBuffTuningSnapshot()
+    {
+        BuffLoopTuning snapshot = new BuffLoopTuning
+        {
+            radiusHeightFactor = this.buffRadiusHeightFactor,
+            radiusClamp = this.buffRadiusClamp,
+            verticalOffsetHeightFactor = this.buffVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.buffVerticalOffsetClamp,
+            chevronCount = this.buffChevronCount,
+            chevronSize = this.buffChevronSize,
+            particleCount = this.buffParticleCount,
+            particleSize = this.buffParticleSize,
+            riseAmount = this.buffRiseAmount,
+            pulseSpeed = this.buffPulseSpeed,
+            pulseAmount = this.buffPulseAmount,
+            color = this.buffColor,
+            coreColor = this.buffCoreColor,
+            sortingOffset = this.buffSortingOffset
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
+
     private void ClearAllLoops()
     {
         foreach (var kvp in _activeLoops)
@@ -508,7 +594,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff) return;
 
         Unit source = effect.SourceUnit;
         CreateVisualLoopInstance(unit, effectType, source);
@@ -533,7 +619,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -596,6 +682,14 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                     if (behavior != null)
                     {
                         behavior.Initialize(unit, GetSharedMaterial(), GetShieldTuningSnapshot(), true);
+                    }
+                }
+                else if (effectType == SkillEffectKind.Buff)
+                {
+                    BuffLoopBehavior behavior = existingObj.GetComponent<BuffLoopBehavior>();
+                    if (behavior != null)
+                    {
+                        behavior.Initialize(unit, GetSharedMaterial(), GetBuffTuningSnapshot(), true);
                     }
                 }
                 return existingObj; // Reuse existing
@@ -667,6 +761,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             isTester = true;
 #endif
             behavior.Initialize(unit, GetSharedMaterial(), GetShieldTuningSnapshot(), isTester);
+        }
+        else if (effectType == SkillEffectKind.Buff)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Buff");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            BuffLoopBehavior behavior = visualObj.AddComponent<BuffLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            behavior.Initialize(unit, GetSharedMaterial(), GetBuffTuningSnapshot(), isTester);
         }
 
         if (visualObj != null)
@@ -2275,6 +2380,274 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                         innerLr.SetPositions(innerPoints);
                     }
                 }
+            }
+        }
+    }
+
+    private class BuffLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private BuffLoopTuning _tuning;
+        private Material _sharedMat;
+        private readonly List<LineRenderer> _chevronLrs = new List<LineRenderer>();
+        private readonly List<LineRenderer> _particleLrs = new List<LineRenderer>();
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+        private bool _isTesterLoop;
+
+        public void Initialize(Unit unit, Material mat, BuffLoopTuning tuning, bool isTester = false)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _isTesterLoop = isTester;
+
+            ResolveAnchor(unit);
+            CreateChevrons();
+            CreateParticles();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+                {
+                    float offset = bounds.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    _resolvedBoundsPosition = new Vector3(bounds.center.x, bounds.min.y + offset, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreateChevrons()
+        {
+            foreach (var lr in _chevronLrs) if (lr != null) Destroy(lr.gameObject);
+            _chevronLrs.Clear();
+
+            int count = Mathf.Max(1, _tuning.chevronCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject chevronObj = new GameObject($"BuffChevron_{i}");
+                chevronObj.transform.SetParent(transform, false);
+                LineRenderer lr = chevronObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _chevronLrs.Add(lr);
+            }
+        }
+
+        private void CreateParticles()
+        {
+            foreach (var lr in _particleLrs) if (lr != null) Destroy(lr.gameObject);
+            _particleLrs.Clear();
+
+            int count = Mathf.Max(0, _tuning.particleCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject particleObj = new GameObject($"BuffParticle_{i}");
+                particleObj.transform.SetParent(transform, false);
+                LineRenderer lr = particleObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset - 1);
+                _particleLrs.Add(lr);
+            }
+        }
+
+        private void SetupLr(LineRenderer lr)
+        {
+            lr.sharedMaterial = _sharedMat;
+            lr.useWorldSpace = true;
+            lr.alignment = LineAlignment.View;
+            lr.loop = false;
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.Buff))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 basePos;
+            float unitHeight = 1.0f;
+            Bounds boundsForHeight = new Bounds();
+            bool hasBounds = false;
+
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                basePos = _resolvedAnchorTransform.position;
+            }
+            else if (hasBounds)
+            {
+                float offset = unitHeight * _tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                basePos = new Vector3(boundsForHeight.center.x, boundsForHeight.min.y + offset, _unit.transform.position.z);
+            }
+            else
+            {
+                basePos = _resolvedBoundsPosition;
+            }
+
+            float verticalOffset = 0f;
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                verticalOffset = Mathf.Clamp(unitHeight * _tuning.verticalOffsetHeightFactor, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+            }
+
+            Vector3 buffCenter = basePos + new Vector3(0f, verticalOffset, 0f);
+            transform.position = buffCenter;
+
+            float radius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            // Pulso suave
+            float pulseSin = Mathf.Sin(Time.time * _tuning.pulseSpeed);
+            float scalePulse = 1.0f + pulseSin * _tuning.pulseAmount;
+            float alphaPulse = 0.8f + 0.2f * pulseSin;
+
+            Color baseColor = _tuning.color;
+            baseColor.a *= alphaPulse;
+            Color coreColor = _tuning.coreColor;
+            coreColor.a *= alphaPulse;
+
+            // Draw chevrons rising upward (spaced along the orbit)
+            int chevronCount = _chevronLrs.Count;
+            for (int i = 0; i < chevronCount; i++)
+            {
+                LineRenderer lr = _chevronLrs[i];
+                if (lr == null) continue;
+
+                // Spacing in angle
+                float baseAngle = (i * 2f * Mathf.PI / chevronCount) + Time.time * 0.5f;
+                // Progress rising upward from -riseAmount to +riseAmount
+                float progress = (Time.time * 0.8f + (float)i / chevronCount) % 1.0f;
+                float localY = Mathf.Lerp(-_tuning.riseAmount, _tuning.riseAmount, progress);
+                float fade = Mathf.Sin(progress * Mathf.PI); // Fade at start and end of rise
+
+                float x = Mathf.Cos(baseAngle) * radius * scalePulse;
+                // Simple perspective/tilt factor to wrap around body slightly
+                float y = Mathf.Sin(baseAngle) * radius * 0.3f * scalePulse + localY;
+
+                Vector3 chevronPos = buffCenter + new Vector3(x, y, 0f);
+                float currentSize = _tuning.chevronSize * (1f + 0.15f * Mathf.Sin(Time.time * 4f + i));
+
+                Color finalColor = baseColor;
+                finalColor.a *= fade;
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentSize * 0.25f;
+                lr.endWidth = currentSize * 0.25f;
+
+                // Chevron points: ^ shape pointing UP
+                lr.positionCount = 3;
+                lr.SetPosition(0, chevronPos + new Vector3(-currentSize * 0.5f, -currentSize * 0.3f, 0f));
+                lr.SetPosition(1, chevronPos + new Vector3(0f, currentSize * 0.4f, 0f));
+                lr.SetPosition(2, chevronPos + new Vector3(currentSize * 0.5f, -currentSize * 0.3f, 0f));
+            }
+
+            // Draw small rising particles
+            int particleCount = _particleLrs.Count;
+            for (int i = 0; i < particleCount; i++)
+            {
+                LineRenderer lr = _particleLrs[i];
+                if (lr == null) continue;
+
+                float progress = (Time.time * 1.2f + (float)i / particleCount) % 1.0f;
+                float localY = Mathf.Lerp(-_tuning.riseAmount * 1.2f, _tuning.riseAmount * 1.2f, progress);
+                float fade = Mathf.Sin(progress * Mathf.PI);
+
+                float seedAngle = i * 1.7f;
+                float sway = Mathf.Sin(Time.time * 3f + i) * radius * 0.15f;
+                float x = Mathf.Cos(seedAngle) * radius * 0.7f + sway;
+                float y = Mathf.Sin(seedAngle) * radius * 0.2f + localY;
+
+                Vector3 particlePos = buffCenter + new Vector3(x, y, 0f);
+                float currentSize = _tuning.particleSize * (0.8f + 0.4f * Mathf.Sin(Time.time * 5f + i));
+
+                Color finalColor = coreColor;
+                finalColor.a *= fade;
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentSize * 0.25f;
+                lr.endWidth = currentSize * 0.25f;
+
+                // Draw a tiny cross or diamond shape for the particle
+                lr.positionCount = 5;
+                lr.SetPosition(0, particlePos + new Vector3(0f, currentSize * 0.5f, 0f));
+                lr.SetPosition(1, particlePos + new Vector3(currentSize * 0.5f, 0f, 0f));
+                lr.SetPosition(2, particlePos + new Vector3(0f, -currentSize * 0.5f, 0f));
+                lr.SetPosition(3, particlePos + new Vector3(-currentSize * 0.5f, 0f, 0f));
+                lr.SetPosition(4, particlePos + new Vector3(0f, currentSize * 0.5f, 0f));
             }
         }
     }
