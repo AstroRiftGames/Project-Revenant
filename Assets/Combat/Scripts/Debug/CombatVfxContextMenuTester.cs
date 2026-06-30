@@ -251,16 +251,17 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     [ContextMenu("Test Skill AoE Ground Placeholder")]
     private void TestSkillAoeGroundPlaceholder()
     {
-        if (!TryResolveCasterOrTarget(out Unit caster))
-            return;
         if (!TryResolveWorldPointOrTarget(out Vector3 worldPoint))
             return;
 
-        SkillData tempSkill = CreateTemporarySkillData(impactPattern: ImpactPattern.Area, radiusInCells: 2);
-        SkillCastVisualEvent evt = new SkillCastVisualEvent(caster, tempSkill, null, Mathf.Max(0.2f, testDuration), caster.Position, worldPoint, true);
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            LogDebugWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter instance was found in the scene.");
+            return;
+        }
 
         Debug.Log("[CombatVfxContextMenuTester] Testing skill AoE ground placeholder.", this);
-        SpawnTracked("SkillAoeGround", () => InvokeStaticMethod(typeof(SkillCastPlaceholderPresenter), "CreatePersistentVisuals", evt));
+        SpawnTracked("SkillAoeGround", () => presenter.CreateAoeGroundImpact(worldPoint));
         ScheduleCleanup();
     }
 

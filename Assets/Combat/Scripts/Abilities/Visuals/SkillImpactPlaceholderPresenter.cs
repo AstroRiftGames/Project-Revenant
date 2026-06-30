@@ -28,6 +28,20 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color _bodyImpactColor = DefaultBodyImpactColor;
     [SerializeField] private int _bodyImpactSortingOffset = DefaultBodyImpactSortingOffset;
 
+    [Header("AoE Ground Runtime Tuning")]
+    [SerializeField] private float _aoeLifetime = 0.55f;
+    [SerializeField] private float _aoeRadius = 2.5f;
+    [SerializeField, Range(0f, 1f)] private float _aoeFillAlpha = 0.12f;
+    [SerializeField] private float _aoeBorderWidth = 0.045f;
+    [SerializeField] private int _aoeBorderSegmentCount = 18;
+    [SerializeField, Range(0.1f, 1f)] private float _aoeBorderCoverage = 0.65f;
+    [SerializeField] private float _aoePulseRadiusMultiplier = 0.35f;
+    [SerializeField] private float _aoePulseSpeed = 2.2f;
+    [SerializeField] private int _aoeGroundMarkCount = 8;
+    [SerializeField] private Color _aoeColor = new Color(1f, 0.28f, 0.18f, 0.75f);
+    [SerializeField] private int _aoeSortingOffset = 8;
+    [SerializeField, Range(0.35f, 0.8f)] private float _aoeGroundVerticalScale = 0.5f;
+
     private static SkillImpactPlaceholderPresenter _activeInstance;
     private static Material _sharedMaterial;
     private static readonly bool EnableTracerLogs = false;
@@ -71,6 +85,16 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         _bodyImpactStartRadiusClamp = SanitizeClamp(_bodyImpactStartRadiusClamp, DefaultBodyImpactMinStartRadius, DefaultBodyImpactMaxStartRadius);
         _bodyImpactEndRadiusClamp = SanitizeClamp(_bodyImpactEndRadiusClamp, DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius);
         _bodyImpactLineWidthClamp = SanitizeClamp(_bodyImpactLineWidthClamp, DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth);
+
+        _aoeLifetime = Mathf.Max(0.01f, _aoeLifetime);
+        _aoeRadius = Mathf.Max(0.01f, _aoeRadius);
+        _aoeFillAlpha = Mathf.Clamp01(_aoeFillAlpha);
+        _aoeBorderWidth = Mathf.Max(0.001f, _aoeBorderWidth);
+        _aoeBorderSegmentCount = Mathf.Max(3, _aoeBorderSegmentCount);
+        _aoeBorderCoverage = Mathf.Clamp(_aoeBorderCoverage, 0.1f, 1.0f);
+        _aoePulseSpeed = Mathf.Max(0f, _aoePulseSpeed);
+        _aoeGroundMarkCount = Mathf.Max(0, _aoeGroundMarkCount);
+        _aoeGroundVerticalScale = Mathf.Clamp(_aoeGroundVerticalScale, 0.35f, 0.8f);
     }
 #endif
 
@@ -215,6 +239,10 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 {
                     hideFlags = HideFlags.HideAndDontSave
                 };
+                if (_sharedMaterial.HasProperty("_MainTex"))
+                {
+                    _sharedMaterial.SetTexture("_MainTex", Texture2D.whiteTexture);
+                }
             }
         }
         return _sharedMaterial;
@@ -439,6 +467,33 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 
         lr.sortingLayerName = sortingLayerName;
         lr.sortingOrder = sortingOrder;
+    }
+
+    public void CreateAoeGroundImpact(Vector3 center)
+    {
+        GameObject obj = new GameObject("VFX_Placeholder_AoE_Ground");
+        obj.transform.position = center;
+        obj.transform.localScale = Vector3.one;
+        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(obj);
+
+        var behavior = obj.AddComponent<AoeGroundImpactBehavior>();
+        behavior.Initialize(
+            _aoeLifetime,
+            _aoeRadius,
+            _aoeFillAlpha,
+            _aoeBorderWidth,
+            _aoeBorderSegmentCount,
+            _aoeBorderCoverage,
+            _aoePulseRadiusMultiplier,
+            _aoePulseSpeed,
+            _aoeGroundMarkCount,
+            _aoeColor,
+            _aoeSortingOffset,
+            _aoeGroundVerticalScale,
+            null
+        );
+
+        Debug.Log($"[SkillImpactPlaceholderPresenter] CreateAoeGroundImpact called: center={center}, radius={_aoeRadius}, lifetime={_aoeLifetime}, name={obj.name}, vertices=33, border_arcs={_aoeBorderSegmentCount}, marks={_aoeGroundMarkCount}, sorting_offset={_aoeSortingOffset}");
     }
 
     private void CreateVisualForEffect(SkillEffectKind effectKind, SkillImpact impact, Vector3 targetPos, SkillContext context)
@@ -1239,6 +1294,311 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 tailDirection = Vector3.up;
             }
             _lr.SetPosition(1, _position - tailDirection * _length);
+        }
+    }
+
+    private class AoeGroundImpactBehavior : MonoBehaviour
+    {
+        private float _lifetime;
+        private float _elapsed;
+        private float _radius;
+        private float _fillAlpha;
+        private float _borderWidth;
+        private int _borderSegmentCount;
+        private float _borderCoverage;
+        private float _pulseRadiusMultiplier;
+        private float _pulseSpeed;
+        private int _groundMarkCount;
+        private Color _color;
+        private int _sortingOffset;
+        private float _verticalScale;
+
+        private Mesh _mesh;
+        private MeshFilter _meshFilter;
+        private MeshRenderer _meshRenderer;
+
+        private List<LineRenderer> _borderLineRenderers = new List<LineRenderer>();
+        private LineRenderer _pulseLineRenderer;
+        private List<LineRenderer> _markLineRenderers = new List<LineRenderer>();
+
+        public void Initialize(
+            float lifetime,
+            float radius,
+            float fillAlpha,
+            float borderWidth,
+            int borderSegmentCount,
+            float borderCoverage,
+            float pulseRadiusMultiplier,
+            float pulseSpeed,
+            int groundMarkCount,
+            Color color,
+            int sortingOffset,
+            float verticalScale,
+            Unit targetUnit)
+        {
+            _lifetime = lifetime;
+            _radius = radius;
+            _fillAlpha = fillAlpha;
+            _borderWidth = borderWidth;
+            _borderSegmentCount = borderSegmentCount;
+            _borderCoverage = borderCoverage;
+            _pulseRadiusMultiplier = pulseRadiusMultiplier;
+            _pulseSpeed = pulseSpeed;
+            _groundMarkCount = groundMarkCount;
+            _color = color;
+            _sortingOffset = sortingOffset;
+            _verticalScale = verticalScale;
+
+            // 1. Create flat translucent inner fill mesh
+            GameObject fillObj = new GameObject("Fill");
+            fillObj.transform.SetParent(transform, false);
+            _meshFilter = fillObj.AddComponent<MeshFilter>();
+            _meshRenderer = fillObj.AddComponent<MeshRenderer>();
+            _meshRenderer.sharedMaterial = GetSharedMaterial();
+            ConfigureRendererSorting(_meshRenderer, targetUnit, _sortingOffset);
+
+            _mesh = new Mesh { name = "AoeGroundFillMesh" };
+
+            // Build the mesh vertices and triangles
+            int meshSegments = 32;
+            Vector3[] vertices = new Vector3[meshSegments + 1];
+            int[] triangles = new int[meshSegments * 3];
+            Color[] colors = new Color[meshSegments + 1];
+            Vector2[] uvs = new Vector2[meshSegments + 1];
+
+            Color cFill = _color;
+            cFill.a = _fillAlpha;
+
+            vertices[0] = Vector3.zero;
+            colors[0] = cFill;
+            uvs[0] = new Vector2(0.5f, 0.5f);
+
+            for (int i = 0; i < meshSegments; i++)
+            {
+                float angle = ((float)i / meshSegments) * Mathf.PI * 2f;
+                vertices[i + 1] = new Vector3(Mathf.Cos(angle) * _radius, Mathf.Sin(angle) * _radius * _verticalScale, 0f);
+                colors[i + 1] = cFill;
+                uvs[i + 1] = new Vector2(Mathf.Cos(angle) * 0.5f + 0.5f, Mathf.Sin(angle) * 0.5f + 0.5f);
+
+                // Clockwise winding order to prevent backface culling
+                triangles[i * 3] = 0;
+                triangles[i * 3 + 1] = (i + 1) % meshSegments + 1;
+                triangles[i * 3 + 2] = i + 1;
+            }
+
+            _mesh.vertices = vertices;
+            _mesh.triangles = triangles;
+            _mesh.colors = colors;
+            _mesh.uv = uvs;
+            _mesh.RecalculateNormals();
+            _mesh.RecalculateBounds();
+            _meshFilter.mesh = _mesh;
+
+            Debug.Log($"[AoeGroundImpactBehavior] Initialize: meshVertices={vertices.Length}, meshTriangles={triangles.Length / 3}, sortingLayer={_meshRenderer.sortingLayerName}, sortingOrder={_meshRenderer.sortingOrder}, scale={transform.localScale}, worldPos={transform.position}");
+
+            // 2. Create segmented outer border
+            float arcSpan = (2f * Mathf.PI / _borderSegmentCount) * _borderCoverage;
+            for (int j = 0; j < _borderSegmentCount; j++)
+            {
+                float centerAngle = j * 2f * Mathf.PI / _borderSegmentCount;
+                float startAngle = centerAngle - (arcSpan / 2f);
+                float endAngle = centerAngle + (arcSpan / 2f);
+
+                GameObject borderSegmentObj = new GameObject($"BorderSegment_{j}");
+                borderSegmentObj.transform.SetParent(transform, false);
+                LineRenderer lr = borderSegmentObj.AddComponent<LineRenderer>();
+                lr.sharedMaterial = GetSharedMaterial();
+                lr.useWorldSpace = false;
+                lr.alignment = LineAlignment.View;
+                lr.loop = false;
+                lr.startWidth = _borderWidth;
+                lr.endWidth = _borderWidth;
+                lr.startColor = _color;
+                lr.endColor = _color;
+                ConfigureRendererSorting(lr, targetUnit, _sortingOffset + 2); // border slightly in front of fill
+
+                int pointsCount = 6;
+                lr.positionCount = pointsCount;
+                for (int p = 0; p < pointsCount; p++)
+                {
+                    float t = (float)p / (pointsCount - 1);
+                    float angle = Mathf.Lerp(startAngle, endAngle, t);
+                    float x = Mathf.Cos(angle) * _radius;
+                    float y = Mathf.Sin(angle) * _radius * _verticalScale;
+                    lr.SetPosition(p, new Vector3(x, y, 0f));
+                }
+
+                _borderLineRenderers.Add(lr);
+            }
+
+            // 3. Create center pulse
+            GameObject pulseObj = new GameObject("Pulse");
+            pulseObj.transform.SetParent(transform, false);
+            _pulseLineRenderer = pulseObj.AddComponent<LineRenderer>();
+            _pulseLineRenderer.sharedMaterial = GetSharedMaterial();
+            _pulseLineRenderer.useWorldSpace = false;
+            _pulseLineRenderer.alignment = LineAlignment.View;
+            _pulseLineRenderer.loop = true;
+            _pulseLineRenderer.startWidth = _borderWidth;
+            _pulseLineRenderer.endWidth = _borderWidth;
+            _pulseLineRenderer.startColor = _color;
+            _pulseLineRenderer.endColor = _color;
+            ConfigureRendererSorting(_pulseLineRenderer, targetUnit, _sortingOffset + 3);
+
+            // 4. Create radial ground marks
+            for (int k = 0; k < _groundMarkCount; k++)
+            {
+                float angle = (k * 2f * Mathf.PI / _groundMarkCount) + UnityEngine.Random.Range(-0.15f, 0.15f);
+                float startDist = _radius * UnityEngine.Random.Range(0.05f, 0.25f);
+                float endDist = _radius * UnityEngine.Random.Range(0.55f, 0.9f);
+                float midDist = Mathf.Lerp(startDist, endDist, 0.5f);
+
+                float midAngleOffset = UnityEngine.Random.Range(-0.08f, 0.08f);
+
+                Vector3 p0 = new Vector3(Mathf.Cos(angle) * startDist, Mathf.Sin(angle) * startDist * _verticalScale, 0f);
+                Vector3 p1 = new Vector3(Mathf.Cos(angle + midAngleOffset) * midDist, Mathf.Sin(angle + midAngleOffset) * midDist * _verticalScale, 0f);
+                Vector3 p2 = new Vector3(Mathf.Cos(angle) * endDist, Mathf.Sin(angle) * endDist * _verticalScale, 0f);
+
+                GameObject markObj = new GameObject($"GroundMark_{k}");
+                markObj.transform.SetParent(transform, false);
+                LineRenderer lrMark = markObj.AddComponent<LineRenderer>();
+                lrMark.sharedMaterial = GetSharedMaterial();
+                lrMark.useWorldSpace = false;
+                lrMark.alignment = LineAlignment.View;
+                lrMark.loop = false;
+                lrMark.startWidth = _borderWidth * 0.7f;
+                lrMark.endWidth = _borderWidth * 0.4f;
+
+                Color cMark = _color;
+                cMark.a *= 0.8f; // slightly faded marks
+                lrMark.startColor = cMark;
+                lrMark.endColor = cMark;
+                ConfigureRendererSorting(lrMark, targetUnit, _sortingOffset + 1);
+
+                lrMark.positionCount = 3;
+                lrMark.SetPosition(0, p0);
+                lrMark.SetPosition(1, p1);
+                lrMark.SetPosition(2, p2);
+
+                _markLineRenderers.Add(lrMark);
+            }
+        }
+
+        private void ConfigureRendererSorting(Renderer r, Unit targetUnit, int orderOffset)
+        {
+            if (r == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            if (targetUnit == null)
+            {
+                var units = FindObjectsByType<Unit>();
+                if (units.Length > 0 && units[0] != null)
+                {
+                    targetUnit = units[0];
+                }
+            }
+
+            if (targetUnit != null)
+            {
+                SpriteRenderer sr = targetUnit.GetComponentInChildren<SpriteRenderer>();
+                if (sr != null)
+                {
+                    sortingLayerName = sr.sortingLayerName;
+                    sortingOrder = sr.sortingOrder + orderOffset;
+                }
+            }
+
+            r.sortingLayerName = sortingLayerName;
+            r.sortingOrder = sortingOrder;
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            float t = Mathf.Clamp01(_elapsed / _lifetime);
+
+            // Animate fill alpha fading out
+            float currentFillAlpha = Mathf.Lerp(_fillAlpha, 0f, t);
+            Color cFill = _color;
+            cFill.a = currentFillAlpha;
+
+            if (_mesh != null)
+            {
+                Color[] colors = _mesh.colors;
+                for (int i = 0; i < colors.Length; i++)
+                {
+                    colors[i] = cFill;
+                }
+                _mesh.colors = colors;
+            }
+
+            // Animate border segment fading out
+            Color cBorder = _color;
+            cBorder.a = Mathf.Lerp(_color.a, 0f, t);
+            for (int i = 0; i < _borderLineRenderers.Count; i++)
+            {
+                if (_borderLineRenderers[i] != null)
+                {
+                    _borderLineRenderers[i].startColor = cBorder;
+                    _borderLineRenderers[i].endColor = cBorder;
+                }
+            }
+
+            // Animate marks fading out
+            for (int i = 0; i < _markLineRenderers.Count; i++)
+            {
+                if (_markLineRenderers[i] != null)
+                {
+                    Color cm = _markLineRenderers[i].startColor;
+                    cm.a = Mathf.Lerp(_color.a * 0.8f, 0f, t);
+                    _markLineRenderers[i].startColor = cm;
+                    _markLineRenderers[i].endColor = cm;
+                }
+            }
+
+            // Animate center pulse expanding and fading out
+            float maxPulseRadius = _radius * _pulseRadiusMultiplier;
+            float currentPulseRadius = _radius * Mathf.Min(_pulseRadiusMultiplier, _elapsed * _pulseSpeed);
+            float pulseT = maxPulseRadius > 0.001f ? Mathf.Clamp01(currentPulseRadius / maxPulseRadius) : 1f;
+
+            Color cPulse = _color;
+            cPulse.a = Mathf.Lerp(_color.a, 0f, pulseT);
+
+            if (_pulseLineRenderer != null)
+            {
+                _pulseLineRenderer.startColor = cPulse;
+                _pulseLineRenderer.endColor = cPulse;
+                DrawPulseRing(currentPulseRadius);
+            }
+        }
+
+        private void DrawPulseRing(float radius)
+        {
+            if (_pulseLineRenderer == null) return;
+            const int segments = 24;
+            _pulseLineRenderer.positionCount = segments;
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = ((float)i / segments) * Mathf.PI * 2f;
+                float x = Mathf.Cos(angle) * radius;
+                float y = Mathf.Sin(angle) * radius * _verticalScale;
+                _pulseLineRenderer.SetPosition(i, new Vector3(x, y, 0f));
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_mesh != null)
+            {
+                Destroy(_mesh);
+            }
         }
     }
 }
