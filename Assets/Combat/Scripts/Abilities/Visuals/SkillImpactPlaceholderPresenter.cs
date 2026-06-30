@@ -28,6 +28,20 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color _bodyImpactColor = DefaultBodyImpactColor;
     [SerializeField] private int _bodyImpactSortingOffset = DefaultBodyImpactSortingOffset;
 
+    [Header("Heal Runtime Tuning")]
+    [SerializeField, Min(0.01f)] private float _healLifetime = 0.65f;
+    [SerializeField, Min(0.01f)] private float _healRadiusHeightFactor = 0.26f;
+    [SerializeField] private Vector2 _healRadiusClamp = new Vector2(0.14f, 0.34f);
+    [SerializeField, Min(0.01f)] private float _healVerticalOffsetHeightFactor = 0.42f;
+    [SerializeField] private Vector2 _healVerticalOffsetClamp = new Vector2(0.20f, 0.48f);
+    [SerializeField, Min(0)] private int _healParticleCount = 8;
+    [SerializeField, Min(0f)] private float _healParticleSize = 0.045f;
+    [SerializeField] private float _healRiseAmount = 0.28f;
+    [SerializeField] private float _healPulseWidth = 0.04f;
+    [SerializeField] private Color _healColor = new Color(0.45f, 1.0f, 0.65f, 0.85f);
+    [SerializeField] private Color _healCoreColor = new Color(0.90f, 1.0f, 0.85f, 0.90f);
+    [SerializeField] private int _healSortingOffset = 29;
+
     [Header("AoE Ground Runtime Tuning")]
     [SerializeField] private float _aoeLifetime = 0.55f;
     [SerializeField] private float _aoeRadius = 2.5f;
@@ -86,6 +100,15 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         _bodyImpactEndRadiusClamp = SanitizeClamp(_bodyImpactEndRadiusClamp, DefaultBodyImpactMinEndRadius, DefaultBodyImpactMaxEndRadius);
         _bodyImpactLineWidthClamp = SanitizeClamp(_bodyImpactLineWidthClamp, DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth);
 
+        _healLifetime = Mathf.Max(0.01f, _healLifetime);
+        _healRadiusHeightFactor = Mathf.Max(0.01f, _healRadiusHeightFactor);
+        _healRadiusClamp = SanitizeClamp(_healRadiusClamp, 0.14f, 0.34f);
+        _healVerticalOffsetHeightFactor = Mathf.Max(0.01f, _healVerticalOffsetHeightFactor);
+        _healVerticalOffsetClamp = SanitizeClamp(_healVerticalOffsetClamp, 0.20f, 0.48f);
+        _healParticleCount = Mathf.Max(0, _healParticleCount);
+        _healParticleSize = Mathf.Max(0f, _healParticleSize);
+        _healPulseWidth = Mathf.Max(0.001f, _healPulseWidth);
+
         _aoeLifetime = Mathf.Max(0.01f, _aoeLifetime);
         _aoeRadius = Mathf.Max(0.01f, _aoeRadius);
         _aoeFillAlpha = Mathf.Clamp01(_aoeFillAlpha);
@@ -131,6 +154,67 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             Color = color;
             SortingOffset = sortingOffset;
         }
+    }
+
+    public readonly struct HealImpactTuning
+    {
+        public readonly float Lifetime;
+        public readonly float RadiusHeightFactor;
+        public readonly Vector2 RadiusClamp;
+        public readonly float VerticalOffsetHeightFactor;
+        public readonly Vector2 VerticalOffsetClamp;
+        public readonly int ParticleCount;
+        public readonly float ParticleSize;
+        public readonly float RiseAmount;
+        public readonly float PulseWidth;
+        public readonly Color Color;
+        public readonly Color CoreColor;
+        public readonly int SortingOffset;
+
+        public HealImpactTuning(
+            float lifetime,
+            float radiusHeightFactor,
+            Vector2 radiusClamp,
+            float verticalOffsetHeightFactor,
+            Vector2 verticalOffsetClamp,
+            int particleCount,
+            float particleSize,
+            float riseAmount,
+            float pulseWidth,
+            Color color,
+            Color coreColor,
+            int sortingOffset)
+        {
+            Lifetime = Mathf.Max(0.01f, lifetime);
+            RadiusHeightFactor = Mathf.Max(0.01f, radiusHeightFactor);
+            RadiusClamp = SanitizeClamp(radiusClamp, 0.14f, 0.34f);
+            VerticalOffsetHeightFactor = Mathf.Max(0.01f, verticalOffsetHeightFactor);
+            VerticalOffsetClamp = SanitizeClamp(verticalOffsetClamp, 0.20f, 0.48f);
+            ParticleCount = Mathf.Max(0, particleCount);
+            ParticleSize = Mathf.Max(0f, particleSize);
+            RiseAmount = riseAmount;
+            PulseWidth = Mathf.Max(0.001f, pulseWidth);
+            Color = color;
+            CoreColor = coreColor;
+            SortingOffset = sortingOffset;
+        }
+    }
+
+    public HealImpactTuning GetHealImpactTuningSnapshot()
+    {
+        return new HealImpactTuning(
+            _healLifetime,
+            _healRadiusHeightFactor,
+            _healRadiusClamp,
+            _healVerticalOffsetHeightFactor,
+            _healVerticalOffsetClamp,
+            _healParticleCount,
+            _healParticleSize,
+            _healRiseAmount,
+            _healPulseWidth,
+            _healColor,
+            _healCoreColor,
+            _healSortingOffset);
     }
 
     private BodyImpactTuning ResolveBodyImpactTuning()
@@ -180,6 +264,7 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         max = Mathf.Max(min + 0.001f, max);
         return new Vector2(min, max);
     }
+
 
     private void HandleSkillEffectsApplied(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
@@ -507,7 +592,14 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 break;
 
             case SkillEffectKind.Heal:
-                CreateHealImpact(targetUnit, targetPos);
+                if (targetUnit != null)
+                {
+                    CreateHealImpact(targetUnit);
+                }
+                else
+                {
+                    Debug.LogWarning("[SkillImpactPlaceholderPresenter] Heal impact has no valid target unit. Skipping visual.");
+                }
                 break;
 
             case SkillEffectKind.Shield:
@@ -539,7 +631,10 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
 
         // Phase 3C: Burst of particles
-        CreateImpactParticles(targetPos, effectKind, targetUnit, context);
+        if (effectKind != SkillEffectKind.Heal)
+        {
+            CreateImpactParticles(targetPos, effectKind, targetUnit, context);
+        }
     }
 
     // 1. Damage: short body-centered hit cue, distinct from ground/status/AoE impacts.
@@ -571,39 +666,101 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         behavior.Initialize(lr, impactCenter, tuning.Lifetime, startRadius, endRadius, 0f, 0f);
     }
 
-    // 2. Heal: pulso verde o cruces verdes ascendentes muy simples
-    private void CreateHealImpact(Unit targetUnit, Vector3 targetPos)
+    private Vector3 ResolveHealPosition(Unit unit, HealImpactTuning tuning)
     {
-        // Spawn 2 green crosses with slightly randomized start positions ascending
-        int count = 2;
-        for (int i = 0; i < count; i++)
+        if (unit == null) return Vector3.zero;
+
+        Transform t = FindDescendantByName(unit.transform, "BodyStatusAnchor") ??
+                     FindDescendantByName(unit.transform, "StatusAnchor") ??
+                     FindDescendantByName(unit.transform, "BodyImpactAnchor") ??
+                     FindDescendantByName(unit.transform, "VisualAnchor");
+
+        if (t != null)
         {
-            GameObject obj = new GameObject($"VFX_Placeholder_Heal_Cross_{i}");
-            CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
-            LineRenderer lr = obj.AddComponent<LineRenderer>();
-            lr.sharedMaterial = GetSharedMaterial();
-            lr.useWorldSpace = true;
-            lr.alignment = LineAlignment.View;
-            lr.loop = false;
-            lr.startWidth = 0.04f;
-            lr.endWidth = 0.04f;
+            return t.position;
+        }
 
-            Color color = new Color(0.2f, 0.9f, 0.3f, 0.9f);
-            lr.startColor = color;
-            lr.endColor = color;
-            ConfigureSorting(obj, targetUnit, 12);
+        if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+        {
+            float y = bounds.min.y + bounds.size.y * tuning.VerticalOffsetHeightFactor;
+            return new Vector3(bounds.center.x, y, unit.transform.position.z);
+        }
 
-            // Add slight spatial offsets relative to the target position
-            Vector3 offsetPos = targetPos + new Vector3(
-                UnityEngine.Random.Range(-0.2f, 0.2f),
-                UnityEngine.Random.Range(0.0f, 0.25f),
+        return unit.transform.position;
+    }
+
+    public GameObject CreateHealImpact(Unit target)
+    {
+        if (target == null)
+        {
+            Debug.LogWarning("[SkillImpactPlaceholderPresenter] CreateHealImpact target is null.");
+            return null;
+        }
+
+        HealImpactTuning tuning = GetHealImpactTuningSnapshot();
+        Vector3 position = ResolveHealPosition(target, tuning);
+
+        GameObject rootObj = new GameObject("TEST_VFX_HealImpact");
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(rootObj, target);
+        rootObj.transform.position = position;
+
+        // 1. Expanding pulse (thin and soft expanding horizontal pulse/oval/ring)
+        GameObject pulseObj = new GameObject("HealPulse");
+        pulseObj.transform.SetParent(rootObj.transform, false);
+        LineRenderer pulseLr = pulseObj.AddComponent<LineRenderer>();
+        pulseLr.sharedMaterial = GetSharedMaterial();
+        pulseLr.useWorldSpace = true;
+        pulseLr.alignment = LineAlignment.View;
+        pulseLr.loop = true;
+
+        pulseLr.startWidth = tuning.PulseWidth;
+        pulseLr.endWidth = tuning.PulseWidth;
+        pulseLr.startColor = tuning.Color;
+        pulseLr.endColor = tuning.Color;
+        ConfigureSorting(pulseObj, target, tuning.SortingOffset);
+
+        float visualHeight = ResolveUnitVisualHeight(target);
+        float startRadius = Mathf.Clamp(visualHeight * tuning.RadiusHeightFactor * 0.7f, tuning.RadiusClamp.x, tuning.RadiusClamp.y);
+        float endRadius = Mathf.Clamp(visualHeight * tuning.RadiusHeightFactor * 1.3f, tuning.RadiusClamp.x, tuning.RadiusClamp.y);
+
+        var pulseBehavior = pulseObj.AddComponent<RingImpactBehavior>();
+        pulseBehavior.Initialize(pulseLr, position, tuning.Lifetime, startRadius, endRadius, 0f, 0f);
+
+        // 2. Sparkles/particles (rising)
+        int particleCount = tuning.ParticleCount;
+        for (int i = 0; i < particleCount; i++)
+        {
+            GameObject partObj = new GameObject($"HealParticle_{i}");
+            partObj.transform.SetParent(rootObj.transform, false);
+            LineRenderer partLr = partObj.AddComponent<LineRenderer>();
+            partLr.sharedMaterial = GetSharedMaterial();
+            partLr.useWorldSpace = true;
+            partLr.alignment = LineAlignment.View;
+            partLr.loop = false;
+
+            float pSize = tuning.ParticleSize;
+            partLr.startWidth = pSize;
+            partLr.endWidth = pSize * 0.5f;
+
+            Color pColor = Color.Lerp(tuning.Color, tuning.CoreColor, UnityEngine.Random.value);
+            partLr.startColor = pColor;
+            partLr.endColor = pColor;
+            ConfigureSorting(partObj, target, tuning.SortingOffset + 1);
+
+            Vector3 offsetPos = position + new Vector3(
+                UnityEngine.Random.Range(-startRadius, startRadius),
+                UnityEngine.Random.Range(-0.1f, 0.1f),
                 0f
             );
 
-            var behavior = obj.AddComponent<CrossImpactBehavior>();
-            // Cross size 0.12f, moves upward at speed 0.75 units/sec, lasts 0.5s
-            behavior.Initialize(lr, offsetPos, 0.5f, 0.12f, 0.75f, color);
+            var partBehavior = partObj.AddComponent<CrossImpactBehavior>();
+            partBehavior.Initialize(partLr, offsetPos, tuning.Lifetime, pSize * 1.5f, tuning.RiseAmount / tuning.Lifetime, pColor);
         }
+
+        var selfDestruct = rootObj.AddComponent<HealVfxRootBehavior>();
+        selfDestruct.Initialize(tuning.Lifetime);
+
+        return rootObj;
     }
 
     // 3. Shield: anillo azul/celeste breve alrededor del target
@@ -1600,5 +1757,38 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 Destroy(_mesh);
             }
         }
+    }
+
+    private class HealVfxRootBehavior : MonoBehaviour
+    {
+        private float _lifetime;
+        private float _elapsed;
+
+        public void Initialize(float lifetime)
+        {
+            _lifetime = lifetime;
+            _elapsed = 0f;
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _lifetime)
+            {
+                Destroy(gameObject);
+            }
+        }
+    }
+
+    private static Transform FindDescendantByName(Transform root, string name)
+    {
+        if (root == null) return null;
+        if (root.name.Equals(name, StringComparison.OrdinalIgnoreCase)) return root;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindDescendantByName(root.GetChild(i), name);
+            if (found != null) return found;
+        }
+        return null;
     }
 }

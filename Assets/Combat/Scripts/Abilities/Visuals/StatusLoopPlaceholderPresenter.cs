@@ -183,6 +183,52 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct ShieldLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int panelCount;
+        public float panelCoverage;
+        public float lineWidth;
+        public float pulseSpeed;
+        public float pulseAmount;
+        public Color color;
+        public Color coreColor;
+        public int sortingOffset;
+        public bool showInnerPulse;
+
+        public void Sanitize()
+        {
+            if (radiusHeightFactor < 0f) radiusHeightFactor = 0.34f;
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (radiusClamp.x < 0f) radiusClamp.x = 0.18f;
+            if (radiusClamp.y < radiusClamp.x) radiusClamp.y = radiusClamp.x;
+
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (panelCount < 1) panelCount = 4;
+            if (panelCoverage < 0.05f) panelCoverage = 0.05f;
+            if (panelCoverage > 1f) panelCoverage = 1f;
+            if (lineWidth <= 0f) lineWidth = 0.045f;
+            if (pulseSpeed < 0f) pulseSpeed = 1.6f;
+            if (pulseAmount < 0f) pulseAmount = 0.06f;
+            color.a = Mathf.Clamp01(color.a);
+            coreColor.a = Mathf.Clamp01(coreColor.a);
+        }
+    }
+
 
     [Header("Stun Loop Tuning")]
     [SerializeField] private float radiusHeightFactor = 0.22f;
@@ -253,6 +299,21 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private Color burnCoreColor = new Color(1.0f, 0.85f, 0.18f, 0.75f);
     [SerializeField] private int burnSortingOffset = 27;
     [SerializeField] private float burnStackIntensity = 1.0f;
+
+    [Header("Shield Loop Tuning")]
+    [SerializeField] private float shieldRadiusHeightFactor = 0.34f;
+    [SerializeField] private Vector2 shieldRadiusClamp = new Vector2(0.18f, 0.46f);
+    [SerializeField] private float shieldVerticalOffsetHeightFactor = 0.42f;
+    [SerializeField] private Vector2 shieldVerticalOffsetClamp = new Vector2(0.20f, 0.50f);
+    [SerializeField] private int shieldPanelCount = 4;
+    [SerializeField] private float shieldPanelCoverage = 0.55f;
+    [SerializeField] private float shieldLineWidth = 0.045f;
+    [SerializeField] private float shieldPulseSpeed = 1.6f;
+    [SerializeField] private float shieldPulseAmount = 0.06f;
+    [SerializeField] private Color shieldColor = new Color(0.35f, 0.85f, 1.0f, 0.70f);
+    [SerializeField] private Color shieldCoreColor = new Color(0.85f, 1.0f, 1.0f, 0.45f);
+    [SerializeField] private int shieldSortingOffset = 25;
+    [SerializeField] private bool shieldShowInnerPulse = true;
 
     private static Material _sharedMaterial;
     
@@ -375,6 +436,28 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public ShieldLoopTuning GetShieldTuningSnapshot()
+    {
+        ShieldLoopTuning snapshot = new ShieldLoopTuning
+        {
+            radiusHeightFactor = this.shieldRadiusHeightFactor,
+            radiusClamp = this.shieldRadiusClamp,
+            verticalOffsetHeightFactor = this.shieldVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.shieldVerticalOffsetClamp,
+            panelCount = this.shieldPanelCount,
+            panelCoverage = this.shieldPanelCoverage,
+            lineWidth = this.shieldLineWidth,
+            pulseSpeed = this.shieldPulseSpeed,
+            pulseAmount = this.shieldPulseAmount,
+            color = this.shieldColor,
+            coreColor = this.shieldCoreColor,
+            sortingOffset = this.shieldSortingOffset,
+            showInnerPulse = this.shieldShowInnerPulse
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
     private void ClearAllLoops()
     {
         foreach (var kvp in _activeLoops)
@@ -425,7 +508,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield) return;
 
         Unit source = effect.SourceUnit;
         CreateVisualLoopInstance(unit, effectType, source);
@@ -450,7 +533,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             }
         }
 
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -505,6 +588,14 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                             tuning.Sanitize();
                         }
                         behavior.Initialize(unit, GetSharedMaterial(), tuning, true);
+                    }
+                }
+                else if (effectType == SkillEffectKind.Shield)
+                {
+                    ShieldLoopBehavior behavior = existingObj.GetComponent<ShieldLoopBehavior>();
+                    if (behavior != null)
+                    {
+                        behavior.Initialize(unit, GetSharedMaterial(), GetShieldTuningSnapshot(), true);
                     }
                 }
                 return existingObj; // Reuse existing
@@ -565,6 +656,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 tuning.Sanitize();
             }
             behavior.Initialize(unit, GetSharedMaterial(), tuning, isTester);
+        }
+        else if (effectType == SkillEffectKind.Shield)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Shield");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            ShieldLoopBehavior behavior = visualObj.AddComponent<ShieldLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            behavior.Initialize(unit, GetSharedMaterial(), GetShieldTuningSnapshot(), isTester);
         }
 
         if (visualObj != null)
@@ -1919,6 +2021,260 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 corePoints[3] = corePoints[0];
                 coreLr.positionCount = 4;
                 coreLr.SetPositions(corePoints);
+            }
+        }
+    }
+
+    private class ShieldLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private ShieldLoopTuning _tuning;
+        private Material _sharedMat;
+        private readonly List<LineRenderer> _panelLrs = new List<LineRenderer>();
+        private readonly List<LineRenderer> _innerLrs = new List<LineRenderer>();
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+        private bool _isTesterLoop;
+
+        public void Initialize(Unit unit, Material mat, ShieldLoopTuning tuning, bool isTester = false)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _isTesterLoop = isTester;
+
+            ResolveAnchor(unit);
+            CreatePanels();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+                {
+                    float offset = bounds.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    _resolvedBoundsPosition = new Vector3(bounds.center.x, bounds.min.y + offset, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreatePanels()
+        {
+            foreach (var lr in _panelLrs) if (lr != null) Destroy(lr.gameObject);
+            _panelLrs.Clear();
+            foreach (var lr in _innerLrs) if (lr != null) Destroy(lr.gameObject);
+            _innerLrs.Clear();
+
+            int count = Mathf.Max(1, _tuning.panelCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject panelObj = new GameObject($"ShieldPanel_{i}");
+                panelObj.transform.SetParent(transform, false);
+                LineRenderer lr = panelObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _panelLrs.Add(lr);
+
+                if (_tuning.showInnerPulse)
+                {
+                    GameObject innerObj = new GameObject($"ShieldInnerPanel_{i}");
+                    innerObj.transform.SetParent(transform, false);
+                    LineRenderer innerLr = innerObj.AddComponent<LineRenderer>();
+                    SetupLr(innerLr);
+                    ConfigureSorting(innerLr, _tuning.sortingOffset - 1);
+                    _innerLrs.Add(innerLr);
+                }
+            }
+        }
+
+        private void SetupLr(LineRenderer lr)
+        {
+            lr.sharedMaterial = _sharedMat;
+            lr.useWorldSpace = true;
+            lr.alignment = LineAlignment.View;
+            lr.loop = false;
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.Shield))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 orbitCenter;
+            float unitHeight = 1.0f;
+            Bounds boundsForHeight = new Bounds();
+            bool hasBounds = false;
+
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+                hasBounds = true;
+            }
+
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                orbitCenter = _resolvedAnchorTransform.position;
+            }
+            else if (hasBounds)
+            {
+                float offset = unitHeight * _tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                orbitCenter = new Vector3(boundsForHeight.center.x, boundsForHeight.min.y + offset, _unit.transform.position.z);
+            }
+            else
+            {
+                orbitCenter = _resolvedBoundsPosition;
+            }
+
+            transform.position = orbitCenter;
+
+            float baseRadius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            // Pulso lento y estable
+            float timeFactor = Time.time * _tuning.pulseSpeed;
+            float scalePulse = 1.0f + Mathf.Sin(timeFactor) * _tuning.pulseAmount;
+            float alphaPulse = 0.85f + 0.15f * Mathf.Sin(timeFactor * 0.8f);
+
+            float outerRadius = baseRadius * scalePulse;
+            float innerRadius = baseRadius * 0.78f * (1.0f - Mathf.Sin(timeFactor + Mathf.PI) * _tuning.pulseAmount * 0.5f);
+
+            Color outerCol = _tuning.color;
+            outerCol.a *= alphaPulse;
+
+            Color innerCol = _tuning.coreColor;
+            innerCol.a *= alphaPulse * 0.8f;
+
+            int count = _panelLrs.Count;
+            // La cobertura total de paneles es panelCoverage (e.g. 0.55 significa que cubren 55% de 360 grados)
+            float totalArcDeg = 360f * _tuning.panelCoverage;
+            float totalGapDeg = 360f - totalArcDeg;
+
+            float singlePanelArcDeg = totalArcDeg / count;
+            float singleGapArcDeg = totalGapDeg / count;
+
+            int segments = 16;
+
+            for (int i = 0; i < count; i++)
+            {
+                LineRenderer outerLr = _panelLrs[i];
+                if (outerLr == null) continue;
+
+                outerLr.startColor = outerCol;
+                outerLr.endColor = outerCol;
+                outerLr.startWidth = _tuning.lineWidth;
+                outerLr.endWidth = _tuning.lineWidth;
+
+                // Centro angular del panel i. Rotamos lentamente en el tiempo para darle dinamismo
+                float centerAngleDeg = i * (singlePanelArcDeg + singleGapArcDeg) + Time.time * 12f;
+                float startAngleDeg = centerAngleDeg - (singlePanelArcDeg * 0.5f);
+
+                Vector3[] outerPoints = new Vector3[segments + 1];
+                for (int s = 0; s <= segments; s++)
+                {
+                    float t = (float)s / segments;
+                    float angleRad = (startAngleDeg + t * singlePanelArcDeg) * Mathf.Deg2Rad;
+                    float x = Mathf.Cos(angleRad) * outerRadius;
+                    float y = Mathf.Sin(angleRad) * outerRadius;
+                    outerPoints[s] = orbitCenter + new Vector3(x, y, 0f);
+                }
+                outerLr.positionCount = segments + 1;
+                outerLr.SetPositions(outerPoints);
+
+                if (_tuning.showInnerPulse && i < _innerLrs.Count)
+                {
+                    LineRenderer innerLr = _innerLrs[i];
+                    if (innerLr != null)
+                    {
+                        innerLr.startColor = innerCol;
+                        innerLr.endColor = innerCol;
+                        innerLr.startWidth = _tuning.lineWidth * 0.6f;
+                        innerLr.endWidth = _tuning.lineWidth * 0.6f;
+
+                        // Los paneles internos pueden estar desfasados o rotar ligeramente distinto
+                        float innerCenterAngleDeg = centerAngleDeg + 180f; // offset diametral
+                        float innerStartAngleDeg = innerCenterAngleDeg - (singlePanelArcDeg * 0.4f);
+
+                        Vector3[] innerPoints = new Vector3[segments + 1];
+                        for (int s = 0; s <= segments; s++)
+                        {
+                            float t = (float)s / segments;
+                            float angleRad = (innerStartAngleDeg + t * singlePanelArcDeg * 0.8f) * Mathf.Deg2Rad;
+                            float x = Mathf.Cos(angleRad) * innerRadius;
+                            float y = Mathf.Sin(angleRad) * innerRadius;
+                            innerPoints[s] = orbitCenter + new Vector3(x, y, 0f);
+                        }
+                        innerLr.positionCount = segments + 1;
+                        innerLr.SetPositions(innerPoints);
+                    }
+                }
             }
         }
     }

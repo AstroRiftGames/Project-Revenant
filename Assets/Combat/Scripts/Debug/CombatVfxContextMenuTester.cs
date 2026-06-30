@@ -162,6 +162,26 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Shield")]
+    private void TestShieldLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Shield loop on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("ShieldLoop", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Shield));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Effect Taunt")]
     private void TestTauntLoop()
     {
@@ -511,6 +531,25 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Heal")]
+    private void TestEffectHeal()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Heal on '{target.name}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("HealImpact", () => presenter.CreateHealImpact(target));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Skill Heal/Buff Impact")]
     private void TestSkillHealBuffImpact()
     {
@@ -519,7 +558,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
 
         Vector3 center = ResolveBodyAnchor(target);
         Debug.Log($"[CombatVfxContextMenuTester] Testing skill heal/buff impact on '{target.name}'.", this);
-        SpawnTracked("SkillHealImpact", () => InvokeSkillImpactPresenter("CreateHealImpact", target, center));
+        SpawnTracked("SkillHealImpact", () => InvokeSkillImpactPresenter("CreateHealImpact", target));
         SpawnTracked("SkillBuffImpact", () => InvokeSkillImpactPresenter("CreateBuffImpact", target, center));
         ScheduleCleanup();
     }
@@ -844,7 +883,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop");
     }
 
     private void ClearSpawnedTestVfxInternal()
