@@ -22,6 +22,11 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     [SerializeField] private float testDuration = 1.5f;
     [SerializeField] private float testDamageAmount = 10f;
 
+    [Header("Summon Debug")]
+    [SerializeField] private Unit _summonDebugUnitPrefab;
+    [SerializeField] private float summonDebugSpawnDelay = 0.25f;
+    [SerializeField] private bool summonDebugCleanupUnitOnClear = true;
+
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs;
 
@@ -32,9 +37,11 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private static readonly BindingFlags InstanceAny = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
     private readonly List<GameObject> _spawnedRoots = new();
+    private readonly List<Unit> _spawnedSummonDebugUnits = new();
     private readonly List<InjectedStatusRecord> _injectedStatuses = new();
     private readonly List<UnityEngine.Object> _temporaryObjects = new();
     private Coroutine _scheduledCleanup;
+    private Coroutine _summonDebugSpawnCoroutine;
 
     private sealed class InjectedStatusRecord
     {
@@ -649,6 +656,68 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Summon")]
+    private void TestEffectSummon()
+    {
+        if (!TryResolveSummonWorldPosition(out Vector3 worldPosition, out bool usedOptionalWorldPoint, out bool usedTargetFallback, out string positionSource))
+            return;
+
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        Debug.Log($"[CombatVfxContextMenuTester] Test Effect Summon optionalWorldPointUsed={usedOptionalWorldPoint}, targetFallbackUsed={usedTargetFallback}, resolvedWorldPosition={worldPosition}, positionSource={positionSource}, activePresenter='{presenter.name}'.", this);
+        ClearSpawnedTestVfxInternal();
+        SpawnTracked("SummonImpact", () => presenter.CreateSummonImpact(worldPosition));
+        Debug.Log($"[CombatVfxContextMenuTester] Test Effect Summon registeredRoots={_spawnedRoots.Count}. Cleanup will run after {Mathf.Max(0.15f, testDuration)} seconds in Play Mode.", this);
+        ScheduleCleanup();
+    }
+
+    [ContextMenu("Test Effect Summon With Real Unit")]
+    private void TestEffectSummonWithRealUnit()
+    {
+        if (_summonDebugUnitPrefab == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] Test Effect Summon With Real Unit requires _summonDebugUnitPrefab to be assigned. No unit or VFX was spawned.", this);
+            return;
+        }
+
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        if (!TryResolveSummonDebugSpawnPoint(out RoomContext roomContext, out RoomGrid grid, out Vector3Int spawnCell, out bool hasSpawnCell, out Vector3 spawnWorldPosition, out string positionSource))
+            return;
+
+        ClearSpawnedTestVfxInternal();
+
+        GameObject vfxRoot = null;
+        SpawnTracked("SummonImpact", () => vfxRoot = presenter.CreateSummonImpact(spawnWorldPosition));
+
+        float delay = Mathf.Max(0f, summonDebugSpawnDelay);
+        string spawnCellLabel = hasSpawnCell ? spawnCell.ToString() : "none";
+        Debug.Log(
+            $"[CombatVfxContextMenuTester] Test Effect Summon With Real Unit spawnCell={spawnCellLabel}, " +
+            $"spawnWorldPosition={spawnWorldPosition}, positionSource={positionSource}, prefab='{_summonDebugUnitPrefab.name}', " +
+            $"vfxRoot='{(vfxRoot != null ? vfxRoot.name : "null")}', delay={delay:0.###}, spawnFlow=debug prefab.",
+            this);
+
+        if (Application.isPlaying && delay > 0f)
+        {
+            _summonDebugSpawnCoroutine = StartCoroutine(SpawnSummonDebugUnitAfterDelay(roomContext, grid, spawnCell, hasSpawnCell, spawnWorldPosition, delay));
+        }
+        else
+        {
+            SpawnSummonDebugUnit(roomContext, grid, spawnCell, hasSpawnCell, spawnWorldPosition);
+        }
+
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Skill Heal/Buff Impact")]
     private void TestSkillHealBuffImpact()
     {
@@ -767,6 +836,284 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         return false;
     }
 
+    private bool TryResolveSummonWorldPosition(out Vector3 point, out bool usedOptionalWorldPoint, out bool usedTargetFallback, out string positionSource)
+    {
+        usedOptionalWorldPoint = false;
+        usedTargetFallback = false;
+
+        if (optionalWorldPoint != null)
+        {
+            point = optionalWorldPoint.position;
+            usedOptionalWorldPoint = true;
+            positionSource = "explicit world point";
+            return true;
+        }
+
+        ResolveUnitsIfNeeded();
+        Unit target = ResolvePreferredTarget(null);
+        if (target != null)
+        {
+            RoomGrid grid = target.RoomContext != null ? target.RoomContext.RoomGrid : null;
+            if (grid != null)
+            {
+                Vector3Int targetCell = grid.WorldToCell(target.transform.position);
+                Vector3Int[] candidateOffsets =
+                {
+                    new Vector3Int(1, 0, 0),
+                    new Vector3Int(-1, 0, 0),
+                    new Vector3Int(0, 1, 0),
+                    new Vector3Int(0, -1, 0),
+                    new Vector3Int(1, -1, 0),
+                    new Vector3Int(-1, 1, 0)
+                };
+
+                for (int i = 0; i < candidateOffsets.Length; i++)
+                {
+                    Vector3Int candidateCell = targetCell + candidateOffsets[i];
+                    if (!grid.HasCell(candidateCell) || !grid.IsCellWalkable(candidateCell))
+                        continue;
+
+                    point = grid.CellToWorld(candidateCell);
+                    usedTargetFallback = true;
+                    positionSource = $"nearby grid cell {candidateCell} from target '{target.name}'";
+                    return true;
+                }
+
+                Vector3Int fallbackCell = targetCell + new Vector3Int(1, 0, 0);
+                point = grid.CellToWorld(fallbackCell);
+                usedTargetFallback = true;
+                positionSource = $"grid cell fallback {fallbackCell} from target '{target.name}'";
+                return true;
+            }
+
+            point = target.transform.position + new Vector3(0.75f, -0.15f, 0f);
+            usedTargetFallback = true;
+            positionSource = $"world offset fallback from target '{target.name}'";
+            return true;
+        }
+
+        point = transform.position + new Vector3(0.75f, -0.15f, 0f);
+        positionSource = "tester transform world offset fallback";
+        return true;
+    }
+
+    private bool TryResolveSummonDebugSpawnPoint(out RoomContext roomContext, out RoomGrid grid, out Vector3Int spawnCell, out bool hasSpawnCell, out Vector3 spawnWorldPosition, out string positionSource)
+    {
+        ResolveUnitsIfNeeded();
+
+        Unit referenceUnit = ResolvePreferredTarget(null) ?? ResolvePreferredCaster();
+        roomContext = ResolveSummonDebugRoomContext(referenceUnit);
+        grid = roomContext != null ? roomContext.RoomGrid : null;
+        if (grid == null && referenceUnit != null && referenceUnit.RoomContext != null)
+            grid = referenceUnit.RoomContext.RoomGrid;
+        if (grid == null)
+            grid = FindAnyObjectByType<RoomGrid>();
+        if (roomContext == null && grid != null)
+            roomContext = grid.GetComponentInParent<RoomContext>(includeInactive: true);
+
+        spawnCell = default;
+        hasSpawnCell = false;
+        spawnWorldPosition = default;
+        positionSource = "unresolved";
+
+        if (optionalWorldPoint != null)
+        {
+            if (grid == null)
+            {
+                spawnWorldPosition = optionalWorldPoint.position;
+                positionSource = "explicit world point fallback without grid";
+                Debug.LogWarning("[CombatVfxContextMenuTester] Test Effect Summon With Real Unit is using optionalWorldPoint without a RoomGrid, so cell occupancy could not be validated.", this);
+                return true;
+            }
+
+            Vector3Int desiredCell = grid.WorldToCell(optionalWorldPoint.position);
+            if (TryFindAvailableSummonDebugCellNear(grid, desiredCell, 4, true, out spawnCell))
+            {
+                hasSpawnCell = true;
+                spawnWorldPosition = grid.CellToWorld(spawnCell);
+                positionSource = spawnCell == desiredCell
+                    ? $"explicit world point snapped to grid cell {spawnCell}"
+                    : $"nearest available grid cell {spawnCell} from explicit world point cell {desiredCell}";
+                return true;
+            }
+
+            Debug.LogWarning($"[CombatVfxContextMenuTester] No available summon debug spawn cell near explicit world point cell {desiredCell}. Aborting real unit summon test.", this);
+            return false;
+        }
+
+        if (grid != null)
+        {
+            Vector3 anchorWorldPosition = referenceUnit != null ? referenceUnit.transform.position : transform.position;
+            Vector3Int anchorCell = grid.WorldToCell(anchorWorldPosition);
+            if (TryFindAvailableSummonDebugCellNear(grid, anchorCell, 6, false, out spawnCell) || TryScanAvailableSummonDebugCell(grid, out spawnCell))
+            {
+                hasSpawnCell = true;
+                spawnWorldPosition = grid.CellToWorld(spawnCell);
+                string referenceName = referenceUnit != null ? referenceUnit.name : name;
+                positionSource = $"available grid cell {spawnCell} near reference '{referenceName}'";
+                return true;
+            }
+
+            Debug.LogWarning($"[CombatVfxContextMenuTester] No available summon debug spawn cell found near {anchorCell}. Aborting real unit summon test.", this);
+            return false;
+        }
+
+        if (referenceUnit != null)
+        {
+            spawnWorldPosition = referenceUnit.transform.position + new Vector3(0.75f, -0.15f, 0f);
+            positionSource = $"world offset fallback from reference '{referenceUnit.name}' without grid";
+            Debug.LogWarning("[CombatVfxContextMenuTester] Test Effect Summon With Real Unit is using a world offset fallback without grid validation.", this);
+            return true;
+        }
+
+        spawnWorldPosition = transform.position + new Vector3(0.75f, -0.15f, 0f);
+        positionSource = "tester transform world offset fallback without grid";
+        Debug.LogWarning("[CombatVfxContextMenuTester] Test Effect Summon With Real Unit could not resolve a RoomGrid or reference unit; using tester transform fallback.", this);
+        return true;
+    }
+
+    private RoomContext ResolveSummonDebugRoomContext(Unit referenceUnit)
+    {
+        if (referenceUnit != null && referenceUnit.RoomContext != null)
+            return referenceUnit.RoomContext;
+
+        RoomContext localContext = GetComponentInParent<RoomContext>(includeInactive: true);
+        if (localContext != null)
+            return localContext;
+
+        return FindAnyObjectByType<RoomContext>();
+    }
+
+    private bool TryFindAvailableSummonDebugCellNear(RoomGrid grid, Vector3Int originCell, int maxRadius, bool allowOrigin, out Vector3Int resultCell)
+    {
+        resultCell = default;
+        if (grid == null)
+            return false;
+
+        int clampedRadius = Mathf.Max(0, maxRadius);
+        for (int radius = 0; radius <= clampedRadius; radius++)
+        {
+            if (radius == 0 && !allowOrigin)
+                continue;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) != radius)
+                        continue;
+
+                    Vector3Int candidateCell = originCell + new Vector3Int(dx, dy, 0);
+                    if (!IsSummonDebugCellAvailable(grid, candidateCell))
+                        continue;
+
+                    resultCell = candidateCell;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryScanAvailableSummonDebugCell(RoomGrid grid, out Vector3Int resultCell)
+    {
+        resultCell = default;
+        if (grid == null || !grid.TryGetWorldBounds(out Bounds worldBounds))
+            return false;
+
+        Vector3Int minCell = grid.WorldToCell(worldBounds.min);
+        Vector3Int maxCell = grid.WorldToCell(worldBounds.max);
+        int minX = Mathf.Min(minCell.x, maxCell.x);
+        int maxX = Mathf.Max(minCell.x, maxCell.x);
+        int minY = Mathf.Min(minCell.y, maxCell.y);
+        int maxY = Mathf.Max(minCell.y, maxCell.y);
+
+        for (int x = minX; x <= maxX; x++)
+        {
+            for (int y = minY; y <= maxY; y++)
+            {
+                Vector3Int candidateCell = new Vector3Int(x, y, 0);
+                if (!IsSummonDebugCellAvailable(grid, candidateCell))
+                    continue;
+
+                resultCell = candidateCell;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsSummonDebugCellAvailable(RoomGrid grid, Vector3Int cell)
+    {
+        if (grid == null || !grid.HasCell(cell) || !grid.IsCellEnterable(cell))
+            return false;
+
+        GridOccupancyTracker occupancy = grid.OccupancyService;
+        return occupancy == null || occupancy.IsCellFreeForPlacement(cell);
+    }
+
+    private IEnumerator SpawnSummonDebugUnitAfterDelay(RoomContext roomContext, RoomGrid grid, Vector3Int spawnCell, bool hasSpawnCell, Vector3 spawnWorldPosition, float delay)
+    {
+        yield return new WaitForSeconds(Mathf.Max(0f, delay));
+        _summonDebugSpawnCoroutine = null;
+        SpawnSummonDebugUnit(roomContext, grid, spawnCell, hasSpawnCell, spawnWorldPosition);
+    }
+
+    private Unit SpawnSummonDebugUnit(RoomContext roomContext, RoomGrid grid, Vector3Int spawnCell, bool hasSpawnCell, Vector3 spawnWorldPosition)
+    {
+        if (_summonDebugUnitPrefab == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] Cannot spawn summon debug unit because _summonDebugUnitPrefab is not assigned.", this);
+            return null;
+        }
+
+        Transform parent = roomContext != null ? roomContext.transform : null;
+        GameObject instance = Instantiate(_summonDebugUnitPrefab.gameObject, spawnWorldPosition, Quaternion.identity, parent);
+        if (instance == null)
+            return null;
+
+        instance.name = "TEST_SummonedUnit_Debug";
+        if (!instance.TryGetComponent(out Unit unit))
+        {
+            Debug.LogError($"[CombatVfxContextMenuTester] Summon debug prefab '{_summonDebugUnitPrefab.name}' does not have a Unit component.", this);
+            DestroyObject(instance);
+            return null;
+        }
+
+        if (hasSpawnCell && grid != null)
+        {
+            UnitMovement movement = unit.GetComponent<UnitMovement>();
+            if (movement != null)
+            {
+                if (!movement.AttachToGridAtCell(grid, spawnCell))
+                {
+                    Debug.LogWarning($"[CombatVfxContextMenuTester] Summon debug unit failed to attach to spawn cell {spawnCell}. Destroying spawned unit to avoid invalid occupancy.", this);
+                    DestroyObject(instance);
+                    return null;
+                }
+            }
+            else
+            {
+                unit.transform.position = grid.CellToWorld(spawnCell);
+            }
+        }
+        else
+        {
+            unit.transform.position = spawnWorldPosition;
+        }
+
+        if (roomContext != null)
+            roomContext.RegisterUnit(unit);
+
+        if (!_spawnedSummonDebugUnits.Contains(unit))
+            _spawnedSummonDebugUnits.Add(unit);
+
+        string spawnCellLabel = hasSpawnCell ? spawnCell.ToString() : "none";
+        Debug.Log($"[CombatVfxContextMenuTester] Spawned TEST_SummonedUnit_Debug from prefab '{_summonDebugUnitPrefab.name}' at cell={spawnCellLabel}, world={unit.transform.position}, roomContext='{(roomContext != null ? roomContext.name : "none")}'.", unit);
+        return unit;
+    }
     private bool TryResolveWorldPointOrTarget(out Vector3 point)
     {
         if (optionalWorldPoint != null)
@@ -982,7 +1329,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop", "TEST_VFX_KnockbackImpact");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop", "TEST_VFX_KnockbackImpact", "TEST_VFX_SummonImpact");
     }
 
     private void ClearSpawnedTestVfxInternal()
@@ -1012,6 +1359,41 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ClearTemporaryObjects();
     }
 
+    private void ClearSummonDebugUnitsInternal()
+    {
+        if (_summonDebugSpawnCoroutine != null)
+        {
+            StopCoroutine(_summonDebugSpawnCoroutine);
+            _summonDebugSpawnCoroutine = null;
+        }
+
+        if (!summonDebugCleanupUnitOnClear)
+        {
+            _spawnedSummonDebugUnits.RemoveAll(unit => unit == null);
+            return;
+        }
+
+        for (int i = _spawnedSummonDebugUnits.Count - 1; i >= 0; i--)
+        {
+            Unit unit = _spawnedSummonDebugUnits[i];
+            if (unit == null)
+                continue;
+
+            RoomContext roomContext = unit.RoomContext;
+            RoomGrid grid = roomContext != null ? roomContext.RoomGrid : unit.GetComponentInParent<RoomGrid>(includeInactive: true);
+
+            if (roomContext != null)
+                roomContext.UnregisterUnit(unit);
+
+            if (grid != null && grid.OccupancyService != null)
+                grid.OccupancyService.ReleaseOccupant(unit);
+
+            DestroyObject(unit.gameObject);
+        }
+
+        _spawnedSummonDebugUnits.Clear();
+        DestroyNamedTestObjects("TEST_SummonedUnit_Debug");
+    }
     private void ClearInjectedStatuses()
     {
         FieldInfo activeEffectsField = typeof(StatusEffectController).GetField("_activeEffects", InstancePrivate);

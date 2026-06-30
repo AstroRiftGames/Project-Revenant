@@ -17,6 +17,23 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private const int DefaultBodyImpactSortingOffset = 24;
     private static readonly Color DefaultBodyImpactColor = new Color(1f, 0.42f, 0.12f, 0.95f);
 
+    private const float DefaultSummonLifetime = 1.25f;
+    private const float DefaultSummonRadius = 0.55f;
+    private const float DefaultSummonGroundVerticalScale = 0.50f;
+    private const float DefaultSummonRingWidth = 0.065f;
+    private const int DefaultSummonRingSegmentCount = 24;
+    private const int DefaultSummonRuneMarkCount = 6;
+    private const int DefaultSummonParticleCount = 10;
+    private const float DefaultSummonParticleSize = 0.055f;
+    private const float DefaultSummonRiseAmount = 0.42f;
+    private const float DefaultSummonColumnHeight = 0.75f;
+    private const float DefaultSummonPulseSpeed = 2.4f;
+    private static readonly Color DefaultSummonColor = new Color(0.55f, 0.25f, 0.95f, 0.85f);
+    private static readonly Color DefaultSummonCoreColor = new Color(0.85f, 0.70f, 1.0f, 0.75f);
+    private const int DefaultSummonSortingOffset = 45;
+    private const int DefaultSummonGroundSortingOffset = 8;
+    private const int DefaultSummonVerticalSortingOffset = 55;
+
     [Header("Body Impact Runtime Tuning")]
     [SerializeField, Min(0.01f)] private float _bodyImpactLifetime = DefaultBodyImpactLifetime;
     [SerializeField, Min(0.01f)] private float _bodyImpactStartRadiusHeightFactor = DefaultBodyImpactStartRadiusHeightFactor;
@@ -75,6 +92,24 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     [SerializeField] private int _knockbackSortingOffset = 28;
     [SerializeField] private float _knockbackDustVerticalOffsetHeightFactor = 0.12f;
     [SerializeField] private Vector2 _knockbackDustVerticalOffsetClamp = new Vector2(0.02f, 0.18f);
+
+    [Header("Summon Runtime Tuning")]
+    [SerializeField, Min(0.01f)] private float _summonLifetime = DefaultSummonLifetime;
+    [SerializeField, Min(0.01f)] private float _summonRadius = DefaultSummonRadius;
+    [SerializeField, Range(0.1f, 1f)] private float _summonGroundVerticalScale = DefaultSummonGroundVerticalScale;
+    [SerializeField, Min(0.001f)] private float _summonRingWidth = DefaultSummonRingWidth;
+    [SerializeField, Min(3)] private int _summonRingSegmentCount = DefaultSummonRingSegmentCount;
+    [SerializeField, Min(0)] private int _summonRuneMarkCount = DefaultSummonRuneMarkCount;
+    [SerializeField, Min(0)] private int _summonParticleCount = DefaultSummonParticleCount;
+    [SerializeField, Min(0f)] private float _summonParticleSize = DefaultSummonParticleSize;
+    [SerializeField] private float _summonRiseAmount = DefaultSummonRiseAmount;
+    [SerializeField] private float _summonColumnHeight = DefaultSummonColumnHeight;
+    [SerializeField] private float _summonPulseSpeed = DefaultSummonPulseSpeed;
+    [SerializeField] private Color _summonColor = DefaultSummonColor;
+    [SerializeField] private Color _summonCoreColor = DefaultSummonCoreColor;
+    [SerializeField] private int _summonSortingOffset = DefaultSummonSortingOffset;
+    [SerializeField] private int _summonGroundSortingOffset = DefaultSummonGroundSortingOffset;
+    [SerializeField] private int _summonVerticalSortingOffset = DefaultSummonVerticalSortingOffset;
 
     private static SkillImpactPlaceholderPresenter _activeInstance;
     private static Material _sharedMaterial;
@@ -154,6 +189,18 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         _knockbackArrowWidth = Mathf.Max(0.001f, _knockbackArrowWidth);
         _knockbackDustVerticalOffsetHeightFactor = Mathf.Max(0f, _knockbackDustVerticalOffsetHeightFactor);
         _knockbackDustVerticalOffsetClamp = SanitizeClamp(_knockbackDustVerticalOffsetClamp, 0.02f, 0.18f);
+
+        _summonLifetime = Mathf.Max(0.01f, _summonLifetime);
+        _summonRadius = Mathf.Max(0.01f, _summonRadius);
+        _summonGroundVerticalScale = Mathf.Clamp(_summonGroundVerticalScale, 0.1f, 1.0f);
+        _summonRingWidth = Mathf.Max(0.001f, _summonRingWidth);
+        _summonRingSegmentCount = Mathf.Max(3, _summonRingSegmentCount);
+        _summonRuneMarkCount = Mathf.Max(0, _summonRuneMarkCount);
+        _summonParticleCount = Mathf.Max(0, _summonParticleCount);
+        _summonParticleSize = Mathf.Max(0f, _summonParticleSize);
+        _summonRiseAmount = Mathf.Max(0f, _summonRiseAmount);
+        _summonColumnHeight = Mathf.Max(0f, _summonColumnHeight);
+        _summonPulseSpeed = Mathf.Max(0f, _summonPulseSpeed);
     }
 #endif
 
@@ -294,6 +341,43 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    public struct SummonImpactTuning
+    {
+        public float lifetime;
+        public float radius;
+        public float groundVerticalScale;
+        public float ringWidth;
+        public int ringSegmentCount;
+        public int runeMarkCount;
+        public int particleCount;
+        public float particleSize;
+        public float riseAmount;
+        public float columnHeight;
+        public float pulseSpeed;
+        public Color color;
+        public Color coreColor;
+        public int sortingOffset;
+        public int groundSortingOffset;
+        public int verticalSortingOffset;
+
+        public void Sanitize()
+        {
+            lifetime = Mathf.Max(0.01f, lifetime);
+            radius = Mathf.Max(0.01f, radius);
+            groundVerticalScale = Mathf.Clamp(groundVerticalScale, 0.1f, 1.0f);
+            ringWidth = Mathf.Max(0.001f, ringWidth);
+            ringSegmentCount = Mathf.Max(3, ringSegmentCount);
+            runeMarkCount = Mathf.Max(0, runeMarkCount);
+            particleCount = Mathf.Max(0, particleCount);
+            particleSize = Mathf.Max(0f, particleSize);
+            riseAmount = Mathf.Max(0f, riseAmount);
+            columnHeight = Mathf.Max(0f, columnHeight);
+            pulseSpeed = Mathf.Max(0f, pulseSpeed);
+            color.a = Mathf.Clamp01(color.a);
+            coreColor.a = Mathf.Clamp01(coreColor.a);
+        }
+    }
+
     public HealImpactTuning GetHealImpactTuningSnapshot()
     {
         return new HealImpactTuning(
@@ -364,6 +448,31 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             new Vector2(DefaultBodyImpactMinLineWidth, DefaultBodyImpactMaxLineWidth),
             DefaultBodyImpactColor,
             DefaultBodyImpactSortingOffset);
+    }
+
+    public SummonImpactTuning GetSummonImpactTuningSnapshot()
+    {
+        SummonImpactTuning snapshot = new SummonImpactTuning
+        {
+            lifetime = _summonLifetime,
+            radius = _summonRadius,
+            groundVerticalScale = _summonGroundVerticalScale,
+            ringWidth = _summonRingWidth,
+            ringSegmentCount = _summonRingSegmentCount,
+            runeMarkCount = _summonRuneMarkCount,
+            particleCount = _summonParticleCount,
+            particleSize = _summonParticleSize,
+            riseAmount = _summonRiseAmount,
+            columnHeight = _summonColumnHeight,
+            pulseSpeed = _summonPulseSpeed,
+            color = _summonColor,
+            coreColor = _summonCoreColor,
+            sortingOffset = _summonSortingOffset,
+            groundSortingOffset = _summonGroundSortingOffset,
+            verticalSortingOffset = _summonVerticalSortingOffset
+        };
+        snapshot.Sanitize();
+        return snapshot;
     }
 
     private static Vector2 SanitizeClamp(Vector2 clamp, float fallbackMin, float fallbackMax)
@@ -1027,65 +1136,393 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         return CreateKnockbackImpact(target, direction);
     }
 
-    // 8. Summon: pulso circular en la celda de apariciÃƒÂ³n
+    public GameObject CreateSummonImpact(Vector3 worldPosition)
+    {
+        SummonImpactTuning tuning = GetSummonImpactTuningSnapshot();
+        ResolveSummonDebugSorting(
+            worldPosition,
+            tuning.groundSortingOffset,
+            tuning.verticalSortingOffset,
+            out string sortingLayerName,
+            out int groundSortingOrder,
+            out int verticalSortingOrder,
+            out string sortingSource);
+
+        GameObject rootObj = new GameObject("TEST_VFX_SummonImpact");
+        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(rootObj);
+        rootObj.transform.position = worldPosition;
+        rootObj.transform.rotation = Quaternion.identity;
+        rootObj.transform.localScale = Vector3.one;
+
+        SummonImpactBehavior behavior = rootObj.AddComponent<SummonImpactBehavior>();
+        behavior.Initialize(GetSharedMaterial(), tuning, worldPosition, sortingLayerName, groundSortingOrder, verticalSortingOrder);
+
+        LineRenderer firstRing = behavior.FirstRingRenderer;
+        string firstRingLayer = firstRing != null ? firstRing.sortingLayerName : "<missing>";
+        int firstRingOrder = firstRing != null ? firstRing.sortingOrder : int.MinValue;
+        Debug.Log($"[SkillImpactPlaceholderPresenter] CreateSummonImpact intendedSpawnWorldPosition={worldPosition}, rootName={rootObj.name}, rootWorldPosition={rootObj.transform.position}, radius={tuning.radius}, lifetime={tuning.lifetime}, ringSegments={tuning.ringSegmentCount}, runeMarks={tuning.runeMarkCount}, particles={tuning.particleCount}, sortingSource={sortingSource}, firstRingLayer={firstRingLayer}, firstRingOrder={firstRingOrder}, verticalSortingOrder={verticalSortingOrder}", this);
+
+        return rootObj;
+    }
+
+    private static void ResolveSummonDebugSorting(Vector3 worldPosition, int groundSortingOffset, int verticalSortingOffset, out string sortingLayerName, out int groundSortingOrder, out int verticalSortingOrder, out string sourceDescription)
+    {
+        Renderer nearestUnitRenderer = null;
+        float nearestUnitSqrDistance = float.PositiveInfinity;
+        Renderer nearestAnyRenderer = null;
+        float nearestAnySqrDistance = float.PositiveInfinity;
+        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            float sqrDistance = (renderer.bounds.center - worldPosition).sqrMagnitude;
+            if (sqrDistance < nearestAnySqrDistance)
+            {
+                nearestAnyRenderer = renderer;
+                nearestAnySqrDistance = sqrDistance;
+            }
+
+            if (renderer.GetComponentInParent<Unit>() == null)
+                continue;
+
+            if (sqrDistance < nearestUnitSqrDistance)
+            {
+                nearestUnitRenderer = renderer;
+                nearestUnitSqrDistance = sqrDistance;
+            }
+        }
+
+        Renderer source = nearestUnitRenderer != null ? nearestUnitRenderer : nearestAnyRenderer;
+        if (source != null)
+        {
+            sortingLayerName = source.sortingLayerName;
+            int baseOrder = source.sortingOrder;
+            groundSortingOrder = nearestUnitRenderer != null
+                ? baseOrder - Mathf.Max(1, Mathf.Abs(groundSortingOffset))
+                : baseOrder + Mathf.Max(10, groundSortingOffset);
+            verticalSortingOrder = baseOrder + Mathf.Max(20, verticalSortingOffset);
+            sourceDescription = $"nearest {(nearestUnitRenderer != null ? "unit" : "scene")} Renderer '{source.name}' type={source.GetType().Name} layer='{source.sortingLayerName}' order={source.sortingOrder}";
+            return;
+        }
+
+        sortingLayerName = "Default";
+        groundSortingOrder = 5000 + Mathf.Max(0, groundSortingOffset);
+        verticalSortingOrder = groundSortingOrder + Mathf.Max(20, verticalSortingOffset);
+        sourceDescription = $"fallback no Renderer found, layer='{sortingLayerName}', groundOrder={groundSortingOrder}, verticalOrder={verticalSortingOrder}";
+        Debug.LogWarning($"[SkillImpactPlaceholderPresenter] Summon debug sorting fallback used at {worldPosition}: {sourceDescription}");
+    }
+
+    // 8. Summon: brief ritual/materialization marker on the appearance cell.
     private void CreateSummonVisual(SkillData skill, SkillContext context, IReadOnlyList<SkillImpact> impacts)
     {
         Vector3 summonPos = Vector3.zero;
         bool hasSummonPos = false;
+        string positionSource = "unresolved";
 
-        // Try to resolve the summon cell position from target cell or impacts
         if (context.HasTargetCell && context.RoomGrid != null)
         {
-            summonPos = context.RoomGrid.CellToWorld(new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0));
+            Vector3Int targetCell = new Vector3Int(context.TargetCell.x, context.TargetCell.y, 0);
+            summonPos = context.RoomGrid.CellToWorld(targetCell);
             hasSummonPos = true;
+            positionSource = $"target grid cell {targetCell}";
         }
         else if (impacts != null && impacts.Count > 0)
         {
             for (int i = 0; i < impacts.Count; i++)
             {
-                var impact = impacts[i];
+                SkillImpact impact = impacts[i];
                 if (impact != null && impact.HasCell && context.RoomGrid != null)
                 {
-                    summonPos = context.RoomGrid.CellToWorld(new Vector3Int(impact.Cell.x, impact.Cell.y, 0));
+                    Vector3Int impactCell = new Vector3Int(impact.Cell.x, impact.Cell.y, 0);
+                    summonPos = context.RoomGrid.CellToWorld(impactCell);
                     hasSummonPos = true;
+                    positionSource = $"impact grid cell {impactCell}";
+                    break;
+                }
+
+                if (impact != null && impact.Kind == SkillImpactKind.AreaPoint)
+                {
+                    summonPos = impact.WorldPosition;
+                    hasSummonPos = true;
+                    positionSource = "explicit impact world point";
                     break;
                 }
             }
         }
 
-        // Fallback to impact center if cell is not explicit but impact center is valid
         if (!hasSummonPos && context.ImpactCenterWorld != Vector3.zero)
         {
             summonPos = context.ImpactCenterWorld;
             hasSummonPos = true;
+            positionSource = "impact center world fallback";
         }
 
         if (!hasSummonPos) return;
 
-        GameObject obj = new GameObject("VFX_Placeholder_Summon");
-        CombatVfxHierarchyHelper.ParentToCombatVfxRoot(obj);
-        LineRenderer lr = obj.AddComponent<LineRenderer>();
-        lr.sharedMaterial = GetSharedMaterial();
-        lr.useWorldSpace = true;
-        lr.alignment = LineAlignment.View;
-        lr.loop = true;
-        lr.startWidth = 0.06f;
-        lr.endWidth = 0.06f;
-
-        Color color = new Color(0.1f, 0.95f, 0.95f, 0.9f);
-        lr.startColor = color;
-        lr.endColor = color;
-        ConfigureSorting(obj, null, 12);
-
-        var behavior = obj.AddComponent<RingImpactBehavior>();
-        // Expand ring from 0.15f to 0.65f over 0.55s
-        behavior.Initialize(lr, summonPos, 0.55f, 0.15f, 0.65f, 0f, 0f);
-
-        // Phase 3C: Summon particles
-        CreateImpactParticles(summonPos, SkillEffectKind.Summon, null, context);
+        Debug.Log($"[SkillImpactPlaceholderPresenter] Summon visual resolved intended spawn world position={summonPos}, positionSource={positionSource}.", this);
+        CreateSummonImpact(summonPos);
     }
 
     // Helper components inside the same file for encapsulation
+    private class SummonImpactBehavior : MonoBehaviour
+    {
+        private readonly List<LineRenderer> _groundLines = new List<LineRenderer>();
+        private readonly List<LineRenderer> _particles = new List<LineRenderer>();
+        private readonly List<LineRenderer> _columns = new List<LineRenderer>();
+
+        private SummonImpactTuning _tuning;
+        private Vector3 _origin;
+        private float _elapsed;
+        private Vector3[] _particleStarts;
+        private Vector3[] _particleOffsets;
+        private string _sortingLayerName;
+        private int _groundSortingOrder;
+        private int _verticalSortingOrder;
+        private LineRenderer _firstRingRenderer;
+        private LineRenderer _debugProbe;
+
+        public LineRenderer FirstRingRenderer => _firstRingRenderer;
+
+        public void Initialize(Material material, SummonImpactTuning tuning, Vector3 origin, string sortingLayerName, int groundSortingOrder, int verticalSortingOrder)
+        {
+            _tuning = tuning;
+            _tuning.Sanitize();
+            _origin = origin;
+            _sortingLayerName = string.IsNullOrEmpty(sortingLayerName) ? "Default" : sortingLayerName;
+            _groundSortingOrder = groundSortingOrder;
+            _verticalSortingOrder = verticalSortingOrder;
+            _elapsed = 0f;
+
+            CreateGroundRing(material);
+            CreateRuneMarks(material);
+            CreateParticles(material);
+            CreateColumns(material);
+            CreateDebugVisibilityProbe(material);
+            UpdateVisuals(0.05f);
+        }
+
+        private void CreateGroundRing(Material material)
+        {
+            GameObject ringObj = new GameObject("SummonRitualRing");
+            ringObj.transform.SetParent(transform, false);
+            LineRenderer ring = ringObj.AddComponent<LineRenderer>();
+            SetupLine(ring, material, _tuning.ringWidth, 0, true);
+            ring.loop = true;
+            ring.positionCount = _tuning.ringSegmentCount;
+            for (int i = 0; i < _tuning.ringSegmentCount; i++)
+            {
+                float angle = ((float)i / _tuning.ringSegmentCount) * Mathf.PI * 2f;
+                ring.SetPosition(i, GroundPoint(angle, _tuning.radius));
+            }
+            _firstRingRenderer = ring;
+            _groundLines.Add(ring);
+
+            GameObject coreObj = new GameObject("SummonCorePulse");
+            coreObj.transform.SetParent(transform, false);
+            LineRenderer core = coreObj.AddComponent<LineRenderer>();
+            SetupLine(core, material, _tuning.ringWidth * 0.65f, 1, true);
+            core.loop = true;
+            core.positionCount = _tuning.ringSegmentCount;
+            _groundLines.Add(core);
+        }
+
+        private void CreateRuneMarks(Material material)
+        {
+            for (int i = 0; i < _tuning.runeMarkCount; i++)
+            {
+                float angle = ((float)i / Mathf.Max(1, _tuning.runeMarkCount)) * Mathf.PI * 2f;
+                float tangentAngle = angle + Mathf.PI * 0.5f;
+                Vector3 center = GroundPoint(angle, _tuning.radius * 0.78f);
+                Vector3 tangent = new Vector3(Mathf.Cos(tangentAngle), Mathf.Sin(tangentAngle) * _tuning.groundVerticalScale, 0f).normalized;
+                float markLength = _tuning.radius * 0.22f;
+
+                GameObject markObj = new GameObject($"SummonRuneMark_{i}");
+                markObj.transform.SetParent(transform, false);
+                LineRenderer mark = markObj.AddComponent<LineRenderer>();
+                SetupLine(mark, material, _tuning.ringWidth * 0.55f, 2, true);
+                mark.positionCount = 2;
+                mark.SetPosition(0, center - tangent * (markLength * 0.5f));
+                mark.SetPosition(1, center + tangent * (markLength * 0.5f));
+                _groundLines.Add(mark);
+            }
+        }
+
+        private void CreateParticles(Material material)
+        {
+            _particleStarts = new Vector3[_tuning.particleCount];
+            _particleOffsets = new Vector3[_tuning.particleCount];
+
+            for (int i = 0; i < _tuning.particleCount; i++)
+            {
+                float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                float distance = UnityEngine.Random.Range(0.05f, _tuning.radius * 0.72f);
+                _particleStarts[i] = GroundPoint(angle, distance);
+                _particleOffsets[i] = new Vector3(
+                    UnityEngine.Random.Range(-0.035f, 0.035f),
+                    _tuning.riseAmount + UnityEngine.Random.Range(-0.06f, 0.08f),
+                    0f);
+
+                GameObject particleObj = new GameObject($"SummonParticle_{i}");
+                particleObj.transform.SetParent(transform, false);
+                LineRenderer particle = particleObj.AddComponent<LineRenderer>();
+                SetupLine(particle, material, _tuning.particleSize, 4, false);
+                particle.positionCount = 2;
+                _particles.Add(particle);
+            }
+        }
+
+        private void CreateColumns(Material material)
+        {
+            int columnCount = Mathf.Clamp(_tuning.runeMarkCount, 3, 8);
+            for (int i = 0; i < columnCount; i++)
+            {
+                Vector3 basePos;
+                if (i == 0)
+                {
+                    basePos = _origin;
+                }
+                else
+                {
+                    float angle = ((float)i / columnCount) * Mathf.PI * 2f;
+                    basePos = GroundPoint(angle, _tuning.radius * 0.36f);
+                }
+
+                GameObject columnObj = new GameObject($"SummonMaterializationLine_{i}");
+                columnObj.transform.SetParent(transform, false);
+                LineRenderer column = columnObj.AddComponent<LineRenderer>();
+                SetupLine(column, material, _tuning.ringWidth * 0.45f, 3, false);
+                column.positionCount = 2;
+                column.SetPosition(0, basePos);
+                column.SetPosition(1, basePos + Vector3.up * _tuning.columnHeight);
+                _columns.Add(column);
+            }
+        }
+
+        private void CreateDebugVisibilityProbe(Material material)
+        {
+            GameObject probeObj = new GameObject("SummonDebugVisibilityProbe");
+            probeObj.transform.SetParent(transform, false);
+            _debugProbe = probeObj.AddComponent<LineRenderer>();
+            SetupLine(_debugProbe, material, Mathf.Max(_tuning.ringWidth, 0.08f), 12, false);
+            _debugProbe.positionCount = 5;
+            _debugProbe.SetPosition(0, _origin + Vector3.left * _tuning.radius * 0.45f);
+            _debugProbe.SetPosition(1, _origin + Vector3.right * _tuning.radius * 0.45f);
+            _debugProbe.SetPosition(2, _origin);
+            _debugProbe.SetPosition(3, _origin + Vector3.up * Mathf.Max(_tuning.columnHeight, 0.75f));
+            _debugProbe.SetPosition(4, _origin + Vector3.down * _tuning.radius * 0.25f);
+        }
+
+        private void SetupLine(LineRenderer line, Material material, float width, int orderDelta, bool groundElement)
+        {
+            line.sharedMaterial = material;
+            line.useWorldSpace = true;
+            line.alignment = LineAlignment.View;
+            line.loop = false;
+            line.startWidth = width;
+            line.endWidth = width;
+            line.sortingLayerName = _sortingLayerName;
+            line.sortingOrder = (groundElement ? _groundSortingOrder : _verticalSortingOrder) + orderDelta;
+        }
+
+        private Vector3 GroundPoint(float angle, float radius)
+        {
+            return _origin + new Vector3(
+                Mathf.Cos(angle) * radius,
+                Mathf.Sin(angle) * radius * _tuning.groundVerticalScale,
+                0f);
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _tuning.lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            UpdateVisuals(Mathf.Clamp01(_elapsed / _tuning.lifetime));
+        }
+
+        private void UpdateVisuals(float progress)
+        {
+            float fadeIn = Mathf.Clamp01(progress / 0.18f);
+            float fadeOut = 1f - Mathf.Clamp01((progress - 0.68f) / 0.32f);
+            float alpha = Mathf.Max(0.25f, fadeIn * fadeOut);
+            float pulse = 1f + Mathf.Sin(progress * Mathf.PI * 2f * _tuning.pulseSpeed) * 0.08f;
+
+            Color ritualColor = _tuning.color;
+            ritualColor.a *= alpha;
+            Color coreColor = _tuning.coreColor;
+            coreColor.a *= alpha;
+
+            for (int i = 0; i < _groundLines.Count; i++)
+            {
+                LineRenderer line = _groundLines[i];
+                if (line == null) continue;
+
+                Color color = i == 1 ? coreColor : ritualColor;
+                line.startColor = color;
+                line.endColor = color;
+
+                if (i == 1)
+                {
+                    float radius = Mathf.Lerp(_tuning.radius * 0.18f, _tuning.radius * 0.62f, Mathf.Clamp01(progress * _tuning.pulseSpeed));
+                    for (int p = 0; p < line.positionCount; p++)
+                    {
+                        float angle = ((float)p / line.positionCount) * Mathf.PI * 2f;
+                        line.SetPosition(p, GroundPoint(angle, radius * pulse));
+                    }
+                }
+            }
+
+            for (int i = 0; i < _particles.Count; i++)
+            {
+                LineRenderer particle = _particles[i];
+                if (particle == null) continue;
+
+                Color particleColor = coreColor;
+                particleColor.a *= 0.9f;
+                particle.startColor = particleColor;
+                particle.endColor = ritualColor;
+
+                Vector3 center = _particleStarts[i] + _particleOffsets[i] * progress;
+                float length = Mathf.Lerp(0.02f, _tuning.particleSize * 2.4f, fadeIn) * fadeOut;
+                particle.startWidth = _tuning.particleSize * fadeOut;
+                particle.endWidth = _tuning.particleSize * 0.25f * fadeOut;
+                particle.SetPosition(0, center - Vector3.up * length);
+                particle.SetPosition(1, center + Vector3.up * length);
+            }
+
+            for (int i = 0; i < _columns.Count; i++)
+            {
+                LineRenderer column = _columns[i];
+                if (column == null) continue;
+
+                Color columnColor = _tuning.coreColor;
+                columnColor.a *= alpha * 0.45f;
+                column.startColor = columnColor;
+                column.endColor = ritualColor;
+
+                Vector3 basePos = column.GetPosition(0);
+                float height = _tuning.columnHeight * Mathf.Lerp(0.35f, 1f, fadeIn) * fadeOut;
+                column.SetPosition(1, basePos + Vector3.up * height);
+            }
+
+            if (_debugProbe != null)
+            {
+                Color magenta = new Color(1f, 0f, 1f, 0.95f * fadeOut);
+                Color cyan = new Color(0f, 1f, 1f, 0.95f * fadeOut);
+                _debugProbe.startColor = magenta;
+                _debugProbe.endColor = cyan;
+            }
+        }
+    }
+
     private class RingImpactBehavior : MonoBehaviour
     {
         private LineRenderer _lr;
