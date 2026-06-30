@@ -100,6 +100,47 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct TauntLoopTuning
+    {
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int markCount;
+        public float markSize;
+        public float pulseSpeed;
+        public float rotationSpeed;
+        public Color color;
+        public int sortingOffset;
+        public bool showDirectionCue;
+        public float directionCueLength;
+        public float directionCueWidth;
+
+        public void Sanitize()
+        {
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (markCount < 1) markCount = 1;
+            if (markSize <= 0f) markSize = 0.11f;
+            if (pulseSpeed < 0f) pulseSpeed = 0f;
+            if (rotationSpeed < 0f) rotationSpeed = 0f;
+            color.a = Mathf.Clamp01(color.a);
+            if (directionCueLength < 0f) directionCueLength = 0f;
+            if (directionCueWidth <= 0f) directionCueWidth = 0.05f;
+        }
+    }
+
     [Header("Stun Loop Tuning")]
     [SerializeField] private float radiusHeightFactor = 0.22f;
     [SerializeField] private Vector2 radiusClamp = new Vector2(0.12f, 0.28f);
@@ -139,6 +180,21 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     [SerializeField] private float poisonDriftAmount = 0.035f;
     [SerializeField] private Color poisonColor = new Color(0.35f, 0.95f, 0.25f, 0.75f);
     [SerializeField] private int poisonSortingOffset = 26;
+
+    [Header("Taunt Loop Tuning")]
+    [SerializeField] private float tauntRadiusHeightFactor = 0.24f;
+    [SerializeField] private Vector2 tauntRadiusClamp = new Vector2(0.14f, 0.34f);
+    [SerializeField] private float tauntVerticalOffsetHeightFactor = 0.64f;
+    [SerializeField] private Vector2 tauntVerticalOffsetClamp = new Vector2(0.24f, 0.64f);
+    [SerializeField] private int tauntMarkCount = 3;
+    [SerializeField] private float tauntMarkSize = 0.11f;
+    [SerializeField] private float tauntPulseSpeed = 4.0f;
+    [SerializeField] private float tauntRotationSpeed = 45f;
+    [SerializeField] private Color tauntColor = new Color(1.0f, 0.16f, 0.10f, 0.95f);
+    [SerializeField] private int tauntSortingOffset = 30;
+    [SerializeField] private bool tauntShowDirectionCue = true;
+    [SerializeField] private float tauntDirectionCueLength = 0.48f;
+    [SerializeField] private float tauntDirectionCueWidth = 0.05f;
 
     private static Material _sharedMaterial;
     
@@ -217,6 +273,28 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         return snapshot;
     }
 
+    public TauntLoopTuning GetTauntTuningSnapshot()
+    {
+        TauntLoopTuning snapshot = new TauntLoopTuning
+        {
+            radiusHeightFactor = this.tauntRadiusHeightFactor,
+            radiusClamp = this.tauntRadiusClamp,
+            verticalOffsetHeightFactor = this.tauntVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this.tauntVerticalOffsetClamp,
+            markCount = this.tauntMarkCount,
+            markSize = this.tauntMarkSize,
+            pulseSpeed = this.tauntPulseSpeed,
+            rotationSpeed = this.tauntRotationSpeed,
+            color = this.tauntColor,
+            sortingOffset = this.tauntSortingOffset,
+            showDirectionCue = this.tauntShowDirectionCue,
+            directionCueLength = this.tauntDirectionCueLength,
+            directionCueWidth = this.tauntDirectionCueWidth
+        };
+        snapshot.Sanitize();
+        return snapshot;
+    }
+
     private void ClearAllLoops()
     {
         foreach (var kvp in _activeLoops)
@@ -255,9 +333,10 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         if (unit == null || effect == null || effect.Definition == null) return;
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt) return;
 
-        CreateVisualLoopInstance(unit, effectType);
+        Unit source = effect.SourceUnit;
+        CreateVisualLoopInstance(unit, effectType, source);
     }
 
     private void HandleStatusRemoved(Unit unit, ActiveStatusEffect effect)
@@ -267,7 +346,7 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         SweepStaleLoops();
 
         SkillEffectKind effectType = effect.Definition.EffectType;
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn) return;
+        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt) return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -281,17 +360,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     }
 
     // Static fallback resolver called by debug paths
-    public static GameObject CreateVisualLoop(Unit unit, SkillEffectKind effectType)
+    public static GameObject CreateVisualLoop(Unit unit, SkillEffectKind effectType, Unit source = null)
     {
         StatusLoopPlaceholderPresenter presenter = FindAnyObjectByType<StatusLoopPlaceholderPresenter>();
         if (presenter != null && presenter.isActiveAndEnabled)
         {
-            return presenter.CreateVisualLoopInstance(unit, effectType);
+            return presenter.CreateVisualLoopInstance(unit, effectType, source);
         }
         return null;
     }
 
-    public GameObject CreateVisualLoopInstance(Unit unit, SkillEffectKind effectType)
+    public GameObject CreateVisualLoopInstance(Unit unit, SkillEffectKind effectType, Unit source = null)
     {
         if (unit == null) return null;
 
@@ -300,7 +379,18 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject existingObj))
         {
-            if (existingObj != null) return existingObj; // Reuse existing
+            if (existingObj != null)
+            {
+                if (effectType == SkillEffectKind.Taunt)
+                {
+                    TauntLoopBehavior behavior = existingObj.GetComponent<TauntLoopBehavior>();
+                    if (behavior != null)
+                    {
+                        behavior.Initialize(unit, GetSharedMaterial(), GetTauntTuningSnapshot(), source, true);
+                    }
+                }
+                return existingObj; // Reuse existing
+            }
             _activeLoops.Remove(key);
         }
 
@@ -329,6 +419,17 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
             isTester = true;
 #endif
             behavior.Initialize(unit, GetSharedMaterial(), GetPoisonTuningSnapshot(), isTester);
+        }
+        else if (effectType == SkillEffectKind.Taunt)
+        {
+            visualObj = new GameObject("VFX_StatusLoop_Taunt");
+            CombatVfxHierarchyHelper.ParentToUnitVisual(visualObj, unit, keepWorldPosition: true);
+            TauntLoopBehavior behavior = visualObj.AddComponent<TauntLoopBehavior>();
+            bool isTester = false;
+#if UNITY_EDITOR
+            isTester = true;
+#endif
+            behavior.Initialize(unit, GetSharedMaterial(), GetTauntTuningSnapshot(), source, isTester);
         }
 
         if (visualObj != null)
@@ -1131,6 +1232,304 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 float x = Mathf.Cos(angle) * size;
                 float y = Mathf.Sin(angle) * size;
                 lr.SetPosition(i, center + new Vector3(x, y, 0f));
+            }
+        }
+    }
+
+    private class TauntLoopBehavior : MonoBehaviour
+    {
+        private Unit _unit;
+        private TauntLoopTuning _tuning;
+        private Material _sharedMat;
+        private Unit _source;
+        private bool _isTesterLoop;
+        private readonly List<LineRenderer> _markLrs = new List<LineRenderer>();
+        private LineRenderer _directionCueLr;
+        private LineRenderer _alertSpikeLr;
+        private Transform _resolvedAnchorTransform;
+        private Vector3 _resolvedBoundsPosition;
+
+        public void Initialize(Unit unit, Material mat, TauntLoopTuning tuning, Unit source, bool isTesterLoop)
+        {
+            _unit = unit;
+            _sharedMat = mat;
+            _tuning = tuning;
+            _source = source;
+            _isTesterLoop = isTesterLoop;
+
+            ResolveAnchor(unit);
+            CreateMarks();
+            CreateAlertSpike();
+            CreateDirectionCue();
+            UpdatePositionAndVfx();
+        }
+
+        private void ResolveAnchor(Unit unit)
+        {
+            Transform root = unit.transform;
+            _resolvedAnchorTransform = FindDescendantByName(root, "HeadStatusAnchor") ??
+                                       FindDescendantByName(root, "StatusAnchor") ??
+                                       FindDescendantByName(root, "BodyStatusAnchor") ??
+                                       FindDescendantByName(root, "BodyImpactAnchor") ??
+                                       FindDescendantByName(root, "VisualAnchor");
+
+            if (_resolvedAnchorTransform == null)
+            {
+                if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bodyBounds))
+                {
+                    float offset = bodyBounds.size.y * _tuning.verticalOffsetHeightFactor;
+                    offset = Mathf.Clamp(offset, _tuning.verticalOffsetClamp.x, _tuning.verticalOffsetClamp.y);
+                    float y = bodyBounds.min.y + offset;
+                    _resolvedBoundsPosition = new Vector3(bodyBounds.center.x, y, unit.transform.position.z);
+                }
+                else
+                {
+                    _resolvedBoundsPosition = unit.transform.position;
+                }
+            }
+        }
+
+        private Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name)) return null;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == name) return child;
+                Transform found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
+        private void CreateMarks()
+        {
+            foreach (var lr in _markLrs)
+            {
+                if (lr != null) Destroy(lr.gameObject);
+            }
+            _markLrs.Clear();
+
+            int count = Mathf.Max(1, _tuning.markCount);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject markObj = new GameObject($"TauntMark_{i}");
+                markObj.transform.SetParent(transform, false);
+                LineRenderer lr = markObj.AddComponent<LineRenderer>();
+
+                lr.sharedMaterial = _sharedMat;
+                lr.useWorldSpace = true;
+                lr.alignment = LineAlignment.View;
+                lr.loop = false;
+                lr.startWidth = _tuning.markSize * 0.25f;
+                lr.endWidth = _tuning.markSize * 0.25f;
+
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _markLrs.Add(lr);
+            }
+        }
+
+        private void CreateAlertSpike()
+        {
+            if (_alertSpikeLr != null) Destroy(_alertSpikeLr.gameObject);
+            _alertSpikeLr = null;
+
+            GameObject spikeObj = new GameObject("TauntAlertSpike");
+            spikeObj.transform.SetParent(transform, false);
+            _alertSpikeLr = spikeObj.AddComponent<LineRenderer>();
+            _alertSpikeLr.sharedMaterial = _sharedMat;
+            _alertSpikeLr.useWorldSpace = true;
+            _alertSpikeLr.alignment = LineAlignment.View;
+            _alertSpikeLr.loop = true;
+            _alertSpikeLr.startWidth = _tuning.markSize * 0.3f;
+            _alertSpikeLr.endWidth = _tuning.markSize * 0.3f;
+
+            ConfigureSorting(_alertSpikeLr, _tuning.sortingOffset + 2);
+        }
+
+        private void CreateDirectionCue()
+        {
+            if (_directionCueLr != null)
+            {
+                Destroy(_directionCueLr.gameObject);
+                _directionCueLr = null;
+            }
+
+            if (_tuning.showDirectionCue && _source != null)
+            {
+                GameObject cueObj = new GameObject("TauntDirectionCue");
+                cueObj.transform.SetParent(transform, false);
+                _directionCueLr = cueObj.AddComponent<LineRenderer>();
+
+                _directionCueLr.sharedMaterial = _sharedMat;
+                _directionCueLr.useWorldSpace = true;
+                _directionCueLr.alignment = LineAlignment.View;
+                _directionCueLr.loop = false;
+                _directionCueLr.startWidth = _tuning.directionCueWidth;
+                _directionCueLr.endWidth = _tuning.directionCueWidth * 0.2f;
+
+                ConfigureSorting(_directionCueLr, _tuning.sortingOffset + 1);
+            }
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _unit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _unit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void LateUpdate()
+        {
+            if (_unit == null || !_unit.gameObject.activeInHierarchy || !_unit.IsAlive || _unit.LifecycleState != UnitLifecycleState.Alive)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (!_isTesterLoop)
+            {
+                if (_unit.StatusEffects == null || !_unit.StatusEffects.HasEffect(SkillEffectKind.Taunt))
+                {
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            CombatVfxHierarchyHelper.CounteractScale(gameObject, _unit.transform);
+            UpdatePositionAndVfx();
+        }
+
+        private void UpdatePositionAndVfx()
+        {
+            if (_unit == null) return;
+
+            Vector3 orbitCenter;
+            if (_resolvedAnchorTransform != null && _resolvedAnchorTransform.gameObject.activeInHierarchy)
+            {
+                orbitCenter = _resolvedAnchorTransform.position;
+            }
+            else
+            {
+                orbitCenter = _resolvedBoundsPosition;
+            }
+
+            transform.position = orbitCenter;
+
+            float unitHeight = 1.0f;
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_unit, out Bounds boundsForHeight))
+            {
+                unitHeight = boundsForHeight.size.y;
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(_unit, out Bounds normalBounds))
+            {
+                unitHeight = normalBounds.size.y;
+            }
+
+            float radius = Mathf.Clamp(unitHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            float nervousPulse = Mathf.Sin(Time.time * _tuning.pulseSpeed) + 0.3f * Mathf.Sin(Time.time * _tuning.pulseSpeed * 3.1f);
+            float pulseScale = 1.0f + 0.15f * nervousPulse;
+            float currentMarkSize = _tuning.markSize * pulseScale;
+            float currentRadius = radius * (1.0f + 0.08f * nervousPulse);
+
+            Color finalColor = _tuning.color;
+            float alphaPulse = 0.8f + 0.2f * Mathf.Sin(Time.time * _tuning.pulseSpeed * 2.5f);
+            finalColor.a *= alphaPulse;
+
+            float baseAngle = Time.time * (_tuning.rotationSpeed * Mathf.Deg2Rad);
+            float tiltFactor = 0.3f;
+
+            int count = _markLrs.Count;
+            for (int i = 0; i < count; i++)
+            {
+                LineRenderer lr = _markLrs[i];
+                if (lr == null) continue;
+
+                float angle = baseAngle + (i * 2f * Mathf.PI / count);
+                float x = Mathf.Cos(angle) * currentRadius;
+                float y = Mathf.Sin(angle) * currentRadius * tiltFactor;
+
+                Vector3 markPos = orbitCenter + new Vector3(x, y, 0f);
+
+                lr.startColor = finalColor;
+                lr.endColor = finalColor;
+                lr.startWidth = currentMarkSize * 0.25f;
+                lr.endWidth = currentMarkSize * 0.25f;
+
+                Vector3 radialDir = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle) * tiltFactor, 0f).normalized;
+                Vector3 tangDir = new Vector3(-Mathf.Sin(angle), Mathf.Cos(angle) * tiltFactor, 0f).normalized;
+
+                // Aggressive inward-pointing chevrons
+                lr.positionCount = 3;
+                lr.SetPosition(0, markPos + tangDir * currentMarkSize * 0.6f + radialDir * currentMarkSize * 0.4f);
+                lr.SetPosition(1, markPos - radialDir * currentMarkSize * 0.8f);
+                lr.SetPosition(2, markPos - tangDir * currentMarkSize * 0.6f + radialDir * currentMarkSize * 0.4f);
+            }
+
+            if (_alertSpikeLr != null)
+            {
+                _alertSpikeLr.startColor = finalColor;
+                _alertSpikeLr.endColor = finalColor;
+                _alertSpikeLr.startWidth = currentMarkSize * 0.3f;
+                _alertSpikeLr.endWidth = currentMarkSize * 0.3f;
+
+                float spikeYOffset = radius * 1.2f;
+                _alertSpikeLr.positionCount = 5;
+                _alertSpikeLr.SetPosition(0, orbitCenter + Vector3.up * spikeYOffset);
+                _alertSpikeLr.SetPosition(1, orbitCenter + Vector3.up * (spikeYOffset + currentMarkSize * 0.9f) - Vector3.right * currentMarkSize * 0.35f);
+                _alertSpikeLr.SetPosition(2, orbitCenter + Vector3.up * (spikeYOffset + currentMarkSize * 1.8f));
+                _alertSpikeLr.SetPosition(3, orbitCenter + Vector3.up * (spikeYOffset + currentMarkSize * 0.9f) + Vector3.right * currentMarkSize * 0.35f);
+                _alertSpikeLr.SetPosition(4, orbitCenter + Vector3.up * spikeYOffset);
+            }
+
+            if (_directionCueLr != null && _source != null)
+            {
+                Vector3 sourcePos = _source.transform.position;
+                Transform sourceAnchor = FindDescendantByName(_source.transform, "BodyStatusAnchor") ??
+                                         FindDescendantByName(_source.transform, "StatusAnchor");
+                if (sourceAnchor != null)
+                {
+                    sourcePos = sourceAnchor.position;
+                }
+                else if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_source, out Bounds sBounds))
+                {
+                    sourcePos = new Vector3(sBounds.center.x, sBounds.center.y, _source.transform.position.z);
+                }
+
+                Vector3 toSource = sourcePos - orbitCenter;
+                toSource.z = 0f;
+                float dist = toSource.magnitude;
+                Vector3 dir = toSource.normalized;
+
+                float cueLen = Mathf.Min(_tuning.directionCueLength, dist * 0.8f);
+                Vector3 cueStart = orbitCenter + dir * radius;
+                Vector3 cueEnd = orbitCenter + dir * (radius + cueLen);
+
+                _directionCueLr.startColor = finalColor;
+                _directionCueLr.endColor = new Color(finalColor.r, finalColor.g, finalColor.b, finalColor.a * 0.2f);
+                _directionCueLr.startWidth = _tuning.directionCueWidth;
+                _directionCueLr.endWidth = _tuning.directionCueWidth * 0.2f;
+
+                float headSize = cueLen * 0.35f;
+                Vector3 perp = new Vector3(-dir.y, dir.x, 0f);
+
+                _directionCueLr.positionCount = 5;
+                _directionCueLr.SetPosition(0, cueStart);
+                _directionCueLr.SetPosition(1, cueEnd);
+                _directionCueLr.SetPosition(2, cueEnd - dir * headSize + perp * headSize * 0.4f);
+                _directionCueLr.SetPosition(3, cueEnd);
+                _directionCueLr.SetPosition(4, cueEnd - dir * headSize - perp * headSize * 0.4f);
             }
         }
     }

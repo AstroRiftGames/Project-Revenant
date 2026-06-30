@@ -122,6 +122,148 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Taunt")]
+    private void TestTauntLoop()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Unit caster = ResolvePreferredCaster();
+        if (ReferenceEquals(caster, target))
+        {
+            if (testCaster != null && !ReferenceEquals(testCaster, target))
+            {
+                caster = testCaster;
+            }
+            else
+            {
+                caster = null;
+            }
+        }
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Taunt loop on '{target.name}' with source '{(caster != null ? caster.name : "None")}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked($"TauntLoop_{target.gameObject.name}", () => presenter.CreateVisualLoopInstance(target, SkillEffectKind.Taunt, caster));
+        ScheduleCleanup();
+    }
+
+    [ContextMenu("Test Effect Taunt Area")]
+    private void TestTauntLoopArea()
+    {
+        GameObject sourceGo = GameObject.Find("Debug_Taunt_Source");
+        Unit focusTarget = sourceGo != null ? sourceGo.GetComponent<Unit>() : null;
+
+        List<Unit> affectedUnits = new List<Unit>();
+        GameObject targetGo = GameObject.Find("Debug_Taunt_Target");
+        Unit targetUnit = targetGo != null ? targetGo.GetComponent<Unit>() : null;
+        if (targetUnit != null && IsUsableUnit(targetUnit)) affectedUnits.Add(targetUnit);
+
+        GameObject dist1Go = GameObject.Find("Debug_Taunt_Distractor_1");
+        Unit dist1 = dist1Go != null ? dist1Go.GetComponent<Unit>() : null;
+        if (dist1 != null && IsUsableUnit(dist1)) affectedUnits.Add(dist1);
+
+        GameObject dist2Go = GameObject.Find("Debug_Taunt_Distractor_2");
+        Unit dist2 = dist2Go != null ? dist2Go.GetComponent<Unit>() : null;
+        if (dist2 != null && IsUsableUnit(dist2)) affectedUnits.Add(dist2);
+
+        bool usedNamedLayout = false;
+
+        if (focusTarget != null && IsUsableUnit(focusTarget) && affectedUnits.Count > 0)
+        {
+            usedNamedLayout = true;
+        }
+        else
+        {
+            ResolveUnitsIfNeeded();
+            focusTarget = testCaster;
+
+            Unit primaryTarget = testTarget;
+            Unit fallbackDistractor = optionalSecondTarget;
+
+            if (focusTarget == null || primaryTarget == null || ReferenceEquals(focusTarget, primaryTarget))
+            {
+                Unit[] units = FindObjectsByType<Unit>(FindObjectsInactive.Exclude);
+                List<Unit> aliveUnits = new List<Unit>();
+                foreach (var u in units)
+                {
+                    if (IsUsableUnit(u))
+                    {
+                        aliveUnits.Add(u);
+                    }
+                }
+
+                if (aliveUnits.Count >= 3)
+                {
+                    focusTarget = aliveUnits[0];
+                    primaryTarget = aliveUnits[1];
+                    fallbackDistractor = aliveUnits[2];
+                }
+                else if (aliveUnits.Count == 2)
+                {
+                    focusTarget = aliveUnits[0];
+                    primaryTarget = aliveUnits[1];
+                    fallbackDistractor = null;
+                }
+                else
+                {
+                    Debug.LogWarning("[CombatVfxContextMenuTester] Cannot run Test Effect Taunt Area: Not enough active units in the scene.", this);
+                    return;
+                }
+            }
+
+            affectedUnits.Clear();
+            if (primaryTarget != null && IsUsableUnit(primaryTarget)) affectedUnits.Add(primaryTarget);
+            if (fallbackDistractor != null && IsUsableUnit(fallbackDistractor) && !ReferenceEquals(fallbackDistractor, focusTarget)) affectedUnits.Add(fallbackDistractor);
+
+            Vector3 centerPos = primaryTarget.transform.position;
+            focusTarget.transform.position = centerPos + Vector3.left * 2.0f;
+            if (fallbackDistractor != null)
+            {
+                fallbackDistractor.transform.position = centerPos + Vector3.right * 1.5f + Vector3.up * 1.0f;
+                primaryTarget.transform.position = centerPos + Vector3.right * 1.5f + Vector3.down * 1.0f;
+            }
+        }
+
+        string affectedNames = "";
+        for (int i = 0; i < affectedUnits.Count; i++)
+        {
+            affectedNames += (i > 0 ? ", " : "") + affectedUnits[i].name;
+        }
+
+        Debug.Log($"[CombatVfxContextMenuTester] Taunt Area Test (NamedLayout={usedNamedLayout}): FocusTarget (Tank)={focusTarget.name}, AffectedUnits Count={affectedUnits.Count}, AffectedUnits=[{affectedNames}]", this);
+        for (int i = 0; i < affectedUnits.Count; i++)
+        {
+            Unit affected = affectedUnits[i];
+            bool hasSource = (focusTarget != null);
+            Debug.Log($"  - Affected Unit: {affected.name}, FocusTarget passed: {hasSource} ({focusTarget.name})", this);
+        }
+
+        ClearStatusLoopVfxInternal();
+
+        StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
+        if (presenter == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active StatusLoopPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        for (int i = 0; i < affectedUnits.Count; i++)
+        {
+            Unit affected = affectedUnits[i];
+            SpawnTracked($"TauntLoop_{affected.gameObject.name}", () => presenter.CreateVisualLoopInstance(affected, SkillEffectKind.Taunt, focusTarget));
+        }
+
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Clear Status Loop VFX")]
     private void ClearStatusLoopVfx()
     {
@@ -662,7 +804,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area");
     }
 
     private void ClearSpawnedTestVfxInternal()

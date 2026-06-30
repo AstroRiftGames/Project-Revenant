@@ -283,11 +283,15 @@ public class MovementDebugTool : MonoBehaviour
             "6. Enemy Proximity:\n" +
             "   - Spawns: 1 Ally and 1 Enemy in adjacent cells.\n" +
             "   - Validates: Direct melee combat targeting and proximity avoidance.\n" +
-            "   - Failure: Units ignore each other or throw errors during step reservation."
+            "   - Failure: Units ignore each other or throw errors during step reservation.\n\n" +
+            "7. Taunt Multi Enemy Layout:\n" +
+            "   - Spawns: 1 Ally Source and 2-3 Enemy units (Target and Distractors).\n" +
+            "   - Validates: Visual positioning and read of the Taunt loop chevron VFX and directional pointer pointing towards the Ally source.\n" +
+            "   - Failure: The target does not show VFX, distractors show VFX, or the arrow points in an incorrect direction."
         );
     }
 
-    [ContextMenu("Scenario 7: Clear Spawned Units")]
+    [ContextMenu("Clear Spawned Units")]
     public void ClearSpawnedUnits()
     {
         for (int i = _spawnedDebugUnits.Count - 1; i >= 0; i--)
@@ -931,6 +935,149 @@ public class MovementDebugTool : MonoBehaviour
         LogScenarioEnd("Scenario 6 (Enemy Proximity)", 2, "1 Ally, 1 Enemy", needsCombatStart: true);
     }
 
+    [ContextMenu("Scenario 7: Taunt Multi Enemy Layout")]
+    public void SetupScenario7()
+    {
+        if (!CheckGridInitialized()) return;
+        if (_allyPrefab == null)
+        {
+            Debug.LogError("[MovementDebugTool] Setup aborted: Taunt Multi Enemy Layout requires the 'Ally Spawn Template' field to be assigned.");
+            return;
+        }
+        if (_enemyPrefab == null)
+        {
+            Debug.LogError("[MovementDebugTool] Setup aborted: Taunt Multi Enemy Layout requires the 'Enemy Spawn Template' field to be assigned.");
+            return;
+        }
+
+        LogScenarioStart("Scenario 7 (Taunt Multi Enemy Layout)");
+
+        BoundsInt bounds = GetGridBounds();
+        Vector3Int center = new Vector3Int((bounds.xMin + bounds.xMax) / 2, (bounds.yMin + bounds.yMax) / 2, 0);
+
+        Vector3Int sourceCell = center;
+        Vector3Int targetCell = center + new Vector3Int(3, 0, 0);
+        Vector3Int distractor1Cell = center + new Vector3Int(3, 2, 0);
+        Vector3Int distractor2Cell = center + new Vector3Int(3, -2, 0);
+
+        bool found = false;
+        for (int radius = 0; radius < 15 && !found; radius++)
+        {
+            for (int dx = -radius; dx <= radius && !found; dx++)
+            {
+                for (int dy = -radius; dy <= radius && !found; dy++)
+                {
+                    Vector3Int candidate = center + new Vector3Int(dx, dy, 0);
+                    if (_roomGrid.IsCellWalkable(candidate) &&
+                        _roomGrid.IsCellWalkable(candidate + new Vector3Int(3, 0, 0)) &&
+                        _roomGrid.IsCellWalkable(candidate + new Vector3Int(3, 2, 0)) &&
+                        _roomGrid.IsCellWalkable(candidate + new Vector3Int(3, -2, 0)))
+                    {
+                        sourceCell = candidate;
+                        targetCell = candidate + new Vector3Int(3, 0, 0);
+                        distractor1Cell = candidate + new Vector3Int(3, 2, 0);
+                        distractor2Cell = candidate + new Vector3Int(3, -2, 0);
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        if (!found)
+        {
+            for (int radius = 0; radius < 15 && !found; radius++)
+            {
+                for (int dx = -radius; dx <= radius && !found; dx++)
+                {
+                    for (int dy = -radius; dy <= radius && !found; dy++)
+                    {
+                        Vector3Int candidate = center + new Vector3Int(dx, dy, 0);
+                        if (_roomGrid.IsCellWalkable(candidate) &&
+                            _roomGrid.IsCellWalkable(candidate + new Vector3Int(2, 0, 0)) &&
+                            _roomGrid.IsCellWalkable(candidate + new Vector3Int(2, 1, 0)) &&
+                            _roomGrid.IsCellWalkable(candidate + new Vector3Int(2, -1, 0)))
+                        {
+                            sourceCell = candidate;
+                            targetCell = candidate + new Vector3Int(2, 0, 0);
+                            distractor1Cell = candidate + new Vector3Int(2, 1, 0);
+                            distractor2Cell = candidate + new Vector3Int(2, -1, 0);
+                            found = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!found)
+        {
+            for (int radius = 0; radius < 15 && !found; radius++)
+            {
+                for (int dx = -radius; dx <= radius && !found; dx++)
+                {
+                    for (int dy = -radius; dy <= radius && !found; dy++)
+                    {
+                        Vector3Int candidate = center + new Vector3Int(dx, dy, 0);
+                        if (_roomGrid.IsCellWalkable(candidate) &&
+                            _roomGrid.IsCellWalkable(candidate + Vector3Int.left) &&
+                            _roomGrid.IsCellWalkable(candidate + Vector3Int.right))
+                        {
+                            targetCell = candidate;
+                            sourceCell = candidate + Vector3Int.left;
+                            distractor1Cell = candidate + Vector3Int.right;
+                            distractor2Cell = candidate;
+                            found = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!found)
+        {
+            Debug.LogWarning("[MovementDebugTool] Aborted Scenario 7: Could not find 3 adjacent walkable cells.");
+            return;
+        }
+
+        ClearSpawnedUnits();
+
+        Unit allySource = SpawnUnitAtCell(_allyPrefab, sourceCell, UnitTeam.Ally);
+        if (allySource != null)
+        {
+            allySource.gameObject.name = "Debug_Taunt_Source";
+            DisableUnitAI(allySource);
+        }
+
+        Unit enemyTarget = SpawnUnitAtCell(_enemyPrefab, targetCell, UnitTeam.Enemy);
+        if (enemyTarget != null)
+        {
+            enemyTarget.gameObject.name = "Debug_Taunt_Target";
+            DisableUnitAI(enemyTarget);
+        }
+
+        Unit enemyDistractor1 = SpawnUnitAtCell(_enemyPrefab, distractor1Cell, UnitTeam.Enemy);
+        if (enemyDistractor1 != null)
+        {
+            enemyDistractor1.gameObject.name = "Debug_Taunt_Distractor_1";
+            DisableUnitAI(enemyDistractor1);
+        }
+
+        if (distractor2Cell != targetCell)
+        {
+            Unit enemyDistractor2 = SpawnUnitAtCell(_enemyPrefab, distractor2Cell, UnitTeam.Enemy);
+            if (enemyDistractor2 != null)
+            {
+                enemyDistractor2.gameObject.name = "Debug_Taunt_Distractor_2";
+                DisableUnitAI(enemyDistractor2);
+            }
+        }
+
+        lastScenarioRun = "7: Taunt Multi Enemy Layout";
+        expectedBehaviorText = "Layout setup for visual Taunt loop verification. Use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Multi Enemy. The target should show a red nervous Chevron effect pointing towards the source ally, while distractors remain clean.";
+        lastScenarioNeedsCombatStart = false;
+
+        LogScenarioEnd("Scenario 7 (Taunt Multi Enemy Layout)", 3, "1 Ally, 2+ Enemies", needsCombatStart: false);
+    }
+
     private BoundsInt GetGridBounds()
     {
         if (_roomGrid != null && _roomGrid.TryGetWorldBounds(out Bounds worldBounds))
@@ -1130,8 +1277,14 @@ public class MovementDebugToolEditor : Editor
                 "• Fail condition: Units ignore proximity target.",
                 tool.SetupScenario6);
 
+            DrawScenarioSection("Scenario 7: Taunt Multi Enemy Layout",
+                "Spawn & Setup creates a layout with one Ally (Source) and two or three Enemy units (Target and Distractors) positioned side-by-side to visually verify Taunt redirection.\n" +
+                "• Flow: Click Spawn & Setup to create layout. Then use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Multi Enemy to trigger VFX.\n" +
+                "• Expect: The target unit displays the chevron Taunt VFX pointing towards the Ally Source, and distractors remain clean.",
+                tool.SetupScenario7);
+
             EditorGUILayout.Space();
-            if (GUILayout.Button("Scenario 7: Clear Spawned Units", GUILayout.Height(30)))
+            if (GUILayout.Button("Clear Spawned Units", GUILayout.Height(30)))
             {
                 tool.ClearSpawnedUnits();
             }
