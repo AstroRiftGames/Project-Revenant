@@ -550,6 +550,65 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
+    [ContextMenu("Test Effect Knockback")]
+    private void TestEffectKnockback()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Unit caster = ResolvePreferredCaster();
+        if (caster == null)
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No valid caster resolved for Knockback direction. Using Vector3.right fallback.", this);
+        }
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Knockback on '{target.name}' with caster '{(caster != null ? caster.name : "None")}'.", this);
+        ClearStatusLoopVfxInternal();
+
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("KnockbackImpact", () => presenter.CreateKnockbackImpact(target, caster));
+        ScheduleCleanup();
+    }
+
+    [ContextMenu("Test Effect Knockback Reverse")]
+    private void TestEffectKnockbackReverse()
+    {
+        if (!TryResolveTarget(out Unit target))
+            return;
+
+        Unit caster = ResolvePreferredCaster();
+        Vector3 reverseDir = Vector3.left;
+        if (caster != null && target != null)
+        {
+            reverseDir = caster.transform.position - target.transform.position;
+            if (reverseDir.sqrMagnitude > 0.0001f)
+            {
+                reverseDir.Normalize();
+            }
+            else
+            {
+                reverseDir = Vector3.left;
+            }
+        }
+
+        Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Knockback Reverse on '{target.name}' in direction {reverseDir}.", this);
+        ClearStatusLoopVfxInternal();
+
+        if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
+        {
+            Debug.LogWarning("[CombatVfxContextMenuTester] No active SkillImpactPlaceholderPresenter found in scene.", this);
+            return;
+        }
+
+        SpawnTracked("KnockbackImpact", () => presenter.CreateKnockbackImpact(target, reverseDir));
+        ScheduleCleanup();
+    }
+
     [ContextMenu("Test Skill Heal/Buff Impact")]
     private void TestSkillHealBuffImpact()
     {
@@ -883,7 +942,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
     private void ClearStatusLoopVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop");
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop", "TEST_VFX_KnockbackImpact");
     }
 
     private void ClearSpawnedTestVfxInternal()

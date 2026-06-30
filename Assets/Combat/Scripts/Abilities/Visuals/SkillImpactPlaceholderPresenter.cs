@@ -56,6 +56,26 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     [SerializeField] private int _aoeSortingOffset = 8;
     [SerializeField, Range(0.35f, 0.8f)] private float _aoeGroundVerticalScale = 0.5f;
 
+    [Header("Knockback Runtime Tuning")]
+    [SerializeField] private float _knockbackLifetime = 0.45f;
+    [SerializeField] private float _knockbackRadiusHeightFactor = 0.22f;
+    [SerializeField] private Vector2 _knockbackRadiusClamp = new Vector2(0.12f, 0.30f);
+    [SerializeField] private float _knockbackVerticalOffsetHeightFactor = 0.42f;
+    [SerializeField] private Vector2 _knockbackVerticalOffsetClamp = new Vector2(0.18f, 0.48f);
+    [SerializeField] private int _knockbackForceLineCount = 5;
+    [SerializeField] private float _knockbackForceLineLength = 0.42f;
+    [SerializeField] private float _knockbackForceLineWidth = 0.035f;
+    [SerializeField] private int _knockbackDustCount = 6;
+    [SerializeField] private float _knockbackDustSize = 0.045f;
+    [SerializeField] private float _knockbackDustSpread = 0.22f;
+    [SerializeField] private float _knockbackArrowLength = 0.38f;
+    [SerializeField] private float _knockbackArrowWidth = 0.05f;
+    [SerializeField] private Color _knockbackColor = new Color(0.95f, 0.90f, 0.72f, 0.85f);
+    [SerializeField] private Color _knockbackDustColor = new Color(0.70f, 0.60f, 0.48f, 0.65f);
+    [SerializeField] private int _knockbackSortingOffset = 28;
+    [SerializeField] private float _knockbackDustVerticalOffsetHeightFactor = 0.12f;
+    [SerializeField] private Vector2 _knockbackDustVerticalOffsetClamp = new Vector2(0.02f, 0.18f);
+
     private static SkillImpactPlaceholderPresenter _activeInstance;
     private static Material _sharedMaterial;
     private static readonly bool EnableTracerLogs = false;
@@ -118,6 +138,22 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         _aoePulseSpeed = Mathf.Max(0f, _aoePulseSpeed);
         _aoeGroundMarkCount = Mathf.Max(0, _aoeGroundMarkCount);
         _aoeGroundVerticalScale = Mathf.Clamp(_aoeGroundVerticalScale, 0.35f, 0.8f);
+
+        _knockbackLifetime = Mathf.Max(0.01f, _knockbackLifetime);
+        _knockbackRadiusHeightFactor = Mathf.Max(0f, _knockbackRadiusHeightFactor);
+        _knockbackRadiusClamp = SanitizeClamp(_knockbackRadiusClamp, 0.12f, 0.30f);
+        _knockbackVerticalOffsetHeightFactor = Mathf.Max(0f, _knockbackVerticalOffsetHeightFactor);
+        _knockbackVerticalOffsetClamp = SanitizeClamp(_knockbackVerticalOffsetClamp, 0.18f, 0.48f);
+        _knockbackForceLineCount = Mathf.Max(0, _knockbackForceLineCount);
+        _knockbackForceLineLength = Mathf.Max(0f, _knockbackForceLineLength);
+        _knockbackForceLineWidth = Mathf.Max(0.001f, _knockbackForceLineWidth);
+        _knockbackDustCount = Mathf.Max(0, _knockbackDustCount);
+        _knockbackDustSize = Mathf.Max(0f, _knockbackDustSize);
+        _knockbackDustSpread = Mathf.Max(0f, _knockbackDustSpread);
+        _knockbackArrowLength = Mathf.Max(0f, _knockbackArrowLength);
+        _knockbackArrowWidth = Mathf.Max(0.001f, _knockbackArrowWidth);
+        _knockbackDustVerticalOffsetHeightFactor = Mathf.Max(0f, _knockbackDustVerticalOffsetHeightFactor);
+        _knockbackDustVerticalOffsetClamp = SanitizeClamp(_knockbackDustVerticalOffsetClamp, 0.02f, 0.18f);
     }
 #endif
 
@@ -200,6 +236,64 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
     }
 
+    [System.Serializable]
+    public struct KnockbackImpactTuning
+    {
+        public float lifetime;
+        public float radiusHeightFactor;
+        public Vector2 radiusClamp;
+        public float verticalOffsetHeightFactor;
+        public Vector2 verticalOffsetClamp;
+        public int forceLineCount;
+        public float forceLineLength;
+        public float forceLineWidth;
+        public int dustCount;
+        public float dustSize;
+        public float dustSpread;
+        public float arrowLength;
+        public float arrowWidth;
+        public Color color;
+        public Color dustColor;
+        public int sortingOffset;
+        public float dustVerticalOffsetHeightFactor;
+        public Vector2 dustVerticalOffsetClamp;
+
+        public void Sanitize()
+        {
+            if (lifetime < 0.01f) lifetime = 0.45f;
+            if (radiusHeightFactor < 0f) radiusHeightFactor = 0.22f;
+            if (radiusClamp.y < radiusClamp.x)
+            {
+                float temp = radiusClamp.x;
+                radiusClamp.x = radiusClamp.y;
+                radiusClamp.y = temp;
+            }
+            if (verticalOffsetClamp.y < verticalOffsetClamp.x)
+            {
+                float temp = verticalOffsetClamp.x;
+                verticalOffsetClamp.x = verticalOffsetClamp.y;
+                verticalOffsetClamp.y = temp;
+            }
+            if (forceLineCount < 0) forceLineCount = 5;
+            if (forceLineLength < 0f) forceLineLength = 0.42f;
+            if (forceLineWidth <= 0f) forceLineWidth = 0.035f;
+            if (dustCount < 0) dustCount = 6;
+            if (dustSize < 0f) dustSize = 0.045f;
+            if (dustSpread < 0f) dustSpread = 0.22f;
+            if (arrowLength < 0f) arrowLength = 0.38f;
+            if (arrowWidth <= 0f) arrowWidth = 0.05f;
+            color.a = Mathf.Clamp01(color.a);
+            dustColor.a = Mathf.Clamp01(dustColor.a);
+            if (dustVerticalOffsetHeightFactor < 0f) dustVerticalOffsetHeightFactor = 0.12f;
+            if (dustVerticalOffsetClamp.y < dustVerticalOffsetClamp.x)
+            {
+                float temp = dustVerticalOffsetClamp.x;
+                dustVerticalOffsetClamp.x = dustVerticalOffsetClamp.y;
+                dustVerticalOffsetClamp.y = temp;
+            }
+        }
+    }
+
     public HealImpactTuning GetHealImpactTuningSnapshot()
     {
         return new HealImpactTuning(
@@ -215,6 +309,33 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             _healColor,
             _healCoreColor,
             _healSortingOffset);
+    }
+
+    public KnockbackImpactTuning GetKnockbackImpactTuningSnapshot()
+    {
+        KnockbackImpactTuning snapshot = new KnockbackImpactTuning
+        {
+            lifetime = this._knockbackLifetime,
+            radiusHeightFactor = this._knockbackRadiusHeightFactor,
+            radiusClamp = this._knockbackRadiusClamp,
+            verticalOffsetHeightFactor = this._knockbackVerticalOffsetHeightFactor,
+            verticalOffsetClamp = this._knockbackVerticalOffsetClamp,
+            forceLineCount = this._knockbackForceLineCount,
+            forceLineLength = this._knockbackForceLineLength,
+            forceLineWidth = this._knockbackForceLineWidth,
+            dustCount = this._knockbackDustCount,
+            dustSize = this._knockbackDustSize,
+            dustSpread = this._knockbackDustSpread,
+            arrowLength = this._knockbackArrowLength,
+            arrowWidth = this._knockbackArrowWidth,
+            color = this._knockbackColor,
+            dustColor = this._knockbackDustColor,
+            sortingOffset = this._knockbackSortingOffset,
+            dustVerticalOffsetHeightFactor = this._knockbackDustVerticalOffsetHeightFactor,
+            dustVerticalOffsetClamp = this._knockbackDustVerticalOffsetClamp
+        };
+        snapshot.Sanitize();
+        return snapshot;
     }
 
     private BodyImpactTuning ResolveBodyImpactTuning()
@@ -626,7 +747,22 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
                 break;
 
             case SkillEffectKind.Knockback:
-                CreateKnockbackImpact(targetUnit, targetPos);
+                {
+                    Vector3 knockbackDir = Vector3.right;
+                    if (targetUnit != null && context != null && context.Caster != null)
+                    {
+                        knockbackDir = targetUnit.transform.position - context.Caster.transform.position;
+                        if (knockbackDir.sqrMagnitude > 0.0001f)
+                        {
+                            knockbackDir.Normalize();
+                        }
+                        else
+                        {
+                            knockbackDir = Vector3.right;
+                        }
+                    }
+                    CreateKnockbackImpact(targetUnit, knockbackDir);
+                }
                 break;
         }
 
@@ -855,27 +991,40 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         behavior.Initialize(lr, targetPos, 0.45f, 0.24f, 0.38f, 0f, 0f);
     }
 
-    // 7. Knockback: impacto simple en target
-    private void CreateKnockbackImpact(Unit targetUnit, Vector3 targetPos)
+    // 7. Knockback: impacto direccional en target
+    public GameObject CreateKnockbackImpact(Unit target, Vector3 direction)
     {
+        if (target == null)
+        {
+            Debug.LogWarning("[SkillImpactPlaceholderPresenter] CreateKnockbackImpact target is null.");
+            return null;
+        }
+
         GameObject obj = new GameObject("VFX_Placeholder_Knockback");
-        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, targetUnit);
-        LineRenderer lr = obj.AddComponent<LineRenderer>();
-        lr.sharedMaterial = GetSharedMaterial();
-        lr.useWorldSpace = true;
-        lr.alignment = LineAlignment.View;
-        lr.loop = true;
-        lr.startWidth = 0.05f;
-        lr.endWidth = 0.05f;
+        CombatVfxHierarchyHelper.ParentToTargetOrRoot(obj, target);
 
-        Color color = new Color(0.8f, 0.95f, 1f, 0.9f);
-        lr.startColor = color;
-        lr.endColor = color;
-        ConfigureSorting(obj, targetUnit, 12);
+        KnockbackImpactBehavior behavior = obj.AddComponent<KnockbackImpactBehavior>();
+        behavior.Initialize(target, direction, GetSharedMaterial(), GetKnockbackImpactTuningSnapshot());
 
-        var behavior = obj.AddComponent<RingImpactBehavior>();
-        // Expand ring from 0.1f to 0.5f over 0.35s
-        behavior.Initialize(lr, targetPos, 0.35f, 0.1f, 0.5f, 0f, 0f);
+        return obj;
+    }
+
+    public GameObject CreateKnockbackImpact(Unit target, Unit source)
+    {
+        Vector3 direction = Vector3.right;
+        if (target != null && source != null)
+        {
+            direction = target.transform.position - source.transform.position;
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                direction.Normalize();
+            }
+            else
+            {
+                direction = Vector3.right;
+            }
+        }
+        return CreateKnockbackImpact(target, direction);
     }
 
     // 8. Summon: pulso circular en la celda de apariciÃƒÂ³n
@@ -1776,6 +1925,254 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             if (_elapsed >= _lifetime)
             {
                 Destroy(gameObject);
+            }
+        }
+    }
+
+    private class KnockbackImpactBehavior : MonoBehaviour
+    {
+        private KnockbackImpactTuning _tuning;
+        private Vector3 _direction;
+        private Vector3 _startPosition;
+        private Vector3 _groundPos;
+        private float _elapsed;
+        private Material _sharedMat;
+        private Unit _targetUnit;
+
+        private readonly List<LineRenderer> _forceLrs = new List<LineRenderer>();
+        private LineRenderer _arrowLr;
+        private readonly List<LineRenderer> _dustLrs = new List<LineRenderer>();
+
+        private Vector3 _perp;
+        private Vector3[] _dustOffsetDirs;
+
+        public void Initialize(Unit target, Vector3 direction, Material mat, KnockbackImpactTuning tuning)
+        {
+            _targetUnit = target;
+            _direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.right;
+            _tuning = tuning;
+            _sharedMat = mat;
+            _elapsed = 0f;
+
+            _startPosition = ResolveKnockbackPosition(target, tuning);
+
+            if (target != null && UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(target, out Bounds bounds))
+            {
+                float offset = bounds.size.y * tuning.dustVerticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, tuning.dustVerticalOffsetClamp.x, tuning.dustVerticalOffsetClamp.y);
+                _groundPos = new Vector3(bounds.center.x, bounds.min.y + offset, target.transform.position.z);
+            }
+            else if (target != null && UnitVisualBoundsUtility.TryResolveUnitVisualBounds(target, out Bounds boundsFallback))
+            {
+                float offset = boundsFallback.size.y * tuning.dustVerticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, tuning.dustVerticalOffsetClamp.x, tuning.dustVerticalOffsetClamp.y);
+                _groundPos = new Vector3(boundsFallback.center.x, boundsFallback.min.y + offset, target.transform.position.z);
+            }
+            else
+            {
+                _groundPos = UnitVisualBoundsUtility.ResolveUnitGroundPosition(target);
+            }
+
+            _perp = new Vector3(-_direction.y, _direction.x, 0f).normalized;
+
+            transform.position = _startPosition;
+
+            CreateVfxElements();
+            UpdateVfx(0f);
+        }
+
+        private Vector3 ResolveKnockbackPosition(Unit unit, KnockbackImpactTuning tuning)
+        {
+            if (unit == null) return Vector3.zero;
+
+            Transform t = FindDescendantByName(unit.transform, "BodyImpactAnchor") ??
+                          FindDescendantByName(unit.transform, "BodyStatusAnchor") ??
+                          FindDescendantByName(unit.transform, "StatusAnchor") ??
+                          FindDescendantByName(unit.transform, "VisualAnchor");
+
+            if (t != null) return t.position;
+
+            if (UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(unit, out Bounds bounds))
+            {
+                float offset = bounds.size.y * tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, tuning.verticalOffsetClamp.x, tuning.verticalOffsetClamp.y);
+                return new Vector3(bounds.center.x, bounds.min.y + offset, unit.transform.position.z);
+            }
+            else if (UnitVisualBoundsUtility.TryResolveUnitVisualBounds(unit, out Bounds boundsFallback))
+            {
+                float offset = boundsFallback.size.y * tuning.verticalOffsetHeightFactor;
+                offset = Mathf.Clamp(offset, tuning.verticalOffsetClamp.x, tuning.verticalOffsetClamp.y);
+                return new Vector3(boundsFallback.center.x, boundsFallback.min.y + offset, unit.transform.position.z);
+            }
+
+            return unit.transform.position;
+        }
+
+        private void CreateVfxElements()
+        {
+            int count = Mathf.Max(0, _tuning.forceLineCount);
+            float boundsHeight = 1.0f;
+            if (_targetUnit != null && UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_targetUnit, out Bounds bounds))
+            {
+                boundsHeight = bounds.size.y;
+            }
+            float radius = Mathf.Clamp(boundsHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            for (int i = 0; i < count; i++)
+            {
+                GameObject lineObj = new GameObject($"ForceLine_{i}");
+                lineObj.transform.SetParent(transform, false);
+                LineRenderer lr = lineObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset);
+                _forceLrs.Add(lr);
+            }
+
+            if (_tuning.arrowLength > 0f)
+            {
+                GameObject arrowObj = new GameObject("KnockbackArrow");
+                arrowObj.transform.SetParent(transform, false);
+                _arrowLr = arrowObj.AddComponent<LineRenderer>();
+                SetupLr(_arrowLr);
+                ConfigureSorting(_arrowLr, _tuning.sortingOffset + 1);
+            }
+
+            int dustCount = Mathf.Max(0, _tuning.dustCount);
+            _dustOffsetDirs = new Vector3[dustCount];
+            for (int i = 0; i < dustCount; i++)
+            {
+                GameObject dustObj = new GameObject($"Dust_{i}");
+                dustObj.transform.SetParent(transform, false);
+                LineRenderer lr = dustObj.AddComponent<LineRenderer>();
+                SetupLr(lr);
+                ConfigureSorting(lr, _tuning.sortingOffset - 1);
+                _dustLrs.Add(lr);
+
+                float offsetPerp = UnityEngine.Random.Range(-_tuning.dustSpread, _tuning.dustSpread);
+                float offsetBack = UnityEngine.Random.Range(0f, _tuning.dustSpread);
+                _dustOffsetDirs[i] = _perp * offsetPerp - _direction * offsetBack;
+            }
+        }
+
+        private void SetupLr(LineRenderer lr)
+        {
+            lr.sharedMaterial = _sharedMat;
+            lr.useWorldSpace = true;
+            lr.alignment = LineAlignment.View;
+            lr.loop = false;
+        }
+
+        private void ConfigureSorting(LineRenderer lr, int orderOffset)
+        {
+            if (lr == null || _targetUnit == null) return;
+            string sortingLayerName = "Gameplay";
+            int sortingOrder = 1000;
+
+            SpriteRenderer sr = _targetUnit.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sortingLayerName = sr.sortingLayerName;
+                sortingOrder = sr.sortingOrder + orderOffset;
+            }
+
+            lr.sortingLayerName = sortingLayerName;
+            lr.sortingOrder = sortingOrder;
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            if (_elapsed >= _tuning.lifetime)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            UpdateVfx(_elapsed / _tuning.lifetime);
+        }
+
+        private void UpdateVfx(float progress)
+        {
+            float alpha = 1.0f - progress;
+            float scale = Mathf.Lerp(1.0f, 1.15f, progress);
+
+            float boundsHeight = 1.0f;
+            if (_targetUnit != null && UnitVisualBoundsUtility.TryResolveUnitBodyVisualBounds(_targetUnit, out Bounds bounds))
+            {
+                boundsHeight = bounds.size.y;
+            }
+            float radius = Mathf.Clamp(boundsHeight * _tuning.radiusHeightFactor, _tuning.radiusClamp.x, _tuning.radiusClamp.y);
+
+            Color forceColor = _tuning.color;
+            forceColor.a *= alpha;
+
+            Color dustColor = _tuning.dustColor;
+            dustColor.a *= alpha;
+
+            int forceCount = _forceLrs.Count;
+            for (int i = 0; i < forceCount; i++)
+            {
+                LineRenderer lr = _forceLrs[i];
+                if (lr == null) continue;
+
+                lr.startColor = forceColor;
+                lr.endColor = forceColor;
+                lr.startWidth = _tuning.forceLineWidth * scale;
+                lr.endWidth = _tuning.forceLineWidth * 0.4f * scale;
+
+                float offsetPct = (forceCount > 1) ? ((float)i / (forceCount - 1) - 0.5f) : 0f;
+                float perpOffset = offsetPct * radius * 1.6f;
+
+                Vector3 startBase = _startPosition + _perp * perpOffset - _direction * (_tuning.forceLineLength * 0.4f);
+                Vector3 endBase = startBase + _direction * _tuning.forceLineLength;
+
+                float lineProg = Mathf.Clamp01(progress * 1.4f);
+                float headPct = Mathf.Clamp01(lineProg * 1.2f);
+                float tailPct = Mathf.Clamp01(lineProg * 1.2f - 0.2f);
+
+                Vector3 p0 = Vector3.Lerp(startBase, endBase, tailPct);
+                Vector3 p1 = Vector3.Lerp(startBase, endBase, headPct);
+
+                lr.positionCount = 2;
+                lr.SetPositions(new Vector3[] { p0, p1 });
+            }
+
+            if (_arrowLr != null)
+            {
+                _arrowLr.startColor = forceColor;
+                _arrowLr.endColor = forceColor;
+                _arrowLr.startWidth = _tuning.arrowWidth;
+                _arrowLr.endWidth = _tuning.arrowWidth;
+
+                Vector3 arrowCenter = _startPosition + _direction * (_tuning.arrowLength * progress * 0.2f);
+                Vector3 arrowTip = arrowCenter + _direction * _tuning.arrowLength * 0.8f;
+                Vector3 baseLeft = arrowCenter - _direction * (_tuning.arrowLength * 0.2f) + _perp * _tuning.arrowWidth * 3.5f;
+                Vector3 baseRight = arrowCenter - _direction * (_tuning.arrowLength * 0.2f) - _perp * _tuning.arrowWidth * 3.5f;
+
+                _arrowLr.positionCount = 3;
+                _arrowLr.SetPositions(new Vector3[] { baseLeft, arrowTip, baseRight });
+            }
+
+            int dustCount = _dustLrs.Count;
+            for (int i = 0; i < dustCount; i++)
+            {
+                LineRenderer lr = _dustLrs[i];
+                if (lr == null) continue;
+
+                lr.startColor = dustColor;
+                lr.endColor = dustColor;
+                lr.startWidth = _tuning.dustSize * (1f - progress * 0.5f);
+                lr.endWidth = _tuning.dustSize * 0.2f;
+
+                Vector3 dustBase = _groundPos + _dustOffsetDirs[i];
+                Vector3 drift = -_direction * (progress * 0.15f) + Vector3.up * (progress * 0.25f);
+                Vector3 dustCenter = dustBase + drift;
+
+                Vector3 p0 = dustCenter - _perp * (_tuning.dustSize * 0.5f);
+                Vector3 p1 = dustCenter + _perp * (_tuning.dustSize * 0.5f);
+
+                lr.positionCount = 2;
+                lr.SetPositions(new Vector3[] { p0, p1 });
             }
         }
     }
