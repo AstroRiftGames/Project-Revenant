@@ -671,20 +671,8 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     {
         if (unit == null || effect == null || effect.Definition == null) return;
 
-        SkillEffectKind effectType = effect.Definition.EffectType;
-
-        // TODO: PoisonBurn is currently shared for Poison and Burn. Once they are fully separated, we will map SkillEffectKind.Burn directly.
-        if (effectType == SkillEffectKind.PoisonBurn)
-        {
-            bool isBurn = (effect.Definition.EffectId != null && effect.Definition.EffectId.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0) ||
-                         (effect.Definition.DisplayName != null && effect.Definition.DisplayName.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (isBurn)
-            {
-                effectType = SkillEffectKind.Burn;
-            }
-        }
-
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff && effectType != SkillEffectKind.Debuff) return;
+        if (!TryResolveVisualLoopEffectType(effect.Definition, out SkillEffectKind effectType))
+            return;
 
         Unit source = effect.SourceUnit;
         CreateVisualLoopInstance(unit, effectType, source);
@@ -696,20 +684,8 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
 
         SweepStaleLoops();
 
-        SkillEffectKind effectType = effect.Definition.EffectType;
-
-        // TODO: PoisonBurn is currently shared for Poison and Burn. Once they are fully separated, we will map SkillEffectKind.Burn directly.
-        if (effectType == SkillEffectKind.PoisonBurn)
-        {
-            bool isBurn = (effect.Definition.EffectId != null && effect.Definition.EffectId.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0) ||
-                         (effect.Definition.DisplayName != null && effect.Definition.DisplayName.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (isBurn)
-            {
-                effectType = SkillEffectKind.Burn;
-            }
-        }
-
-        if (effectType != SkillEffectKind.Stun && effectType != SkillEffectKind.Slow && effectType != SkillEffectKind.PoisonBurn && effectType != SkillEffectKind.Taunt && effectType != SkillEffectKind.Burn && effectType != SkillEffectKind.Shield && effectType != SkillEffectKind.Buff && effectType != SkillEffectKind.Debuff) return;
+        if (!TryResolveVisualLoopEffectType(effect.Definition, out SkillEffectKind effectType))
+            return;
 
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
@@ -719,6 +695,51 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 Destroy(visualObj);
             }
             _activeLoops.Remove(key);
+        }
+    }
+
+    private static bool TryResolveVisualLoopEffectType(StatusEffectDefinition definition, out SkillEffectKind effectType)
+    {
+        effectType = SkillEffectKind.Damage;
+        if (definition == null)
+            return false;
+
+        effectType = definition.EffectType;
+
+        // TODO: PoisonBurn is currently shared for Poison and Burn. Once they are fully separated, we will map SkillEffectKind.Burn directly.
+        if (effectType == SkillEffectKind.PoisonBurn)
+        {
+            bool isBurn = (definition.EffectId != null && definition.EffectId.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                          (definition.DisplayName != null && definition.DisplayName.IndexOf("burn", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (isBurn)
+            {
+                effectType = SkillEffectKind.Burn;
+            }
+            return true;
+        }
+
+        switch (effectType)
+        {
+            case SkillEffectKind.Stun:
+            case SkillEffectKind.Slow:
+            case SkillEffectKind.Taunt:
+            case SkillEffectKind.Burn:
+            case SkillEffectKind.Shield:
+            case SkillEffectKind.Buff:
+            case SkillEffectKind.Debuff:
+                return true;
+        }
+
+        switch (definition.VisualStyle)
+        {
+            case StatusVisualStyle.Buff:
+                effectType = SkillEffectKind.Buff;
+                return true;
+            case StatusVisualStyle.Debuff:
+                effectType = SkillEffectKind.Debuff;
+                return true;
+            default:
+                return false;
         }
     }
 
