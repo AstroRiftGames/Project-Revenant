@@ -263,7 +263,6 @@ MonoBehaviour:
   m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
-  m_Version: 2
   m_TaaSettings:
     m_Quality: 3
     m_FrameInfluence: 0.1
@@ -271,6 +270,7 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!20 &519420031
 Camera:
   m_ObjectHideFlags: 0
@@ -358,6 +358,7 @@ MonoBehaviour:
     height: 1
   _padding: 0
   _minOrthographicSize: 2
+  _transitionSpeed: 5
 --- !u!114 &519420035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -381,6 +382,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1013076129}
   - component: {fileID: 1013076128}
+  - component: {fileID: 1013076130}
+  - component: {fileID: 1013076131}
   m_Layer: 0
   m_Name: CombatDebugVisuals
   m_TagString: Untagged
@@ -408,6 +411,16 @@ MonoBehaviour:
   _secondaryPointSize: 0.28
   _lineWidth: 0.08
   _ringWidth: 0.07
+  _patternDurationMultiplier: 1
+  _modifierDurationMultiplier: 1
+  _primaryImpactDurationMultiplier: 1
+  _secondaryImpactDurationMultiplier: 1
+  _healDurationMultiplier: 1
+  _statusDurationMultiplier: 1
+  _summonDurationBonus: 0.15
+  _knockbackDurationMultiplier: 1
+  _shieldDurationMultiplier: 1
+  _periodicTickDurationMultiplier: 0.65
   _targetPointPrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10031, type: 3}
   _areaCirclePrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10032, type: 3}
   _linePrefab: {fileID: 11400000, guid: 6bdecb9683dd4c8d8f8d5d58a4c10033, type: 3}
@@ -444,17 +457,199 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1032554670 stripped
+--- !u!114 &1013076130
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5362052257735884656, guid: 67dfa8cbb709d71418806f170668bbfc, type: 3}
-  m_PrefabInstance: {fileID: 7751117009294981613}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1013076127}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b5f35274d18bd44e9cabe004e946aa3, type: 3}
+  m_Script: {fileID: 11500000, guid: fc9b7d10b90a7f34daa6c2a3d180f111, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _bodyImpactLifetime: 0.38
+  _bodyImpactStartRadiusHeightFactor: 0.2
+  _bodyImpactEndRadiusHeightFactor: 0.46
+  _bodyImpactLineWidthHeightFactor: 0.06
+  _bodyImpactStartRadiusClamp: {x: 0.14, y: 0.28}
+  _bodyImpactEndRadiusClamp: {x: 0.32, y: 0.56}
+  _bodyImpactLineWidthClamp: {x: 0.05, y: 0.09}
+  _bodyImpactColor: {r: 1, g: 0.42, b: 0.12, a: 0.95}
+  _bodyImpactSortingOffset: 24
+  _healLifetime: 0.65
+  _healRadiusHeightFactor: 0.26
+  _healRadiusClamp: {x: 0.14, y: 0.34}
+  _healVerticalOffsetHeightFactor: 0.42
+  _healVerticalOffsetClamp: {x: 0.2, y: 0.48}
+  _healParticleCount: 8
+  _healParticleSize: 0.045
+  _healRiseAmount: 0.28
+  _healPulseWidth: 0.04
+  _healColor: {r: 0.45, g: 1, b: 0.65, a: 0.85}
+  _healCoreColor: {r: 0.9, g: 1, b: 0.85, a: 0.9}
+  _healSortingOffset: 29
+  _aoeLifetime: 0.55
+  _aoeRadius: 2.5
+  _aoeFillAlpha: 0.12
+  _aoeBorderWidth: 0.045
+  _aoeBorderSegmentCount: 18
+  _aoeBorderCoverage: 0.65
+  _aoePulseRadiusMultiplier: 0.35
+  _aoePulseSpeed: 2.2
+  _aoeGroundMarkCount: 8
+  _aoeColor: {r: 1, g: 0.28, b: 0.18, a: 0.75}
+  _aoeSortingOffset: 8
+  _aoeGroundVerticalScale: 0.5
+  _knockbackLifetime: 0.45
+  _knockbackRadiusHeightFactor: 0.22
+  _knockbackRadiusClamp: {x: 0.12, y: 0.3}
+  _knockbackVerticalOffsetHeightFactor: 0.42
+  _knockbackVerticalOffsetClamp: {x: 0.18, y: 0.48}
+  _knockbackForceLineCount: 5
+  _knockbackForceLineLength: 0.42
+  _knockbackForceLineWidth: 0.035
+  _knockbackDustCount: 6
+  _knockbackDustSize: 0.045
+  _knockbackDustSpread: 0.22
+  _knockbackArrowLength: 0.38
+  _knockbackArrowWidth: 0.05
+  _knockbackColor: {r: 0.95, g: 0.9, b: 0.72, a: 0.85}
+  _knockbackDustColor: {r: 0.7, g: 0.6, b: 0.48, a: 0.65}
+  _knockbackSortingOffset: 28
+  _knockbackDustVerticalOffsetHeightFactor: 0.12
+  _knockbackDustVerticalOffsetClamp: {x: 0.02, y: 0.18}
+  _summonLifetime: 1.35
+  _summonRadius: 0.5
+  _summonGroundVerticalScale: 0.5
+  _summonRingWidth: 0.06
+  _summonRingSegmentCount: 24
+  _summonRuneMarkCount: 6
+  _summonParticleCount: 14
+  _summonParticleSize: 0.055
+  _summonRiseAmount: 0.55
+  _summonColumnHeight: 0.8
+  _summonPulseSpeed: 2.4
+  _summonColor: {r: 0.55, g: 0.25, b: 0.95, a: 0.95}
+  _summonCoreColor: {r: 0.85, g: 0.7, b: 1, a: 0.9}
+  _summonSortingOffset: 45
+  _summonGroundSortingOffset: 8
+  _summonVerticalSortingOffset: 55
+--- !u!114 &1013076131
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013076127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 425bf86f38a6d094d8f44c7a4672a3a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radiusHeightFactor: 0.22
+  radiusClamp: {x: 0.12, y: 0.28}
+  verticalOffsetHeightFactor: -0.12
+  verticalOffsetClamp: {x: -0.16, y: 0.06}
+  markSize: 0.055
+  markCount: 3
+  rotationSpeed: 160
+  pulseSpeed: 4
+  color: {r: 1, g: 0.85, b: 0.18, a: 0.85}
+  sortingOffset: 28
+  slowRadiusHeightFactor: 0.24
+  slowRadiusClamp: {x: 0.14, y: 0.3}
+  slowVerticalOffsetHeightFactor: 0.1
+  slowVerticalOffsetClamp: {x: 0.04, y: 0.14}
+  slowFootCenterHeightFactor: 0.18
+  slowFootCenterOffsetClamp: {x: 0.12, y: 0.26}
+  slowArcCount: 3
+  slowArcCoverage: 220
+  slowLineWidth: 0.035
+  slowPulseSpeed: 1.4
+  slowContractionAmount: 0.18
+  slowColor: {r: 0.35, g: 0.65, b: 1, a: 0.65}
+  slowSortingOffset: 18
+  enableDebugLogs: 1
+  poisonRadiusHeightFactor: 0.24
+  poisonRadiusClamp: {x: 0.12, y: 0.28}
+  poisonVerticalOffsetHeightFactor: 0.32
+  poisonVerticalOffsetClamp: {x: 0.12, y: 0.34}
+  poisonBubbleCount: 5
+  poisonBubbleSize: 0.045
+  poisonPulseSpeed: 1.6
+  poisonDriftAmount: 0.035
+  poisonColor: {r: 0.35, g: 0.95, b: 0.25, a: 0.75}
+  poisonSortingOffset: 26
+  tauntRadiusHeightFactor: 0.24
+  tauntRadiusClamp: {x: 0.14, y: 0.34}
+  tauntVerticalOffsetHeightFactor: 0.64
+  tauntVerticalOffsetClamp: {x: 0.24, y: 0.64}
+  tauntMarkCount: 3
+  tauntMarkSize: 0.11
+  tauntPulseSpeed: 4
+  tauntRotationSpeed: 45
+  tauntColor: {r: 1, g: 0.16, b: 0.1, a: 0.95}
+  tauntSortingOffset: 30
+  tauntShowDirectionCue: 1
+  tauntDirectionCueLength: 0.48
+  tauntDirectionCueWidth: 0.05
+  burnRadiusHeightFactor: 0.22
+  burnRadiusClamp: {x: 0.12, y: 0.3}
+  burnVerticalOffsetHeightFactor: 0.28
+  burnVerticalOffsetClamp: {x: 0.1, y: 0.34}
+  burnFlameCount: 5
+  burnFlameSize: 0.06
+  burnFlickerSpeed: 5
+  burnFlickerAmount: 0.035
+  burnHeatWaveAmount: 0.025
+  burnColor: {r: 1, g: 0.34, b: 0.06, a: 0.85}
+  burnCoreColor: {r: 1, g: 0.85, b: 0.18, a: 0.75}
+  burnSortingOffset: 27
+  burnStackIntensity: 1
+  shieldRadiusHeightFactor: 0.34
+  shieldRadiusClamp: {x: 0.18, y: 0.46}
+  shieldVerticalOffsetHeightFactor: 0.42
+  shieldVerticalOffsetClamp: {x: 0.2, y: 0.5}
+  shieldPanelCount: 4
+  shieldPanelCoverage: 0.55
+  shieldLineWidth: 0.045
+  shieldPulseSpeed: 1.6
+  shieldPulseAmount: 0.06
+  shieldColor: {r: 0.35, g: 0.85, b: 1, a: 0.7}
+  shieldCoreColor: {r: 0.85, g: 1, b: 1, a: 0.45}
+  shieldSortingOffset: 25
+  shieldShowInnerPulse: 1
+  buffRadiusHeightFactor: 0.26
+  buffRadiusClamp: {x: 0.14, y: 0.34}
+  buffVerticalOffsetHeightFactor: 0.4
+  buffVerticalOffsetClamp: {x: 0.18, y: 0.48}
+  buffChevronCount: 3
+  buffChevronSize: 0.075
+  buffParticleCount: 5
+  buffParticleSize: 0.04
+  buffRiseAmount: 0.22
+  buffPulseSpeed: 2
+  buffPulseAmount: 0.06
+  buffColor: {r: 0.75, g: 0.55, b: 1, a: 0.8}
+  buffCoreColor: {r: 0.95, g: 0.85, b: 1, a: 0.7}
+  buffSortingOffset: 26
+  debuffRadiusHeightFactor: 0.27
+  debuffRadiusClamp: {x: 0.14, y: 0.35}
+  debuffVerticalOffsetHeightFactor: 0.44
+  debuffVerticalOffsetClamp: {x: 0.2, y: 0.52}
+  debuffChevronCount: 3
+  debuffChevronSize: 0.075
+  debuffParticleCount: 6
+  debuffParticleSize: 0.04
+  debuffFallAmount: 0.24
+  debuffPulseSpeed: 1.7
+  debuffPulseAmount: 0.07
+  debuffWobbleAmount: 0.025
+  debuffColor: {r: 0.34, g: 0.12, b: 0.55, a: 0.85}
+  debuffCoreColor: {r: 0.55, g: 0.38, b: 0.75, a: 0.6}
+  debuffSortingOffset: 26
 --- !u!1001 &1131841152
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -464,17 +659,9 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
-      propertyPath: Seed
-      value: -1844454601
-      objectReference: {fileID: 0}
-    - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: _floorManager
       value: 
-      objectReference: {fileID: 1032554670}
-    - target: {fileID: 1574469988401372388, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
-      propertyPath: 'RoomPrototypes.Array.data[5].Templates.Array.data[0]'
-      value: 
-      objectReference: {fileID: -1078256696771541569, guid: 272d84ab6cc626846a7b31a043868c19, type: 3}
+      objectReference: {fileID: 7751117009294981614}
     - target: {fileID: 6651081469251109486, guid: 639a5d692c8a63d4586b3d1be8a1132c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -697,6 +884,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2400816754956820336, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2497544896376151175, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2497544896376151175, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2497544896376151175, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2497544896376151175, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
@@ -924,6 +1127,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4906502547736124066, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906502547736124066, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906502547736124066, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906502547736124066, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4975050900531137396, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -1100,6 +1319,22 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9134120382481591321, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9134120382481591321, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9134120382481591321, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9134120382481591321, guid: fb4bcc4dfb768d7498b2876c1d1c9b0d, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1162,6 +1397,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 67dfa8cbb709d71418806f170668bbfc, type: 3}
+--- !u!114 &7751117009294981614 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5362052257735884656, guid: 67dfa8cbb709d71418806f170668bbfc, type: 3}
+  m_PrefabInstance: {fileID: 7751117009294981613}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b5f35274d18bd44e9cabe004e946aa3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &9196902451757700823
 PrefabInstance:
   m_ObjectHideFlags: 0

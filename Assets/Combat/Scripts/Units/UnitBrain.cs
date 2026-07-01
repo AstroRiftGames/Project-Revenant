@@ -111,9 +111,88 @@ public class UnitBrain : MonoBehaviour
 
     private bool TryEvaluateAndUseSkill()
     {
+        if (_skillCaster != null && _skillCaster.Skill != null && _debugSkillFlow)
+        {
+            Debug.Log($"[UnitBrain Debug Flow] Evaluating skill '{_skillCaster.Skill.DisplayName}' for caster '{FormatDebugIdentity()}'. IsSkillReady: {_skillCaster.IsSkillReady}, Charge: {_skillCaster.CurrentCharge}/{_skillCaster.MaxCharge}", this);
+        }
+
         if (_skillCaster == null || !_skillCaster.IsSkillReady)
         {
             ClearSkillIntent();
+            return false;
+        }
+
+        SkillData skill = _skillCaster.Skill;
+        if (skill != null && skill.PrimaryTargetRequirement == PrimaryTargetRequirement.GroundCell)
+        {
+            RoomGrid roomGrid = _unit.RoomContext != null ? _unit.RoomContext.RoomGrid : null;
+            if (roomGrid != null)
+            {
+                Vector3Int casterCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, _unit);
+                Unit referenceTarget = _basicActionTargetUnit != null ? _basicActionTargetUnit : _unit;
+                Vector3Int referenceCell = GridUnitCellUtility.ResolveUnitCell(roomGrid, referenceTarget);
+                int rangeVal = _skillCaster.GetSkillRange();
+
+                Vector3Int bestCell = Vector3Int.zero;
+                float minDistance = float.MaxValue;
+                bool cellFound = false;
+
+                if (_debugSkillFlow)
+                {
+                    Debug.Log($"[UnitBrain Debug Flow] GroundCell skill '{skill.DisplayName}' evaluated for {FormatDebugIdentity()}. " +
+                              $"CasterCell: {casterCell}, RefTarget: {FormatUnitIdentity(referenceTarget)}, RefCell: {referenceCell}", this);
+                }
+
+                for (int x = -rangeVal; x <= rangeVal; x++)
+                {
+                    for (int y = -rangeVal; y <= rangeVal; y++)
+                    {
+                        Vector3Int candidateCell = casterCell + new Vector3Int(x, y, 0);
+
+                        if (!GridNavigationUtility.IsWithinCellRange(casterCell, candidateCell, rangeVal))
+                            continue;
+
+                        if (!roomGrid.HasCell(candidateCell) || 
+                            !roomGrid.IsCellInsideWalkableBounds(candidateCell) || 
+                            roomGrid.IsCellHardBlocked(candidateCell))
+                            continue;
+
+                        if (roomGrid.OccupancyService != null && 
+                            !roomGrid.OccupancyService.IsCellFreeForPlacement(candidateCell))
+                            continue;
+
+                        float dist = GridNavigationUtility.GetCellDistance(referenceCell, candidateCell);
+                        if (dist < minDistance)
+                        {
+                            minDistance = dist;
+                            bestCell = candidateCell;
+                            cellFound = true;
+                        }
+                    }
+                }
+
+                if (!cellFound)
+                {
+                    if (_debugSkillFlow)
+                    {
+                        Debug.Log($"[UnitBrain Debug Flow] GroundCell skill '{skill.DisplayName}' aborted for {FormatDebugIdentity()}: no valid/walkable/unoccupied cells found in range ({rangeVal}).", this);
+                    }
+                    return false;
+                }
+
+                Vector2Int targetCell2D = new Vector2Int(bestCell.x, bestCell.y);
+                bool castResult = _skillCaster.TryUseGroundCell(targetCell2D);
+                if (_debugSkillFlow)
+                {
+                    Debug.Log($"[UnitBrain Debug Flow] TryUseGroundCell for '{skill.DisplayName}' at {targetCell2D} result: {castResult}", this);
+                }
+
+                if (castResult)
+                {
+                    ClearSkillIntent();
+                    return true;
+                }
+            }
             return false;
         }
 

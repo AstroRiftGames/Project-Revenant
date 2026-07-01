@@ -17,19 +17,19 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     private const int DefaultBodyImpactSortingOffset = 24;
     private static readonly Color DefaultBodyImpactColor = new Color(1f, 0.42f, 0.12f, 0.95f);
 
-    private const float DefaultSummonLifetime = 1.25f;
-    private const float DefaultSummonRadius = 0.55f;
+    private const float DefaultSummonLifetime = 1.35f;
+    private const float DefaultSummonRadius = 0.50f;
     private const float DefaultSummonGroundVerticalScale = 0.50f;
-    private const float DefaultSummonRingWidth = 0.065f;
+    private const float DefaultSummonRingWidth = 0.06f;
     private const int DefaultSummonRingSegmentCount = 24;
     private const int DefaultSummonRuneMarkCount = 6;
-    private const int DefaultSummonParticleCount = 10;
+    private const int DefaultSummonParticleCount = 14;
     private const float DefaultSummonParticleSize = 0.055f;
-    private const float DefaultSummonRiseAmount = 0.42f;
-    private const float DefaultSummonColumnHeight = 0.75f;
+    private const float DefaultSummonRiseAmount = 0.55f;
+    private const float DefaultSummonColumnHeight = 0.80f;
     private const float DefaultSummonPulseSpeed = 2.4f;
-    private static readonly Color DefaultSummonColor = new Color(0.55f, 0.25f, 0.95f, 0.85f);
-    private static readonly Color DefaultSummonCoreColor = new Color(0.85f, 0.70f, 1.0f, 0.75f);
+    private static readonly Color DefaultSummonColor = new Color(0.55f, 0.25f, 0.95f, 0.95f);
+    private static readonly Color DefaultSummonCoreColor = new Color(0.85f, 0.70f, 1.0f, 0.90f);
     private const int DefaultSummonSortingOffset = 45;
     private const int DefaultSummonGroundSortingOffset = 8;
     private const int DefaultSummonVerticalSortingOffset = 55;
@@ -129,20 +129,31 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         if (_activeInstance != null && _activeInstance != this)
         {
             SkillCaster.AnySkillEffectsAppliedForVisuals -= _activeInstance.HandleSkillEffectsApplied;
+            SkillCompositionExecutor.SummonSpawnedForVisuals -= _activeInstance.HandleSummonSpawned;
             Debug.LogWarning("[SkillImpactPlaceholderPresenter] Replacing an already active presenter instance. Disable duplicate presenters to avoid ambiguous debug VFX tuning.", this);
         }
 
         _activeInstance = this;
         SkillCaster.AnySkillEffectsAppliedForVisuals -= HandleSkillEffectsApplied;
         SkillCaster.AnySkillEffectsAppliedForVisuals += HandleSkillEffectsApplied;
+
+        SkillCompositionExecutor.SummonSpawnedForVisuals -= HandleSummonSpawned;
+        SkillCompositionExecutor.SummonSpawnedForVisuals += HandleSummonSpawned;
+
+        Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnEnable subscribed to SummonSpawnedForVisuals");
     }
 
     private void OnDisable()
     {
         SkillCaster.AnySkillEffectsAppliedForVisuals -= HandleSkillEffectsApplied;
+        SkillCompositionExecutor.SummonSpawnedForVisuals -= HandleSummonSpawned;
         if (_activeInstance == this)
             _activeInstance = null;
+
+        Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnDisable unsubscribed from SummonSpawnedForVisuals");
     }
+
+
 
 #if UNITY_EDITOR
     private void OnValidate()
@@ -524,20 +535,48 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
 
         // 2. Process spatial summon impact (only once per skill resolution)
-        if (skill.CompositionEffects != null)
-        {
-            for (int j = 0; j < skill.CompositionEffects.Length; j++)
-            {
-                SkillCompositionEffect effect = skill.CompositionEffects[j];
-                if (effect.EffectKind == SkillEffectKind.Summon)
-                {
-                    CreateSummonVisual(skill, context, impacts);
-                }
-            }
-        }
+        // Bypassed for runtime: handled via SummonSpawnedForVisuals to target final actual spawn cell.
 
         // 3. Process origin tracer visuals (Phase 3B)
         CreateTracers(skill, context, impacts);
+    }
+
+    private void HandleSummonSpawned(Unit caster, Unit summonedUnit, Vector3Int spawnCell, Vector3 spawnPosition)
+    {
+        if (float.IsNaN(spawnPosition.x) || float.IsNaN(spawnPosition.y) || float.IsNaN(spawnPosition.z))
+        {
+            Debug.LogWarning("[SkillImpactPlaceholderPresenter] Summon visual ignored due to invalid spawnPosition containing NaN values.");
+            return;
+        }
+
+        string casterName = caster != null ? caster.name : "Null";
+        string summonedUnitName = summonedUnit != null ? summonedUnit.name : "Null";
+
+        Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned received event. Caster: {casterName}, SummonedUnit: {summonedUnitName}, SpawnCell: {spawnCell}, SpawnPosition: {spawnPosition}");
+
+        GameObject rootObj = CreateSummonImpact(spawnPosition);
+
+        if (rootObj != null)
+        {
+            Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned: root created name: '{rootObj.name}' at position: {rootObj.transform.position}");
+            if (summonedUnit != null)
+            {
+                SpriteRenderer sr = summonedUnit.GetComponentInChildren<SpriteRenderer>();
+                if (sr != null)
+                {
+                    SummonImpactBehavior behavior = rootObj.GetComponent<SummonImpactBehavior>();
+                    if (behavior != null)
+                    {
+                        behavior.SetGroundSorting(sr.sortingLayerName, sr.sortingOrder - 2);
+                        behavior.SetVerticalSorting(sr.sortingLayerName, sr.sortingOrder + 10);
+                    }
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned failed: root created was null.");
+        }
     }
 
     private static Material GetSharedMaterial()
@@ -1160,7 +1199,14 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         LineRenderer firstRing = behavior.FirstRingRenderer;
         string firstRingLayer = firstRing != null ? firstRing.sortingLayerName : "<missing>";
         int firstRingOrder = firstRing != null ? firstRing.sortingOrder : int.MinValue;
-        Debug.Log($"[SkillImpactPlaceholderPresenter] CreateSummonImpact intendedSpawnWorldPosition={worldPosition}, rootName={rootObj.name}, rootWorldPosition={rootObj.transform.position}, radius={tuning.radius}, lifetime={tuning.lifetime}, ringSegments={tuning.ringSegmentCount}, runeMarks={tuning.runeMarkCount}, particles={tuning.particleCount}, sortingSource={sortingSource}, firstRingLayer={firstRingLayer}, firstRingOrder={firstRingOrder}, verticalSortingOrder={verticalSortingOrder}", this);
+        Material sharedMat = GetSharedMaterial();
+        string matName = sharedMat != null ? sharedMat.name : "Null";
+        Debug.Log($"[SkillImpactPlaceholderPresenter Debug] CreateSummonImpact: root created='{rootObj.name}' at {rootObj.transform.position}, " +
+                  $"child count={rootObj.transform.childCount}, " +
+                  $"ring positionCount={(firstRing != null ? firstRing.positionCount : 0)}, " +
+                  $"ring sortingLayerName={firstRingLayer}, ring sortingOrder={firstRingOrder}, " +
+                  $"vertical sortingLayerName={sortingLayerName}, vertical sortingOrder={verticalSortingOrder}, " +
+                  $"material name={matName}, lifetime={tuning.lifetime}", this);
 
         return rootObj;
     }
@@ -1303,6 +1349,47 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             CreateColumns(material);
             CreateDebugVisibilityProbe(material);
             UpdateVisuals(0.05f);
+        }
+
+        public void SetGroundSorting(string layerName, int order)
+        {
+            _sortingLayerName = layerName;
+            _groundSortingOrder = order;
+            for (int i = 0; i < _groundLines.Count; i++)
+            {
+                if (_groundLines[i] != null)
+                {
+                    _groundLines[i].sortingLayerName = layerName;
+                    _groundLines[i].sortingOrder = order + i;
+                }
+            }
+        }
+
+        public void SetVerticalSorting(string layerName, int order)
+        {
+            _sortingLayerName = layerName;
+            _verticalSortingOrder = order;
+            for (int i = 0; i < _particles.Count; i++)
+            {
+                if (_particles[i] != null)
+                {
+                    _particles[i].sortingLayerName = layerName;
+                    _particles[i].sortingOrder = order + 4;
+                }
+            }
+            for (int i = 0; i < _columns.Count; i++)
+            {
+                if (_columns[i] != null)
+                {
+                    _columns[i].sortingLayerName = layerName;
+                    _columns[i].sortingOrder = order + 3;
+                }
+            }
+            if (_debugProbe != null)
+            {
+                _debugProbe.sortingLayerName = layerName;
+                _debugProbe.sortingOrder = order + 12;
+            }
         }
 
         private void CreateGroundRing(Material material)
@@ -1450,9 +1537,9 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 
         private void UpdateVisuals(float progress)
         {
-            float fadeIn = Mathf.Clamp01(progress / 0.18f);
+            float fadeIn = Mathf.Clamp01(progress / 0.12f);
             float fadeOut = 1f - Mathf.Clamp01((progress - 0.68f) / 0.32f);
-            float alpha = Mathf.Max(0.25f, fadeIn * fadeOut);
+            float alpha = Mathf.Max(0.40f * fadeOut, fadeIn * fadeOut);
             float pulse = 1f + Mathf.Sin(progress * Mathf.PI * 2f * _tuning.pulseSpeed) * 0.08f;
 
             Color ritualColor = _tuning.color;

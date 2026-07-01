@@ -362,17 +362,55 @@ public class SkillCaster : MonoBehaviour
         if (skill == null)
             return FailSkillUse(SkillUseFailureReason.NoSkillAssigned, "no skill assigned.");
 
+        if (_debugLogs)
+        {
+            Debug.Log($"[SkillCaster Debug] {FormatOwnerIdentity()} TryUseInternal reached. " +
+                      $"Skill: '{skill.DisplayName}', " +
+                      $"PrimaryTargetRequirement: {skill.PrimaryTargetRequirement}, " +
+                      $"TargetSelectionMode: {skill.TargetSelectionMode}, " +
+                      $"TargetFallbackMode: {skill.TargetFallbackMode}, " +
+                      $"CombatTarget (PrimaryTarget candidate): {FormatUnitName(combatTarget)}, " +
+                      $"TargetCell: {(hasTargetCell ? targetCell.ToString() : "None")}, " +
+                      $"IsSkillReady: {IsSkillReady}", this);
+        }
+
         if (!CanStartCast(skill))
+        {
+            if (_debugLogs)
+            {
+                Debug.Log($"[SkillCaster Debug] {FormatOwnerIdentity()} CanStartCast failed for '{skill.DisplayName}'. Reason: {LastFailureReason} - {LastFailureDetail}", this);
+            }
             return false;
+        }
 
         if (!TryBuildSkillContext(skill, combatTarget, targetCell, hasTargetCell, out SkillContext skillContext))
         {
             string buildError = BuildContextBuildRejectionReason(skill, combatTarget);
+            if (_debugLogs)
+            {
+                Debug.Log($"[SkillCaster Debug] {FormatOwnerIdentity()} BuildContext failed for '{skill.DisplayName}'. Reason: {buildError}", this);
+            }
             return FailSkillUse(SkillUseFailureReason.ContextInvalid, buildError);
         }
 
+        bool isPrimaryTargetValid = skillContext != null && skillContext.HasPrimaryTarget && CanUseUnitAsPrimaryTarget(skill, skillContext.PrimaryTarget);
+        bool isTargetCellValid = skillContext != null && skillContext.HasTargetCell && IsValidGroundTargetCell(skillContext, false);
+
+        if (_debugLogs && skillContext != null)
+        {
+            Debug.Log($"[SkillCaster Debug] Context Built: " +
+                      $"PrimaryTarget: {(skillContext.HasPrimaryTarget ? FormatUnitName(skillContext.PrimaryTarget) : "None")} (Valid: {isPrimaryTargetValid}), " +
+                      $"TargetCell: {(skillContext.HasTargetCell ? skillContext.TargetCell.ToString() : "None")} (Valid: {isTargetCellValid})", this);
+        }
+
         if (!TryValidateSkillContext(skillContext))
+        {
+            if (_debugLogs)
+            {
+                Debug.Log($"[SkillCaster Debug] {FormatOwnerIdentity()} ValidateContext failed for '{skill.DisplayName}'. Reason: {LastFailureReason} - {LastFailureDetail}", this);
+            }
             return false;
+        }
 
         if (!IsSkillContextInRange(skillContext))
         {

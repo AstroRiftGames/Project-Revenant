@@ -44,12 +44,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b853376bb3f8151428e5aed0d71c8c7f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Seed: -579608436
+  Seed: -1844454601
   FloorNumber: 1
   MinRooms: 10
   MaxRooms: 13
   UseRandomSeed: 1
-  TileWorldSize: 1
+  FloorOffsetDistance: 500
   RoomPrototypes:
   - Type: 0
     Templates:
@@ -68,7 +68,7 @@ MonoBehaviour:
     - {fileID: -1078256696771541569, guid: 97d78f489f64b2d4e8d652fa0bf502e2, type: 3}
   - Type: 5
     Templates:
-    - {fileID: -1078256696771541569, guid: e11913508e6338044b99aa6222b96923, type: 3}
+    - {fileID: -1078256696771541569, guid: 272d84ab6cc626846a7b31a043868c19, type: 3}
   - Type: 6
     Templates:
     - {fileID: -1078256696771541569, guid: 89afb1a2c42fb8d4f939b39850e66900, type: 3}

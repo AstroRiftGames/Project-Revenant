@@ -5,6 +5,8 @@ public static class SkillCompositionExecutor
 {
     private const string LogTag = "[SkillCompositionExecutor]";
 
+    public static event System.Action<Unit, Unit, Vector3Int, Vector3> SummonSpawnedForVisuals;
+
     // ============================================================
     // PUBLIC ENTRY POINTS
     // ============================================================
@@ -310,6 +312,8 @@ public static class SkillCompositionExecutor
         if (summonedUnitData == null || summonedUnitData.unitPrefab == null)
             return false;
 
+        Debug.Log($"[SkillCompositionExecutor Debug] ExecuteSummon reached. Caster: {caster.name}, Skill: {skill.DisplayName}, SummonedUnit: {summonedUnitData.name}");
+
         RoomContext roomContext = ResolveRoomContext(context, caster);
         RoomGrid grid = roomContext != null ? roomContext.RoomGrid : null;
         if (roomContext == null || grid == null)
@@ -357,6 +361,8 @@ public static class SkillCompositionExecutor
         {
             summonedUnit.SnapToGrid();
         }
+
+        SummonSpawnedForVisuals?.Invoke(caster, summonedUnit, spawnCell, spawnPosition);
 
         return true;
     }
