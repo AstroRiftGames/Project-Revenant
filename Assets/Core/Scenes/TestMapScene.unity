@@ -647,6 +647,7 @@ GameObject:
   - component: {fileID: 3000000003}
   - component: {fileID: 3000000004}
   - component: {fileID: 3000000005}
+  - component: {fileID: 3000000006}
   m_Layer: 0
   m_Name: CombatDebugVisuals
   m_TagString: Untagged
@@ -753,6 +754,22 @@ MonoBehaviour:
   pulseSpeed: 4
   color: {r: 1, g: 0.85, b: 0.18, a: 0.85}
   sortingOffset: 28
+--- !u!114 &3000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2b9e2b9e2b9e2b9e2b9e2b9e2b9e2b9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _recruitmentVfxPrefab: {fileID: 100000, guid: f1a8e1a8e1a8e1a8e1a8e1a8e1a8e101, type: 3}
+  _essenceConsumeVfxPrefab: {fileID: 100000, guid: f1a8e1a8e1a8e1a8e1a8e1a8e1a8e102, type: 3}
+  _vfxLifetimeSeconds: 1.2
+  _enableDebugLogs: 1
 --- !u!1839735485 &3000000010 stripped
 Tilemap:
   m_CorrespondingSourceObject: {fileID: 3184769969460405456, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}

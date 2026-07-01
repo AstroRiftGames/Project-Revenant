@@ -384,6 +384,7 @@ GameObject:
   - component: {fileID: 1013076128}
   - component: {fileID: 1013076130}
   - component: {fileID: 1013076131}
+  - component: {fileID: 1013076132}
   m_Layer: 0
   m_Name: CombatDebugVisuals
   m_TagString: Untagged
@@ -650,6 +651,22 @@ MonoBehaviour:
   debuffColor: {r: 0.34, g: 0.12, b: 0.55, a: 0.85}
   debuffCoreColor: {r: 0.55, g: 0.38, b: 0.75, a: 0.6}
   debuffSortingOffset: 26
+--- !u!114 &1013076132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013076127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2b9e2b9e2b9e2b9e2b9e2b9e2b9e2b9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _recruitmentVfxPrefab: {fileID: 100000, guid: f1a8e1a8e1a8e1a8e1a8e1a8e1a8e101, type: 3}
+  _essenceConsumeVfxPrefab: {fileID: 100000, guid: f1a8e1a8e1a8e1a8e1a8e1a8e1a8e102, type: 3}
+  _vfxLifetimeSeconds: 1.2
+  _enableDebugLogs: 1
 --- !u!1001 &1131841152
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -2,6 +2,26 @@ using Core.Audio;
 using Core.Audio.Data;
 using UnityEngine;
 
+public readonly struct CorpseInteractionVfxContext
+{
+    public readonly Vector3 CorpsePosition;
+    public readonly Vector3 NecromancerPosition;
+    public readonly Sprite CorpseSprite;
+    public readonly Vector3 CorpseScale;
+    public readonly int SortingLayerId;
+    public readonly int SortingOrder;
+
+    public CorpseInteractionVfxContext(Vector3 corpsePosition, Vector3 necromancerPosition, Sprite corpseSprite, Vector3 corpseScale, int sortingLayerId, int sortingOrder)
+    {
+        CorpsePosition = corpsePosition;
+        NecromancerPosition = necromancerPosition;
+        CorpseSprite = corpseSprite;
+        CorpseScale = corpseScale;
+        SortingLayerId = sortingLayerId;
+        SortingOrder = sortingOrder;
+    }
+}
+
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Unit))]
 [RequireComponent(typeof(RecruitableUnitState))]
@@ -10,6 +30,9 @@ using UnityEngine;
 [RequireComponent(typeof(PartyMemberLink))]
 public class RecruitableCorpseHandler : MonoBehaviour
 {
+    public static event System.Action<CorpseInteractionVfxContext> AnyCorpseRecruited;
+    public static event System.Action<CorpseInteractionVfxContext> AnyCorpseEssenceAbsorbed;
+
     [SerializeField] private int _minimumRecruitHealth = 1;
 
     private Unit _unit;
@@ -42,6 +65,25 @@ public class RecruitableCorpseHandler : MonoBehaviour
         _state.OnStateChanged -= HandleStateChanged;
     }
 
+    private CorpseInteractionVfxContext GatherVfxContext()
+    {
+        Vector3 corpsePos = transform.position;
+        Vector3 necromancerPos = corpsePos;
+        var necro = NecromancerReferenceUtility.Resolve(null);
+        if (necro != null)
+        {
+            necromancerPos = necro.transform.position;
+        }
+
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        Sprite corpseSprite = sr != null ? sr.sprite : null;
+        Vector3 scale = sr != null ? sr.transform.lossyScale : transform.lossyScale;
+        int sortingLayerId = sr != null ? sr.sortingLayerID : 0;
+        int sortingOrder = sr != null ? sr.sortingOrder : 0;
+
+        return new CorpseInteractionVfxContext(corpsePos, necromancerPos, corpseSprite, scale, sortingLayerId, sortingOrder);
+    }
+
     public bool TryRecruit()
     {
         if (!CanHandleCorpse())
@@ -59,10 +101,15 @@ public class RecruitableCorpseHandler : MonoBehaviour
         }
 
         AudioService.TryPlayClipFromSet(unitData?.AudioSet, "Recruitment", _unit.transform.position);
+
+        CorpseInteractionVfxContext vfxContext = GatherVfxContext();
+
         ReviveRecruitedUnit(member);
         _partyContext ??= NecromancerPartyContext.Current;
         _partyContext?.TrackDeployedUnit(gameObject, member.PartyMemberId);
         _hasHandledCorpse = true;
+
+        AnyCorpseRecruited?.Invoke(vfxContext);
         return true;
     }
 
@@ -86,9 +133,12 @@ public class RecruitableCorpseHandler : MonoBehaviour
 
         AudioService.TryPlayClipFromSet(unitData?.AudioSet, "Soul Absorption", _unit.transform.position);
 
+        CorpseInteractionVfxContext vfxContext = GatherVfxContext();
+
         _soulContext.AwardSouls(soulReward);
         _deathHandler.FinishSoulAbsorb();
         _hasHandledCorpse = true;
+        AnyCorpseEssenceAbsorbed?.Invoke(vfxContext);
         return true;
     }
 
