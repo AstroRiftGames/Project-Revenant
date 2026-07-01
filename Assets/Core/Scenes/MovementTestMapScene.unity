@@ -373,6 +373,9 @@ MonoBehaviour:
   statusLoopPresenter: {fileID: 0}
   testDuration: 1.5
   testDamageAmount: 10
+  _summonDebugUnitPrefab: {fileID: 8606000000000000001, guid: 7c1f91a6d2b54b0cb8e2c6e71f010101, type: 3}
+  summonDebugSpawnDelay: 0.25
+  summonDebugCleanupUnitOnClear: 1
   enableDebugLogs: 0
 --- !u!4 &1037274096
 Transform:
@@ -583,6 +586,18 @@ MonoBehaviour:
   _bodyImpactLineWidthClamp: {x: 0.05, y: 0.09}
   _bodyImpactColor: {r: 1, g: 0.42, b: 0.12, a: 1}
   _bodyImpactSortingOffset: 24
+  _healLifetime: 0.65
+  _healRadiusHeightFactor: 0.26
+  _healRadiusClamp: {x: 0.14, y: 0.34}
+  _healVerticalOffsetHeightFactor: 0.42
+  _healVerticalOffsetClamp: {x: 0.2, y: 0.48}
+  _healParticleCount: 8
+  _healParticleSize: 0.045
+  _healRiseAmount: 0.28
+  _healPulseWidth: 0.04
+  _healColor: {r: 0.45, g: 1, b: 0.65, a: 0.85}
+  _healCoreColor: {r: 0.9, g: 1, b: 0.85, a: 0.9}
+  _healSortingOffset: 29
   _aoeLifetime: 0.55
   _aoeRadius: 2.5
   _aoeFillAlpha: 0.12
@@ -595,6 +610,40 @@ MonoBehaviour:
   _aoeColor: {r: 1, g: 0.28, b: 0.18, a: 0.75}
   _aoeSortingOffset: 8
   _aoeGroundVerticalScale: 0.5
+  _knockbackLifetime: 0.45
+  _knockbackRadiusHeightFactor: 0.22
+  _knockbackRadiusClamp: {x: 0.12, y: 0.3}
+  _knockbackVerticalOffsetHeightFactor: 0.42
+  _knockbackVerticalOffsetClamp: {x: 0.18, y: 0.48}
+  _knockbackForceLineCount: 5
+  _knockbackForceLineLength: 0.42
+  _knockbackForceLineWidth: 0.035
+  _knockbackDustCount: 6
+  _knockbackDustSize: 0.045
+  _knockbackDustSpread: 0.22
+  _knockbackArrowLength: 0.38
+  _knockbackArrowWidth: 0.05
+  _knockbackColor: {r: 0.95, g: 0.9, b: 0.72, a: 0.85}
+  _knockbackDustColor: {r: 0.7, g: 0.6, b: 0.48, a: 0.65}
+  _knockbackSortingOffset: 28
+  _knockbackDustVerticalOffsetHeightFactor: 0.12
+  _knockbackDustVerticalOffsetClamp: {x: 0.02, y: 0.18}
+  _summonLifetime: 1.25
+  _summonRadius: 0.55
+  _summonGroundVerticalScale: 0.5
+  _summonRingWidth: 0.065
+  _summonRingSegmentCount: 24
+  _summonRuneMarkCount: 6
+  _summonParticleCount: 10
+  _summonParticleSize: 0.055
+  _summonRiseAmount: 0.42
+  _summonColumnHeight: 0.75
+  _summonPulseSpeed: 2.4
+  _summonColor: {r: 0.55, g: 0.25, b: 0.95, a: 0.85}
+  _summonCoreColor: {r: 0.85, g: 0.7, b: 1, a: 0.75}
+  _summonSortingOffset: 45
+  _summonGroundSortingOffset: 8
+  _summonVerticalSortingOffset: 55
 --- !u!114 &3000000005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -641,6 +690,74 @@ MonoBehaviour:
   poisonDriftAmount: 0.035
   poisonColor: {r: 0, g: 0.44705883, b: 0.11372549, a: 0.9137255}
   poisonSortingOffset: 26
+  tauntRadiusHeightFactor: 0.24
+  tauntRadiusClamp: {x: 0.14, y: 0.34}
+  tauntVerticalOffsetHeightFactor: 0.64
+  tauntVerticalOffsetClamp: {x: 0.24, y: 0.64}
+  tauntMarkCount: 3
+  tauntMarkSize: 0.11
+  tauntPulseSpeed: 4
+  tauntRotationSpeed: 45
+  tauntColor: {r: 1, g: 0.16, b: 0.1, a: 0.95}
+  tauntSortingOffset: 30
+  tauntShowDirectionCue: 1
+  tauntDirectionCueLength: 0.48
+  tauntDirectionCueWidth: 0.05
+  burnRadiusHeightFactor: 0.22
+  burnRadiusClamp: {x: 0.12, y: 0.3}
+  burnVerticalOffsetHeightFactor: 0.28
+  burnVerticalOffsetClamp: {x: 0.1, y: 0.34}
+  burnFlameCount: 5
+  burnFlameSize: 0.06
+  burnFlickerSpeed: 5
+  burnFlickerAmount: 0.035
+  burnHeatWaveAmount: 0.025
+  burnColor: {r: 1, g: 0.34, b: 0.06, a: 0.85}
+  burnCoreColor: {r: 1, g: 0.85, b: 0.18, a: 0.75}
+  burnSortingOffset: 27
+  burnStackIntensity: 1
+  shieldRadiusHeightFactor: 0.34
+  shieldRadiusClamp: {x: 0.18, y: 0.46}
+  shieldVerticalOffsetHeightFactor: 0.42
+  shieldVerticalOffsetClamp: {x: 0.2, y: 0.5}
+  shieldPanelCount: 4
+  shieldPanelCoverage: 0.55
+  shieldLineWidth: 0.045
+  shieldPulseSpeed: 1.6
+  shieldPulseAmount: 0.06
+  shieldColor: {r: 0.35, g: 0.85, b: 1, a: 0.7}
+  shieldCoreColor: {r: 0.85, g: 1, b: 1, a: 0.45}
+  shieldSortingOffset: 25
+  shieldShowInnerPulse: 1
+  buffRadiusHeightFactor: 0.26
+  buffRadiusClamp: {x: 0.14, y: 0.34}
+  buffVerticalOffsetHeightFactor: 0.4
+  buffVerticalOffsetClamp: {x: 0.18, y: 0.48}
+  buffChevronCount: 3
+  buffChevronSize: 0.075
+  buffParticleCount: 5
+  buffParticleSize: 0.04
+  buffRiseAmount: 0.22
+  buffPulseSpeed: 2
+  buffPulseAmount: 0.06
+  buffColor: {r: 0.75, g: 0.55, b: 1, a: 0.8}
+  buffCoreColor: {r: 0.95, g: 0.85, b: 1, a: 0.7}
+  buffSortingOffset: 26
+  debuffRadiusHeightFactor: 0.27
+  debuffRadiusClamp: {x: 0.14, y: 0.35}
+  debuffVerticalOffsetHeightFactor: 0.44
+  debuffVerticalOffsetClamp: {x: 0.2, y: 0.52}
+  debuffChevronCount: 3
+  debuffChevronSize: 0.075
+  debuffParticleCount: 6
+  debuffParticleSize: 0.04
+  debuffFallAmount: 0.24
+  debuffPulseSpeed: 1.7
+  debuffPulseAmount: 0.07
+  debuffWobbleAmount: 0.025
+  debuffColor: {r: 0.34, g: 0.12, b: 0.55, a: 0.85}
+  debuffCoreColor: {r: 0.55, g: 0.38, b: 0.75, a: 0.6}
+  debuffSortingOffset: 26
 --- !u!1839735485 &3000000010 stripped
 Tilemap:
   m_CorrespondingSourceObject: {fileID: 3184769969460405456, guid: 835dd55df05eda346b35dc6ad7f4f130, type: 3}

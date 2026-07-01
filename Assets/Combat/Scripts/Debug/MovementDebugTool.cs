@@ -1072,7 +1072,7 @@ public class MovementDebugTool : MonoBehaviour
         }
 
         lastScenarioRun = "7: Taunt Multi Enemy Layout";
-        expectedBehaviorText = "Layout setup for visual Taunt loop verification. Use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Multi Enemy. The target should show a red nervous Chevron effect pointing towards the source ally, while distractors remain clean.";
+        expectedBehaviorText = "Layout setup for visual Taunt loop verification. Use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Area. The target should show a red nervous Chevron effect pointing towards the source ally, while distractors remain clean.";
         lastScenarioNeedsCombatStart = false;
 
         LogScenarioEnd("Scenario 7 (Taunt Multi Enemy Layout)", 3, "1 Ally, 2+ Enemies", needsCombatStart: false);
@@ -1279,7 +1279,7 @@ public class MovementDebugToolEditor : Editor
 
             DrawScenarioSection("Scenario 7: Taunt Multi Enemy Layout",
                 "Spawn & Setup creates a layout with one Ally (Source) and two or three Enemy units (Target and Distractors) positioned side-by-side to visually verify Taunt redirection.\n" +
-                "• Flow: Click Spawn & Setup to create layout. Then use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Multi Enemy to trigger VFX.\n" +
+                "• Flow: Click Spawn & Setup to create layout. Then use CombatVfxContextMenuTester > Test Effect Taunt or Test Effect Taunt Area to trigger VFX.\n" +
                 "• Expect: The target unit displays the chevron Taunt VFX pointing towards the Ally Source, and distractors remain clean.",
                 tool.SetupScenario7);
 

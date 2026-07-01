@@ -70,7 +70,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Slow loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         if (!InjectStatusEffect(target, SkillEffectKind.Slow))
             return;
@@ -93,7 +93,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Stun loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         if (!InjectStatusEffect(target, SkillEffectKind.Stun))
             return;
@@ -116,7 +116,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Poison loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -136,7 +136,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Burn loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -156,7 +156,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Burn Stacks loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -176,7 +176,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Shield loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -196,7 +196,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Buff loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -216,7 +216,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Debuff loop on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -249,7 +249,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Taunt loop on '{target.name}' with source '{(caster != null ? caster.name : "None")}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -353,7 +353,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             Debug.Log($"  - Affected Unit: {affected.name}, FocusTarget passed: {hasSource} ({focusTarget.name})", this);
         }
 
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         StatusLoopPlaceholderPresenter presenter = GetActiveStatusLoopPresenter();
         if (presenter == null)
@@ -371,11 +371,11 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         ScheduleCleanup();
     }
 
-    [ContextMenu("Clear Status Loop VFX")]
-    private void ClearStatusLoopVfx()
+    [ContextMenu("Clear Debug VFX")]
+    private void ClearDebugVfx()
     {
-        Debug.Log("[CombatVfxContextMenuTester] Clearing status loop test VFX.", this);
-        ClearStatusLoopVfxInternal();
+        Debug.Log("[CombatVfxContextMenuTester] Clearing debug test VFX.", this);
+        ClearDebugVfxInternal();
     }
 
     [ContextMenu("Test Basic Melee Hit Impact")]
@@ -585,7 +585,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Heal on '{target.name}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
         {
@@ -610,7 +610,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Knockback on '{target.name}' with caster '{(caster != null ? caster.name : "None")}'.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
         {
@@ -644,7 +644,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
 
         Debug.Log($"[CombatVfxContextMenuTester] Testing Effect Knockback Reverse on '{target.name}' in direction {reverseDir}.", this);
-        ClearStatusLoopVfxInternal();
+        ClearDebugVfxInternal();
 
         if (!SkillImpactPlaceholderPresenter.TryGetActiveInstance(out SkillImpactPlaceholderPresenter presenter))
         {
@@ -670,6 +670,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
 
         Debug.Log($"[CombatVfxContextMenuTester] Test Effect Summon optionalWorldPointUsed={usedOptionalWorldPoint}, targetFallbackUsed={usedTargetFallback}, resolvedWorldPosition={worldPosition}, positionSource={positionSource}, activePresenter='{presenter.name}'.", this);
         ClearSpawnedTestVfxInternal();
+        ClearSummonDebugUnitsInternal();
         SpawnTracked("SummonImpact", () => presenter.CreateSummonImpact(worldPosition));
         Debug.Log($"[CombatVfxContextMenuTester] Test Effect Summon registeredRoots={_spawnedRoots.Count}. Cleanup will run after {Mathf.Max(0.15f, testDuration)} seconds in Play Mode.", this);
         ScheduleCleanup();
@@ -694,6 +695,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
             return;
 
         ClearSpawnedTestVfxInternal();
+        ClearSummonDebugUnitsInternal();
 
         GameObject vfxRoot = null;
         SpawnTracked("SummonImpact", () => vfxRoot = presenter.CreateSummonImpact(spawnWorldPosition));
@@ -1326,10 +1328,11 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         controller.SetBaseState(UnitVisualMaterialState.Normal);
     }
 
-    private void ClearStatusLoopVfxInternal()
+    private void ClearDebugVfxInternal()
     {
         ClearInjectedStatuses();
-        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_TauntLoop_Area", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop", "TEST_VFX_KnockbackImpact", "TEST_VFX_SummonImpact");
+        ClearSummonDebugUnitsInternal();
+        DestroyNamedTestObjects("TEST_VFX_SlowLoop", "TEST_VFX_StunLoop", "TEST_VFX_PoisonLoop", "TEST_VFX_TauntLoop", "TEST_VFX_BurnLoop", "TEST_VFX_BurnLoop_Stacks", "TEST_VFX_HealImpact", "TEST_VFX_ShieldLoop", "TEST_VFX_KnockbackImpact", "TEST_VFX_SummonImpact");
     }
 
     private void ClearSpawnedTestVfxInternal()
@@ -1354,6 +1357,7 @@ public sealed class CombatVfxContextMenuTester : MonoBehaviour
         }
 
         ClearSpawnedTestVfxInternal();
+        ClearSummonDebugUnitsInternal();
         ClearInjectedStatuses();
         ResetVisualControllers();
         ClearTemporaryObjects();
