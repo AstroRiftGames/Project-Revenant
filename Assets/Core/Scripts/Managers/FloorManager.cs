@@ -43,8 +43,14 @@ public class FloorManager : MonoBehaviour
         nextRoom.SetActive(true);
         _currentRoom = nextRoom;
 
+        // Instead of deactivating the previous room entirely (which hides visuals),
+        // we call ExitRoom() to disable only gameplay components while keeping
+        // the room visible (tilemaps, sprites, etc. remain rendered).
         if (previousRoom != null && previousRoom != nextRoom)
-            previousRoom.SetActive(false);
+        {
+            if (previousRoom.TryGetComponent(out RoomContext previousRoomContext))
+                previousRoomContext.ExitRoom();
+        }
 
         if (nextRoom.TryGetComponent(out RoomContext roomContext))
             roomContext.EnterRoom();
