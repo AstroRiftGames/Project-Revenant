@@ -111,6 +111,11 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
     [SerializeField] private int _summonGroundSortingOffset = DefaultSummonGroundSortingOffset;
     [SerializeField] private int _summonVerticalSortingOffset = DefaultSummonVerticalSortingOffset;
 
+    [Header("Debug Settings")]
+    [SerializeField] private bool _enableDebugLogs = false;
+
+    public bool EnableDebugLogs => _enableDebugLogs;
+
     private static SkillImpactPlaceholderPresenter _activeInstance;
     private static Material _sharedMaterial;
     private static readonly bool EnableTracerLogs = false;
@@ -140,7 +145,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         SkillCompositionExecutor.SummonSpawnedForVisuals -= HandleSummonSpawned;
         SkillCompositionExecutor.SummonSpawnedForVisuals += HandleSummonSpawned;
 
-        Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnEnable subscribed to SummonSpawnedForVisuals");
+        if (_enableDebugLogs)
+            Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnEnable subscribed to SummonSpawnedForVisuals");
     }
 
     private void OnDisable()
@@ -150,7 +156,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         if (_activeInstance == this)
             _activeInstance = null;
 
-        Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnDisable unsubscribed from SummonSpawnedForVisuals");
+        if (_enableDebugLogs)
+            Debug.Log("[SkillImpactPlaceholderPresenter Debug] SkillImpactPlaceholderPresenter.OnDisable unsubscribed from SummonSpawnedForVisuals");
     }
 
 
@@ -552,13 +559,15 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         string casterName = caster != null ? caster.name : "Null";
         string summonedUnitName = summonedUnit != null ? summonedUnit.name : "Null";
 
-        Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned received event. Caster: {casterName}, SummonedUnit: {summonedUnitName}, SpawnCell: {spawnCell}, SpawnPosition: {spawnPosition}");
+        if (_enableDebugLogs)
+            Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned received event. Caster: {casterName}, SummonedUnit: {summonedUnitName}, SpawnCell: {spawnCell}, SpawnPosition: {spawnPosition}");
 
         GameObject rootObj = CreateSummonImpact(spawnPosition);
 
         if (rootObj != null)
         {
-            Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned: root created name: '{rootObj.name}' at position: {rootObj.transform.position}");
+            if (_enableDebugLogs)
+                Debug.Log($"[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned: root created name: '{rootObj.name}' at position: {rootObj.transform.position}");
             if (summonedUnit != null)
             {
                 SpriteRenderer sr = summonedUnit.GetComponentInChildren<SpriteRenderer>();
@@ -575,7 +584,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         }
         else
         {
-            Debug.Log("[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned failed: root created was null.");
+            if (_enableDebugLogs)
+                Debug.Log("[SkillImpactPlaceholderPresenter Debug] HandleSummonSpawned failed: root created was null.");
         }
     }
 
@@ -847,7 +857,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             null
         );
 
-        Debug.Log($"[SkillImpactPlaceholderPresenter] CreateAoeGroundImpact called: center={center}, radius={_aoeRadius}, lifetime={_aoeLifetime}, name={obj.name}, vertices=33, border_arcs={_aoeBorderSegmentCount}, marks={_aoeGroundMarkCount}, sorting_offset={_aoeSortingOffset}");
+        if (_enableDebugLogs)
+            Debug.Log($"[SkillImpactPlaceholderPresenter] CreateAoeGroundImpact called: center={center}, radius={_aoeRadius}, lifetime={_aoeLifetime}, name={obj.name}, vertices=33, border_arcs={_aoeBorderSegmentCount}, marks={_aoeGroundMarkCount}, sorting_offset={_aoeSortingOffset}");
     }
 
     private void CreateVisualForEffect(SkillEffectKind effectKind, SkillImpact impact, Vector3 targetPos, SkillContext context)
@@ -1201,12 +1212,15 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
         int firstRingOrder = firstRing != null ? firstRing.sortingOrder : int.MinValue;
         Material sharedMat = GetSharedMaterial();
         string matName = sharedMat != null ? sharedMat.name : "Null";
-        Debug.Log($"[SkillImpactPlaceholderPresenter Debug] CreateSummonImpact: root created='{rootObj.name}' at {rootObj.transform.position}, " +
-                  $"child count={rootObj.transform.childCount}, " +
-                  $"ring positionCount={(firstRing != null ? firstRing.positionCount : 0)}, " +
-                  $"ring sortingLayerName={firstRingLayer}, ring sortingOrder={firstRingOrder}, " +
-                  $"vertical sortingLayerName={sortingLayerName}, vertical sortingOrder={verticalSortingOrder}, " +
-                  $"material name={matName}, lifetime={tuning.lifetime}", this);
+        if (_enableDebugLogs)
+        {
+            Debug.Log($"[SkillImpactPlaceholderPresenter Debug] CreateSummonImpact: root created='{rootObj.name}' at {rootObj.transform.position}, " +
+                      $"child count={rootObj.transform.childCount}, " +
+                      $"ring positionCount={(firstRing != null ? firstRing.positionCount : 0)}, " +
+                      $"ring sortingLayerName={firstRingLayer}, ring sortingOrder={firstRingOrder}, " +
+                      $"vertical sortingLayerName={sortingLayerName}, vertical sortingOrder={verticalSortingOrder}, " +
+                      $"material name={matName}, lifetime={tuning.lifetime}", this);
+        }
 
         return rootObj;
     }
@@ -1309,7 +1323,8 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
 
         if (!hasSummonPos) return;
 
-        Debug.Log($"[SkillImpactPlaceholderPresenter] Summon visual resolved intended spawn world position={summonPos}, positionSource={positionSource}.", this);
+        if (_enableDebugLogs)
+            Debug.Log($"[SkillImpactPlaceholderPresenter] Summon visual resolved intended spawn world position={summonPos}, positionSource={positionSource}.", this);
         CreateSummonImpact(summonPos);
     }
 
@@ -2224,7 +2239,10 @@ public class SkillImpactPlaceholderPresenter : MonoBehaviour
             _mesh.RecalculateBounds();
             _meshFilter.mesh = _mesh;
 
-            Debug.Log($"[AoeGroundImpactBehavior] Initialize: meshVertices={vertices.Length}, meshTriangles={triangles.Length / 3}, sortingLayer={_meshRenderer.sortingLayerName}, sortingOrder={_meshRenderer.sortingOrder}, scale={transform.localScale}, worldPos={transform.position}");
+            if (TryGetActiveInstance(out var presenter) && presenter.EnableDebugLogs)
+            {
+                Debug.Log($"[AoeGroundImpactBehavior] Initialize: meshVertices={vertices.Length}, meshTriangles={triangles.Length / 3}, sortingLayer={_meshRenderer.sortingLayerName}, sortingOrder={_meshRenderer.sortingOrder}, scale={transform.localScale}, worldPos={transform.position}");
+            }
 
             // 2. Create segmented outer border
             float arcSpan = (2f * Mathf.PI / _borderSegmentCount) * _borderCoverage;
