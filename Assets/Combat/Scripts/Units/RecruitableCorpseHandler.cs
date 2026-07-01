@@ -110,6 +110,7 @@ public class RecruitableCorpseHandler : MonoBehaviour
         _hasHandledCorpse = true;
 
         AnyCorpseRecruited?.Invoke(vfxContext);
+        _deathHandler.FinishRecruitment();
         return true;
     }
 

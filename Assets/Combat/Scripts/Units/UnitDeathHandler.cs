@@ -123,6 +123,14 @@ public class UnitDeathHandler : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public void FinishRecruitment()
+    {
+        PrepareMovementForDeath();
+        ClearCorpseOccupancy();
+        SetLifeState(UnitLifecycleState.Removed);
+        gameObject.SetActive(false);
+    }
+
     private void DisableBehavioursForRecruitableDeath()
     {
         if (_behavioursToDisableForRecruitableDeath == null)
