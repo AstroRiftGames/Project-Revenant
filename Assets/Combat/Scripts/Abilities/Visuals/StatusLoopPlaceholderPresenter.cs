@@ -450,12 +450,15 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
     {
         StatusEffectController.AnyStatusApplied += HandleStatusApplied;
         StatusEffectController.AnyStatusRemoved += HandleStatusRemoved;
+        ShieldController.AnyShieldChanged += HandleShieldChanged;
+        SynchronizeActiveShields();
     }
 
     private void OnDisable()
     {
         StatusEffectController.AnyStatusApplied -= HandleStatusApplied;
         StatusEffectController.AnyStatusRemoved -= HandleStatusRemoved;
+        ShieldController.AnyShieldChanged -= HandleShieldChanged;
         ClearAllLoops();
     }
 
@@ -687,6 +690,42 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
         if (!TryResolveVisualLoopEffectType(effect.Definition, out SkillEffectKind effectType))
             return;
 
+        RemoveVisualLoopInstance(unit, effectType);
+    }
+
+    private void HandleShieldChanged(ShieldController controller, int prevShield, int currentShield)
+    {
+        if (controller == null) return;
+
+        Unit unit = controller.GetComponent<Unit>();
+        if (unit == null)
+        {
+            unit = controller.GetComponentInParent<Unit>();
+        }
+
+        if (unit == null)
+        {
+            if (enableDebugLogs)
+            {
+                Debug.LogWarning($"[StatusLoopPlaceholderPresenter] Could not resolve Unit for ShieldController on {controller.name}");
+            }
+            return;
+        }
+
+        if (currentShield > 0)
+        {
+            CreateVisualLoopInstance(unit, SkillEffectKind.Shield);
+        }
+        else
+        {
+            RemoveVisualLoopInstance(unit, SkillEffectKind.Shield);
+        }
+    }
+
+    private void RemoveVisualLoopInstance(Unit unit, SkillEffectKind effectType)
+    {
+        if (unit == null) return;
+        SweepStaleLoops();
         var key = (unit, effectType);
         if (_activeLoops.TryGetValue(key, out GameObject visualObj))
         {
@@ -695,6 +734,27 @@ public class StatusLoopPlaceholderPresenter : MonoBehaviour
                 Destroy(visualObj);
             }
             _activeLoops.Remove(key);
+        }
+    }
+
+    private void SynchronizeActiveShields()
+    {
+        ShieldController[] controllers = FindObjectsByType<ShieldController>(FindObjectsSortMode.None);
+        if (controllers == null) return;
+        foreach (var controller in controllers)
+        {
+            if (controller != null && controller.HasShield)
+            {
+                Unit unit = controller.GetComponent<Unit>();
+                if (unit == null)
+                {
+                    unit = controller.GetComponentInParent<Unit>();
+                }
+                if (unit != null)
+                {
+                    CreateVisualLoopInstance(unit, SkillEffectKind.Shield);
+                }
+            }
         }
     }
 

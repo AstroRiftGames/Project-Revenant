@@ -9,6 +9,7 @@ public sealed class ShieldController : MonoBehaviour
 
     public event Action<int> OnShieldChanged;
     public event Action<int> OnShieldAbsorbed;
+    public static event Action<ShieldController, int, int> AnyShieldChanged;
 
     public int CurrentShield => _currentShield;
     public bool HasShield => _currentShield > 0;
@@ -34,9 +35,11 @@ public sealed class ShieldController : MonoBehaviour
         if (amount <= 0 || durationSeconds <= 0f)
             return;
 
+        int prevShield = _currentShield;
         _currentShield = amount;
         _expiresAt = Time.time + durationSeconds;
         OnShieldChanged?.Invoke(_currentShield);
+        AnyShieldChanged?.Invoke(this, prevShield, _currentShield);
     }
 
     public int AbsorbDamage(int incomingDamage, out int absorbedDamage)
@@ -48,10 +51,12 @@ public sealed class ShieldController : MonoBehaviour
         if (!HasShield)
             return incomingDamage;
 
+        int prevShield = _currentShield;
         absorbedDamage = Mathf.Min(_currentShield, incomingDamage);
         _currentShield = Mathf.Max(0, _currentShield - absorbedDamage);
         OnShieldAbsorbed?.Invoke(absorbedDamage);
         OnShieldChanged?.Invoke(_currentShield);
+        AnyShieldChanged?.Invoke(this, prevShield, _currentShield);
 
         if (_currentShield <= 0)
             _expiresAt = 0f;
@@ -64,8 +69,10 @@ public sealed class ShieldController : MonoBehaviour
         if (_currentShield <= 0 && _expiresAt <= 0f)
             return;
 
+        int prevShield = _currentShield;
         _currentShield = 0;
         _expiresAt = 0f;
         OnShieldChanged?.Invoke(_currentShield);
+        AnyShieldChanged?.Invoke(this, prevShield, _currentShield);
     }
 }
