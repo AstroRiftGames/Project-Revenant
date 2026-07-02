@@ -168,11 +168,13 @@ public class GameManager : MonoBehaviour
         {
             TryRecordBossFloorShortcut(controller);
             RequestStateChange(GameState.CombatResolved);
+            TimeScaleController.Instance.ResetToDefault();
             RequestStateChange(GameState.ExploringDungeon);
         }
         else
         {
             RequestStateChange(GameState.GameOver);
+            TimeScaleController.Instance.ResetToDefault();
         }
     }
 
