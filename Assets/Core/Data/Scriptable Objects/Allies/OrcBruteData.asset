@@ -15,7 +15,7 @@ MonoBehaviour:
   unitId: OrcBrute
   displayName: Orc Brute
   isFusion: 0
-  unitPrefab: {fileID: 5437173185435831237, guid: 7c1f91a6d2b54b0cb8e2c6e71f010202, type: 3}
+  unitPrefab: {fileID: 6276415837733979111, guid: 64fa0daf6364c064f9ad8848fd34c8d8, type: 3}
   team: 0
   role: 0
   combatStyle: 1
