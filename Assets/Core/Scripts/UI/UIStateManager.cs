@@ -10,7 +10,8 @@ public class UIStateManager : MonoBehaviour
             GameManager.Instance.RequestHideUI(UIType.LOG);
             GameManager.Instance.RequestHideUI(UIType.DeepInspector);
             GameManager.Instance.RequestHideUI(UIType.CombatStatus);
-            
+            GameManager.Instance.RequestHideUI(UIType.TimeScaler);
+
             if (GameManager.Instance.StateManager != null)
             {
                 GameManager.Instance.StateManager.OnStateChanged += HandleStateChanged;
@@ -39,6 +40,7 @@ public class UIStateManager : MonoBehaviour
                 GameManager.Instance.RequestHideUI(UIType.DeepInspector);
                 GameManager.Instance.RequestHideUI(UIType.LOG);
                 GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                GameManager.Instance.RequestHideUI(UIType.TimeScaler);
                 break;
 
             case GameState.ExploringDungeon:
@@ -48,6 +50,7 @@ public class UIStateManager : MonoBehaviour
                 GameManager.Instance.RequestShowUI(UIType.Minimap);
                 GameManager.Instance.RequestHideUI(UIType.LOG);
                 GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                GameManager.Instance.RequestHideUI(UIType.TimeScaler);
                 break;
 
             case GameState.InCombat:
@@ -55,12 +58,14 @@ public class UIStateManager : MonoBehaviour
                 GameManager.Instance.RequestHideUI(UIType.Minimap);
                 GameManager.Instance.RequestShowUI(UIType.LOG);
                 GameManager.Instance.RequestShowUI(UIType.CombatStatus);
+                GameManager.Instance.RequestShowUI(UIType.TimeScaler);
                 break;
 
             case GameState.GameOver:
                 GameManager.Instance.RequestHideUI(UIType.Minimap);
                 GameManager.Instance.RequestHideUI(UIType.LOG);
                 GameManager.Instance.RequestHideUI(UIType.CombatStatus);
+                GameManager.Instance.RequestHideUI(UIType.TimeScaler);
                 break;
         }
     }

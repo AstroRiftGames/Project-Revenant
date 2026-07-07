@@ -152,6 +152,8 @@ MonoBehaviour:
     ElementObject: {fileID: 1242826732018307874}
   - ElementType: 12
     ElementObject: {fileID: 5785346903604953516}
+  - ElementType: 13
+    ElementObject: {fileID: 4891178945235888229}
   _gameplayUIElements: 0000000001000000020000000a0000000b000000
   _audioClipSet: {fileID: 11400000, guid: f1cdb3358e9a7c940bc6290d3a3dd8a9, type: 2}
 --- !u!114 &8175705738802489650
@@ -551,7 +553,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7787974026512043994, guid: 5b91929f1cc23f842a83d6066457df79, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 250
+      value: 275.3117
       objectReference: {fileID: 0}
     - target: {fileID: 7787974026512043994, guid: 5b91929f1cc23f842a83d6066457df79, type: 3}
       propertyPath: m_SizeDelta.y
@@ -610,6 +612,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b91929f1cc23f842a83d6066457df79, type: 3}
+--- !u!1 &4891178945235888229 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6491788961511274949, guid: 5b91929f1cc23f842a83d6066457df79, type: 3}
+  m_PrefabInstance: {fileID: 1871108190449029536}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &8494901470082227834 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7787974026512043994, guid: 5b91929f1cc23f842a83d6066457df79, type: 3}
