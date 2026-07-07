@@ -44,55 +44,74 @@ public static class GenerateOverrideControllerYaml
     // Output folder (relative to Assets/)
     private const string OutputRoot = "Combat/Animation/Creatures/New";
 
-    /// <summary>
-    /// Maps race → role → component aseprite GUIDs.
-    /// The "Body" entry is used as the m_OriginalClip reference for all components.
-    /// </summary>
-    private static readonly Dictionary<string, Dictionary<string, Dictionary<string, string>>> AsepriteGuids = new()
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> DiscoverAsepriteGuids()
     {
-        ["Human"] = new()
+        var discovered = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(System.StringComparer.OrdinalIgnoreCase);
+        string rootDir = "Assets/Combat/Graphics/Characters";
+
+        if (!Directory.Exists(rootDir))
         {
-            ["DPS"] = new()
-            {
-                ["Body"]  = "999bdcb70ca3efc4d99b57db10aad942",
-                ["Cloth"] = "66ffc6daa6dc44440b3329364f3b1329",
-                ["Weapon"] = "ac1fc5bca67601c4281b7172054464a5",
-            },
-            ["Support"] = new()
-            {
-                ["Body"]  = "e7ebf622d36d3954f9c930a175367ffc",
-                ["Cloth"] = "18fe684ce8775054ea7b2af18bbda369",
-                ["Weapon"] = "02c8dc2d308e5b247b3d5086bd688feb",
-            },
-            ["Tank"] = new()
-            {
-                ["Body"]  = "901afffb30e6e5144955e2066d2be52f",
-                ["Cloth"] = "a7c67e4a37bec844fb63389850455017",
-                ["Weapon"] = "bbd917feecb1906418a06439e94b673b",
-            },
-        },
-        ["Orc"] = new()
+            Debug.LogError($"Directory not found: {rootDir}");
+            return discovered;
+        }
+
+        string[] files = Directory.GetFiles(rootDir, "*.aseprite", SearchOption.AllDirectories);
+        foreach (string file in files)
         {
-            ["DPS"] = new()
+            string path = file.Replace('\\', '/');
+            string fileName = Path.GetFileNameWithoutExtension(path);
+
+            string race = null;
+            if (path.IndexOf("/Human/", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                path.IndexOf("/Humans/", System.StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ["Body"]  = "3f58b3b0c5d171547b983562c8e969ba",
-                ["Cloth"] = "7a715a215bafa6f43b57412ac669c1aa",
-                ["Weapon"] = "9fd23957cd2724b43af8052d4288c783",
-            },
-            ["Support"] = new()
+                race = "Human";
+            }
+            else if (path.IndexOf("/Orc/", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     path.IndexOf("/Orcs/", System.StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ["Body"]  = "27f2aadd51af0fb49a4bec4a328e4cfd",
-                ["Cloth"] = "8ef482700ec964f469cab7fc7cb049c7",
-                ["Weapon"] = "42f497a017ad5694ca69709a768b2f2a",
-            },
-            ["Tank"] = new()
+                race = "Orc";
+            }
+
+            if (race == null) continue;
+
+            string role = null;
+            if (fileName.IndexOf("_DPS_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "DPS";
+            else if (fileName.IndexOf("_Support_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "Support";
+            else if (fileName.IndexOf("_Tank_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "Tank";
+
+            if (role == null) continue;
+
+            string component = "Weapon";
+            if (fileName.IndexOf("_Body_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Body";
+            else if (fileName.IndexOf("_Clothes_", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     fileName.IndexOf("_Cloth_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Cloth";
+            else if (fileName.IndexOf("_Accessories_", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     fileName.IndexOf("_Accessory_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Accessories";
+
+            string guid = AssetDatabase.AssetPathToGUID(path);
+            if (string.IsNullOrEmpty(guid))
             {
-                ["Body"]  = "5a48ae713d5e72948babffa45ef82bb9",
-                ["Cloth"] = "31b6890425fa08d4c968c9fc6e97cbb3",
-                ["Weapon"] = "be926fb3f044192478ddf92a3983a126",
-            },
-        },
-    };
+                Debug.LogWarning($"Could not find GUID for asset at path: {path}");
+                continue;
+            }
+
+            if (!discovered.ContainsKey(race))
+                discovered[race] = new Dictionary<string, Dictionary<string, string>>(System.StringComparer.OrdinalIgnoreCase);
+            if (!discovered[race].ContainsKey(role))
+                discovered[race][role] = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+
+            discovered[race][role][component] = guid;
+        }
+
+        return discovered;
+    }
 
     [MenuItem("Tools/Combat/Generate Override Controller YAML Files")]
     public static void GenerateAll()
@@ -102,7 +121,9 @@ public static class GenerateOverrideControllerYaml
         string assetsPath = Application.dataPath;
         string outputBase = Path.Combine(assetsPath, OutputRoot);
 
-        foreach (var raceEntry in AsepriteGuids)
+        var discoveredGuids = DiscoverAsepriteGuids();
+
+        foreach (var raceEntry in discoveredGuids)
         {
             string race = raceEntry.Key;
 
@@ -111,7 +132,11 @@ public static class GenerateOverrideControllerYaml
                 string role = roleEntry.Key;
 
                 // The Body GUID is the source of m_OriginalClip for all components
-                string bodyGuid = roleEntry.Value["Body"];
+                if (!roleEntry.Value.TryGetValue("Body", out string bodyGuid))
+                {
+                    Debug.LogError($"No Body component found for race {race}, role {role}. Skip generating components.");
+                    continue;
+                }
 
                 foreach (var compEntry in roleEntry.Value)
                 {

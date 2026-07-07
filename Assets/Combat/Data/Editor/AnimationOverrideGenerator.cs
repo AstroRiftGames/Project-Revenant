@@ -14,54 +14,100 @@ public static class AnimationOverrideGenerator
     private const string BaseControllerPath = "Assets/Combat/Animation/Creatures/New/UnitAnimator.controller";
     private const string OutputRoot = "Assets/Combat/Animation/Creatures/New";
 
-    /// <summary>
-    /// Maps race → role → component → aseprite asset path
-    /// </summary>
-    private static readonly Dictionary<string, Dictionary<string, Dictionary<string, string>>> AsepritePaths = new()
+    private static Dictionary<string, Dictionary<string, Dictionary<string, string>>> DiscoverAsepritePaths()
     {
-        ["Human"] = new()
+        var discovered = new Dictionary<string, Dictionary<string, Dictionary<string, string>>>(System.StringComparer.OrdinalIgnoreCase);
+        string rootDir = "Assets/Combat/Graphics/Characters";
+
+        if (!Directory.Exists(rootDir))
         {
-            ["DPS"] = new()
-            {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Human/Humans_DPS_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Human/Humans_DPS_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Human/Humans_DPS_Axes_Idle.aseprite",
-            },
-            ["Support"] = new()
-            {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Human/Humans_Support_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Human/Humans_Support_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Human/Humans_Support_Bow_Idle.aseprite",
-            },
-            ["Tank"] = new()
-            {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Human/Humans_Tank_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Human/Humans_Tank_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Human/Humans_Tank_Spear&Shield_Idle.aseprite",
-            },
-        },
-        ["Orc"] = new()
+            Debug.LogError($"Directory not found: {rootDir}");
+            return discovered;
+        }
+
+        string[] files = Directory.GetFiles(rootDir, "*.aseprite", SearchOption.AllDirectories);
+        foreach (string file in files)
         {
-            ["DPS"] = new()
+            string path = file.Replace('\\', '/');
+            string fileName = Path.GetFileNameWithoutExtension(path);
+
+            string race = null;
+            if (path.IndexOf("/Human/", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                path.IndexOf("/Humans/", System.StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Orcs/Orcs_DPS_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_DPS_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_DPS_Axes_Idle.aseprite",
-            },
-            ["Support"] = new()
+                race = "Human";
+            }
+            else if (path.IndexOf("/Orc/", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     path.IndexOf("/Orcs/", System.StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Support_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Support_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Support_Bow_Idle.aseprite",
-            },
-            ["Tank"] = new()
+                race = "Orc";
+            }
+
+            if (race == null) continue;
+
+            string role = null;
+            if (fileName.IndexOf("_DPS_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "DPS";
+            else if (fileName.IndexOf("_Support_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "Support";
+            else if (fileName.IndexOf("_Tank_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                role = "Tank";
+
+            if (role == null) continue;
+
+            string component = "Weapon";
+            if (fileName.IndexOf("_Body_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Body";
+            else if (fileName.IndexOf("_Clothes_", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     fileName.IndexOf("_Cloth_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Cloth";
+            else if (fileName.IndexOf("_Accessories_", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     fileName.IndexOf("_Accessory_", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                component = "Accessories";
+
+            if (!discovered.ContainsKey(race))
+                discovered[race] = new Dictionary<string, Dictionary<string, string>>(System.StringComparer.OrdinalIgnoreCase);
+            if (!discovered[race].ContainsKey(role))
+                discovered[race][role] = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+
+            discovered[race][role][component] = path;
+        }
+
+        return discovered;
+    }
+
+    private static string GetDirection(AnimationClip clip)
+    {
+        if (clip == null) return string.Empty;
+
+        string clipName = clip.name;
+        string assetPath = AssetDatabase.GetAssetPath(clip);
+        if (!string.IsNullOrEmpty(assetPath))
+        {
+            string fileName = Path.GetFileNameWithoutExtension(assetPath);
+            if (clipName.StartsWith(fileName, System.StringComparison.OrdinalIgnoreCase))
             {
-                ["Body"]  = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Tank_Body_Idle.aseprite",
-                ["Cloth"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Tank_Clothes_Idle.aseprite",
-                ["Weapon"] = "Assets/Combat/Graphics/Characters/Orcs/Orcs_Tank_Spear&Shield_Idle.aseprite",
-            },
-        },
-    };
+                clipName = clipName.Substring(fileName.Length);
+            }
+        }
+
+        string lower = clipName.ToLowerInvariant();
+        string[] parts = lower.Split('_');
+        string lastPart = parts.Length > 0 ? parts[parts.Length - 1] : lower;
+
+        bool IsDir(string dir) => lastPart == dir || lower.EndsWith("_" + dir) || lower.EndsWith(dir);
+
+        if (IsDir("northeast") || IsDir("upright")) return "northeast";
+        if (IsDir("northwest") || IsDir("upleft")) return "northwest";
+        if (IsDir("southeast") || IsDir("downright")) return "southeast";
+        if (IsDir("southwest") || IsDir("downleft")) return "southwest";
+        if (IsDir("north") || IsDir("up")) return "north";
+        if (IsDir("south") || IsDir("down")) return "south";
+        if (IsDir("east") || IsDir("right")) return "east";
+        if (IsDir("west") || IsDir("left")) return "west";
+
+        return string.Empty;
+    }
 
     [MenuItem("Tools/Combat/Generate All Override Controllers")]
     public static void GenerateAll()
@@ -76,6 +122,7 @@ public static class AnimationOverrideGenerator
             return;
         }
 
+        var AsepritePaths = DiscoverAsepritePaths();
         int generated = 0;
         int errors = 0;
 
@@ -88,7 +135,12 @@ public static class AnimationOverrideGenerator
                 string role = roleEntry.Key;
 
                 // Load the Body aseprite to get the original clips
-                string bodyAsepritePath = roleEntry.Value["Body"];
+                if (!roleEntry.Value.TryGetValue("Body", out string bodyAsepritePath))
+                {
+                    Debug.LogError($"No Body component found for race {race}, role {role}. Skip generating components.");
+                    errors++;
+                    continue;
+                }
                 AnimationClip[] bodyClips = LoadAnimationClips(bodyAsepritePath);
 
                 if (bodyClips == null || bodyClips.Length == 0)
@@ -124,15 +176,21 @@ public static class AnimationOverrideGenerator
                     var overrides = new List<KeyValuePair<AnimationClip, AnimationClip>>();
                     overrideController.GetOverrides(overrides);
 
-                    // Map each original clip to the corresponding override clip
-                    // The order in m_Clips must match the user's specification:
-                    // 1) East (Right), 2) North (Up), 3) NorthEast (UpRight),
-                    // 4) NorthWest (UpLeft), 5) South (Down), 6) SouthEast (DownRight),
-                    // 7) SouthWest (DownLeft), 8) West (Left)
-                    for (int i = 0; i < overrides.Count && i < overrideClips.Length; i++)
+                    // Map each original clip to the corresponding override clip by matching their direction suffix.
+                    for (int i = 0; i < overrides.Count; i++)
                     {
-                        overrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(
-                            overrides[i].Key, overrideClips[i]);
+                        AnimationClip originalClip = overrides[i].Key;
+                        string direction = GetDirection(originalClip);
+                        AnimationClip matchingOverride = System.Array.Find(overrideClips, c => GetDirection(c) == direction);
+
+                        if (matchingOverride != null)
+                        {
+                            overrides[i] = new KeyValuePair<AnimationClip, AnimationClip>(originalClip, matchingOverride);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Could not find matching override clip for direction '{direction}' (original clip: {originalClip.name}) in component {component} of {race}-{role}");
+                        }
                     }
 
                     overrideController.ApplyOverrides(overrides);
